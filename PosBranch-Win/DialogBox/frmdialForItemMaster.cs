@@ -4387,8 +4387,8 @@ namespace PosBranch_Win.DialogBox
                         // Log what we're sending to the Stock Adjustment form
                         System.Diagnostics.Debug.WriteLine($"Sending to Stock Adjustment: ItemId={itemId}, Description={description}, Stock={stockQty}");
 
-                        // Add item to the parent form's grid - default adjustment qty is 0, focusGrid is true
-                        parentForm.AddItemToGrid(itemId, barcode, description, unit, stockQty, 0, true);
+                        // Add item to the parent form's grid - default adjustment qty is 0, focusGrid is false to keep focus on barcode
+                        parentForm.AddItemToGrid(itemId, barcode, description, unit, stockQty, 0, false);
 
                         // Set dialog result and close
                         this.DialogResult = DialogResult.OK;

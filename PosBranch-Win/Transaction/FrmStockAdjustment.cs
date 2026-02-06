@@ -37,6 +37,15 @@ namespace PosBranch_Win.Transaction
         public FrmStockAdjustment()
         {
             InitializeComponent();
+
+            // Ensure barcode textbox gets focus when form is shown
+            this.Shown += FrmStockAdjustment_Shown;
+        }
+
+        private void FrmStockAdjustment_Shown(object sender, EventArgs e)
+        {
+            // Set focus to barcode textbox when form opens
+            barcodeFocus();
         }
 
         public void ReturnTable()
@@ -89,6 +98,15 @@ namespace PosBranch_Win.Transaction
                 col.Header.Appearance.BackGradientStyle = GradientStyle.Vertical;
                 col.Header.Appearance.ForeColor = Color.White;
                 col.Header.Appearance.BorderColor = Color.FromArgb(44, 62, 80);
+
+                // Set default activation to NoEdit (Read Only)
+                col.CellActivation = Activation.NoEdit;
+
+                // Enable editing ONLY for specific columns as requested
+                if (col.Key == "UOM" || col.Key == "Adjustment Qty")
+                {
+                    col.CellActivation = Activation.AllowEdit;
+                }
             }
 
             // Set specific column properties
@@ -324,6 +342,7 @@ namespace PosBranch_Win.Transaction
         {
             frmReasonDialog reasonDialog = new frmReasonDialog();
             reasonDialog.ShowDialog();
+            barcodeFocus();
         }
 
         private void btn_Dial_Categ_Click(object sender, EventArgs e)
@@ -331,6 +350,7 @@ namespace PosBranch_Win.Transaction
             string Params = "FrmStockAdjustment";
             frmCategoryDialog category = new frmCategoryDialog(Params);
             category.ShowDialog();
+            barcodeFocus();
         }
 
         private void btn_ItemLoad_Click(object sender, EventArgs e)
@@ -348,6 +368,9 @@ namespace PosBranch_Win.Transaction
 
                 // Show the dialog
                 itemDialog.ShowDialog();
+
+                // Return focus to barcode after dialog closes
+                barcodeFocus();
 
                 // Log after dialog is closed
                 System.Diagnostics.Debug.WriteLine("Item dialog closed");
@@ -576,10 +599,13 @@ namespace PosBranch_Win.Transaction
                     return;
                 }
 
-                // Handle F8 to save
+                // Handle F8 to save - Only work if Save button is visible
                 if (e.KeyCode == Keys.F8)
                 {
-                    btnSave_Click(this, EventArgs.Empty);
+                    if (btnSave.Visible)
+                    {
+                        btnSave_Click(this, EventArgs.Empty);
+                    }
                     e.Handled = true;
                     return;
                 }
@@ -936,6 +962,10 @@ namespace PosBranch_Win.Transaction
                     stockAdjustmentTable.Clear();
                 }
 
+                // Reset button visibility to Save mode (not Update mode)
+                btnSave.Visible = true;
+                ultraPictureBox7.Visible = false;
+
                 // Set focus to barcode field
                 barcodeFocus();
             }
@@ -1019,12 +1049,8 @@ namespace PosBranch_Win.Transaction
                 // 6. Handle results
                 if (result == "success")
                 {
-                    frmSuccesMsg success = new frmSuccesMsg();
-                    success.FormClosed += (s, args) => {
-                        // Call clear method when success message is closed
-                        btnClear_Click(this, EventArgs.Empty);
-                    };
-                    success.ShowDialog();
+                    MessageBox.Show("Stock Adjustment Saved Successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    btnClear_Click(this, EventArgs.Empty);
                 }
                 else
                 {
@@ -1118,8 +1144,13 @@ namespace PosBranch_Win.Transaction
             frmDocDialog docdialo = new frmDocDialog();
             if (docdialo.ShowDialog() == DialogResult.OK)
             {
+                System.Diagnostics.Debug.WriteLine("Document loaded - switching to Update mode");
                 btnSave.Visible = false;
                 ultraPictureBox7.Visible = true;
+                System.Diagnostics.Debug.WriteLine($"btnSave.Visible = {btnSave.Visible}, ultraPictureBox7.Visible = {ultraPictureBox7.Visible}");
+
+                // Return focus to barcode after loading document
+                barcodeFocus();
             }
         }
 
@@ -1172,12 +1203,8 @@ namespace PosBranch_Win.Transaction
                 // 6. Handle results
                 if (result == "success")
                 {
-                    frmSuccesMsg success = new frmSuccesMsg();
-                    success.FormClosed += (s, args) => {
-                        // Call clear method when success message is closed
-                        btnClear_Click(this, EventArgs.Empty);
-                    };
-                    success.ShowDialog();
+                    MessageBox.Show("Stock Adjustment Updated Successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    btnClear_Click(this, EventArgs.Empty);
                 }
                 else
                 {
@@ -1235,7 +1262,7 @@ namespace PosBranch_Win.Transaction
         {
             try
             {
-                // F1 to clear the form (previously F5)
+                // F1 to clear the form
                 if (keyData == Keys.F1)
                 {
                     btnClear_Click(this, EventArgs.Empty);
@@ -1256,24 +1283,29 @@ namespace PosBranch_Win.Transaction
                     frmdialForItemMaster itemDialog = new frmdialForItemMaster(Params1);
                     itemDialog.Owner = this; // Set owner for communication
                     itemDialog.ShowDialog();
+                    // Return focus to barcode textbox after dialog closes
+                    barcodeFocus();
                     return true;
                 }
 
-                // F8 to save
+                // F8 to save - Only work if Save button is visible (i.e. New Mode, not Update Mode)
                 if (keyData == Keys.F8)
                 {
-                    btnSave_Click(this, EventArgs.Empty);
+                    if (btnSave.Visible)
+                    {
+                        btnSave_Click(this, EventArgs.Empty);
+                    }
                     return true;
                 }
 
-                // Ctrl+S to save (keeping this for backward compatibility)
+                // Ctrl+S to save
                 if (keyData == (Keys.Control | Keys.S))
                 {
                     btnSave_Click(this, EventArgs.Empty);
                     return true;
                 }
 
-                // Ctrl+U to update (keeping this for backward compatibility)
+                // Ctrl+U to update
                 if (keyData == (Keys.Control | Keys.U))
                 {
                     btn_update_Click(this, EventArgs.Empty);
@@ -1418,13 +1450,12 @@ namespace PosBranch_Win.Transaction
                     newGridRow.Cells["Status"].Value = "No Change";
                 }
 
-                // Handle after-add tasks
+                // Handle after-add tasks (grid focus for editing if requested)
                 AfterRowAdded(focusGrid);
 
-                if (!focusGrid)
-                {
-                    barcodeFocus();
-                }
+                // ALWAYS return focus to barcode textbox for continuous data entry
+                // This ensures users can keep scanning/entering barcodes without manual focus management
+                barcodeFocus();
 
                 // Return the index of the newly added row
                 return lastRowIndex;
@@ -1447,22 +1478,7 @@ namespace PosBranch_Win.Transaction
         }
 
 
-        public void SetRemarkForLastRow(string remark)
-        {
-            try
-            {
-                // Remark column removed, this method is no longer needed but kept for compatibility
-                // if (ultraGrid1.Rows.Count > 0)
-                // {
-                //     int lastRowIndex = ultraGrid1.Rows.Count - 1;
-                //     ultraGrid1.Rows[lastRowIndex].Cells["Remark"].Value = remark;
-                // }
-            }
-            catch (Exception ex)
-            {
-                // Ignore errors
-            }
-        }
+
 
         // Update double click handler to use the new method
         private void UltraGrid1_DoubleClickCell(object sender, DoubleClickCellEventArgs e)

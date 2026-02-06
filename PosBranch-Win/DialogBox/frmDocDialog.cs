@@ -49,11 +49,11 @@ namespace PosBranch_Win.DialogBox
         private Point startPoint;
         private Infragistics.Win.UltraWinGrid.UltraGridColumn columnToMove = null;
         private bool isDraggingColumn = false;
-        
+
         // FIXED: Add a list to store hidden column keys for persistence
         // Initialize with new list to avoid null reference
-        private static List<string> persistentHiddenColumns = new List<string>(); 
-        
+        private static List<string> persistentHiddenColumns = new List<string>();
+
         public frmDocDialog()
         {
             InitializeComponent();
@@ -94,14 +94,14 @@ namespace PosBranch_Win.DialogBox
             // Connect key events for grid
             ultraGrid1.KeyPress += ultraGrid1_KeyPress;
             ultraGrid1.KeyDown += ultraGrid1_KeyDown;
-            
+
             // FIXED: Add form closing event to save column state
             this.FormClosing += FrmDocDialog_FormClosing;
-            
+
             // --- MISSING FEATURES: Add from frmCustomerDialog ---
             // Setup panel hover effects
             SetupPanelHoverEffects();
-            
+
             // Add event handlers for better UX
             this.LocationChanged += (s, e) => PositionColumnChooserAtBottomRight();
             this.Activated += (s, e) => PositionColumnChooserAtBottomRight();
@@ -155,25 +155,25 @@ namespace PosBranch_Win.DialogBox
                 ultgrid_docNo_KeyPress(sender, e);
             }
         }
-        
+
         // Load the selected stock adjustment master record and all its details
         private void ultgrid_docNo_KeyPress(object sender, KeyPressEventArgs e)
         {
             try
             {
-                if (sender is Infragistics.Win.UltraWinGrid.UltraGrid grid && 
+                if (sender is Infragistics.Win.UltraWinGrid.UltraGrid grid &&
                     grid.ActiveRow != null)
                 {
                     // Get the FrmStockAdjustment form instance
                     stockk = (FrmStockAdjustment)Application.OpenForms["FrmStockAdjustment"];
-                    
+
                     if (stockk == null)
                     {
-                        MessageBox.Show("Stock Adjustment form is not open.", "Error", 
+                        MessageBox.Show("Stock Adjustment form is not open.", "Error",
                             MessageBoxButtons.OK, MessageBoxIcon.Error);
                         return;
                     }
-                    
+
                     // Get master record data from the selected grid row
                     UltraGridCell Id = grid.ActiveRow.Cells["Id"];
                     UltraGridCell StockAdjustmentNo = grid.ActiveRow.Cells["StockAdjustmentNo"];
@@ -183,32 +183,32 @@ namespace PosBranch_Win.DialogBox
                     UltraGridCell LedgerID = grid.ActiveRow.Cells["LedgerId"];
                     UltraGridCell VoucherId = grid.ActiveRow.Cells["VoucherId"];
                     UltraGridCell CategoryId = grid.ActiveRow.Cells["CategoryId"];
-                    
+
                     // Clear the existing grid in the stock adjustment form
                     stockk.ClearGrid();
-                    
+
                     // Load the full master and detail data using Dropdowns
                     int masterId = Convert.ToInt32(Id.Value);
                     StockGrid skGrid = drop.getStockAdjustmentById(masterId);
-                    
+
                     if (skGrid == null)
                     {
                         MessageBox.Show("Error loading stock adjustment details.", "Error",
                             MessageBoxButtons.OK, MessageBoxIcon.Error);
                         return;
                     }
-                    
+
                     // Populate master data into the form
                     stockk.txt_Adjno.Text = StockAdjustmentNo.Value?.ToString() ?? "";
-                    stockk.dateTimePicker1.Value = StockAdjustmentDate.Value != null 
-                        ? Convert.ToDateTime(StockAdjustmentDate.Value) 
+                    stockk.dateTimePicker1.Value = StockAdjustmentDate.Value != null
+                        ? Convert.ToDateTime(StockAdjustmentDate.Value)
                         : DateTime.Now;
                     stockk.txtb_reason.Text = LedgerName.Value?.ToString() ?? "";
                     stockk.txteditor_remark.Text = Comments.Value?.ToString() ?? "";
                     stockk.ultlbl_ledgerid.Text = LedgerID.Value?.ToString() ?? "0";
                     stockk.ultravoucherId.Text = VoucherId.Value?.ToString() ?? "0";
                     stockk.ultralblId.Text = Id.Value?.ToString() ?? "0";
-                    
+
                     // Populate category ID and name
                     int categoryIdValue = 0;
                     if (CategoryId != null && CategoryId.Value != null && CategoryId.Value != DBNull.Value)
@@ -223,11 +223,11 @@ namespace PosBranch_Win.DialogBox
                             categoryIdValue = masterRecord.CategoryId;
                         }
                     }
-                    
+
                     if (categoryIdValue > 0 && stockk.ultlbl_catid != null)
                     {
                         stockk.ultlbl_catid.Text = categoryIdValue.ToString();
-                        
+
                         try
                         {
                             DataBase.Operations = "Category";
@@ -248,7 +248,7 @@ namespace PosBranch_Win.DialogBox
                         stockk.ultlbl_catid.Text = "0";
                         stockk.txtb_category.Text = "";
                     }
-                    
+
                     // Populate detail data into the grid
                     if (skGrid.ListDetails != null && skGrid.ListDetails.Any())
                     {
@@ -257,7 +257,7 @@ namespace PosBranch_Win.DialogBox
                             // Calculate Adjustment Qty from PhysicalStock and SystemStock
                             // Adjustment Qty = PhysicalStock - SystemStock (the amount that was adjusted)
                             int adjustmentQty = (int)(detail.PhysicalStock - detail.SystemStock);
-                            
+
                             // Add each detail item to the grid
                             // Note: StockAdjPriceDetails uses Description and UOM, not ItemName and UnitName
                             int newRowIdx = stockk.AddItemToGrid(
@@ -268,23 +268,19 @@ namespace PosBranch_Win.DialogBox
                                 detail.SystemStock.ToString(),
                                 adjustmentQty  // Pass the calculated adjustment amount
                             );
-                            
-                            // Set the remark for the row that was just added
-                            if (newRowIdx >= 0 && !string.IsNullOrEmpty(detail.Reason))
-                            {
-                                // Use the public method to set remark for the last added row
-                                stockk.SetRemarkForLastRow(detail.Reason);
-                            }
                         }
                     }
-                    
+
+                    // Set DialogResult to OK so parent form knows we loaded data
+                    this.DialogResult = DialogResult.OK;
+
                     // Close the dialog
                     this.Close();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading stock adjustment: {ex.Message}\n\nStack Trace: {ex.StackTrace}", 
+                MessageBox.Show($"Error loading stock adjustment: {ex.Message}\n\nStack Trace: {ex.StackTrace}",
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -503,10 +499,10 @@ namespace PosBranch_Win.DialogBox
 
                 // Configure cell appearance to increase vertical content alignment
                 ultraGrid1.DisplayLayout.Override.CellAppearance.TextVAlign = Infragistics.Win.VAlign.Middle;
-                
+
                 // FIXED: Change horizontal alignment to left for better readability
                 ultraGrid1.DisplayLayout.Override.CellAppearance.TextHAlign = Infragistics.Win.HAlign.Left;
-                
+
                 // Connect click events for double-clicking
                 ultraGrid1.DoubleClickCell += new Infragistics.Win.UltraWinGrid.DoubleClickCellEventHandler(ultraGrid1_DoubleClickCell);
 
@@ -516,10 +512,10 @@ namespace PosBranch_Win.DialogBox
                 ultraGrid1.DisplayLayout.Override.HeaderClickAction = Infragistics.Win.UltraWinGrid.HeaderClickAction.SortSingle;
                 ultraGrid1.DisplayLayout.Override.WrapHeaderText = Infragistics.Win.DefaultableBoolean.False;
                 ultraGrid1.DisplayLayout.Override.HeaderAppearance.TextTrimming = Infragistics.Win.TextTrimming.None;
-                
+
                 // FIXED: Enable horizontal scrolling explicitly
                 ultraGrid1.DisplayLayout.ViewStyleBand = Infragistics.Win.UltraWinGrid.ViewStyleBand.OutlookGroupBy;
-                
+
                 // FIXED: Set default column width to prevent tight columns
                 ultraGrid1.DisplayLayout.Override.DefaultColWidth = 100;
             }
@@ -559,7 +555,7 @@ namespace PosBranch_Win.DialogBox
                 ApplyFilter(searchText);
             }
         }
-        
+
         private void ApplyFilter(string searchText)
         {
             try
@@ -569,10 +565,10 @@ namespace PosBranch_Win.DialogBox
                     UpdateStatus("No data available to filter.");
                     return;
                 }
-                
+
                 // Create a view of the data
                 DataView dv = fullDataTable.DefaultView;
-                
+
                 // If search text is provided, apply filter
                 if (!string.IsNullOrEmpty(searchText) && searchText != "Search documents..." && searchText != "Search...")
                 {
@@ -584,7 +580,7 @@ namespace PosBranch_Win.DialogBox
 
                     // Build a filter based on selected option and data columns
                     string filter = "";
-                    
+
                     // Build filter based on available columns and selected filter
                     switch (filterOption)
                     {
@@ -616,7 +612,7 @@ namespace PosBranch_Win.DialogBox
                             {
                                 // Skip the OriginalRowOrder column
                                 if (col.ColumnName == "OriginalRowOrder") continue;
-                                
+
                                 if (col.DataType == typeof(string) || col.DataType == typeof(DateTime))
                                 {
                                     filterParts.Add($"CONVERT({col.ColumnName}, 'System.String') LIKE '%{escapedSearchText}%'");
@@ -628,7 +624,7 @@ namespace PosBranch_Win.DialogBox
                             }
                             break;
                     }
-                    
+
                     // Apply filter if valid
                     if (!string.IsNullOrEmpty(filter))
                     {
@@ -642,7 +638,7 @@ namespace PosBranch_Win.DialogBox
                     dv.RowFilter = string.Empty;
                     UpdateStatus("Showing all records");
                 }
-                
+
                 // Select first row after filtering
                 if (ultraGrid1.Rows.Count > 0)
                 {
@@ -650,7 +646,7 @@ namespace PosBranch_Win.DialogBox
                     ultraGrid1.Selected.Rows.Clear();
                     ultraGrid1.Selected.Rows.Add(ultraGrid1.Rows[0]);
                 }
-                
+
                 // Update record count label
                 UpdateRecordCountLabel();
             }
@@ -667,7 +663,7 @@ namespace PosBranch_Win.DialogBox
             KeyPressEventArgs args = new KeyPressEventArgs((char)13);
             ultgrid_docNo_KeyPress(ultraGrid1, args);
         }
-        
+
         // Override to process Enter key properly
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
@@ -689,7 +685,7 @@ namespace PosBranch_Win.DialogBox
             {
                 // Update status
                 UpdateStatus("Loading documents...");
-                
+
                 // Initialize label1 with record count info if it exists
                 if (label1 != null)
                 {
@@ -698,36 +694,36 @@ namespace PosBranch_Win.DialogBox
                     label1.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Regular);
                     label1.ForeColor = Color.FromArgb(0, 70, 170); // Dark blue color
                 }
-                
+
                 // Load document data
                 StockGrid stokGrid = new StockGrid();
                 stokGrid = drop.getAllDocNo();
-                
+
                 // FIXED: Disable AutoFitStyle to prevent columns from being resized automatically
                 this.ultraGrid1.DisplayLayout.AutoFitStyle = Infragistics.Win.UltraWinGrid.AutoFitStyle.None;
-                
+
                 // Store data in a DataTable for filtering capability
                 if (stokGrid.ListMaster != null)
                 {
                     fullDataTable = ToDataTable(stokGrid.ListMaster);
-                    
+
                     // Preserve original row order for sorting functionality
                     PreserveOriginalRowOrder(fullDataTable);
-                    
+
                     ultraGrid1.DataSource = fullDataTable;
-                    
+
                     // FIXED: Initialize column widths after data is loaded
                     InitializeColumnWidths();
-                    
+
                     // FIXED: Restore hidden column state
                     RestoreHiddenColumns();
-                    
+
                     // FIXED: Ensure horizontal scrolling is enabled
                     EnsureHorizontalScrolling();
-                    
+
                     // Initialize saved column widths
                     InitializeSavedColumnWidths();
-                    
+
                     // Select first row if available
                     if (ultraGrid1.Rows.Count > 0)
                     {
@@ -735,10 +731,10 @@ namespace PosBranch_Win.DialogBox
                         ultraGrid1.Selected.Rows.Clear();
                         ultraGrid1.Selected.Rows.Add(ultraGrid1.Rows[0]);
                     }
-                    
+
                     // Update record count label
                     UpdateRecordCountLabel();
-                    
+
                     // Update status
                     UpdateStatus($"Loaded {fullDataTable?.Rows.Count ?? 0} documents");
                 }
@@ -750,7 +746,7 @@ namespace PosBranch_Win.DialogBox
                         label1.Text = "No records found";
                     }
                 }
-                
+
                 // Set search textbox placeholder with improved handling
                 if (textBoxsearch != null)
                 {
@@ -761,7 +757,7 @@ namespace PosBranch_Win.DialogBox
                     textBoxsearch.TextChanged += TextBoxsearch_TextChanged;
                     textBoxsearch.KeyDown += TextBoxsearch_KeyDown;
                 }
-                
+
                 // Ensure focus is on the search textbox for better UX
                 this.BeginInvoke(new Action(() =>
                 {
@@ -778,21 +774,21 @@ namespace PosBranch_Win.DialogBox
                 MessageBox.Show($"Error loading document data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        
+
         // Helper method to convert list to DataTable for filtering
         private DataTable ToDataTable<T>(IEnumerable<T> items)
         {
             if (items == null) return new DataTable();
-            
+
             var table = new DataTable();
             var props = typeof(T).GetProperties();
-            
+
             // Create columns
             foreach (var prop in props)
             {
                 table.Columns.Add(prop.Name, SystemNullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType);
             }
-            
+
             // Add rows
             foreach (var item in items)
             {
@@ -803,10 +799,10 @@ namespace PosBranch_Win.DialogBox
                 }
                 table.Rows.Add(row);
             }
-            
+
             return table;
         }
-        
+
         private void TextBoxsearch_TextChanged(object sender, EventArgs e)
         {
             // Apply filter when search text changes
@@ -952,10 +948,10 @@ namespace PosBranch_Win.DialogBox
 
             // Define the columns to show in the specified order
             List<string> columnsToShow = new List<string>();
-            
+
             // Map display names to column keys
             string columnKey = GetColumnKeyFromDisplayName(selectedColumn);
-            
+
             // Add visible columns to the list
             foreach (Infragistics.Win.UltraWinGrid.UltraGridColumn col in ultraGrid1.DisplayLayout.Bands[0].Columns)
             {
@@ -979,7 +975,7 @@ namespace PosBranch_Win.DialogBox
                 if (ultraGrid1.DisplayLayout.Bands[0].Columns.Exists(colKey))
                 {
                     ultraGrid1.DisplayLayout.Bands[0].Columns[colKey].Header.VisiblePosition = i;
-                    
+
                     // Preserve width if we have it stored
                     if (columnWidths.ContainsKey(colKey))
                     {
@@ -1077,13 +1073,13 @@ namespace PosBranch_Win.DialogBox
                 savedColumnWidths[column.Key] = column.Width;
                 ultraGrid1.SuspendLayout();
                 column.Hidden = true;
-                
+
                 // FIXED: Add to persistent hidden columns list
                 if (!persistentHiddenColumns.Contains(column.Key))
                 {
                     persistentHiddenColumns.Add(column.Key);
                 }
-                
+
                 foreach (Infragistics.Win.UltraWinGrid.UltraGridColumn col in ultraGrid1.DisplayLayout.Bands[0].Columns)
                 {
                     if (!col.Hidden && savedColumnWidths.ContainsKey(col.Key))
@@ -1266,7 +1262,7 @@ namespace PosBranch_Win.DialogBox
         {
             if (columnChooserListBox == null) return;
             columnChooserListBox.Items.Clear();
-            
+
             // Define display names for MASTER columns only
             Dictionary<string, string> displayNames = new Dictionary<string, string>()
             {
@@ -1279,10 +1275,10 @@ namespace PosBranch_Win.DialogBox
                 { "VoucherId", "Voucher ID" },
                 { "Status", "Status" }
             };
-            
+
             // Track columns we've already added to prevent duplicates
             HashSet<string> addedColumns = new HashSet<string>();
-            
+
             if (ultraGrid1.DisplayLayout.Bands.Count > 0)
             {
                 // Add ALL hidden columns to the chooser
@@ -1304,13 +1300,13 @@ namespace PosBranch_Win.DialogBox
                         {
                             displayText = col.Key;
                         }
-                        
+
                         columnChooserListBox.Items.Add(new ColumnItem(col.Key, displayText));
                         addedColumns.Add(col.Key);
                     }
                 }
             }
-            
+
             // Log the number of items for debugging
             UpdateStatus($"Column chooser populated with {columnChooserListBox.Items.Count} hidden columns");
         }
@@ -1364,32 +1360,32 @@ namespace PosBranch_Win.DialogBox
                         ultraGrid1.DisplayLayout.Bands[0].Columns.Exists(item.ColumnKey))
                     {
                         // Get the column and unhide it
-                        Infragistics.Win.UltraWinGrid.UltraGridColumn col = 
+                        Infragistics.Win.UltraWinGrid.UltraGridColumn col =
                             ultraGrid1.DisplayLayout.Bands[0].Columns[item.ColumnKey];
                         col.Hidden = false;
-                        
+
                         // FIXED: Remove from persistent hidden columns list
                         persistentHiddenColumns.Remove(item.ColumnKey);
-                        
+
                         // Remove from the column chooser
                         for (int i = 0; i < columnChooserListBox.Items.Count; i++)
                         {
-                            if (columnChooserListBox.Items[i] is ColumnItem listItem && 
+                            if (columnChooserListBox.Items[i] is ColumnItem listItem &&
                                 listItem.ColumnKey == item.ColumnKey)
                             {
                                 columnChooserListBox.Items.RemoveAt(i);
                                 break;
                             }
                         }
-                        
+
                         // Restore the saved width if available
                         if (savedColumnWidths.ContainsKey(item.ColumnKey))
                         {
                             col.Width = savedColumnWidths[item.ColumnKey];
                         }
-                        
+
                         // Show feedback
-                        this.toolTip.Show($"Column '{item.DisplayText}' restored", 
+                        this.toolTip.Show($"Column '{item.DisplayText}' restored",
                             ultraGrid1, ultraGrid1.PointToClient(Control.MousePosition), 2000);
                     }
                 }
@@ -1426,7 +1422,7 @@ namespace PosBranch_Win.DialogBox
                 UpdateStatus($"Error preserving column widths: {ex.Message}");
             }
         }
-        
+
         private void InitializeSavedColumnWidths()
         {
             try
@@ -1523,7 +1519,7 @@ namespace PosBranch_Win.DialogBox
 
                 // Resume layout
                 ultraGrid1.ResumeLayout();
-                
+
                 // Update status
                 UpdateStatus($"Sort order changed: {(isOriginalOrder ? "Original" : "Reverse")}");
             }
@@ -1613,9 +1609,9 @@ namespace PosBranch_Win.DialogBox
             try
             {
                 if (ultraGrid1.DisplayLayout.Bands.Count == 0) return;
-                
+
                 ultraGrid1.SuspendLayout();
-                
+
                 // Define column widths for MASTER columns only
                 Dictionary<string, int> columnWidths = new Dictionary<string, int>()
                 {
@@ -1628,27 +1624,27 @@ namespace PosBranch_Win.DialogBox
                     { "VoucherId", 80 },               // Voucher ID column
                     { "Status", 100 }                  // Status column
                 };
-                
+
                 // Apply widths to columns
                 foreach (var columnWidth in columnWidths)
                 {
                     if (ultraGrid1.DisplayLayout.Bands[0].Columns.Exists(columnWidth.Key))
                     {
                         ultraGrid1.DisplayLayout.Bands[0].Columns[columnWidth.Key].Width = columnWidth.Value;
-                        
+
                         // Store in saved widths dictionary for persistence
                         savedColumnWidths[columnWidth.Key] = columnWidth.Value;
                     }
                 }
-                
+
                 // FIXED: Adjust header captions to match the image and be shorter where needed
                 SetHeaderCaptions();
-                
+
                 // Ensure text alignment is appropriate for each column type
                 foreach (Infragistics.Win.UltraWinGrid.UltraGridColumn col in ultraGrid1.DisplayLayout.Bands[0].Columns)
                 {
                     // Center numeric columns
-                    if (col.DataType == typeof(int) || col.DataType == typeof(decimal) || 
+                    if (col.DataType == typeof(int) || col.DataType == typeof(decimal) ||
                         col.DataType == typeof(double) || col.DataType == typeof(float))
                     {
                         col.CellAppearance.TextHAlign = Infragistics.Win.HAlign.Right;
@@ -1664,10 +1660,10 @@ namespace PosBranch_Win.DialogBox
                         col.CellAppearance.TextHAlign = Infragistics.Win.HAlign.Left;
                     }
                 }
-                
+
                 // FIXED: Set horizontal scrolling options to ensure proper scrolling
                 ultraGrid1.DisplayLayout.AutoFitStyle = Infragistics.Win.UltraWinGrid.AutoFitStyle.None;
-                
+
                 ultraGrid1.ResumeLayout();
             }
             catch (Exception ex)
@@ -1675,12 +1671,12 @@ namespace PosBranch_Win.DialogBox
                 UpdateStatus($"Error setting column widths: {ex.Message}");
             }
         }
-        
+
         // FIXED: New method to set proper header captions
         private void SetHeaderCaptions()
         {
             if (ultraGrid1.DisplayLayout.Bands.Count == 0) return;
-            
+
             // Map of column keys to display captions for MASTER columns only
             Dictionary<string, string> headerCaptions = new Dictionary<string, string>()
             {
@@ -1693,7 +1689,7 @@ namespace PosBranch_Win.DialogBox
                 { "VoucherId", "Voucher ID" },
                 { "Status", "Status" }
             };
-            
+
             // Apply the captions
             foreach (var caption in headerCaptions)
             {
@@ -1710,7 +1706,7 @@ namespace PosBranch_Win.DialogBox
             try
             {
                 if (ultraGrid1.DisplayLayout.Bands.Count == 0) return;
-                
+
                 // Calculate total width of all columns
                 int totalWidth = 0;
                 foreach (Infragistics.Win.UltraWinGrid.UltraGridColumn col in ultraGrid1.DisplayLayout.Bands[0].Columns)
@@ -1720,14 +1716,14 @@ namespace PosBranch_Win.DialogBox
                         totalWidth += col.Width;
                     }
                 }
-                
+
                 // If total width is less than grid width, adjust the last column
                 if (totalWidth < ultraGrid1.Width)
                 {
                     // Find the last visible column
                     Infragistics.Win.UltraWinGrid.UltraGridColumn lastCol = null;
                     int lastVisiblePosition = -1;
-                    
+
                     foreach (Infragistics.Win.UltraWinGrid.UltraGridColumn col in ultraGrid1.DisplayLayout.Bands[0].Columns)
                     {
                         if (!col.Hidden && col.Header.VisiblePosition > lastVisiblePosition)
@@ -1736,7 +1732,7 @@ namespace PosBranch_Win.DialogBox
                             lastCol = col;
                         }
                     }
-                    
+
                     // Adjust the last column width if needed
                     if (lastCol != null)
                     {
@@ -1747,7 +1743,7 @@ namespace PosBranch_Win.DialogBox
                         }
                     }
                 }
-                
+
                 // Set scroll properties
                 // Ensure horizontal scrolling is enabled by setting scroll style
                 ultraGrid1.DisplayLayout.ScrollStyle = Infragistics.Win.UltraWinGrid.ScrollStyle.Immediate;
@@ -1764,7 +1760,7 @@ namespace PosBranch_Win.DialogBox
             // Save column widths for next time
             SaveColumnState();
         }
-        
+
         // FIXED: Add method to save column state
         private void SaveColumnState()
         {
@@ -1782,7 +1778,7 @@ namespace PosBranch_Win.DialogBox
                         }
                     }
                 }
-                
+
                 // Note: persistentHiddenColumns is already updated when columns are hidden/shown
                 UpdateStatus($"Saved column state: {persistentHiddenColumns.Count} hidden columns");
             }
@@ -1791,7 +1787,7 @@ namespace PosBranch_Win.DialogBox
                 UpdateStatus($"Error saving column state: {ex.Message}");
             }
         }
-        
+
         // FIXED: Add method to restore hidden columns
         private void RestoreHiddenColumns()
         {
@@ -1803,36 +1799,36 @@ namespace PosBranch_Win.DialogBox
                     persistentHiddenColumns = new List<string>();
                     return;
                 }
-                
+
                 // Check if there are any hidden columns to restore
                 if (persistentHiddenColumns.Count == 0)
                 {
                     UpdateStatus("No hidden columns to restore");
                     return;
                 }
-                
-                if (ultraGrid1 == null || ultraGrid1.DisplayLayout == null || 
+
+                if (ultraGrid1 == null || ultraGrid1.DisplayLayout == null ||
                     ultraGrid1.DisplayLayout.Bands == null || ultraGrid1.DisplayLayout.Bands.Count == 0)
                 {
                     UpdateStatus("Grid not fully initialized, cannot restore column state");
                     return;
                 }
-                
+
                 ultraGrid1.SuspendLayout();
-                
+
                 // Hide columns that were previously hidden
                 foreach (string columnKey in persistentHiddenColumns.ToList()) // Use ToList() to avoid collection modification issues
                 {
-                    if (!string.IsNullOrEmpty(columnKey) && 
-                        ultraGrid1.DisplayLayout.Bands[0].Columns != null && 
+                    if (!string.IsNullOrEmpty(columnKey) &&
+                        ultraGrid1.DisplayLayout.Bands[0].Columns != null &&
                         ultraGrid1.DisplayLayout.Bands[0].Columns.Exists(columnKey))
                     {
                         ultraGrid1.DisplayLayout.Bands[0].Columns[columnKey].Hidden = true;
                     }
                 }
-                
+
                 ultraGrid1.ResumeLayout();
-                
+
                 UpdateStatus($"Restored {persistentHiddenColumns.Count} hidden columns");
             }
             catch (Exception ex)
@@ -1844,7 +1840,7 @@ namespace PosBranch_Win.DialogBox
         }
 
         // --- MISSING FEATURES from frmCustomerDialog ---
-        
+
         // Panel Hover Effects for better UX
         private void SetupPanelHoverEffects()
         {
@@ -1868,37 +1864,37 @@ namespace PosBranch_Win.DialogBox
             Infragistics.Win.UltraWinEditors.UltraPictureBox pictureBox)
         {
             if (panel == null) return;
-            
+
             Color originalBackColor = panel.Appearance.BackColor;
             Color originalBackColor2 = panel.Appearance.BackColor2;
             Color hoverBackColor = BrightenColor(originalBackColor, 30);
             Color hoverBackColor2 = BrightenColor(originalBackColor2, 30);
-            
+
             Action applyHoverEffect = () =>
             {
                 panel.Appearance.BackColor = hoverBackColor;
                 panel.Appearance.BackColor2 = hoverBackColor2;
                 panel.ClientArea.Cursor = Cursors.Hand;
             };
-            
+
             Action removeHoverEffect = () =>
             {
                 panel.Appearance.BackColor = originalBackColor;
                 panel.Appearance.BackColor2 = originalBackColor2;
                 panel.ClientArea.Cursor = Cursors.Default;
             };
-            
+
             panel.MouseEnter += (s, e) => { applyHoverEffect(); };
             panel.MouseLeave += (s, e) => { removeHoverEffect(); };
             panel.ClientArea.MouseEnter += (s, e) => { applyHoverEffect(); };
             panel.ClientArea.MouseLeave += (s, e) => { removeHoverEffect(); };
-            
+
             if (pictureBox != null)
             {
                 pictureBox.MouseEnter += (s, e) => { applyHoverEffect(); pictureBox.Cursor = Cursors.Hand; };
                 pictureBox.MouseLeave += (s, e) => { if (!IsMouseOverControl(panel)) removeHoverEffect(); };
             }
-            
+
             if (label != null)
             {
                 label.MouseEnter += (s, e) => { applyHoverEffect(); label.Cursor = Cursors.Hand; };
@@ -1928,7 +1924,7 @@ namespace PosBranch_Win.DialogBox
             try
             {
                 if (table == null) return;
-                
+
                 if (!table.Columns.Contains("OriginalRowOrder"))
                 {
                     DataColumn orderColumn = new DataColumn("OriginalRowOrder", typeof(int));
@@ -1953,7 +1949,7 @@ namespace PosBranch_Win.DialogBox
             {
                 int currentDisplayCount = ultraGrid1.Rows?.Count ?? 0;
                 int totalCount = fullDataTable?.Rows.Count ?? 0;
-                
+
                 if (label1 != null)
                 {
                     label1.Text = $"Showing {currentDisplayCount} of {totalCount} records";
@@ -1961,12 +1957,12 @@ namespace PosBranch_Win.DialogBox
                     label1.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Regular);
                     label1.ForeColor = Color.FromArgb(0, 70, 170);
                 }
-                
+
                 if (textBox3 != null)
                 {
                     textBox3.Text = currentDisplayCount.ToString();
                 }
-                
+
                 UpdateStatus($"Showing {currentDisplayCount} of {totalCount} records");
             }
             catch (Exception ex)
