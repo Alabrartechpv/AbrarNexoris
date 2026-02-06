@@ -223,7 +223,6 @@
             Infragistics.Win.Appearance appearance52 = new Infragistics.Win.Appearance();
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool107 = new Infragistics.Win.UltraWinToolbars.ButtonTool("POSSettings");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool109 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Roles");
-            Infragistics.Win.Appearance appearance53 = new Infragistics.Win.Appearance();
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
@@ -706,8 +705,6 @@
             buttonTool105.SharedPropsInternal.AppearancesLarge.Appearance = appearance52;
             buttonTool105.SharedPropsInternal.Caption = "StockReport";
             buttonTool107.SharedPropsInternal.Caption = "Sale Settings";
-        
-            buttonTool109.SharedPropsInternal.AppearancesLarge.Appearance = appearance53;
             buttonTool109.SharedPropsInternal.Caption = "Roles";
             this.ultraToolbarsManager1.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonTool11,
