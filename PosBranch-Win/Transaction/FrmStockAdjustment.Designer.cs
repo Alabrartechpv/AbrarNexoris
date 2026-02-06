@@ -278,7 +278,7 @@ namespace PosBranch_Win.Transaction
             this.btnSave.BorderStyle = Infragistics.Win.UIElementBorderStyle.Rounded1Etched;
             this.btnSave.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnSave.Image = ((object)(resources.GetObject("btnSave.Image")));
-            this.btnSave.Location = new System.Drawing.Point(14, 55);
+            this.btnSave.Location = new System.Drawing.Point(13, 55);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(53, 56);
             this.btnSave.TabIndex = 36;
