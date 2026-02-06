@@ -80,6 +80,7 @@ namespace Repository
                 disposed = true;
             }
         }
+         
 
         ~BaseRepostitory()
         {
