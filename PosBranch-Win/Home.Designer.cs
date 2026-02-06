@@ -706,7 +706,7 @@
             buttonTool105.SharedPropsInternal.AppearancesLarge.Appearance = appearance52;
             buttonTool105.SharedPropsInternal.Caption = "StockReport";
             buttonTool107.SharedPropsInternal.Caption = "Sale Settings";
-            appearance53.Image = global::PosBranch_Win.Properties.Resources.uerroles;
+            appearance53.Image = global::PosBranch_Win.Properties.Resources.icons8_roles_96;
             buttonTool109.SharedPropsInternal.AppearancesLarge.Appearance = appearance53;
             buttonTool109.SharedPropsInternal.Caption = "Roles";
             this.ultraToolbarsManager1.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
@@ -778,9 +778,9 @@
             this._Home_Toolbars_Dock_Area_Right.DockedPosition = Infragistics.Win.UltraWinToolbars.DockedPosition.Right;
             this._Home_Toolbars_Dock_Area_Right.ForeColor = System.Drawing.SystemColors.ControlText;
             this._Home_Toolbars_Dock_Area_Right.InitialResizeAreaExtent = 8;
-            this._Home_Toolbars_Dock_Area_Right.Location = new System.Drawing.Point(1356, 162);
+            this._Home_Toolbars_Dock_Area_Right.Location = new System.Drawing.Point(1356, 189);
             this._Home_Toolbars_Dock_Area_Right.Name = "_Home_Toolbars_Dock_Area_Right";
-            this._Home_Toolbars_Dock_Area_Right.Size = new System.Drawing.Size(8, 375);
+            this._Home_Toolbars_Dock_Area_Right.Size = new System.Drawing.Size(8, 348);
             this._Home_Toolbars_Dock_Area_Right.ToolbarsManager = this.ultraToolbarsManager1;
             // 
             // _Home_Toolbars_Dock_Area_Left
@@ -790,9 +790,9 @@
             this._Home_Toolbars_Dock_Area_Left.DockedPosition = Infragistics.Win.UltraWinToolbars.DockedPosition.Left;
             this._Home_Toolbars_Dock_Area_Left.ForeColor = System.Drawing.SystemColors.ControlText;
             this._Home_Toolbars_Dock_Area_Left.InitialResizeAreaExtent = 8;
-            this._Home_Toolbars_Dock_Area_Left.Location = new System.Drawing.Point(0, 162);
+            this._Home_Toolbars_Dock_Area_Left.Location = new System.Drawing.Point(0, 189);
             this._Home_Toolbars_Dock_Area_Left.Name = "_Home_Toolbars_Dock_Area_Left";
-            this._Home_Toolbars_Dock_Area_Left.Size = new System.Drawing.Size(8, 375);
+            this._Home_Toolbars_Dock_Area_Left.Size = new System.Drawing.Size(8, 348);
             this._Home_Toolbars_Dock_Area_Left.ToolbarsManager = this.ultraToolbarsManager1;
             // 
             // _Home_Toolbars_Dock_Area_Bottom
@@ -814,7 +814,7 @@
             this._Home_Toolbars_Dock_Area_Top.ForeColor = System.Drawing.SystemColors.ControlText;
             this._Home_Toolbars_Dock_Area_Top.Location = new System.Drawing.Point(0, 0);
             this._Home_Toolbars_Dock_Area_Top.Name = "_Home_Toolbars_Dock_Area_Top";
-            this._Home_Toolbars_Dock_Area_Top.Size = new System.Drawing.Size(1364, 162);
+            this._Home_Toolbars_Dock_Area_Top.Size = new System.Drawing.Size(1364, 189);
             this._Home_Toolbars_Dock_Area_Top.ToolbarsManager = this.ultraToolbarsManager1;
             // 
             // tabControlMain
@@ -826,7 +826,7 @@
             this.tabControlMain.Location = new System.Drawing.Point(0, 0);
             this.tabControlMain.Name = "tabControlMain";
             this.tabControlMain.SharedControlsPage = this.ultraTabSharedControlsPage1;
-            this.tabControlMain.Size = new System.Drawing.Size(1348, 375);
+            this.tabControlMain.Size = new System.Drawing.Size(1348, 348);
             this.tabControlMain.TabIndex = 10;
             this.tabControlMain.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             // 
@@ -836,33 +836,33 @@
             this.closeTabToolStripMenuItem,
             this.closeAllTabsToolStripMenuItem});
             this.tabContextMenuStrip.Name = "tabContextMenuStrip";
-            this.tabContextMenuStrip.Size = new System.Drawing.Size(147, 48);
+            this.tabContextMenuStrip.Size = new System.Drawing.Size(148, 48);
             // 
             // closeTabToolStripMenuItem
             // 
             this.closeTabToolStripMenuItem.Name = "closeTabToolStripMenuItem";
-            this.closeTabToolStripMenuItem.Size = new System.Drawing.Size(146, 22);
+            this.closeTabToolStripMenuItem.Size = new System.Drawing.Size(147, 22);
             this.closeTabToolStripMenuItem.Text = "Close Tab";
             // 
             // closeAllTabsToolStripMenuItem
             // 
             this.closeAllTabsToolStripMenuItem.Name = "closeAllTabsToolStripMenuItem";
-            this.closeAllTabsToolStripMenuItem.Size = new System.Drawing.Size(146, 22);
+            this.closeAllTabsToolStripMenuItem.Size = new System.Drawing.Size(147, 22);
             this.closeAllTabsToolStripMenuItem.Text = "Close All Tabs";
             // 
             // ultraTabSharedControlsPage1
             // 
             this.ultraTabSharedControlsPage1.Location = new System.Drawing.Point(2, 21);
             this.ultraTabSharedControlsPage1.Name = "ultraTabSharedControlsPage1";
-            this.ultraTabSharedControlsPage1.Size = new System.Drawing.Size(1344, 352);
+            this.ultraTabSharedControlsPage1.Size = new System.Drawing.Size(1344, 325);
             // 
             // panelMain
             // 
             this.panelMain.Controls.Add(this.tabControlMain);
             this.panelMain.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelMain.Location = new System.Drawing.Point(8, 162);
+            this.panelMain.Location = new System.Drawing.Point(8, 189);
             this.panelMain.Name = "panelMain";
-            this.panelMain.Size = new System.Drawing.Size(1348, 375);
+            this.panelMain.Size = new System.Drawing.Size(1348, 348);
             this.panelMain.TabIndex = 12;
             // 
             // Home
