@@ -706,7 +706,7 @@
             buttonTool105.SharedPropsInternal.AppearancesLarge.Appearance = appearance52;
             buttonTool105.SharedPropsInternal.Caption = "StockReport";
             buttonTool107.SharedPropsInternal.Caption = "Sale Settings";
-        
+            appearance53.Image = global::PosBranch_Win.Properties.Resources.uerroles;
             buttonTool109.SharedPropsInternal.AppearancesLarge.Appearance = appearance53;
             buttonTool109.SharedPropsInternal.Caption = "Roles";
             this.ultraToolbarsManager1.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
@@ -836,18 +836,18 @@
             this.closeTabToolStripMenuItem,
             this.closeAllTabsToolStripMenuItem});
             this.tabContextMenuStrip.Name = "tabContextMenuStrip";
-            this.tabContextMenuStrip.Size = new System.Drawing.Size(148, 48);
+            this.tabContextMenuStrip.Size = new System.Drawing.Size(147, 48);
             // 
             // closeTabToolStripMenuItem
             // 
             this.closeTabToolStripMenuItem.Name = "closeTabToolStripMenuItem";
-            this.closeTabToolStripMenuItem.Size = new System.Drawing.Size(147, 22);
+            this.closeTabToolStripMenuItem.Size = new System.Drawing.Size(146, 22);
             this.closeTabToolStripMenuItem.Text = "Close Tab";
             // 
             // closeAllTabsToolStripMenuItem
             // 
             this.closeAllTabsToolStripMenuItem.Name = "closeAllTabsToolStripMenuItem";
-            this.closeAllTabsToolStripMenuItem.Size = new System.Drawing.Size(147, 22);
+            this.closeAllTabsToolStripMenuItem.Size = new System.Drawing.Size(146, 22);
             this.closeAllTabsToolStripMenuItem.Text = "Close All Tabs";
             // 
             // ultraTabSharedControlsPage1

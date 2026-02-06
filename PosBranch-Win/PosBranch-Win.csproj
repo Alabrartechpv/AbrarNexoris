@@ -1417,5 +1417,8 @@
   <ItemGroup>
     <None Include="Resources\printer_425983.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\uerroles.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
