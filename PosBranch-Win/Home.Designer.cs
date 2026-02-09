@@ -61,7 +61,6 @@
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool80 = new Infragistics.Win.UltraWinToolbars.ButtonTool("UnitMaster");
             Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup3 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("ribbonGroup2");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool45 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Users");
-            Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool84 = new Infragistics.Win.UltraWinToolbars.ButtonTool("TaxManagement");
             Infragistics.Win.UltraWinToolbars.RibbonTab ribbonTab2 = new Infragistics.Win.UltraWinToolbars.RibbonTab("ribbon2");
             Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup4 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("Sales");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool3 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Pos");
@@ -116,6 +115,8 @@
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool106 = new Infragistics.Win.UltraWinToolbars.ButtonTool("POSSettings");
             Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup17 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("Roles");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool108 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Roles");
+            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup18 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("TaxManagement");
+            Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool110 = new Infragistics.Win.UltraWinToolbars.ButtonTool("TaxManagement");
             Infragistics.Win.UltraWinToolbars.UltraToolbar ultraToolbar1 = new Infragistics.Win.UltraWinToolbars.UltraToolbar("UltraToolbar1");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool11 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Master");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool12 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Transaction");
@@ -405,10 +406,8 @@
             buttonTool80});
             ribbonGroup3.Caption = "Utilities";
             buttonTool45.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
-            buttonTool84.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             ribbonGroup3.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
-            buttonTool45,
-            buttonTool84});
+            buttonTool45});
             ribbonTab1.Groups.AddRange(new Infragistics.Win.UltraWinToolbars.RibbonGroup[] {
             ribbonGroup1,
             ribbonGroup2,
@@ -535,9 +534,14 @@
             buttonTool108.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             ribbonGroup17.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonTool108});
+            ribbonGroup18.Caption = "TaxManagement";
+            buttonTool110.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
+            ribbonGroup18.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
+            buttonTool110});
             ribbonTab7.Groups.AddRange(new Infragistics.Win.UltraWinToolbars.RibbonGroup[] {
             ribbonGroup16,
-            ribbonGroup17});
+            ribbonGroup17,
+            ribbonGroup18});
             this.ultraToolbarsManager1.Ribbon.NonInheritedRibbonTabs.AddRange(new Infragistics.Win.UltraWinToolbars.RibbonTab[] {
             ribbonTab1,
             ribbonTab2,
@@ -881,7 +885,7 @@
             this.KeyPreview = true;
             this.Name = "Home";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Home";
+            this.Text = "             ";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Load += new System.EventHandler(this.Home_Load);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Home_KeyDown);
