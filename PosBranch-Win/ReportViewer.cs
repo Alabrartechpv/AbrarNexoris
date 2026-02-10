@@ -38,12 +38,16 @@ namespace PosBranch_Win
 
         public void setReportConnection(ReportDocument reportDoc)
         {
+            // Use SqlConnectionStringBuilder to parse the current database connection string
+            // This ensures dynamic configuration for both Local and Online modes
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(cn.DataConnection.ConnectionString);
+
             ConnectionInfo connectionInfo = new ConnectionInfo
             {
-                ServerName = "192.168.1.232\\SQLEXPRESS",
-                DatabaseName = "RambaiTest",
-                UserID = "sa",
-                Password = "Abrar@123"
+                ServerName = builder.DataSource,
+                DatabaseName = builder.InitialCatalog,
+                UserID = builder.UserID,
+                Password = builder.Password
             };
 
             foreach (Table tbl in reportDoc.Database.Tables)
