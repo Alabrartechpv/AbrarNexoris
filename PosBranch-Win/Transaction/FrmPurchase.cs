@@ -7371,8 +7371,10 @@ namespace PosBranch_Win.Transaction
                                                 }
 
                                                 // Update tax-related fields from item data
+                                                // Only update TaxPer and TaxType here; TaxAmt will be
+                                                // recalculated below by RecalculateBaseCostAndTaxFromCost
+                                                // based on the purchase row's own Cost and Qty.
                                                 row["TaxPer"] = (float)itm.TaxPer;
-                                                row["TaxAmt"] = (float)itm.TaxAmt;
                                                 if (!string.IsNullOrEmpty(itm.TaxType))
                                                 {
                                                     row["TaxType"] = NormalizeTaxType(itm.TaxType);
@@ -7398,7 +7400,10 @@ namespace PosBranch_Win.Transaction
 
                                                     if (qty > 0 && cost > 0)
                                                     {
-                                                        RecalculateTaxForRow(gridRow, cost, qty);
+                                                        // Use RecalculateBaseCostAndTaxFromCost (not RecalculateTaxForRow)
+                                                        // because when TaxPer changes, BaseCost itself needs
+                                                        // recalculation (especially for "incl" tax type).
+                                                        RecalculateBaseCostAndTaxFromCost(gridRow, cost, qty);
                                                     }
                                                 }
 
@@ -7444,3 +7449,4 @@ namespace PosBranch_Win.Transaction
 
     };
 }
+ 
