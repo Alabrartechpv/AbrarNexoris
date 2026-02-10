@@ -67,7 +67,7 @@ namespace Repository
         public static string _CreditNoteDetails = "_CreditNoteDetails";
         public static string _DebitNoteMaster = "_DebitNoteMaster";
         public static string _DebitNoteDetails = "_DebitNoteDetails";
-        public static string POS_Setting = "POS_Setting";
+        public static string  POS_Setting = "POS_Setting";
         public static string _POS_SPaymentDetails = "_POS_SPaymentDetails";
 
 
