@@ -28,7 +28,7 @@ namespace PosBranch_Win.Transaction
 
         private void button1_Click(object sender, EventArgs e)
         {
-            if(textBox1.Text == "" || textBox1.Text == null)
+            if (textBox1.Text == "" || textBox1.Text == null)
             {
                 MessageBox.Show("Please Enter The BillNo");
             }
@@ -37,7 +37,7 @@ namespace PosBranch_Win.Transaction
                 Int64 BillNo = Convert.ToInt64(textBox1.Text);
                 this.PrintBill(BillNo);
             }
-           
+
         }
         public void PrintBill(Int64 BillNo)
         {
@@ -74,12 +74,12 @@ namespace PosBranch_Win.Transaction
                     cmd.Parameters.AddWithValue("@_Operations", "GETBILL");
                     using (SqlDataAdapter adapt = new SqlDataAdapter(cmd))
                     {
-                        DataSet ds = new DataSet();
-                        ds.Tables.Add(dt);
-                        adapt.Fill(ds);
-                        rpt.SetDataSource(ds);
+                        adapt.Fill(dt);
+                        rpt.SetDataSource(dt);
                     }
                 }
+
+                rp.setReportConnection(rpt);
 
                 rpt.SetParameterValue("@BillNo", BillNo);
                 rpt.SetParameterValue("@BranchId", SessionContext.BranchId);
@@ -90,7 +90,8 @@ namespace PosBranch_Win.Transaction
                 // This applies the "Payment Mode Display Fix" to this screen as well.
                 rp.HandleSubreportParameters(rpt, BillNo);
 
-                rp.setReportConnection(rpt);
+                // Avoid prompting for parameters again
+                crystalReportViewer1.ReuseParameterValuesOnRefresh = true;
                 crystalReportViewer1.ReportSource = rpt;
             }
             catch (Exception ex)
@@ -111,7 +112,7 @@ namespace PosBranch_Win.Transaction
 
         private void textBox1_KeyDown(object sender, KeyEventArgs e)
         {
-            if(e.KeyCode == Keys.Enter)
+            if (e.KeyCode == Keys.Enter)
             {
                 button1.Focus();
             }
