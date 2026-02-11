@@ -547,18 +547,19 @@ namespace Repository.TransactionRepository
                 {
                 }
 
-                // Check if we need to preserve the VoucherID (only for hold bill updates that STAY as hold)
-                bool preserveVoucherID = (sales.VoucherID > 0 && sales.Status == "Hold");
+                // Check if we need to preserve the VoucherID
+                // ALWAYS preserve VoucherID if it exists, regardless of status
+                bool preserveVoucherID = (sales.VoucherID > 0);
 
                 if (preserveVoucherID)
                 {
-                    // For hold bills, preserve the existing VoucherID
+                    // Preserve the existing VoucherID
                     int existingVoucherID = (int)sales.VoucherID;
                     voucher.VoucherID = existingVoucherID;
                 }
                 else
                 {
-                    // Generate a fresh VoucherID for update (for completed sales)
+                    // Generate a fresh VoucherID only if we don't have one
                     voucher._Operation = "GENERATENUMBER";
                     voucher.BranchID = SessionContext.BranchId;
                     voucher.CompanyID = SessionContext.CompanyId;
@@ -580,6 +581,8 @@ namespace Repository.TransactionRepository
                         throw new Exception("Failed to generate VoucherID for updating invoice.");
                     }
                 }
+
+
 
                 // Set the operation to UPDATE
                 sales._Operation = "UPDATE";
@@ -978,8 +981,9 @@ namespace Repository.TransactionRepository
                     }
                 }
 
-                //Delete existing voucher entries only if we're not preserving the VoucherID
-                if (!preserveVoucherID)
+                // Delete existing voucher entries to recreate them with updated values
+                // We do this whether we preserved the ID or generated a new one
+                if (sales.VoucherID > 0)
                 {
                     try
                     {
@@ -999,8 +1003,9 @@ namespace Repository.TransactionRepository
                 {
                 }
 
-                // Create new voucher entries only if we're not preserving the VoucherID
-                if (!preserveVoucherID)
+                // Create new voucher entries
+                // We do this whether we preserved the ID or generated a new one
+                if (sales.VoucherID > 0)
                 {
                     voucher._Operation = "CREATE";
 

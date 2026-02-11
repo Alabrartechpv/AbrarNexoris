@@ -717,6 +717,12 @@ namespace PosBranch_Win.Transaction
             }
             if (e.KeyCode == Keys.Space)
             {
+                // Prevent Spacebar shortcut when in update mode
+                if (updtbtn.Visible)
+                {
+                    MessageBox.Show("Please use the Update button to save changes.", "Update Mode", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
                 ShowPaymentPanel();
             }
             else if (e.Control && e.KeyCode == Keys.F10)
@@ -789,6 +795,12 @@ namespace PosBranch_Win.Transaction
             }
             else if (e.KeyCode == Keys.F8)
             {
+                // Prevent F8 shortcut when in update mode
+                if (updtbtn.Visible)
+                {
+                    MessageBox.Show("Please use the Update button to save changes.", "Update Mode", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
                 // Call the same functionality as ultraPictureBox4 (Save button)
                 ShowPaymentPanel();
             }
@@ -1429,6 +1441,12 @@ namespace PosBranch_Win.Transaction
                 // Change quantity only (e.g., *5 = change qty to 5)
                 ChangeQuantity(input);
             }
+            else if (input.StartsWith("..") && input.Length > 2 && ultraGrid1.Rows.Count > 0)
+            {
+                // IRS POS: Override net total directly (e.g., ..20 = set net total to 20)
+                // Grid amounts remain unchanged, discount = gridTotal - overrideValue
+                NetTotalOverride(input);
+            }
             else if (input.StartsWith(".") && input.Length > 1 && ultraGrid1.Rows.Count > 0 && ultraGrid1.ActiveRow != null)
             {
                 // Change selling price directly (e.g., .10 = change price to 10)
@@ -1652,6 +1670,71 @@ namespace PosBranch_Win.Transaction
             else
             {
                 MessageBox.Show("Invalid price format. Please enter a valid number after the dot (e.g., .10)", "Invalid Input", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtBarcode.Clear();
+            }
+        }
+
+        /// <summary>
+        /// IRS POS Net Total Override: Sets the net total directly from barcode input.
+        /// Format: ..{amount} (e.g., ..20 = set net total to 20)
+        /// Discount is calculated as: gridTotal - overrideAmount (can be negative)
+        /// Grid item amounts remain unchanged.
+        /// </summary>
+        private void NetTotalOverride(string input)
+        {
+            try
+            {
+                // Extract the override amount from input (e.g., "..20" -> "20")
+                string amountStr = input.Substring(2);
+                if (float.TryParse(amountStr, out float overrideNetTotal) && overrideNetTotal >= 0)
+                {
+                    // Get the current grid total (sum of all TotalAmount in grid)
+                    double gridTotal = CalculateNetTotalFromGrid();
+
+                    // Calculate discount: gridTotal - overrideNetTotal
+                    // Positive = normal discount, Negative = price increase/surcharge
+                    double discountAmount = gridTotal - overrideNetTotal;
+                    discountAmount = Math.Round(discountAmount, 2);
+
+                    // Set the discount textbox (can be negative for surcharge)
+                    txtDisc.TextChanged -= txtDisc_TextChanged; // Temporarily unhook to avoid re-triggering
+                    txtDisc.Text = discountAmount.ToString("0.00");
+                    txtDisc.TextChanged += txtDisc_TextChanged;
+
+                    // Store discount values in sales object
+                    sales.DiscountAmt = (float)discountAmount;
+                    if (gridTotal > 0)
+                    {
+                        sales.DiscountPer = (float)Math.Round((discountAmount / gridTotal) * 100, 2);
+                    }
+                    else
+                    {
+                        sales.DiscountPer = 0;
+                    }
+
+                    // Set the net total directly (grid amounts remain unchanged)
+                    SetNetTotal(overrideNetTotal);
+
+                    // Apply rounding if enabled
+                    if (ultraCheckEditorApplyRounding.Checked)
+                    {
+                        ApplyRounding();
+                    }
+
+                    txtBarcode.Clear();
+
+                    System.Diagnostics.Debug.WriteLine($"NetTotalOverride: Grid Total={gridTotal}, Override={overrideNetTotal}, Discount={discountAmount}");
+                }
+                else
+                {
+                    MessageBox.Show("Invalid amount. Please enter a valid number after '..' (e.g., ..20)",
+                        "Invalid Input", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtBarcode.Clear();
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error applying net total override: " + ex.Message, "Error");
                 txtBarcode.Clear();
             }
         }
@@ -5142,6 +5225,32 @@ namespace PosBranch_Win.Transaction
                     System.Diagnostics.Debug.WriteLine($"SalesList_OnSalesSelected: Loading {sale.ListSDetails.Count()} bill items");
                     SalesDetails[] details = sale.ListSDetails.ToArray();
                     LoadBillItems(details);
+
+                    // RESTORE DISCOUNT AND NET TOTAL AFTER LOADING ITEMS
+                    // This is critical because LoadBillItems might trigger calculations that reset the totals
+                    // We need to ensure the saved discount (especially override values) are preserved
+
+                    // Restore discount values to sales object
+                    sales.DiscountAmt = sm.DiscountAmt;
+                    sales.DiscountPer = sm.DiscountPer;
+
+                    // Restore discount text (temporarily unhook event to prevent double calculation)
+                    if (sm.DiscountAmt != 0)
+                    {
+                        txtDisc.TextChanged -= txtDisc_TextChanged;
+                        txtDisc.Text = sm.DiscountAmt.ToString("0.00");
+                        txtDisc.TextChanged += txtDisc_TextChanged;
+                    }
+                    else
+                    {
+                        txtDisc.Clear();
+                    }
+
+                    // Force set the Net Total to the saved value
+                    // This ensures that any "Net Total Override" (..300) is preserved
+                    SetNetTotal((float)sm.NetAmount);
+
+                    System.Diagnostics.Debug.WriteLine($"Restored Bill Values: NetTotal={sm.NetAmount}, Discount={sm.DiscountAmt}");
                 }
                 else
                 {
