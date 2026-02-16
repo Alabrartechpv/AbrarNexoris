@@ -704,6 +704,11 @@ namespace PosBranch_Win.Transaction
                 System.Diagnostics.Debug.WriteLine($"Error subscribing to vendor save event: {ex.Message}");
             }
 
+            // Wire up keyboard shortcut buttons (Click events)
+            if (pbxExit != null) pbxExit.Click += (s, args) => this.Close();
+            if (ultraPictureBox1 != null) ultraPictureBox1.Click += (s, args) => this.Clear();
+            if (pbxSave != null) pbxSave.Click += (s, args) => this.SavePurchase();
+            if (ultraPictureBox2 != null) ultraPictureBox2.Click += (s, args) => this.DeletePurchase();
         }
 
         // Method to configure date pickers to match the format in the image
@@ -1007,6 +1012,7 @@ namespace PosBranch_Win.Transaction
                 dt.Columns.Add("TotalAmount", typeof(float));
                 dt.Columns.Add("NetAmt", typeof(float)); // Net Amount = Amount + TaxAmt (for excl tax type)
                 dt.Columns.Add("Gross", typeof(float)); // Gross = Amount - TaxAmt (for incl tax type)
+                dt.Columns.Add("NewBaseCost", typeof(float)); // New BaseCost = average of all rows' Cost values
 
                 // Hidden columns needed for operations but not displayed
                 dt.Columns.Add("ItemId", typeof(int));
@@ -1154,6 +1160,7 @@ namespace PosBranch_Win.Transaction
                     SetupColumn(band.Columns["TotalAmount"], "Total Amount", 120, HAlign.Right, false, true, true);
                     SetupColumn(band.Columns["NetAmt"], "Net Amount", 120, HAlign.Right, false, true, true); // Editable - changed from true to false
                     SetupColumn(band.Columns["Gross"], "Gross", 120, HAlign.Right, false, true, true); // Editable - changed from true to false
+                    SetupColumn(band.Columns["NewBaseCost"], "New BaseCost", 120, HAlign.Right, true, true, true, "N2"); // Read-only, hidden by default, toggled by F5
 
                     // Tax columns - make them visible
                     SetupColumn(band.Columns["TaxPer"], "Tax %", 80, HAlign.Right, false, true, false, "N2");
@@ -1598,6 +1605,7 @@ namespace PosBranch_Win.Transaction
                     newRow["WholeSalePrice"] = (float)unitPrice1;
                     newRow["CreditPrice"] = (float)unitPrice1;
                     newRow["CardPrice"] = (float)unitPrice1;
+                    newRow["NewBaseCost"] = 0f; // Will be recalculated after row is added
 
                     // Add the row to the DataTable
                     dt.Rows.Add(newRow);
@@ -1615,6 +1623,9 @@ namespace PosBranch_Win.Transaction
                         ultraGrid1.Selected.Rows.Clear();
                         ultraGrid1.Selected.Rows.Add(ultraGrid1.ActiveRow);
                     }
+
+                    // Recalculate NewBaseCost (average cost) for all rows
+                    RecalculateNewBaseCostForAllRows();
 
                     // Calculate totals
                     this.CaluateTotals();
@@ -2155,6 +2166,8 @@ namespace PosBranch_Win.Transaction
                             if (e.Cell.Column.Key == "Cost")
                             {
                                 RecalculateBaseCostAndTaxFromCost(e.Cell.Row, costWithTax, qty);
+                                // Recalculate NewBaseCost (average cost) for all rows
+                                RecalculateNewBaseCostForAllRows();
                             }
                             else
                             {
@@ -2361,11 +2374,154 @@ namespace PosBranch_Win.Transaction
                 // Update NetAmt for excl tax type and Gross for incl tax type
                 UpdateNetAmtForRow(row);
                 UpdateGrossForRow(row);
+
+                // Recalculate NewBaseCost (average cost) for all rows
+                RecalculateNewBaseCostForAllRows();
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine("Error recalculating base cost and tax from cost: " + ex.Message);
             }
+        }
+
+        // Helper method to recalculate NewBaseCost (weighted average cost) for all rows
+        // Formula: AvgCost = ((ExistingCost × ExistingStock) + (PurchaseCost × PurchaseQty)) / (ExistingStock + PurchaseQty)
+        // Same formula as PurchaseInvoiceRepository.CalculateAverageCost
+        private void RecalculateNewBaseCostForAllRows()
+        {
+            try
+            {
+                DataTable dt = ultraGrid1.DataSource as DataTable;
+                if (dt == null || dt.Rows.Count == 0)
+                    return;
+
+                foreach (DataRow row in dt.Rows)
+                {
+                    try
+                    {
+                        // Get ItemId and UnitId from the row
+                        int itemId = 0;
+                        int unitId = 0;
+                        float purchaseCost = 0;
+                        float purchaseQty = 0;
+
+                        if (row["ItemId"] == null || row["ItemId"] == DBNull.Value)
+                            continue;
+                        int.TryParse(row["ItemId"].ToString(), out itemId);
+                        if (itemId <= 0)
+                            continue;
+
+                        if (row["UnitId"] != null && row["UnitId"] != DBNull.Value)
+                            int.TryParse(row["UnitId"].ToString(), out unitId);
+                        if (unitId <= 0) unitId = 1;
+
+                        if (row["Cost"] != null && row["Cost"] != DBNull.Value)
+                            float.TryParse(row["Cost"].ToString(), out purchaseCost);
+
+                        if (row["Qty"] != null && row["Qty"] != DBNull.Value)
+                            float.TryParse(row["Qty"].ToString(), out purchaseQty);
+
+                        // Get existing Cost and Stock from PriceSettings for this item/unit
+                        float existingCost = 0;
+                        float existingStock = 0;
+                        GetExistingCostAndStock(itemId, unitId, out existingCost, out existingStock);
+
+                        // Calculate weighted average cost
+                        float avgCost = CalculateWeightedAverageCost(existingCost, existingStock, purchaseCost, purchaseQty);
+
+                        row["NewBaseCost"] = avgCost;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Error calculating NewBaseCost for row: " + ex.Message);
+                    }
+                }
+
+                // Force grid to refresh the NewBaseCost column cells from the underlying DataTable
+                // This ensures the user sees the updated values immediately, without needing to change focus
+                if (ultraGrid1.Rows.Count > 0)
+                {
+                    ultraGrid1.Rows.Refresh(RefreshRow.FireInitializeRow);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error recalculating NewBaseCost for all rows: " + ex.Message);
+            }
+        }
+
+        // Gets existing Cost and Stock from PriceSettings table for a specific ItemId and UnitId
+        private void GetExistingCostAndStock(int itemId, int unitId, out float existingCost, out float existingStock)
+        {
+            existingCost = 0;
+            existingStock = 0;
+
+            try
+            {
+                bool wasOpen = drop.DataConnection.State == System.Data.ConnectionState.Open;
+                if (!wasOpen)
+                    drop.DataConnection.Open();
+
+                try
+                {
+                    string query = @"
+                        SELECT ISNULL(Cost, 0) as Cost, ISNULL(Stock, 0) as Stock 
+                        FROM PriceSettings 
+                        WHERE BranchId = @BranchId 
+                            AND CompanyId = @CompanyId
+                            AND ItemId = @ItemId 
+                            AND UnitId = @UnitId";
+
+                    using (System.Data.SqlClient.SqlCommand cmd = new System.Data.SqlClient.SqlCommand(query, (System.Data.SqlClient.SqlConnection)drop.DataConnection))
+                    {
+                        cmd.Parameters.AddWithValue("@BranchId", Convert.ToInt32(DataBase.BranchId));
+                        cmd.Parameters.AddWithValue("@CompanyId", Convert.ToInt32(DataBase.CompanyId));
+                        cmd.Parameters.AddWithValue("@ItemId", itemId);
+                        cmd.Parameters.AddWithValue("@UnitId", unitId);
+
+                        using (System.Data.SqlClient.SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                existingCost = Convert.ToSingle(reader["Cost"]);
+                                existingStock = Convert.ToSingle(reader["Stock"]);
+                            }
+                        }
+                    }
+                }
+                finally
+                {
+                    if (!wasOpen && drop.DataConnection.State == System.Data.ConnectionState.Open)
+                        drop.DataConnection.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error getting existing cost and stock for ItemId={itemId}, UnitId={unitId}: {ex.Message}");
+            }
+        }
+
+        // Calculates weighted average cost (same formula as PurchaseInvoiceRepository.CalculateAverageCost)
+        // Formula: AvgCost = ((ExistingCost × ExistingStock) + (PurchaseCost × PurchaseQty)) / (ExistingStock + PurchaseQty)
+        private float CalculateWeightedAverageCost(float existingCost, float existingStock, float purchaseCost, float purchaseQty)
+        {
+            // If there's no existing stock, just use the purchase cost
+            if (existingStock <= 0)
+                return purchaseCost;
+
+            // If no new purchase quantity, keep existing cost
+            if (purchaseQty <= 0)
+                return existingCost;
+
+            // Calculate weighted average cost
+            float totalValue = (existingCost * existingStock) + (purchaseCost * purchaseQty);
+            float totalQty = existingStock + purchaseQty;
+
+            // Prevent division by zero
+            if (totalQty <= 0)
+                return purchaseCost;
+
+            return totalValue / totalQty;
         }
 
         // Helper method to recalculate tax for a row
@@ -2434,6 +2590,9 @@ namespace PosBranch_Win.Transaction
                 UpdateNetAmtForRow(row);
                 // Update Gross for incl tax type: Gross = Amount - TaxAmt
                 UpdateGrossForRow(row);
+
+                // Recalculate NewBaseCost (average cost) for all rows
+                RecalculateNewBaseCostForAllRows();
             }
             catch (Exception ex)
             {
@@ -2764,6 +2923,9 @@ namespace PosBranch_Win.Transaction
                         row.Cells["NetAmt"].Value = 0f;
                     if (row.Cells.Exists("Gross"))
                         row.Cells["Gross"].Value = 0f;
+
+                    // Recalculate NewBaseCost (average cost) for all rows
+                    RecalculateNewBaseCostForAllRows();
                 }
                 else
                 {
@@ -2828,6 +2990,9 @@ namespace PosBranch_Win.Transaction
                 // Update Amount and TotalAmount (Qty × Cost)
                 dataRow["Amount"] = costWithTax * qty;
                 dataRow["TotalAmount"] = costWithTax * qty;
+
+                // Recalculate NewBaseCost (average cost) for all rows
+                RecalculateNewBaseCostForAllRows();
             }
             catch (Exception ex)
             {
@@ -2842,9 +3007,11 @@ namespace PosBranch_Win.Transaction
             {
                 // Move to the next cell or row
                 UltraGrid grid = sender as UltraGrid;
+                // ... (rest of Enter logic) ...
                 if (grid != null && grid.ActiveCell != null)
                 {
                     UltraGridCell nextCell = FindNextEditableCell(grid.ActiveRow, grid.ActiveCell);
+                    // ...
                     if (nextCell != null)
                     {
                         grid.ActiveCell = nextCell;
@@ -2862,6 +3029,12 @@ namespace PosBranch_Win.Transaction
                         }
                     }
                 }
+            }
+            else if (e.KeyCode == Keys.Delete)
+            {
+                // Remove selected item when Delete is pressed
+                RemoveSelectedItem();
+                e.Handled = true;
             }
         }
 
@@ -2916,7 +3089,20 @@ namespace PosBranch_Win.Transaction
 
         private void FrmPurchase_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.F7)
+            if (e.KeyCode == Keys.F5)
+            {
+                // Toggle NewBaseCost column visibility
+                if (ultraGrid1.DisplayLayout.Bands.Count > 0)
+                {
+                    var col = ultraGrid1.DisplayLayout.Bands[0].Columns["NewBaseCost"];
+                    if (col != null)
+                    {
+                        col.Hidden = !col.Hidden;
+                    }
+                }
+                e.Handled = true;
+            }
+            else if (e.KeyCode == Keys.F7)
             {
                 ShowItemSelectionDialog();
             }
@@ -2930,7 +3116,7 @@ namespace PosBranch_Win.Transaction
             }
             else if (e.KeyCode == Keys.F1)
             {
-                // Clear the form when F1 is pressed
+                // Clear the form when F1 is pressed (mapped to ultraPictureBox1 action - New)
                 this.Clear();
                 e.Handled = true;
             }
@@ -2954,8 +3140,20 @@ namespace PosBranch_Win.Transaction
             }
             else if (e.KeyCode == Keys.F4)
             {
-                // Remove selected item when F4 is pressed
-                RemoveSelectedItem();
+                // Exit the form (User requested F4 for Exit) - mapped to pbxExit logic
+                this.Close();
+                e.Handled = true;
+            }
+            else if (e.KeyCode == Keys.F8)
+            {
+                // Save the purchase (User requested F8 for Save)
+                this.SavePurchase();
+                e.Handled = true;
+            }
+            else if (e.KeyCode == Keys.F12)
+            {
+                // Delete the purchase (Mapped to ultraPictureBox2 action - F12 label)
+                this.DeletePurchase();
                 e.Handled = true;
             }
             else if (e.KeyCode == Keys.Escape)
@@ -3697,6 +3895,7 @@ namespace PosBranch_Win.Transaction
                     newRow["WholeSalePrice"] = itm.WholeSalePrice;
                     newRow["CreditPrice"] = itm.CreditPrice;
                     newRow["CardPrice"] = itm.CardPrice;
+                    newRow["NewBaseCost"] = 0f; // Will be recalculated after row is added
                 }
 
                 // Add the row to the DataTable
@@ -3710,6 +3909,9 @@ namespace PosBranch_Win.Transaction
                     ultraGrid1.Selected.Rows.Clear();
                     ultraGrid1.Selected.Rows.Add(ultraGrid1.ActiveRow);
                 }
+
+                // Recalculate NewBaseCost (average cost) for all rows
+                RecalculateNewBaseCostForAllRows();
 
                 // Calculate totals
                 this.CaluateTotals();
@@ -4686,9 +4888,18 @@ namespace PosBranch_Win.Transaction
                             float unit1WholeSalePrice = GetWholeSalePriceFromPriceSettings(pd.ItemID, 1);
                             newRow["UnitSP"] = unit1WholeSalePrice > 0 ? unit1WholeSalePrice : (float)wholesalePrice;
 
+                            // Load NewBaseCost from PriceSettings directly - shows current Txt_UnitCost
+                            float currentMstCost = 0;
+                            float currentMstStock = 0;
+                            GetExistingCostAndStock(pd.ItemID, pd.UnitId, out currentMstCost, out currentMstStock);
+                            newRow["NewBaseCost"] = currentMstCost;
+
                             // Add the row to the datatable
                             dt.Rows.Add(newRow);
                         }
+
+                        // RecalculateNewBaseCostForAllRows() removed to prevent double-counting of loaded items
+                        // Saved items should just show current Master Cost (Txt_UnitCost) as loaded above
 
                         // Calculate totals and update displays
                         CaluateTotals();
@@ -7449,4 +7660,3 @@ namespace PosBranch_Win.Transaction
 
     };
 }
- 
