@@ -6478,12 +6478,18 @@ namespace PosBranch_Win.Transaction
                 float cost = ParseFloat(ultraGrid1.ActiveRow.Cells["Cost"].Value, 0);
                 string itemName = ultraGrid1.ActiveRow.Cells["ItemName"].Value?.ToString() ?? "Unknown Item";
                 float unitPrice = ParseFloat(ultraGrid1.ActiveRow.Cells["UnitPrice"].Value, 0);
-                float margin = unitPrice > 0 ? ((unitPrice - cost) / unitPrice) * 100 : 0;
+                float qty = ParseFloat(ultraGrid1.ActiveRow.Cells["Qty"].Value, 0);
+                float marginAmt = (unitPrice - cost) * qty;
+
+                // Get current stock quantity from database
+                int itemId = ParseInt(ultraGrid1.ActiveRow.Cells["ItemId"].Value, 0);
+                float stock = itemId > 0 ? GetItemStockQuantity(itemId) : 0;
 
                 string costInfo = $"Item: {itemName}\n" +
                                 $"Cost: {cost:C2}\n" +
                                 $"Unit Price: {unitPrice:C2}\n" +
-                                $"Margin: {margin:F1}%";
+                                $"Margin Amt: {marginAmt:C2}\n" +
+                                $"Stock: {stock:F2}";
 
                 // Show tooltip at the active row position
                 costToolTip.Show(costInfo, ultraGrid1, new Point(10, 10), 5000);
