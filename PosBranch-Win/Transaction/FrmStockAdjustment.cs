@@ -1311,6 +1311,83 @@ namespace PosBranch_Win.Transaction
                     btn_update_Click(this, EventArgs.Empty);
                     return true;
                 }
+
+                // Handle Up/Down arrow keys to navigate grid even when focus is on barcode textbox
+                if (keyData == Keys.Up || keyData == Keys.Down)
+                {
+                    // Only handle if we have rows in the grid
+                    if (ultraGrid1.Rows.Count > 0)
+                    {
+                        // If no active row, select the first row
+                        if (ultraGrid1.ActiveRow == null)
+                        {
+                            ultraGrid1.ActiveRow = ultraGrid1.Rows[0];
+                            if (ultraGrid1.DisplayLayout.Bands[0].Columns.Exists("Adjustment Qty"))
+                            {
+                                ultraGrid1.ActiveCell = ultraGrid1.ActiveRow.Cells["Adjustment Qty"];
+                            }
+                            return true;
+                        }
+
+                        int currentIndex = ultraGrid1.ActiveRow.Index;
+
+                        // Navigate up
+                        if (keyData == Keys.Up && currentIndex > 0)
+                        {
+                            ultraGrid1.ActiveRow = ultraGrid1.Rows[currentIndex - 1];
+                            if (ultraGrid1.DisplayLayout.Bands[0].Columns.Exists("Adjustment Qty"))
+                            {
+                                ultraGrid1.ActiveCell = ultraGrid1.ActiveRow.Cells["Adjustment Qty"];
+                            }
+                            ultraGrid1.ActiveRowScrollRegion.ScrollRowIntoView(ultraGrid1.ActiveRow);
+                            return true;
+                        }
+
+                        // Navigate down
+                        if (keyData == Keys.Down && currentIndex < ultraGrid1.Rows.Count - 1)
+                        {
+                            ultraGrid1.ActiveRow = ultraGrid1.Rows[currentIndex + 1];
+                            if (ultraGrid1.DisplayLayout.Bands[0].Columns.Exists("Adjustment Qty"))
+                            {
+                                ultraGrid1.ActiveCell = ultraGrid1.ActiveRow.Cells["Adjustment Qty"];
+                            }
+                            ultraGrid1.ActiveRowScrollRegion.ScrollRowIntoView(ultraGrid1.ActiveRow);
+                            return true;
+                        }
+                    }
+                }
+
+                // Handle Delete key to remove rows even when focus is on barcode textbox
+                if (keyData == Keys.Delete)
+                {
+                    if (ultraGrid1.Rows.Count > 0 && ultraGrid1.ActiveRow != null)
+                    {
+                        DialogResult result = MessageBox.Show("Are you sure you want to delete this item?",
+                            "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                        if (result == DialogResult.Yes)
+                        {
+                            DataTable dt = (DataTable)ultraGrid1.DataSource;
+                            int rowIndex = ultraGrid1.ActiveRow.Index;
+                            dt.Rows.RemoveAt(rowIndex);
+
+                            // After deletion, set active row to the same index or last row if deleted the last one
+                            if (ultraGrid1.Rows.Count > 0)
+                            {
+                                int newActiveIndex = Math.Min(rowIndex, ultraGrid1.Rows.Count - 1);
+                                ultraGrid1.ActiveRow = ultraGrid1.Rows[newActiveIndex];
+                                if (ultraGrid1.DisplayLayout.Bands[0].Columns.Exists("Adjustment Qty"))
+                                {
+                                    ultraGrid1.ActiveCell = ultraGrid1.ActiveRow.Cells["Adjustment Qty"];
+                                }
+                            }
+
+                            // Return focus to barcode textbox
+                            barcodeFocus();
+                        }
+                        return true;
+                    }
+                }
             }
             catch (Exception ex)
             {
