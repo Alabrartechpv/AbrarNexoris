@@ -2817,20 +2817,20 @@ namespace PosBranch_Win.Transaction
                 }
 
                 // Display warning if any items have zero stock
-                if (zeroStockItems.Count > 0)
-                {
-                    StringBuilder message = new StringBuilder();
-                    message.AppendLine("The following items have no stock available:");
-                    message.AppendLine();
+                //if (zeroStockItems.Count > 0)
+                //{
+                //    StringBuilder message = new StringBuilder();
+                //    message.AppendLine("The following items have no stock available:");
+                //    message.AppendLine();
 
-                    foreach (string itemName in zeroStockItems)
-                    {
-                        message.AppendLine($"• {itemName}");
-                    }
+                //    foreach (string itemName in zeroStockItems)
+                //    {
+                //        message.AppendLine($"• {itemName}");
+                //    }
 
-                    MessageBox.Show(message.ToString(), "Stock Warning",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
+                //    MessageBox.Show(message.ToString(), "Stock Warning",
+                //        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                //}
             }
             catch (Exception ex)
             {
