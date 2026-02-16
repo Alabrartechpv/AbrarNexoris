@@ -704,6 +704,11 @@ namespace PosBranch_Win.Transaction
                 System.Diagnostics.Debug.WriteLine($"Error subscribing to vendor save event: {ex.Message}");
             }
 
+            // Wire up keyboard shortcut buttons (Click events)
+            if (pbxExit != null) pbxExit.Click += (s, args) => this.Close();
+            if (ultraPictureBox1 != null) ultraPictureBox1.Click += (s, args) => this.Clear();
+            if (pbxSave != null) pbxSave.Click += (s, args) => this.SavePurchase();
+            if (ultraPictureBox2 != null) ultraPictureBox2.Click += (s, args) => this.DeletePurchase();
         }
 
         // Method to configure date pickers to match the format in the image
@@ -3002,9 +3007,11 @@ namespace PosBranch_Win.Transaction
             {
                 // Move to the next cell or row
                 UltraGrid grid = sender as UltraGrid;
+                // ... (rest of Enter logic) ...
                 if (grid != null && grid.ActiveCell != null)
                 {
                     UltraGridCell nextCell = FindNextEditableCell(grid.ActiveRow, grid.ActiveCell);
+                    // ...
                     if (nextCell != null)
                     {
                         grid.ActiveCell = nextCell;
@@ -3022,6 +3029,12 @@ namespace PosBranch_Win.Transaction
                         }
                     }
                 }
+            }
+            else if (e.KeyCode == Keys.Delete)
+            {
+                // Remove selected item when Delete is pressed
+                RemoveSelectedItem();
+                e.Handled = true;
             }
         }
 
@@ -3103,7 +3116,7 @@ namespace PosBranch_Win.Transaction
             }
             else if (e.KeyCode == Keys.F1)
             {
-                // Clear the form when F1 is pressed
+                // Clear the form when F1 is pressed (mapped to ultraPictureBox1 action - New)
                 this.Clear();
                 e.Handled = true;
             }
@@ -3127,8 +3140,20 @@ namespace PosBranch_Win.Transaction
             }
             else if (e.KeyCode == Keys.F4)
             {
-                // Remove selected item when F4 is pressed
-                RemoveSelectedItem();
+                // Exit the form (User requested F4 for Exit) - mapped to pbxExit logic
+                this.Close();
+                e.Handled = true;
+            }
+            else if (e.KeyCode == Keys.F8)
+            {
+                // Save the purchase (User requested F8 for Save)
+                this.SavePurchase();
+                e.Handled = true;
+            }
+            else if (e.KeyCode == Keys.F12)
+            {
+                // Delete the purchase (Mapped to ultraPictureBox2 action - F12 label)
+                this.DeletePurchase();
                 e.Handled = true;
             }
             else if (e.KeyCode == Keys.Escape)
