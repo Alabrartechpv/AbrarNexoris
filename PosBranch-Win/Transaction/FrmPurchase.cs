@@ -3557,6 +3557,35 @@ namespace PosBranch_Win.Transaction
                         return;
                     }
 
+                    // Handle ".." to update total and show balance
+                    // User requested: "if label4 = 1000 and user type ..100 then label4 = 100, textBox3 = 900"
+                    // label4 is Net Total. textBox3 is likely Balance (using textBox2 as substitute).
+                    if (input.StartsWith("..") && input.Length > 2)
+                    {
+                        string amountStr = input.Substring(2);
+                        if (float.TryParse(amountStr, out float newTotal))
+                        {
+                            // Update label4 (Net Total) with the new total amount (Paid amount?)
+                            label4.Text = newTotal.ToString("N2");
+                            txtInvoiceAmt.Text = newTotal.ToString("N2");
+
+                            // Calculate remaining balance
+                            // Assuming OriginalNetTotal holds the full invoice amount
+                            float remaining = OriginalNetTotal - newTotal;
+
+                            // Display remaining balance in textBox2
+                            // Note: User specified textBox3, but it does not exist in Designer.
+                            // textBox2 is unused and positioned suitably for this purpose.
+                            if (textBox2 != null)
+                            {
+                                textBox2.Text = remaining.ToString("N2");
+                            }
+
+                            this.barcodeFocus();
+                            return;
+                        }
+                    }
+
                     // Handle "." to delete the highlighted item
                     if (input == ".")
                     {

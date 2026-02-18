@@ -89,7 +89,6 @@ namespace PosBranch_Win.Transaction
             this.lblBarcode = new System.Windows.Forms.Label();
             this.ultraPanel1 = new Infragistics.Win.Misc.UltraPanel();
             this.ultraPanel5 = new Infragistics.Win.Misc.UltraPanel();
-            this.textBox3 = new System.Windows.Forms.TextBox();
             this.ultraPanel11 = new Infragistics.Win.Misc.UltraPanel();
             this.ultraPanel10 = new Infragistics.Win.Misc.UltraPanel();
             this.label4 = new System.Windows.Forms.Label();
@@ -137,6 +136,7 @@ namespace PosBranch_Win.Transaction
             this.label17 = new System.Windows.Forms.Label();
             this.ultraPanel3 = new Infragistics.Win.Misc.UltraPanel();
             this.label5 = new System.Windows.Forms.Label();
+            this.textBox3 = new System.Windows.Forms.TextBox();
             this.ultraPanel1.ClientArea.SuspendLayout();
             this.ultraPanel1.SuspendLayout();
             this.ultraPanel5.ClientArea.SuspendLayout();
@@ -365,7 +365,6 @@ namespace PosBranch_Win.Transaction
             // 
             // ultraPanel5.ClientArea
             // 
-            this.ultraPanel5.ClientArea.Controls.Add(this.textBox3);
             this.ultraPanel5.ClientArea.Controls.Add(this.ultraPanel11);
             this.ultraPanel5.ClientArea.Controls.Add(this.lblSubTotalAmt);
             this.ultraPanel5.ClientArea.Controls.Add(this.textBox2);
@@ -376,20 +375,11 @@ namespace PosBranch_Win.Transaction
             this.ultraPanel5.ClientArea.Controls.Add(this.Disc);
             this.ultraPanel5.ClientArea.Controls.Add(this.lblsub);
             this.ultraPanel5.ClientArea.Controls.Add(this.ultraCheckEditor1);
+            this.ultraPanel5.ClientArea.Controls.Add(this.textBox3);
             this.ultraPanel5.Location = new System.Drawing.Point(6, 430);
             this.ultraPanel5.Name = "ultraPanel5";
             this.ultraPanel5.Size = new System.Drawing.Size(1229, 90);
             this.ultraPanel5.TabIndex = 11;
-            // 
-            // textBox3
-            // 
-            this.textBox3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox3.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.textBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox3.Location = new System.Drawing.Point(684, 30);
-            this.textBox3.Name = "textBox3";
-            this.textBox3.Size = new System.Drawing.Size(80, 24);
-            this.textBox3.TabIndex = 70;
             // 
             // ultraPanel11
             // 
@@ -459,7 +449,7 @@ namespace PosBranch_Win.Transaction
             this.lblSubTotalAmt.AutoSize = true;
             this.lblSubTotalAmt.BackColor = System.Drawing.Color.White;
             this.lblSubTotalAmt.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblSubTotalAmt.Location = new System.Drawing.Point(691, 10);
+            this.lblSubTotalAmt.Location = new System.Drawing.Point(703, 8);
             this.lblSubTotalAmt.Name = "lblSubTotalAmt";
             this.lblSubTotalAmt.Size = new System.Drawing.Size(36, 16);
             this.lblSubTotalAmt.TabIndex = 30;
@@ -471,7 +461,7 @@ namespace PosBranch_Win.Transaction
             this.textBox2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.textBox2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.textBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox2.Location = new System.Drawing.Point(684, 5);
+            this.textBox2.Location = new System.Drawing.Point(687, 30);
             this.textBox2.Name = "textBox2";
             this.textBox2.Size = new System.Drawing.Size(80, 24);
             this.textBox2.TabIndex = 47;
@@ -482,7 +472,7 @@ namespace PosBranch_Win.Transaction
             this.txtBilledBy.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
             this.txtBilledBy.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtBilledBy.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtBilledBy.Location = new System.Drawing.Point(684, 55);
+            this.txtBilledBy.Location = new System.Drawing.Point(687, 55);
             this.txtBilledBy.Name = "txtBilledBy";
             this.txtBilledBy.Size = new System.Drawing.Size(147, 24);
             this.txtBilledBy.TabIndex = 6;
@@ -1151,6 +1141,16 @@ namespace PosBranch_Win.Transaction
             this.label5.TabIndex = 18;
             this.label5.Text = "PurchaseDate";
             // 
+            // textBox3
+            // 
+            this.textBox3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBox3.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.textBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBox3.Location = new System.Drawing.Point(687, 4);
+            this.textBox3.Name = "textBox3";
+            this.textBox3.Size = new System.Drawing.Size(80, 24);
+            this.textBox3.TabIndex = 81;
+            // 
             // FrmPurchase
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1265,7 +1265,7 @@ namespace PosBranch_Win.Transaction
         private Infragistics.Win.UltraWinEditors.UltraPictureBox ultraPictureBox8;
         private Infragistics.Win.Misc.UltraPanel ultraPanel8;
         private System.Windows.Forms.Label Disc;
-        public System.Windows.Forms.TextBox textBox3;
         private Infragistics.Win.UltraWinEditors.UltraCheckEditor ultraCheckEditor1;
+        public System.Windows.Forms.TextBox textBox3;
     }
 }
