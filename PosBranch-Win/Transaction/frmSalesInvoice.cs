@@ -3830,7 +3830,7 @@ namespace PosBranch_Win.Transaction
         }
 
         // Update AddItemToGrid method for UltraGrid
-        public void AddItemToGrid(string itemId, string itemName, string barcode, string unit, decimal unitPrice, int qty, decimal amount)
+        public void AddItemToGrid(string itemId, string itemName, string barcode, string unit, decimal unitPrice, int qty, decimal amount, float packing = 1f)
         {
             try
             {
@@ -3941,6 +3941,7 @@ namespace PosBranch_Win.Transaction
                     newRow["UnitPrice"] = unitPrice;
                     newRow["Cost"] = cost; // Use actual cost from database
                     newRow["Qty"] = qty;
+                    newRow["Packing"] = packing; // Packing from item master
                     newRow["Amount"] = amount;
                     newRow["DiscPer"] = 0;
                     newRow["DiscAmt"] = 0;
@@ -4272,6 +4273,7 @@ namespace PosBranch_Win.Transaction
                     newRow["DiscPer"] = details[i].DiscountPer;
                     newRow["DiscAmt"] = details[i].DiscountAmount;
                     newRow["Qty"] = details[i].Qty;
+                    newRow["Packing"] = (float)details[i].Packing; // Restore packing from saved bill
 
                     // FIX: Amount field in DB stores line total (Qty × Unit Selling Price)
                     // but grid's "Amount" column expects unit selling price
