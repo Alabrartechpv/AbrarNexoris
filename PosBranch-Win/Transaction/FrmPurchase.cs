@@ -1056,6 +1056,8 @@ namespace PosBranch_Win.Transaction
                 ultraGrid1.DisplayLayout.Override.AllowColSizing = AllowColSizing.Free;
                 ultraGrid1.DisplayLayout.Override.AllowColSwapping = AllowColSwapping.WithinBand;
 
+
+
                 // Apply grid spacing and appearance - matching frmdialForItemMaster
                 ultraGrid1.DisplayLayout.Override.RowSizing = RowSizing.AutoFree;
                 ultraGrid1.DisplayLayout.Override.MinRowHeight = 30;
@@ -1092,7 +1094,7 @@ namespace PosBranch_Win.Transaction
                 ultraGrid1.DisplayLayout.Override.RowSelectorAppearance.BackGradientStyle = GradientStyle.None;
                 ultraGrid1.DisplayLayout.Override.RowSelectorAppearance.ForeColor = Color.White;
                 ultraGrid1.DisplayLayout.Override.RowSelectorAppearance.BorderColor = lightBlue; // Set row selector border to light blue
-                ultraGrid1.DisplayLayout.Override.RowSelectorHeaderStyle = RowSelectorHeaderStyle.Default;
+                ultraGrid1.DisplayLayout.Override.RowSelectorHeaderStyle = RowSelectorHeaderStyle.ColumnChooserButton;
                 ultraGrid1.DisplayLayout.Override.RowSelectorWidth = 15; // Match FrmPurchaseDisplayDialog width
                 ultraGrid1.DisplayLayout.Override.RowSelectorNumberStyle = RowSelectorNumberStyle.None; // Remove numbers
                 ultraGrid1.DisplayLayout.Override.ExpansionIndicator = ShowExpansionIndicator.Never;
@@ -1132,7 +1134,7 @@ namespace PosBranch_Win.Transaction
 
                 // Configure spacing and expansion behavior
                 ultraGrid1.DisplayLayout.InterBandSpacing = 0;
-                ultraGrid1.DisplayLayout.UseFixedHeaders = true;
+
 
                 // Configure columns in the UltraGrid
                 if (ultraGrid1.DisplayLayout.Bands.Count > 0)
@@ -1149,9 +1151,9 @@ namespace PosBranch_Win.Transaction
                     SetupColumn(band.Columns["BarCode"], "Barcode", 120, HAlign.Center, false, false);
                     SetupColumn(band.Columns["Description"], "Item Name", 200, HAlign.Left, false, false);
                     SetupColumn(band.Columns["Unit"], "Unit", 80, HAlign.Center, false, false);
-                    SetupColumn(band.Columns["Packing"], "Packing", 80, HAlign.Right, false, true, false, "N0");
+                    SetupColumn(band.Columns["Packing"], "Packing", 80, HAlign.Right, false, true, true, "N0");
                     SetupColumn(band.Columns["RetailPrice"], "Retail Price", 100, HAlign.Right, false, true, true);
-                    SetupColumn(band.Columns["Free"], "Free", 50, HAlign.Right, false, true);
+                    SetupColumn(band.Columns["Free"], "Free", 50, HAlign.Right, false, true, true);
                     SetupColumn(band.Columns["SellingPrice"], "Selling Price", 100, HAlign.Right, false, true, true, "N2");
                     SetupColumn(band.Columns["UnitSP"], "Unit SP", 100, HAlign.Right, false, true, true, "N2");
                     SetupColumn(band.Columns["BaseCost"], "Base Cost", 100, HAlign.Right, true, true, false, "N2");
@@ -1163,10 +1165,10 @@ namespace PosBranch_Win.Transaction
                     SetupColumn(band.Columns["Gross"], "Gross", 120, HAlign.Right, false, true, true); // Editable - changed from true to false
                     SetupColumn(band.Columns["NewBaseCost"], "New BaseCost", 120, HAlign.Right, true, true, true, "N2"); // Read-only, hidden by default, toggled by F5
 
-                    // Tax columns - make them visible
-                    SetupColumn(band.Columns["TaxPer"], "Tax %", 80, HAlign.Right, false, true, false, "N2");
-                    SetupColumn(band.Columns["TaxAmt"], "Tax Amount", 100, HAlign.Right, false, true, false, "N2");
-                    SetupColumn(band.Columns["TaxType"], "Tax Type", 80, HAlign.Center, false, false, false);
+                    // Tax columns - hidden by default (in field chooser)
+                    SetupColumn(band.Columns["TaxPer"], "Tax %", 80, HAlign.Right, false, true, true, "N2");
+                    SetupColumn(band.Columns["TaxAmt"], "Tax Amount", 100, HAlign.Right, false, true, true, "N2");
+                    SetupColumn(band.Columns["TaxType"], "Tax Type", 80, HAlign.Center, false, false, true);
 
                     // Hide all other columns
                     SetupColumn(band.Columns["ItemId"], "ItemId", 0, HAlign.Center, false, false, true);
@@ -1275,7 +1277,7 @@ namespace PosBranch_Win.Transaction
                 e.Layout.Override.RowSelectorAppearance.BackColor2 = headerBlue;
                 e.Layout.Override.RowSelectorAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.None;
                 e.Layout.Override.RowSelectorAppearance.BorderColor = lightBlue; // Set row selector border to light blue
-                e.Layout.Override.RowSelectorHeaderStyle = Infragistics.Win.UltraWinGrid.RowSelectorHeaderStyle.Default;
+                e.Layout.Override.RowSelectorHeaderStyle = Infragistics.Win.UltraWinGrid.RowSelectorHeaderStyle.ColumnChooserButton;
                 e.Layout.Override.RowSelectorWidth = 15; // Match FrmPurchaseDisplayDialog width
                 e.Layout.Override.RowSelectorNumberStyle = Infragistics.Win.UltraWinGrid.RowSelectorNumberStyle.None; // Remove numbers
                 e.Layout.Override.ExpansionIndicator = Infragistics.Win.UltraWinGrid.ShowExpansionIndicator.Never;
@@ -1310,7 +1312,7 @@ namespace PosBranch_Win.Transaction
 
                 // Configure spacing and expansion behavior
                 e.Layout.InterBandSpacing = 0;
-                e.Layout.UseFixedHeaders = true;
+
 
                 // Configure scrollbar style
                 e.Layout.ScrollBounds = Infragistics.Win.UltraWinGrid.ScrollBounds.ScrollToFill;
@@ -1399,7 +1401,11 @@ namespace PosBranch_Win.Transaction
                     Color headerBlue = Color.FromArgb(0, 123, 255); // Solid blue color for headers
 
                     // Set basic grid appearance for optimal display
-                    ultraGrid1.DisplayLayout.AutoFitStyle = AutoFitStyle.ResizeAllColumns;
+                    ultraGrid1.DisplayLayout.AutoFitStyle = AutoFitStyle.None;
+                    ultraGrid1.DisplayLayout.Override.AllowColMoving = AllowColMoving.WithinBand;
+                    ultraGrid1.DisplayLayout.Override.AllowColSwapping = AllowColSwapping.WithinBand;
+                    ultraGrid1.DisplayLayout.Override.HeaderClickAction = HeaderClickAction.SortSingle;
+                    ultraGrid1.DisplayLayout.UseFixedHeaders = false;
                     ultraGrid1.DisplayLayout.Override.RowSizing = RowSizing.AutoFree;
                     ultraGrid1.DisplayLayout.Override.DefaultRowHeight = 22;
                     ultraGrid1.DisplayLayout.Override.RowSpacingBefore = 0; // Remove row spacing as requested
@@ -1425,7 +1431,7 @@ namespace PosBranch_Win.Transaction
                     ultraGrid1.DisplayLayout.Override.RowSelectorAppearance.BackColor2 = headerBlue;
                     ultraGrid1.DisplayLayout.Override.RowSelectorAppearance.BackGradientStyle = GradientStyle.None;
                     ultraGrid1.DisplayLayout.Override.RowSelectorAppearance.BorderColor = lightBlue; // Set row selector border to light blue
-                    ultraGrid1.DisplayLayout.Override.RowSelectorHeaderStyle = RowSelectorHeaderStyle.Default;
+                    ultraGrid1.DisplayLayout.Override.RowSelectorHeaderStyle = RowSelectorHeaderStyle.ColumnChooserButton;
                     ultraGrid1.DisplayLayout.Override.RowSelectorWidth = 15; // Match FrmPurchaseDisplayDialog width
                     ultraGrid1.DisplayLayout.Override.RowSelectorNumberStyle = RowSelectorNumberStyle.None; // Remove numbers
 
