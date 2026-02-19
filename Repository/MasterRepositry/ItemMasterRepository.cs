@@ -449,8 +449,8 @@ namespace Repository.MasterRepositry
                         unitPriceSettings.MarginAmt = SafeParseDouble(priceRow.Cells["MarginAmt"]?.Value);
                         unitPriceSettings.MarginPer = SafeParseDouble(priceRow.Cells["MarginPer"]?.Value);
                         unitPriceSettings.MRP = SafeParseDouble(priceRow.Cells["MRP"]?.Value);
-                        unitPriceSettings.RetailPrice = SafeParseDouble(priceRow.Cells["WholeSalePrice"]?.Value);
-                        unitPriceSettings.WholeSalePrice = SafeParseDouble(priceRow.Cells["RetailPrice"]?.Value);
+                        unitPriceSettings.RetailPrice = SafeParseDouble(priceRow.Cells["RetailPrice"]?.Value);
+                        unitPriceSettings.WholeSalePrice = SafeParseDouble(priceRow.Cells["WholeSalePrice"]?.Value);
                         unitPriceSettings.CreditPrice = SafeParseDouble(priceRow.Cells["CreditPrice"]?.Value);
                         unitPriceSettings.CardPrice = SafeParseDouble(priceRow.Cells["CardPrice"]?.Value);
                         unitPriceSettings.TaxAmt = SafeParseDouble(priceRow.Cells["TaxAmt"]?.Value);

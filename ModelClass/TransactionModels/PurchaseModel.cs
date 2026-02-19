@@ -57,6 +57,7 @@ namespace ModelClass.TransactionModels
         public double PayedAmount { get; set; }
         public string BilledBy { get; set; }
         public string TrnsType { get; set; }
+        public double NetTotal { get; set; }
         public string _Operation { get; set; }
     }
     public class PurchaseDetails

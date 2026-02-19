@@ -8615,9 +8615,10 @@ namespace PosBranch_Win.Master
                                 // Update all price values based on new base prices
                                 row.Cells["Cost"].Value = baseCost * packing;
                                 row.Cells["MRP"].Value = baseMRP * packing;
-                                // CORRECT MAPPING: txt_Retail → RetailPrice ("Retail Price"), txt_walkin → WholeSalePrice ("Walking Price")
-                                row.Cells["RetailPrice"].Value = baseRetailPrice * packing;
-                                row.Cells["WholeSalePrice"].Value = baseWalkingPrice * packing;
+                                // CORRECT MAPPING: txt_walkin → RetailPrice, txt_Retail → WholeSalePrice
+                                // (matches LoadItemById, UpdateItem, SaveMaster, UpdatePriceGridForBaseUnit)
+                                row.Cells["RetailPrice"].Value = baseWalkingPrice * packing;
+                                row.Cells["WholeSalePrice"].Value = baseRetailPrice * packing;
                                 row.Cells["CreditPrice"].Value = baseCreditPrice * packing;
                                 row.Cells["CardPrice"].Value = baseCardPrice * packing;
 

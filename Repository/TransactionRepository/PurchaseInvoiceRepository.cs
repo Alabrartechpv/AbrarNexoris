@@ -528,18 +528,24 @@ namespace Repository.TransactionRepository
 
                             int gridQty = 0;
                             int.TryParse(dgvPurchase.Rows[i].Cells["Qty"].Value?.ToString(), out gridQty);
-                            objPricesettingsStock.Qty = gridQty;
 
-                            // When Free = Qty (free items case), only Qty counts for stock, not Free
-                            // So if Free = Qty, set Free to 0 for stock calculation to avoid double counting
-                            if (free >= 1 && Math.Abs(free - gridQty) < 0.01f)
+                            // Find the old purchase detail for this item/unit combination BEFORE setting Qty
+                            // so we can compute the delta for stock update
+                            float oldPurchaseCost = 0;
+                            float oldPurchaseQty = 0;
+                            float oldPurchaseFree = 0;
+                            var oldDetail = oldPurchaseDetails.FirstOrDefault(
+                                pd => pd.ItemID == objPricesettingsStock.ItemID && pd.UnitId == objPricesettingsStock.UnitId);
+
+                            if (oldDetail != null)
                             {
-                                objPricesettingsStock.Free = 0; // Don't add Free separately since it's already in Qty
+                                oldPurchaseCost = (float)oldDetail.Cost;
+                                oldPurchaseQty = (float)oldDetail.Qty;
+                                oldPurchaseFree = (float)oldDetail.Free;
                             }
-                            else
-                            {
-                                objPricesettingsStock.Free = free;
-                            }
+
+                            objPricesettingsStock.Qty = gridQty;
+                            objPricesettingsStock.Free = (int)free;
 
                             int packingValue = 0;
                             int.TryParse(dgvPurchase.Rows[i].Cells["Packing"].Value?.ToString(), out packingValue);
@@ -576,73 +582,42 @@ namespace Repository.TransactionRepository
                             objPricesettingsStock.MDStaffPrice = existingPrices.MDStaffPrice;
                             objPricesettingsStock.MDMinPrice = existingPrices.MDMinPrice;
 
-                            // Calculate average cost - for UPDATE, we need to reverse old purchase first
-                            float currentCost = (float)existingPrices.Cost;
-                            float currentStock = (float)existingPrices.Stock;
-                            float newPurchaseCost = cost; // Cost from the purchase grid
-                            float newPurchaseQty = qty;   // Quantity being purchased
+                            objPricesettingsStock.SingleItemCost = cost;
 
-                            // Check if Free = Qty (free items case)
-                            // When Free = Qty and Free >= 1, cost is 0, so average cost should not change
-                            bool isFreeItem = (free >= 1 && Math.Abs(free - qty) < 0.01f && Math.Abs(cost) < 0.01f);
-
-                            // Find the old purchase detail for this item/unit combination
-                            float oldPurchaseCost = 0;
-                            float oldPurchaseQty = 0;
-                            var oldDetail = oldPurchaseDetails.FirstOrDefault(
-                                pd => pd.ItemID == objPricesettingsStock.ItemID && pd.UnitId == objPricesettingsStock.UnitId);
-
-                            // Set OldQty to the old purchase quantity so stored procedure can reverse it
+                            // === PURCHASE UPDATE: DELETE old stock, then CREATE new stock ===
+                            // Step 1: If old purchase detail exists, call SP with DELETE to reverse old stock
                             if (oldDetail != null)
                             {
-                                oldPurchaseCost = (float)oldDetail.Cost;
-                                oldPurchaseQty = (float)oldDetail.Qty;
-                                objPricesettingsStock.OldQty = oldPurchaseQty; // Set old quantity for reversal
+                                var deleteObj = new PurchaseStockUpdateOnPricesettings();
+                                deleteObj._Operation = "DELETE";
+                                deleteObj.CompanyId = objPricesettingsStock.CompanyId;
+                                deleteObj.BranchID = objPricesettingsStock.BranchID;
+                                deleteObj.FinYearId = objPricesettingsStock.FinYearId;
+                                deleteObj.ItemID = objPricesettingsStock.ItemID;
+                                deleteObj.UnitId = objPricesettingsStock.UnitId;
+                                deleteObj.Qty = oldPurchaseQty;
+                                deleteObj.Free = oldPurchaseFree;
+                                deleteObj.OldQty = 0;
+                                deleteObj.SingleItemCost = oldPurchaseCost;
+                                deleteObj.Packing = packingValue;
+                                deleteObj.RetailPrice = existingPrices.RetailPrice;
+                                deleteObj.WholeSalePrice = existingPrices.WholeSalePrice;
+                                deleteObj.CreditPrice = existingPrices.CreditPrice;
 
-                                // If this is a free item (Free = Qty, Cost = 0), don't change average cost
-                                if (isFreeItem)
-                                {
-                                    // Keep the existing average cost unchanged
-                                    objPricesettingsStock.SingleItemCost = currentCost;
-                                    System.Diagnostics.Debug.WriteLine($"UPDATE Purchase (Free Item) - ItemId={objPricesettingsStock.ItemID}, Free={free}, Qty={qty}, Cost=0, KeepingAvgCost={currentCost}");
-                                }
-                                else
-                                {
-                                    // Use update calculation which reverses the old purchase
-                                    float averageCost = CalculateAverageCostForUpdate(
-                                        currentCost, currentStock,
-                                        oldPurchaseCost, oldPurchaseQty,
-                                        newPurchaseCost, newPurchaseQty);
-                                    objPricesettingsStock.SingleItemCost = averageCost;
+                                DataConnection.Query<PurchaseStockUpdateOnPricesettings>(
+                                    STOREDPROCEDURE.POS_PurchaseInvoice_PriceSettings,
+                                    deleteObj, trans, commandType: CommandType.StoredProcedure).ToList();
 
-                                    System.Diagnostics.Debug.WriteLine($"UPDATE Purchase - ItemId={objPricesettingsStock.ItemID}, CurrentCost={currentCost}, CurrentStock={currentStock}, OldPurchaseCost={oldPurchaseCost}, OldPurchaseQty={oldPurchaseQty}, NewPurchaseCost={newPurchaseCost}, NewPurchaseQty={newPurchaseQty}, CalculatedAvgCost={averageCost}");
-                                }
-                            }
-                            else
-                            {
-                                // No old purchase detail found - treat as new purchase
-                                objPricesettingsStock.OldQty = 0; // No old quantity to reverse
-
-                                // If this is a free item (Free = Qty, Cost = 0), don't change average cost
-                                if (isFreeItem)
-                                {
-                                    // Keep the existing average cost unchanged
-                                    objPricesettingsStock.SingleItemCost = currentCost;
-                                    System.Diagnostics.Debug.WriteLine($"UPDATE Purchase (Free Item, no old detail) - ItemId={objPricesettingsStock.ItemID}, Free={free}, Qty={qty}, Cost=0, KeepingAvgCost={currentCost}");
-                                }
-                                else
-                                {
-                                    float averageCost = CalculateAverageCost(currentCost, currentStock, newPurchaseCost, newPurchaseQty);
-                                    objPricesettingsStock.SingleItemCost = averageCost;
-
-                                    System.Diagnostics.Debug.WriteLine($"UPDATE Purchase (no old detail) - ItemId={objPricesettingsStock.ItemID}, CurrentCost={currentCost}, CurrentStock={currentStock}, NewPurchaseCost={newPurchaseCost}, NewPurchaseQty={newPurchaseQty}, CalculatedAvgCost={averageCost}");
-                                }
+                                System.Diagnostics.Debug.WriteLine($"UPDATE Purchase STEP1 DELETE - ItemId={objPricesettingsStock.ItemID}, OldQty={oldPurchaseQty}, OldFree={oldPurchaseFree}, OldCost={oldPurchaseCost}, Packing={packingValue}");
                             }
 
+                            // Step 2: Call SP with CREATE to add new stock
+                            objPricesettingsStock._Operation = "CREATE";
                             List<PurchaseStockUpdateOnPricesettings> UpdatePriceSettingsWithStock = DataConnection.Query<PurchaseStockUpdateOnPricesettings>(STOREDPROCEDURE.POS_PurchaseInvoice_PriceSettings, objPricesettingsStock, trans, commandType: CommandType.StoredProcedure).ToList<PurchaseStockUpdateOnPricesettings>();
 
-                            // CRITICAL: Update ItemMaster cost directly to ensure our calculated average cost is saved
-                            // The stored procedure might be doing its own calculation, so we need to explicitly update it
+                            System.Diagnostics.Debug.WriteLine($"UPDATE Purchase STEP2 CREATE - ItemId={objPricesettingsStock.ItemID}, NewQty={gridQty}, NewFree={free}, NewCost={cost}, Packing={packingValue}");
+
+                            // Update ItemMaster cost directly to ensure our calculated average cost is saved
                             UpdateItemMasterCostDirectly(objPricesettingsStock.ItemID, objPricesettingsStock.UnitId, (float)objPricesettingsStock.SingleItemCost, trans);
                         }
                         catch (Exception ex)
@@ -1037,8 +1012,9 @@ namespace Repository.TransactionRepository
                         ItemID,
                         UnitId,
                         ISNULL(Qty, 0) as Qty,
-                        ISNULL(Cost, 0) as Cost
-                    FROM PurchaseDetails
+                        ISNULL(Cost, 0) as Cost,
+                        ISNULL(Free, 0) as Free
+                    FROM PDetails
                     WHERE PurchaseNo = @PurchaseNo
                         AND FinYearId = @FinYearId
                         AND BranchID = @BranchId
@@ -1092,6 +1068,8 @@ namespace Repository.TransactionRepository
                 // Don't throw - this is a secondary update, stored procedure might have already updated it
             }
         }
+
+
 
         /// <summary>
         /// Calculates average cost for UPDATE operation by reversing old purchase effect first

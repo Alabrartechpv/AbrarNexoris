@@ -31,6 +31,9 @@ namespace PosBranch_Win.Transaction
         // Guard flag to prevent AfterCellUpdate from triggering during unit change (fixes rate multiplication bug)
         private bool _isUpdatingUnit = false;
 
+        // Flag to track if the user manually changed label4 (Net Total) via ".." shortcut in txtBarcode
+        private bool _isNetTotalManuallySet = false;
+
         // Helper method to raise the price update event safely
         private static void RaisePriceSettingsUpdated(int itemId)
         {
@@ -705,10 +708,8 @@ namespace PosBranch_Win.Transaction
             }
 
             // Wire up keyboard shortcut buttons (Click events)
-            if (pbxExit != null) pbxExit.Click += (s, args) => this.Close();
-            if (ultraPictureBox1 != null) ultraPictureBox1.Click += (s, args) => this.Clear();
-            if (pbxSave != null) pbxSave.Click += (s, args) => this.SavePurchase();
-            if (ultraPictureBox2 != null) ultraPictureBox2.Click += (s, args) => this.DeletePurchase();
+            // Note: Click events for pbxExit, ultraPictureBox1, pbxSave, ultraPictureBox2
+            // are already wired in the constructor — do NOT wire them again here
         }
 
         // Method to configure date pickers to match the format in the image
@@ -3558,28 +3559,32 @@ namespace PosBranch_Win.Transaction
                     }
 
                     // Handle ".." to update total and show balance
-                    // User requested: "if label4 = 1000 and user type ..100 then label4 = 100, textBox3 = 900"
-                    // label4 is Net Total. textBox3 is likely Balance (using textBox2 as substitute).
+                    // When user types ..{amount}, hide label4 panel, show label6 panel with new amount
+                    // label6 = NetTotal (overridden). textBox2 = remaining balance.
                     if (input.StartsWith("..") && input.Length > 2)
                     {
                         string amountStr = input.Substring(2);
                         if (float.TryParse(amountStr, out float newTotal))
                         {
-                            // Update label4 (Net Total) with the new total amount (Paid amount?)
-                            label4.Text = newTotal.ToString("N2");
+                            // Hide label4 panel, show label6 panel
+                            ultraPanel11.Visible = false;
+                            ultraPanel12.Visible = true;
+
+                            // Set label6 with the overridden NetTotal amount
+                            label6.Text = newTotal.ToString("N2");
                             txtInvoiceAmt.Text = newTotal.ToString("N2");
 
                             // Calculate remaining balance
-                            // Assuming OriginalNetTotal holds the full invoice amount
                             float remaining = OriginalNetTotal - newTotal;
 
                             // Display remaining balance in textBox2
-                            // Note: User specified textBox3, but it does not exist in Designer.
-                            // textBox2 is unused and positioned suitably for this purpose.
                             if (textBox2 != null)
                             {
                                 textBox2.Text = remaining.ToString("N2");
                             }
+
+                            // Mark that the user manually overrode the total
+                            _isNetTotalManuallySet = true;
 
                             this.barcodeFocus();
                             return;
@@ -4019,7 +4024,9 @@ namespace PosBranch_Win.Transaction
                 ObjPurchaseMaster.SpDisPer = 0;
                 ObjPurchaseMaster.SpDsiAmt = 0;
                 ObjPurchaseMaster.BillDiscountPer = 0;
-                ObjPurchaseMaster.BillDiscountAmt = 0;
+                ObjPurchaseMaster.BillDiscountAmt = _isNetTotalManuallySet
+                    ? (double.TryParse(textBox2.Text, out double saveBd) ? saveBd : 0)
+                    : 0;
                 ObjPurchaseMaster.TaxPer = 0;
                 ObjPurchaseMaster.TaxAmt = 0;
                 ObjPurchaseMaster.Frieght = 0;
@@ -4048,6 +4055,11 @@ namespace PosBranch_Win.Transaction
 
                 ObjPurchaseMaster.BilledBy = txtBilledBy.Text;
                 ObjPurchaseMaster.TrnsType = "Purchase";
+
+                // NetTotal: if user overrode via ".." shortcut, save label6 value; otherwise same as GrandTotal
+                ObjPurchaseMaster.NetTotal = _isNetTotalManuallySet
+                    ? (double.TryParse(label6.Text, out double saveNt) ? saveNt : NetTotal)
+                    : NetTotal;
 
                 // Get data from ultraGrid1
                 DataTable dt = ultraGrid1.DataSource as DataTable;
@@ -4234,6 +4246,13 @@ namespace PosBranch_Win.Transaction
             lblSubTotalAmt.Text = "0.00";
 
             label4.Text = "0.00";
+            label6.Text = "0.00";
+            textBox2.Text = "";
+            _isNetTotalManuallySet = false;
+
+            // Reset panel visibility: show label4 panel, hide label6 panel
+            ultraPanel11.Visible = true;
+            ultraPanel12.Visible = false;
 
             // Reset button visibility
             pbxSave.Visible = true;
@@ -4933,6 +4952,19 @@ namespace PosBranch_Win.Transaction
                         // Calculate totals and update displays
                         CaluateTotals();
 
+                        // Restore manually-set total if BillDiscountAmt was saved (user used ".." shortcut)
+                        var pmLoaded = purchaseInvoiceGrid.Listpmaster.First();
+                        if (pmLoaded.BillDiscountAmt > 0)
+                        {
+                            _isNetTotalManuallySet = true;
+                            // Hide label4 panel, show label6 panel with saved NetTotal
+                            ultraPanel11.Visible = false;
+                            ultraPanel12.Visible = true;
+                            label6.Text = pmLoaded.NetTotal.ToString("N2");
+                            txtInvoiceAmt.Text = pmLoaded.NetTotal.ToString("N2");
+                            textBox2.Text = pmLoaded.BillDiscountAmt.ToString("N2");
+                        }
+
                         // Update NetAmt and Gross column visibility after loading, and Amount caption
                         UpdateNetAmtColumnVisibility();
                         UpdateGrossColumnVisibility();
@@ -5010,7 +5042,9 @@ namespace PosBranch_Win.Transaction
                 ObjPurchaseMaster.SpDisPer = 0;
                 ObjPurchaseMaster.SpDsiAmt = 0;
                 ObjPurchaseMaster.BillDiscountPer = 0;
-                ObjPurchaseMaster.BillDiscountAmt = 0;
+                ObjPurchaseMaster.BillDiscountAmt = _isNetTotalManuallySet
+                    ? (double.TryParse(textBox2.Text, out double updBd) ? updBd : 0)
+                    : 0;
                 ObjPurchaseMaster.TaxPer = 0;
                 ObjPurchaseMaster.TaxAmt = 0;
                 ObjPurchaseMaster.Frieght = 0;
@@ -5039,6 +5073,11 @@ namespace PosBranch_Win.Transaction
 
                 ObjPurchaseMaster.BilledBy = txtBilledBy.Text;
                 ObjPurchaseMaster.TrnsType = "Purchase"; // Set transaction type for proper update
+
+                // NetTotal: if user overrode via ".." shortcut, save label6 value; otherwise same as GrandTotal
+                ObjPurchaseMaster.NetTotal = _isNetTotalManuallySet
+                    ? (double.TryParse(label6.Text, out double updNt) ? updNt : NetTotal)
+                    : NetTotal;
 
                 // Get data from ultraGrid1
                 DataTable dt = ultraGrid1.DataSource as DataTable;
