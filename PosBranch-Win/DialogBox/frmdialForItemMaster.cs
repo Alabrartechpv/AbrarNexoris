@@ -2588,7 +2588,12 @@ namespace PosBranch_Win.DialogBox
                             else
                                 decimal.TryParse(ultraGrid1.ActiveRow.Cells["WholeSalePrice"].Value?.ToString(), out unitPrice); // Default to RetailPrice (WholeSalePrice field)
 
-                            parentForm.AddItemToGrid(itemId, itemName, barcode, unit, unitPrice, 1, unitPrice);
+                            // Read Packing from item master row (default to 1 if not available)
+                            float packing = 1f;
+                            if (ultraGrid1.ActiveRow.Cells.Exists("Packing") && ultraGrid1.ActiveRow.Cells["Packing"].Value != null)
+                                float.TryParse(ultraGrid1.ActiveRow.Cells["Packing"].Value.ToString(), out packing);
+
+                            parentForm.AddItemToGrid(itemId, itemName, barcode, unit, unitPrice, 1, unitPrice, packing);
                             this.DialogResult = DialogResult.OK;
                             this.Close();
                         }
