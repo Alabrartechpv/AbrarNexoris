@@ -34,8 +34,8 @@ namespace PosBranch_Win.Transaction
             Infragistics.Win.Appearance appearance2 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance3 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance4 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance6 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance5 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance6 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance7 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance8 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance9 = new Infragistics.Win.Appearance();
@@ -93,10 +93,10 @@ namespace PosBranch_Win.Transaction
             this.ultraPanel5 = new Infragistics.Win.Misc.UltraPanel();
             this.ultraPanel11 = new Infragistics.Win.Misc.UltraPanel();
             this.ultraPanel10 = new Infragistics.Win.Misc.UltraPanel();
-            this.ultraPanel9 = new Infragistics.Win.Misc.UltraPanel();
-            this.label6 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.ultraPanel12 = new Infragistics.Win.Misc.UltraPanel();
+            this.ultraPanel9 = new Infragistics.Win.Misc.UltraPanel();
+            this.label6 = new System.Windows.Forms.Label();
             this.lblSubTotalAmt = new System.Windows.Forms.Label();
             this.textBox2 = new System.Windows.Forms.TextBox();
             this.txtBilledBy = new System.Windows.Forms.TextBox();
@@ -150,10 +150,10 @@ namespace PosBranch_Win.Transaction
             this.ultraPanel11.SuspendLayout();
             this.ultraPanel10.ClientArea.SuspendLayout();
             this.ultraPanel10.SuspendLayout();
-            this.ultraPanel9.ClientArea.SuspendLayout();
-            this.ultraPanel9.SuspendLayout();
             this.ultraPanel12.ClientArea.SuspendLayout();
             this.ultraPanel12.SuspendLayout();
+            this.ultraPanel9.ClientArea.SuspendLayout();
+            this.ultraPanel9.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.ultraCheckEditor1)).BeginInit();
             this.ultraPanel2.ClientArea.SuspendLayout();
             this.ultraPanel2.SuspendLayout();
@@ -409,9 +409,9 @@ namespace PosBranch_Win.Transaction
             // 
             this.ultraPanel11.ClientArea.Controls.Add(this.ultraPanel10);
             this.ultraPanel11.ForeColor = System.Drawing.Color.Black;
-            this.ultraPanel11.Location = new System.Drawing.Point(977, 1);
+            this.ultraPanel11.Location = new System.Drawing.Point(983, 1);
             this.ultraPanel11.Name = "ultraPanel11";
-            this.ultraPanel11.Size = new System.Drawing.Size(241, 80);
+            this.ultraPanel11.Size = new System.Drawing.Size(236, 80);
             this.ultraPanel11.TabIndex = 41;
             this.ultraPanel11.UseFlatMode = Infragistics.Win.DefaultableBoolean.True;
             // 
@@ -433,49 +433,11 @@ namespace PosBranch_Win.Transaction
             // 
             this.ultraPanel10.ClientArea.Controls.Add(this.label4);
             this.ultraPanel10.ForeColor = System.Drawing.Color.Beige;
-            this.ultraPanel10.Location = new System.Drawing.Point(1, 1);
+            this.ultraPanel10.Location = new System.Drawing.Point(-2, 0);
             this.ultraPanel10.Name = "ultraPanel10";
-            this.ultraPanel10.Size = new System.Drawing.Size(235, 75);
+            this.ultraPanel10.Size = new System.Drawing.Size(233, 75);
             this.ultraPanel10.TabIndex = 42;
             this.ultraPanel10.UseFlatMode = Infragistics.Win.DefaultableBoolean.True;
-            // 
-            // ultraPanel9
-            // 
-            this.ultraPanel9.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            appearance6.BackColor = System.Drawing.Color.Maroon;
-            appearance6.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(0)))));
-            appearance6.BackGradientStyle = Infragistics.Win.GradientStyle.GlassTop50;
-            appearance6.BorderColor = System.Drawing.Color.White;
-            appearance6.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            appearance6.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            appearance6.ForegroundAlpha = Infragistics.Win.Alpha.UseAlphaLevel;
-            this.ultraPanel9.Appearance = appearance6;
-            this.ultraPanel9.BorderStyle = Infragistics.Win.UIElementBorderStyle.Etched;
-            // 
-            // ultraPanel9.ClientArea
-            // 
-            this.ultraPanel9.ClientArea.Controls.Add(this.label6);
-            this.ultraPanel9.ForeColor = System.Drawing.Color.Beige;
-            this.ultraPanel9.Location = new System.Drawing.Point(1, 0);
-            this.ultraPanel9.Name = "ultraPanel9";
-            this.ultraPanel9.Size = new System.Drawing.Size(235, 75);
-            this.ultraPanel9.TabIndex = 45;
-            this.ultraPanel9.UseFlatMode = Infragistics.Win.DefaultableBoolean.True;
-            // 
-            // label6
-            // 
-            this.label6.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.label6.AutoSize = true;
-            this.label6.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.label6.Font = new System.Drawing.Font("DS-Digital", 36F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(16, 12);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(104, 47);
-            this.label6.TabIndex = 0;
-            this.label6.Text = "0.00";
-           
             // 
             // label4
             // 
@@ -509,12 +471,49 @@ namespace PosBranch_Win.Transaction
             // 
             this.ultraPanel12.ClientArea.Controls.Add(this.ultraPanel9);
             this.ultraPanel12.ForeColor = System.Drawing.Color.Black;
-            this.ultraPanel12.Location = new System.Drawing.Point(977, 2);
+            this.ultraPanel12.Location = new System.Drawing.Point(980, 2);
             this.ultraPanel12.Name = "ultraPanel12";
             this.ultraPanel12.Size = new System.Drawing.Size(241, 80);
             this.ultraPanel12.TabIndex = 44;
             this.ultraPanel12.UseFlatMode = Infragistics.Win.DefaultableBoolean.True;
             this.ultraPanel12.Visible = false;
+            // 
+            // ultraPanel9
+            // 
+            this.ultraPanel9.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            appearance6.BackColor = System.Drawing.Color.Maroon;
+            appearance6.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(0)))));
+            appearance6.BackGradientStyle = Infragistics.Win.GradientStyle.GlassTop50;
+            appearance6.BorderColor = System.Drawing.Color.White;
+            appearance6.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            appearance6.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            appearance6.ForegroundAlpha = Infragistics.Win.Alpha.UseAlphaLevel;
+            this.ultraPanel9.Appearance = appearance6;
+            this.ultraPanel9.BorderStyle = Infragistics.Win.UIElementBorderStyle.Etched;
+            // 
+            // ultraPanel9.ClientArea
+            // 
+            this.ultraPanel9.ClientArea.Controls.Add(this.label6);
+            this.ultraPanel9.ForeColor = System.Drawing.Color.Beige;
+            this.ultraPanel9.Location = new System.Drawing.Point(1, 0);
+            this.ultraPanel9.Name = "ultraPanel9";
+            this.ultraPanel9.Size = new System.Drawing.Size(235, 75);
+            this.ultraPanel9.TabIndex = 45;
+            this.ultraPanel9.UseFlatMode = Infragistics.Win.DefaultableBoolean.True;
+            // 
+            // label6
+            // 
+            this.label6.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.label6.AutoSize = true;
+            this.label6.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.label6.Font = new System.Drawing.Font("DS-Digital", 36F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label6.Location = new System.Drawing.Point(18, 12);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(104, 47);
+            this.label6.TabIndex = 0;
+            this.label6.Text = "0.00";
             // 
             // lblSubTotalAmt
             // 
@@ -1247,11 +1246,11 @@ namespace PosBranch_Win.Transaction
             this.ultraPanel10.ClientArea.ResumeLayout(false);
             this.ultraPanel10.ClientArea.PerformLayout();
             this.ultraPanel10.ResumeLayout(false);
+            this.ultraPanel12.ClientArea.ResumeLayout(false);
+            this.ultraPanel12.ResumeLayout(false);
             this.ultraPanel9.ClientArea.ResumeLayout(false);
             this.ultraPanel9.ClientArea.PerformLayout();
             this.ultraPanel9.ResumeLayout(false);
-            this.ultraPanel12.ClientArea.ResumeLayout(false);
-            this.ultraPanel12.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.ultraCheckEditor1)).EndInit();
             this.ultraPanel2.ClientArea.ResumeLayout(false);
             this.ultraPanel2.ClientArea.PerformLayout();

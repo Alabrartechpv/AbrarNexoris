@@ -1161,8 +1161,8 @@ namespace PosBranch_Win.Transaction
                     SetupColumn(band.Columns["Qty"], "Qty", 80, HAlign.Right, false, true);
                     SetupColumn(band.Columns["Amount"], "Amount", 120, HAlign.Right, false, true);
                     SetupColumn(band.Columns["TotalAmount"], "Total Amount", 120, HAlign.Right, false, true, true);
-                    SetupColumn(band.Columns["NetAmt"], "Net Amount", 120, HAlign.Right, false, true, true); // Editable - changed from true to false
                     SetupColumn(band.Columns["Gross"], "Gross", 120, HAlign.Right, false, true, true); // Editable - changed from true to false
+                    SetupColumn(band.Columns["NetAmt"], "Net Amount", 120, HAlign.Right, false, true, true); // Editable - changed from true to false
                     SetupColumn(band.Columns["NewBaseCost"], "New BaseCost", 120, HAlign.Right, true, true, true, "N2"); // Read-only, hidden by default, toggled by F5
 
                     // Tax columns - hidden by default (in field chooser)
@@ -3153,8 +3153,22 @@ namespace PosBranch_Win.Transaction
             }
             else if (e.KeyCode == Keys.F8)
             {
-                // Save the purchase (User requested F8 for Save)
-                this.SavePurchase();
+                if (ultraPictureBox4.Visible)
+                {
+                    try
+                    {
+                        this.UpdatePurchase();
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Error triggering update via F8: " + ex.Message);
+                    }
+                }
+                else
+                {
+                    // Save the purchase (User requested F8 for Save)
+                    this.SavePurchase();
+                }
                 e.Handled = true;
             }
             else if (e.KeyCode == Keys.F12)
