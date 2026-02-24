@@ -432,7 +432,7 @@ namespace PosBranch_Win.Transaction
             this.Resize += (s, e) => UpdateFooterCellPositions();
 
             // Add click event for ultraPictureBox7 to open PurchaseEdit with highlighted row
-          
+            
 
             // Add click event for pbxExit to remove selected item
             pbxExit.Click += (s, e) => RemoveSelectedItem();
