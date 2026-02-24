@@ -37,6 +37,16 @@ namespace PosBranch_Win.Transaction
                     ultraGrid1.DisplayLayout.Override.RowAlternateAppearance.BackColor = Color.White;
                     ultraGrid1.DisplayLayout.Override.RowAlternateAppearance.BackColor2 = Color.White;
                     ultraGrid1.DisplayLayout.Override.RowAlternateAppearance.BackGradientStyle = GradientStyle.None;
+
+                    // Ensure old layouts don't override the new Gross/NetAmt requirement
+                    if (ultraGrid1.DisplayLayout.Bands.Count > 0 &&
+                        ultraGrid1.DisplayLayout.Bands[0].Columns.Exists("Gross") &&
+                        ultraGrid1.DisplayLayout.Bands[0].Columns.Exists("NetAmt"))
+                    {
+                        var band = ultraGrid1.DisplayLayout.Bands[0];
+                        band.Columns["Gross"].Header.VisiblePosition = band.Columns.Count - 2;
+                        band.Columns["NetAmt"].Header.VisiblePosition = band.Columns.Count - 1;
+                    }
                 }
             }
             catch (Exception ex)
@@ -422,22 +432,7 @@ namespace PosBranch_Win.Transaction
             this.Resize += (s, e) => UpdateFooterCellPositions();
 
             // Add click event for ultraPictureBox7 to open PurchaseEdit with highlighted row
-            ultraPictureBox7.Click += (s, e) =>
-            {
-                if (ultraGrid1.ActiveRow == null)
-                {
-                    MessageBox.Show("Please select an item to edit", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
-                PurchaseEdit purchaseEditForm = new PurchaseEdit();
-                purchaseEditForm.SetGridRow(ultraGrid1.ActiveRow);
-
-                if (purchaseEditForm.ShowDialog() == DialogResult.OK && purchaseEditForm.IsUpdated)
-                {
-                    CaluateTotals();
-                }
-            };
+          
 
             // Add click event for pbxExit to remove selected item
             pbxExit.Click += (s, e) => RemoveSelectedItem();
@@ -1051,8 +1046,8 @@ namespace PosBranch_Win.Transaction
                 dt.Columns.Add("Qty", typeof(float));
                 dt.Columns.Add("Amount", typeof(float));
                 dt.Columns.Add("TotalAmount", typeof(float));
-                dt.Columns.Add("NetAmt", typeof(float)); // Net Amount = Amount + TaxAmt (for excl tax type)
                 dt.Columns.Add("Gross", typeof(float)); // Gross = Amount - TaxAmt (for incl tax type)
+                dt.Columns.Add("NetAmt", typeof(float)); // Net Amount = Amount + TaxAmt (for excl tax type)
                 dt.Columns.Add("NewBaseCost", typeof(float)); // New BaseCost = average of all rows' Cost values
 
                 // Hidden columns needed for operations but not displayed
@@ -1201,7 +1196,7 @@ namespace PosBranch_Win.Transaction
                     SetupColumn(band.Columns["Qty"], "Qty", 80, HAlign.Right, false, true);
                     SetupColumn(band.Columns["Amount"], "Amount", 0, HAlign.Right, false, true, true);
                     SetupColumn(band.Columns["TotalAmount"], "Total Amount", 0, HAlign.Right, false, true, true);
-                    SetupColumn(band.Columns["Gross"], "Gross", 120, HAlign.Right, false, true, false); // Visible, editable
+                    SetupColumn(band.Columns["Gross"], "Gross", 120, HAlign.Right, false, true, true); // Hidden
                     SetupColumn(band.Columns["NetAmt"], "Net Amount", 120, HAlign.Right, false, true, false); // Visible, editable
                     SetupColumn(band.Columns["NewBaseCost"], "New BaseCost", 120, HAlign.Right, true, true, true, "N2"); // Read-only, hidden by default, toggled by F5
 
@@ -1220,7 +1215,8 @@ namespace PosBranch_Win.Transaction
                     SetupColumn(band.Columns["CreditPrice"], "CreditPrice", 0, HAlign.Right, false, true, true);
                     SetupColumn(band.Columns["CardPrice"], "CardPrice", 0, HAlign.Right, false, true, true);
 
-                    // Ensure Net Amount is visually positioned at the very end of the grid
+                    // Ensure Gross and Net Amount are visually positioned at the very end of the grid
+                    band.Columns["Gross"].Header.VisiblePosition = band.Columns.Count - 2;
                     band.Columns["NetAmt"].Header.VisiblePosition = band.Columns.Count - 1;
                 }
 
@@ -7305,7 +7301,7 @@ namespace PosBranch_Win.Transaction
                         string[] standardColumns = new string[] {
                             "SLNO", "BarCode", "Description", "Unit", "Packing", "Free",
                             "SellingPrice", "UnitSP", "BaseCost", "Cost", "Qty", "Gross", "NetAmt",
-                            "TaxPer", "TaxAmt", "TaxType"
+                            "TaxPer", "TaxAmt", "TaxType", "Amount", "TotalAmount", "RetailPrice"
                         };
 
                         if (standardColumns.Contains(column.Key))
@@ -7379,7 +7375,7 @@ namespace PosBranch_Win.Transaction
             string[] standardColumns = new string[] {
                 "SLNO", "BarCode", "Description", "Unit", "Packing", "Free",
                 "SellingPrice", "UnitSP", "BaseCost", "Cost", "Qty", "Gross", "NetAmt",
-                "TaxPer", "TaxAmt", "TaxType"
+                "TaxPer", "TaxAmt", "TaxType", "Amount", "TotalAmount", "RetailPrice"
             };
 
             Dictionary<string, string> displayNames = new Dictionary<string, string>()
@@ -7389,12 +7385,15 @@ namespace PosBranch_Win.Transaction
                 { "Description", "Item Name" },
                 { "Unit", "Unit" },
                 { "Packing", "Packing" },
+                { "RetailPrice", "Retail Price" },
                 { "Free", "Free" },
                 { "SellingPrice", "Selling Price" },
                 { "UnitSP", "Unit SP" },
                 { "BaseCost", "Base Cost" },
                 { "Cost", "Cost" },
                 { "Qty", "Qty" },
+                { "Amount", "Amount" },
+                { "TotalAmount", "Total Amount" },
                 { "Gross", "Gross" },
                 { "NetAmt", "Net Amount" },
                 { "TaxPer", "Tax %" },
@@ -7461,7 +7460,7 @@ namespace PosBranch_Win.Transaction
                     string[] standardColumns = new string[] {
                         "SLNO", "BarCode", "Description", "Unit", "Packing", "Free",
                         "SellingPrice", "UnitSP", "BaseCost", "Cost", "Qty", "Gross", "NetAmt",
-                        "TaxPer", "TaxAmt", "TaxType"
+                        "TaxPer", "TaxAmt", "TaxType", "Amount", "TotalAmount", "RetailPrice"
                     };
 
                     if (standardColumns.Contains(column.Key))
