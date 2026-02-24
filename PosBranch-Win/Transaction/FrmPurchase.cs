@@ -21,6 +21,43 @@ namespace PosBranch_Win.Transaction
 {
     public partial class FrmPurchase : Form
     {
+        private const string GRID_LAYOUT_FILE = "PurchaseGridLayout.xml";
+        private string GridLayoutPath => System.IO.Path.Combine(Application.StartupPath, GRID_LAYOUT_FILE);
+
+        // Load saved grid layout from XML file
+        private void LoadGridLayout()
+        {
+            try
+            {
+                if (System.IO.File.Exists(GridLayoutPath))
+                {
+                    ultraGrid1.DisplayLayout.LoadFromXml(GridLayoutPath);
+
+                    // Re-apply essential layout configurations specifically overridden by XML structure
+                    ultraGrid1.DisplayLayout.Override.RowAlternateAppearance.BackColor = Color.White;
+                    ultraGrid1.DisplayLayout.Override.RowAlternateAppearance.BackColor2 = Color.White;
+                    ultraGrid1.DisplayLayout.Override.RowAlternateAppearance.BackGradientStyle = GradientStyle.None;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading grid layout: {ex.Message}");
+            }
+        }
+
+        // Save grid layout to XML file
+        private void SaveGridLayout()
+        {
+            try
+            {
+                ultraGrid1.DisplayLayout.SaveAsXml(GridLayoutPath);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error saving grid layout: {ex.Message}");
+            }
+        }
+
         // Static event to notify other forms when prices are updated in PriceSettings
         // The int parameter is the ItemId that was updated
         public static event Action<int> OnPriceSettingsUpdated;
@@ -531,6 +568,9 @@ namespace PosBranch_Win.Transaction
             ConfigureItemsGridLayout();
             SetupGridDocking();
             SetupRowFooter(); // Setup the row footer using gridFooterPanel
+
+            // Load saved user layout customizations
+            LoadGridLayout();
 
             // Initialize saved column widths
             InitializeSavedColumnWidths();
@@ -1159,10 +1199,10 @@ namespace PosBranch_Win.Transaction
                     SetupColumn(band.Columns["BaseCost"], "Base Cost", 100, HAlign.Right, true, true, false, "N2");
                     SetupColumn(band.Columns["Cost"], "Cost", 100, HAlign.Right, false, true, false, "N2");
                     SetupColumn(band.Columns["Qty"], "Qty", 80, HAlign.Right, false, true);
-                    SetupColumn(band.Columns["Amount"], "Amount", 120, HAlign.Right, false, true);
-                    SetupColumn(band.Columns["TotalAmount"], "Total Amount", 120, HAlign.Right, false, true, true);
-                    SetupColumn(band.Columns["Gross"], "Gross", 120, HAlign.Right, false, true, true); // Editable - changed from true to false
-                    SetupColumn(band.Columns["NetAmt"], "Net Amount", 120, HAlign.Right, false, true, true); // Editable - changed from true to false
+                    SetupColumn(band.Columns["Amount"], "Amount", 0, HAlign.Right, false, true, true);
+                    SetupColumn(band.Columns["TotalAmount"], "Total Amount", 0, HAlign.Right, false, true, true);
+                    SetupColumn(band.Columns["Gross"], "Gross", 120, HAlign.Right, false, true, false); // Visible, editable
+                    SetupColumn(band.Columns["NetAmt"], "Net Amount", 120, HAlign.Right, false, true, false); // Visible, editable
                     SetupColumn(band.Columns["NewBaseCost"], "New BaseCost", 120, HAlign.Right, true, true, true, "N2"); // Read-only, hidden by default, toggled by F5
 
                     // Tax columns - hidden by default (in field chooser)
@@ -1179,6 +1219,9 @@ namespace PosBranch_Win.Transaction
                     SetupColumn(band.Columns["WholeSalePrice"], "WholeSalePrice", 0, HAlign.Right, false, true, true);
                     SetupColumn(band.Columns["CreditPrice"], "CreditPrice", 0, HAlign.Right, false, true, true);
                     SetupColumn(band.Columns["CardPrice"], "CardPrice", 0, HAlign.Right, false, true, true);
+
+                    // Ensure Net Amount is visually positioned at the very end of the grid
+                    band.Columns["NetAmt"].Header.VisiblePosition = band.Columns.Count - 1;
                 }
 
                 // Subscribe to InitializeLayout event for consistent styling
@@ -1214,6 +1257,11 @@ namespace PosBranch_Win.Transaction
         {
             try
             {
+                // Ensure column moving and swapping are always enabled even after layout restore
+                e.Layout.Override.AllowColMoving = Infragistics.Win.UltraWinGrid.AllowColMoving.WithinBand;
+                e.Layout.Override.AllowColSwapping = Infragistics.Win.UltraWinGrid.AllowColSwapping.WithinBand;
+                e.Layout.Override.AllowColSizing = Infragistics.Win.UltraWinGrid.AllowColSizing.Free;
+
                 // Define grid line color to match light blue from the image
                 Color lightBlue = Color.FromArgb(173, 216, 230); // Light blue for borders
                 Color gridLineColor = lightBlue; // Using light blue for grid lines
@@ -3153,6 +3201,13 @@ namespace PosBranch_Win.Transaction
             }
             else if (e.KeyCode == Keys.F8)
             {
+                // Force any active edits in the grid to commit
+                if (ultraGrid1 != null && ultraGrid1.ActiveCell != null && ultraGrid1.ActiveCell.IsInEditMode)
+                {
+                    ultraGrid1.PerformAction(Infragistics.Win.UltraWinGrid.UltraGridAction.ExitEditMode);
+                    ultraGrid1.UpdateData();
+                }
+
                 if (ultraPictureBox4.Visible)
                 {
                     try
@@ -7173,6 +7228,30 @@ namespace PosBranch_Win.Transaction
                         ultraGrid1.SuspendLayout();
                         column.Hidden = false;
 
+                        // Calculate drop position based on mouse coordinates
+                        Point pointInGrid = ultraGrid1.PointToClient(new Point(e.X, e.Y));
+                        Infragistics.Win.UIElement element = ultraGrid1.DisplayLayout.UIElement.ElementFromPoint(pointInGrid);
+                        if (element != null)
+                        {
+                            Infragistics.Win.UltraWinGrid.HeaderUIElement headerElement = element.GetAncestor(typeof(Infragistics.Win.UltraWinGrid.HeaderUIElement)) as Infragistics.Win.UltraWinGrid.HeaderUIElement;
+                            if (headerElement != null)
+                            {
+                                UltraGridColumn targetColumn = headerElement.GetContext(typeof(UltraGridColumn)) as UltraGridColumn;
+                                if (targetColumn != null)
+                                {
+                                    bool dropAfter = pointInGrid.X > (headerElement.Rect.Left + headerElement.Rect.Width / 2);
+                                    int newPos = targetColumn.Header.VisiblePosition;
+                                    if (dropAfter) newPos++;
+
+                                    // Ensure we don't exceed the column bounds
+                                    int maxPos = ultraGrid1.DisplayLayout.Bands[0].Columns.Count - 1;
+                                    if (newPos > maxPos) newPos = maxPos;
+
+                                    column.Header.VisiblePosition = newPos;
+                                }
+                            }
+                        }
+
                         // Restore saved width if available
                         if (savedColumnWidths.ContainsKey(item.ColumnKey))
                         {
@@ -7222,19 +7301,29 @@ namespace PosBranch_Win.Transaction
 
                     if (columnChooserListBox != null)
                     {
-                        bool alreadyExists = false;
-                        foreach (object item in columnChooserListBox.Items)
-                        {
-                            if (item is ColumnItem columnItem && columnItem.ColumnKey == column.Key)
-                            {
-                                alreadyExists = true;
-                                break;
-                            }
-                        }
+                        // Define restricted standard columns for Purchase form
+                        string[] standardColumns = new string[] {
+                            "SLNO", "BarCode", "Description", "Unit", "Packing", "Free",
+                            "SellingPrice", "UnitSP", "BaseCost", "Cost", "Qty", "Gross", "NetAmt",
+                            "TaxPer", "TaxAmt", "TaxType"
+                        };
 
-                        if (!alreadyExists)
+                        if (standardColumns.Contains(column.Key))
                         {
-                            columnChooserListBox.Items.Add(new ColumnItem(column.Key, columnName));
+                            bool alreadyExists = false;
+                            foreach (object item in columnChooserListBox.Items)
+                            {
+                                if (item is ColumnItem columnItem && columnItem.ColumnKey == column.Key)
+                                {
+                                    alreadyExists = true;
+                                    break;
+                                }
+                            }
+
+                            if (!alreadyExists)
+                            {
+                                columnChooserListBox.Items.Add(new ColumnItem(column.Key, columnName));
+                            }
                         }
                     }
                 }
@@ -7254,6 +7343,7 @@ namespace PosBranch_Win.Transaction
         {
             if (columnChooserForm != null && !columnChooserForm.IsDisposed)
             {
+                PopulateColumnChooserListBox();
                 columnChooserForm.Show();
                 PositionColumnChooserAtBottomRight();
                 return;
@@ -7287,8 +7377,8 @@ namespace PosBranch_Win.Transaction
 
             // Define standard columns for Purchase form
             string[] standardColumns = new string[] {
-                "SLNO", "BarCode", "Description", "Unit", "Packing", "RetailPrice", "Free",
-                "SellingPrice", "UnitSP", "BaseCost", "Cost", "Qty", "Amount", "TotalAmount",
+                "SLNO", "BarCode", "Description", "Unit", "Packing", "Free",
+                "SellingPrice", "UnitSP", "BaseCost", "Cost", "Qty", "Gross", "NetAmt",
                 "TaxPer", "TaxAmt", "TaxType"
             };
 
@@ -7299,15 +7389,14 @@ namespace PosBranch_Win.Transaction
                 { "Description", "Item Name" },
                 { "Unit", "Unit" },
                 { "Packing", "Packing" },
-                { "RetailPrice", "Retail Price" },
                 { "Free", "Free" },
                 { "SellingPrice", "Selling Price" },
                 { "UnitSP", "Unit SP" },
                 { "BaseCost", "Base Cost" },
                 { "Cost", "Cost" },
                 { "Qty", "Qty" },
-                { "Amount", "Amount" },
-                { "TotalAmount", "Total Amount" },
+                { "Gross", "Gross" },
+                { "NetAmt", "Net Amount" },
                 { "TaxPer", "Tax %" },
                 { "TaxAmt", "Tax Amount" },
                 { "TaxType", "Tax Type" }
@@ -7367,7 +7456,18 @@ namespace PosBranch_Win.Transaction
                     string columnName = !string.IsNullOrEmpty(column.Header.Caption) ?
                                     column.Header.Caption : column.Key;
                     column.Hidden = true;
-                    columnChooserListBox.Items.Add(new ColumnItem(column.Key, columnName));
+
+                    // Define restricted standard columns for Purchase form
+                    string[] standardColumns = new string[] {
+                        "SLNO", "BarCode", "Description", "Unit", "Packing", "Free",
+                        "SellingPrice", "UnitSP", "BaseCost", "Cost", "Qty", "Gross", "NetAmt",
+                        "TaxPer", "TaxAmt", "TaxType"
+                    };
+
+                    if (standardColumns.Contains(column.Key))
+                    {
+                        columnChooserListBox.Items.Add(new ColumnItem(column.Key, columnName));
+                    }
                 }
             }
         }
@@ -7737,6 +7837,8 @@ namespace PosBranch_Win.Transaction
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
+            SaveGridLayout();
+
             if (columnChooserForm != null && !columnChooserForm.IsDisposed)
             {
                 columnChooserForm.Close();
