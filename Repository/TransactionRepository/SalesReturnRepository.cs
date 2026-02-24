@@ -767,7 +767,7 @@ namespace Repository.TransactionRepository
                             int itemIdValue = dgvInvoice.Rows[i].Cells["ItemId"].Value != null && dgvInvoice.Rows[i].Cells["ItemId"].Value != DBNull.Value ? Convert.ToInt32(dgvInvoice.Rows[i].Cells["ItemId"].Value) : 0;
                             decimal previouslyReturned = GetTotalReturnedQty(sr.InvoiceNo ?? string.Empty, itemIdValue, trans, null);
                             decimal newReturnedTotal = previouslyReturned + currentReturnQty;
-                            cmd.Parameters.AddWithValue("@ReturnQty", 0m);
+                            cmd.Parameters.AddWithValue("@ReturnQty", currentReturnQty);
                             cmd.Parameters.AddWithValue("@ReturnedQty", newReturnedTotal);
                             cmd.Parameters.AddWithValue("@SalesPrice", unitPriceDec);
                             cmd.Parameters.AddWithValue("@Amount", unitPriceDec * currentReturnQty);
@@ -1079,7 +1079,7 @@ namespace Repository.TransactionRepository
                         // Add all required parameters
                         cmd.Parameters.AddWithValue("@CompanyId", sr.CompanyId);
                         cmd.Parameters.AddWithValue("@BranchId", sr.BranchId);
-                        cmd.Parameters.AddWithValue("@FinYearId", SessionContext.FinYearId);
+                        cmd.Parameters.AddWithValue("@FinYearId", sr.FinYearId);
                         cmd.Parameters.AddWithValue("@SReturnNo", sr.SReturnNo);
                         cmd.Parameters.AddWithValue("@SReturnDate", sr.SReturnDate);
                         cmd.Parameters.AddWithValue("@InvoiceNo", string.IsNullOrEmpty(sr.InvoiceNo) ? "" : sr.InvoiceNo);
@@ -1139,7 +1139,78 @@ namespace Repository.TransactionRepository
                         }
                     }
 
-                    // Delete all existing details records first
+                    // STEP 1: Reverse stock for old return details BEFORE deleting them
+                    // Fetch old details using GETALLSRETURNDETAILS
+                    try
+                    {
+                        using (SqlCommand getOldCmd = new SqlCommand(STOREDPROCEDURE.POS_SReturnDetails, (SqlConnection)DataConnection, trans))
+                        {
+                            getOldCmd.CommandType = CommandType.StoredProcedure;
+                            getOldCmd.Parameters.AddWithValue("@SReturnNo", sr.SReturnNo);
+                            getOldCmd.Parameters.AddWithValue("@_Operation", "GETALLSRETURNDETAILS");
+
+                            using (SqlDataAdapter adapter = new SqlDataAdapter(getOldCmd))
+                            {
+                                DataTable oldDetails = new DataTable();
+                                adapter.Fill(oldDetails);
+
+                                // Reverse stock for each old detail item
+                                foreach (DataRow oldRow in oldDetails.Rows)
+                                {
+                                    try
+                                    {
+                                        int oldItemId = oldRow.Table.Columns.Contains("ItemID") && oldRow["ItemID"] != DBNull.Value ? Convert.ToInt32(oldRow["ItemID"]) : 0;
+                                        // Use ReturnQty (actual qty for THIS return) for stock reversal, not ReturnedQty (which is cumulative)
+                                        decimal oldQty = 0m;
+                                        if (oldRow.Table.Columns.Contains("ReturnQty") && oldRow["ReturnQty"] != DBNull.Value)
+                                        {
+                                            oldQty = Convert.ToDecimal(oldRow["ReturnQty"]);
+                                        }
+                                        // Fallback: if ReturnQty is 0 (old records), use ReturnedQty as best-effort
+                                        if (oldQty <= 0 && oldRow.Table.Columns.Contains("ReturnedQty") && oldRow["ReturnedQty"] != DBNull.Value)
+                                        {
+                                            oldQty = Convert.ToDecimal(oldRow["ReturnedQty"]);
+                                        }
+                                        decimal oldPacking = oldRow.Table.Columns.Contains("Packing") && oldRow["Packing"] != DBNull.Value ? Convert.ToDecimal(oldRow["Packing"]) : 1m;
+                                        int oldUnitId = oldRow.Table.Columns.Contains("UnitId") && oldRow["UnitId"] != DBNull.Value ? Convert.ToInt32(oldRow["UnitId"]) : 0;
+                                        decimal oldCost = oldRow.Table.Columns.Contains("Cost") && oldRow["Cost"] != DBNull.Value ? Convert.ToDecimal(oldRow["Cost"]) : 0m;
+
+                                        if (oldItemId > 0 && oldQty > 0)
+                                        {
+                                            using (SqlCommand reverseStockCmd = new SqlCommand(STOREDPROCEDURE._SalesReturn_PriceSettings, (SqlConnection)DataConnection, trans))
+                                            {
+                                                reverseStockCmd.CommandType = CommandType.StoredProcedure;
+                                                reverseStockCmd.Parameters.AddWithValue("@CompanyId", sr.CompanyId);
+                                                reverseStockCmd.Parameters.AddWithValue("@BranchId", sr.BranchId);
+                                                reverseStockCmd.Parameters.AddWithValue("@FinYearId", sr.FinYearId);
+                                                reverseStockCmd.Parameters.AddWithValue("@ItemId", oldItemId);
+                                                reverseStockCmd.Parameters.AddWithValue("@UnitId", oldUnitId);
+                                                reverseStockCmd.Parameters.AddWithValue("@Qty", oldQty);
+                                                reverseStockCmd.Parameters.AddWithValue("@SingleItemCost", oldCost);
+                                                reverseStockCmd.Parameters.AddWithValue("@Packing", oldPacking);
+                                                reverseStockCmd.Parameters.AddWithValue("@SReturnNo", sr.SReturnNo);
+                                                reverseStockCmd.Parameters.AddWithValue("@_Operation", "DELETE");
+
+                                                object result = reverseStockCmd.ExecuteScalar();
+                                                System.Diagnostics.Debug.WriteLine($"Reversed stock for ItemId {oldItemId}, Qty {oldQty}: {result}");
+                                            }
+                                        }
+                                    }
+                                    catch (Exception stockEx)
+                                    {
+                                        System.Diagnostics.Debug.WriteLine($"Error reversing stock for old detail: {stockEx.Message}");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error fetching old details for stock reversal: {ex.Message}");
+                        // Continue - stock reversal failure should not block the update
+                    }
+
+                    // STEP 2: Delete all existing details records
                     try
                     {
                         using (SqlCommand deleteCmd = new SqlCommand(STOREDPROCEDURE.POS_SReturnDetails, (SqlConnection)DataConnection, trans))
@@ -1319,7 +1390,7 @@ namespace Repository.TransactionRepository
                                 int itemIdValue = dgvInvoice.Rows[i].Cells["ItemId"].Value != null && dgvInvoice.Rows[i].Cells["ItemId"].Value != DBNull.Value ? Convert.ToInt32(dgvInvoice.Rows[i].Cells["ItemId"].Value) : 0;
                                 decimal previouslyReturned = GetTotalReturnedQty(sr.InvoiceNo ?? string.Empty, itemIdValue, trans, null);
                                 decimal newReturnedTotal = previouslyReturned + currentReturnQty;
-                                cmd.Parameters.AddWithValue("@ReturnQty", 0m);
+                                cmd.Parameters.AddWithValue("@ReturnQty", currentReturnQty);
                                 cmd.Parameters.AddWithValue("@ReturnedQty", newReturnedTotal);
                                 cmd.Parameters.AddWithValue("@SalesPrice", unitPriceDec);
                                 cmd.Parameters.AddWithValue("@Amount", unitPriceDec * currentReturnQty);
@@ -1516,14 +1587,20 @@ namespace Repository.TransactionRepository
                             System.Diagnostics.Debug.WriteLine($"Created cash credit voucher entry for VoucherID: {sr.VoucherID}");
                         }
 
-                        // Second voucher entry - Credit Sales (reverse of Sales)
+                        // Second voucher entry - Debit Sales (reverse of Sales)
+                        // Calculate GST amounts for proper voucher split
+                        Dictionary<double, double> gstTaxAmounts = CalculateGSTAmounts(dgvInvoice);
+                        double totalGST = gstTaxAmounts.Values.Sum();
+                        double returnAmountWithoutGST = sr.GrandTotal - totalGST;
+                        int slNo = 2;
+
                         objVoucher.GroupID = Convert.ToInt32(AccountGroup.SALES_ACCOUNT);
                         objVoucher.LedgerID = ledgerRepository.GetLedgerId(DefaultLedgers.SALE, (int)AccountGroup.SALES_ACCOUNT, Convert.ToInt32(DataBase.BranchId));
                         objVoucher.LedgerName = DefaultLedgers.SALE;
-                        // Reverse of sales: Debit Sales (Sales Return)
+                        // Reverse of sales: Debit Sales (Sales Return) - without GST
                         objVoucher.Credit = 0;
-                        objVoucher.Debit = sr.GrandTotal;
-                        objVoucher.SlNo = 2;
+                        objVoucher.Debit = returnAmountWithoutGST;
+                        objVoucher.SlNo = slNo++;
 
                         using (SqlCommand voucherEntryCmd = new SqlCommand(STOREDPROCEDURE.POS_Vouchers, (SqlConnection)DataConnection, (SqlTransaction)trans))
                         {
@@ -1553,6 +1630,9 @@ namespace Repository.TransactionRepository
                             voucherEntryCmd.ExecuteNonQuery();
                             System.Diagnostics.Debug.WriteLine($"Created sales debit voucher entry for VoucherID: {sr.VoucherID}");
                         }
+
+                        // Create GST voucher entries (CGST and SGST) - DEBITED for return
+                        CreateGSTReturnVoucherEntries(sr, objVoucher, trans, gstTaxAmounts, sr.SReturnDate, ref slNo);
                     }
                     else // CREDIT
                     {
@@ -1612,14 +1692,20 @@ namespace Repository.TransactionRepository
                             System.Diagnostics.Debug.WriteLine($"Created customer credit voucher entry for VoucherID: {sr.VoucherID}");
                         }
 
-                        // Second voucher entry - Credit Sales (reverse of Sales)
+                        // Second voucher entry - Debit Sales (reverse of Sales)
+                        // Calculate GST amounts for proper voucher split
+                        Dictionary<double, double> gstTaxAmountsCredit = CalculateGSTAmounts(dgvInvoice);
+                        double totalGSTCredit = gstTaxAmountsCredit.Values.Sum();
+                        double returnAmountWithoutGSTCredit = sr.GrandTotal - totalGSTCredit;
+                        int slNoCredit = 2;
+
                         objVoucher.GroupID = Convert.ToInt32(AccountGroup.SALES_ACCOUNT);
                         objVoucher.LedgerID = ledgerRepository.GetLedgerId(DefaultLedgers.SALE, (int)AccountGroup.SALES_ACCOUNT, Convert.ToInt32(DataBase.BranchId));
                         objVoucher.LedgerName = DefaultLedgers.SALE;
-                        // Debit Sales (Sales Return)
+                        // Debit Sales (Sales Return) - without GST
                         objVoucher.Credit = 0;
-                        objVoucher.Debit = sr.GrandTotal;
-                        objVoucher.SlNo = 2;
+                        objVoucher.Debit = returnAmountWithoutGSTCredit;
+                        objVoucher.SlNo = slNoCredit++;
 
                         using (SqlCommand voucherEntryCmd = new SqlCommand(STOREDPROCEDURE.POS_Vouchers, (SqlConnection)DataConnection, (SqlTransaction)trans))
                         {
@@ -1647,8 +1733,11 @@ namespace Repository.TransactionRepository
                             voucherEntryCmd.Parameters.AddWithValue("UserDate", objVoucher.UserDate);
 
                             voucherEntryCmd.ExecuteNonQuery();
-                            System.Diagnostics.Debug.WriteLine($"Created sales credit voucher entry for VoucherID: {sr.VoucherID}");
+                            System.Diagnostics.Debug.WriteLine($"Created sales debit voucher entry for VoucherID: {sr.VoucherID}");
                         }
+
+                        // Create GST voucher entries (CGST and SGST) - DEBITED for return
+                        CreateGSTReturnVoucherEntries(sr, objVoucher, trans, gstTaxAmountsCredit, sr.SReturnDate, ref slNoCredit);
                     }
 
                     trans.Commit();

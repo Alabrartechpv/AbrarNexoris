@@ -743,7 +743,7 @@ namespace Repository.TransactionRepository
                     }
                     catch (Exception ex)
                     {
-                        continue;
+                        throw new Exception($"Error processing row {i} in updateStock: {ex.Message}", ex);
                     }
                 }
 

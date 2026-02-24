@@ -508,20 +508,25 @@ namespace Repository.TransactionRepository
             var trans = ((SqlConnection)DataConnection).BeginTransaction(IsolationLevel.Serializable);
             try
             {
-                // Ensure FinYearId is set from session context
-                sales.FinYearId = SessionContext.FinYearId;
-                Netamount = sales.NetAmount;
-                // Ensure FinYearId is not zero
-                if (sales.FinYearId == 0)
-                {
-                    throw new Exception("Cannot update invoice. Financial Year is unexpectedly 0 after hardcoding.");
-                }
-
                 // Check if this bill is CURRENTLY a Hold bill in the database
                 // This determines whether stock was reduced or not when the bill was created
                 // If current status = 'Hold', stock was NOT reduced (so we shouldn't restore it)
                 // If current status = 'Complete', stock WAS reduced (so we should restore it before re-reducing)
                 bool isCurrentlyHoldBill = false;
+                
+                // Get original FinYearId if updating, otherwise use session context
+                int originalFinYearId = sales.FinYearId;
+                if (originalFinYearId <= 0)
+                {
+                    originalFinYearId = SessionContext.FinYearId;
+                    sales.FinYearId = originalFinYearId;
+                }
+                Netamount = sales.NetAmount;
+                // Ensure FinYearId is not zero
+                if (sales.FinYearId <= 0)
+                {
+                    throw new Exception("Cannot update invoice. Financial Year is unexpectedly 0 after hardcoding.");
+                }
                 try
                 {
                     using (SqlCommand statusCmd = new SqlCommand(STOREDPROCEDURE._POS_Sales_Win, (SqlConnection)DataConnection, (SqlTransaction)trans))
@@ -642,6 +647,10 @@ namespace Repository.TransactionRepository
                     else
                     {
                         // COMPLETED SALE UPDATE: Stock was reduced, so use DELETE_BY_BILLNO to restore stock first
+                        
+                        // Restore base unit stock for old details is handled inside _POS_SDetails_Win 'DELETE_BY_BILLNO' operation
+                        // as per the updated stored procedure logic.
+
                         using (SqlCommand deleteCmd = new SqlCommand(STOREDPROCEDURE._POS_SDetails_Win, (SqlConnection)DataConnection, (SqlTransaction)trans))
                         {
                             deleteCmd.CommandType = CommandType.StoredProcedure;
@@ -660,6 +669,17 @@ namespace Repository.TransactionRepository
                                 }
                             }
                         }
+                    }
+
+                    // CLEANUP SPLIT PAYMENTS
+                    // Ensure orphaned payment details are deleted during update
+                    try
+                    {
+                        DeletePaymentDetailsByBillNo(sales.BillNo, sales.CompanyId, sales.BranchId, sales.FinYearId, trans);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to delete payment details during update: {ex.Message}");
                     }
                 }
                 catch (Exception ex)

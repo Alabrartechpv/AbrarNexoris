@@ -120,6 +120,39 @@ namespace PosBranch_Win
                 // Handle subreport parameters
                 HandleSubreportParameters(rpt, BillNo);
 
+                // Prevent printing invoices to barcode printers if Windows changed the default printer
+                try
+                {
+                    string currentPrinter = rpt.PrintOptions.PrinterName;
+                    if (string.IsNullOrEmpty(currentPrinter))
+                    {
+                        currentPrinter = new System.Drawing.Printing.PrinterSettings().PrinterName;
+                    }
+
+                    if (!string.IsNullOrEmpty(currentPrinter) &&
+                       (currentPrinter.IndexOf("snbc", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        currentPrinter.IndexOf("lpneo", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        currentPrinter.IndexOf("tvse", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        currentPrinter.IndexOf("bple", StringComparison.OrdinalIgnoreCase) >= 0))
+                    {
+                        foreach (string printer in System.Drawing.Printing.PrinterSettings.InstalledPrinters)
+                        {
+                            if (printer.IndexOf("snbc", StringComparison.OrdinalIgnoreCase) < 0 &&
+                                printer.IndexOf("lpneo", StringComparison.OrdinalIgnoreCase) < 0 &&
+                                printer.IndexOf("tvse", StringComparison.OrdinalIgnoreCase) < 0 &&
+                                printer.IndexOf("bple", StringComparison.OrdinalIgnoreCase) < 0)
+                            {
+                                rpt.PrintOptions.PrinterName = printer;
+                                break;
+                            }
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    // Ignore printer enumeration errors
+                }
+
                 // Print directly (no need to set ReportSource for preview when printing)
                 rpt.PrintToPrinter(1, false, 0, 0);
             }
@@ -373,6 +406,40 @@ namespace PosBranch_Win
                 rpt.Load(reportPath);
                 setReportConnection(rpt);
                 crystalReportViewer1.ReportSource = rpt;
+
+                // Prevent printing to barcode printers if Windows changed the default printer
+                try
+                {
+                    string currentPrinter = rpt.PrintOptions.PrinterName;
+                    if (string.IsNullOrEmpty(currentPrinter))
+                    {
+                        currentPrinter = new System.Drawing.Printing.PrinterSettings().PrinterName;
+                    }
+
+                    if (!string.IsNullOrEmpty(currentPrinter) &&
+                       (currentPrinter.IndexOf("snbc", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        currentPrinter.IndexOf("lpneo", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        currentPrinter.IndexOf("tvse", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        currentPrinter.IndexOf("bple", StringComparison.OrdinalIgnoreCase) >= 0))
+                    {
+                        foreach (string printer in System.Drawing.Printing.PrinterSettings.InstalledPrinters)
+                        {
+                            if (printer.IndexOf("snbc", StringComparison.OrdinalIgnoreCase) < 0 &&
+                                printer.IndexOf("lpneo", StringComparison.OrdinalIgnoreCase) < 0 &&
+                                printer.IndexOf("tvse", StringComparison.OrdinalIgnoreCase) < 0 &&
+                                printer.IndexOf("bple", StringComparison.OrdinalIgnoreCase) < 0)
+                            {
+                                rpt.PrintOptions.PrinterName = printer;
+                                break;
+                            }
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    // Ignore printer enumeration errors
+                }
+
                 rpt.PrintToPrinter(1, false, 0, 0);
             }
             catch (Exception ex)

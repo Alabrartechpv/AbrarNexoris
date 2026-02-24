@@ -274,7 +274,7 @@ namespace Repository.TransactionRepository
                         catch (Exception ex)
                         {
                             System.Diagnostics.Debug.WriteLine("Error processing row " + i + ": " + ex.Message);
-                            continue;
+                            throw new Exception($"Error processing row {i} in SavePurchaseInvoice: {ex.Message}", ex);
                         }
                     }
                 }
@@ -623,7 +623,7 @@ namespace Repository.TransactionRepository
                         catch (Exception ex)
                         {
                             System.Diagnostics.Debug.WriteLine("Error processing row " + i + ": " + ex.Message);
-                            continue;
+                            throw new Exception($"Error processing row {i} in UpdatePurchase: {ex.Message}", ex);
                         }
                     }
                 }

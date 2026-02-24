@@ -2782,7 +2782,17 @@ namespace PosBranch_Win.Transaction
                             newRow["ItemId"] = row["ItemId"];
 
                         newRow["ItemName"] = row["ItemName"] != DBNull.Value ? row["ItemName"].ToString() : string.Empty;
-                        newRow["Barcode"] = row["BarCode"] != DBNull.Value ? row["BarCode"].ToString() : string.Empty;
+                        
+                        // Fix for "Column 'BarCode' does not belong to table" error
+                        if (details.Columns.Contains("BarCode") && row["BarCode"] != DBNull.Value)
+                        {
+                            newRow["Barcode"] = row["BarCode"].ToString();
+                        }
+                        else
+                        {
+                            newRow["Barcode"] = string.Empty;
+                        }
+
                         newRow["Unit"] = row["Unit"] != DBNull.Value ? row["Unit"].ToString() : string.Empty;
 
                         decimal unitPrice = 0;
