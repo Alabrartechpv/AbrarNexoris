@@ -1821,22 +1821,42 @@ namespace PosBranch_Win.DialogBox
                     // Get the selected search filter option
                     string filterOption = comboBox1.SelectedItem?.ToString() ?? "Select all";
 
-                    // Build a filter based on the selected option
-                    string filter = BuildFilterString(searchText, filterOption);
+                    DataTable searchResultsTable = dv.ToTable().Clone();
 
-                    dv.RowFilter = filter;
+                    // Apply fuzzy search
+                    var searchResults = new List<Tuple<int, DataRow>>();
+
+                    foreach (DataRowView drv in dv)
+                    {
+                        int score = CalculateFuzzyMatchScore(drv.Row, searchText.Trim(), filterOption);
+                        if (score > 0)
+                        {
+                            searchResults.Add(new Tuple<int, DataRow>(score, drv.Row));
+                        }
+                    }
+
+                    // Sort by highest score first
+                    var sortedResults = searchResults.OrderByDescending(x => x.Item1).ToList();
+
+                    foreach (var match in sortedResults)
+                    {
+                        searchResultsTable.ImportRow(match.Item2);
+                    }
 
                     // Update status with filter info
-                    UpdateStatus($"Filter applied: '{filter}' - Found {dv.Count} matching rows (Latest first)");
+                    UpdateStatus($"Filter applied (fuzzy): Found {searchResultsTable.Rows.Count} matching rows");
 
                     // Update title with filter results
-                    this.Text = $"Item Master - Showing {dv.Count} of {fullDataTable.Rows.Count} items (Latest first)";
+                    this.Text = $"Item Master - Showing {searchResultsTable.Rows.Count} of {fullDataTable.Rows.Count} items (Matches Sorted)";
 
                     // Update textBox3 with the filtered count
                     if (textBox3 != null)
                     {
-                        textBox3.Text = dv.Count.ToString();
+                        textBox3.Text = searchResultsTable.Rows.Count.ToString();
                     }
+                    
+                    // Apply the filtered view to the grid
+                    ultraGrid1.DataSource = searchResultsTable;
                 }
                 else
                 {
@@ -1851,10 +1871,10 @@ namespace PosBranch_Win.DialogBox
                     {
                         textBox3.Text = fullDataTable.Rows.Count.ToString();
                     }
-                }
 
-                // Apply the filtered view to the grid
-                ultraGrid1.DataSource = dv;
+                    // Apply the unfiltered view to the grid
+                    ultraGrid1.DataSource = dv;
+                }
 
                 // Configure visible columns but preserve widths and positions
                 ConfigureVisibleColumnsPreserveLayout(columnWidths, columnPositions);
@@ -1873,7 +1893,7 @@ namespace PosBranch_Win.DialogBox
                 ultraGrid1.ResumeLayout(true);
 
                 // Final status update
-                UpdateStatus($"Grid updated with {ultraGrid1.Rows.Count} rows. Filter: {(string.IsNullOrEmpty(dv.RowFilter) ? "None" : dv.RowFilter)}");
+                UpdateStatus($"Grid updated with {ultraGrid1.Rows.Count} rows.");
             }
             catch (Exception ex)
             {
@@ -1881,6 +1901,135 @@ namespace PosBranch_Win.DialogBox
                 try { ultraGrid1.ResumeLayout(true); } catch { }
                 UpdateStatus($"Error applying filter: {ex.Message}");
             }
+        }
+
+        // Calculate a score for how well a row matches a search string
+        private int CalculateFuzzyMatchScore(DataRow row, string searchText, string filterOption)
+        {
+            searchText = searchText.ToLower();
+            int maxScore = 0;
+
+            // Columns to search based on filter option
+            var colsToSearch = new List<string>();
+            switch (filterOption)
+            {
+                case "Barcode":
+                    colsToSearch.Add("BarCode");
+                    break;
+                case "Item Name":
+                    colsToSearch.Add("Description");
+                    break;
+                case "UnitID":
+                    colsToSearch.Add("UnitId");
+                    break;
+                case "Unit":
+                    colsToSearch.Add("Unit");
+                    break;
+                case "Select all":
+                default:
+                    colsToSearch.Add("BarCode");
+                    colsToSearch.Add("Description");
+                    colsToSearch.Add("UnitId");
+                    colsToSearch.Add("Unit");
+                    break;
+            }
+
+            foreach (string colName in colsToSearch)
+            {
+                if (row.Table.Columns.Contains(colName) && row[colName] != DBNull.Value)
+                {
+                    string cellValue = row[colName].ToString().ToLower();
+                    maxScore = Math.Max(maxScore, GetFuzzyMatchScore(cellValue, searchText));
+                }
+            }
+
+            return maxScore;
+        }
+
+        private int GetFuzzyMatchScore(string text, string query)
+        {
+            if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(query)) return 0;
+            
+            // Exact full match
+            if (text == query) return 1000;
+            
+            // Exact prefix match
+            if (text.StartsWith(query)) return 500;
+            
+            // Exact substring match
+            if (text.Contains(query)) return 100;
+
+            // Levenshtein / Word proximity match
+            string[] queryWords = query.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            string[] textWords = text.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            
+            int totalScore = 0;
+            foreach (string qWord in queryWords)
+            {
+                int bestWordScore = 0;
+                foreach (string tWord in textWords)
+                {
+                    // Exact word match
+                    if (tWord == qWord)
+                    {
+                        bestWordScore = Math.Max(bestWordScore, 50);
+                    }
+                    // Word prefix match
+                    else if (tWord.StartsWith(qWord))
+                    {
+                        bestWordScore = Math.Max(bestWordScore, 20);
+                    }
+                    else
+                    {
+                        int maxLen = Math.Max(tWord.Length, qWord.Length);
+                        int distance = ComputeLevenshteinDistance(tWord, qWord);
+                        
+                        // Roughly define "close enough" 
+                        // If distance is 1 for a 4+ char word, or 2 for an 8+ char word
+                        if (distance == 1 && maxLen >= 4)
+                        {
+                            bestWordScore = Math.Max(bestWordScore, 10);
+                        }
+                        else if (distance <= 2 && maxLen >= 8)
+                        {
+                            bestWordScore = Math.Max(bestWordScore, 5); 
+                        }
+                    }
+                }
+                
+                // If a query word completely misses everything, severe penalty
+                if (bestWordScore == 0) return 0; 
+                
+                totalScore += bestWordScore;
+            }
+
+            return totalScore;
+        }
+
+        private int ComputeLevenshteinDistance(string s, string t)
+        {
+            if (string.IsNullOrEmpty(s)) return string.IsNullOrEmpty(t) ? 0 : t.Length;
+            if (string.IsNullOrEmpty(t)) return s.Length;
+
+            int n = s.Length;
+            int m = t.Length;
+            int[,] d = new int[n + 1, m + 1];
+
+            for (int i = 0; i <= n; d[i, 0] = i++) { }
+            for (int j = 0; j <= m; d[0, j] = j++) { }
+
+            for (int i = 1; i <= n; i++)
+            {
+                for (int j = 1; j <= m; j++)
+                {
+                    int cost = (t[j - 1] == s[i - 1]) ? 0 : 1;
+
+                    d[i, j] = Math.Min(
+                        Math.Min(d[i - 1, j] + 1, d[i, j - 1] + 1),
+                        d[i - 1, j - 1] + cost);
+                }
+            }
+            return d[n, m];
         }
 
         // Build filter string based on selected filter option
