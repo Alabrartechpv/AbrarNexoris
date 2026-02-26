@@ -432,7 +432,7 @@ namespace PosBranch_Win.Transaction
             this.Resize += (s, e) => UpdateFooterCellPositions();
 
             // Add click event for ultraPictureBox7 to open PurchaseEdit with highlighted row
-            
+
 
             // Add click event for pbxExit to remove selected item
             pbxExit.Click += (s, e) => RemoveSelectedItem();
@@ -1044,8 +1044,7 @@ namespace PosBranch_Win.Transaction
                 dt.Columns.Add("BaseCost", typeof(float));
                 dt.Columns.Add("Cost", typeof(float));
                 dt.Columns.Add("Qty", typeof(float));
-                dt.Columns.Add("Amount", typeof(float));
-                dt.Columns.Add("TotalAmount", typeof(float));
+                // Amount and TotalAmount columns removed - not needed in grid
                 dt.Columns.Add("Gross", typeof(float)); // Gross = Amount - TaxAmt (for incl tax type)
                 dt.Columns.Add("NetAmt", typeof(float)); // Net Amount = Amount + TaxAmt (for excl tax type)
                 dt.Columns.Add("NewBaseCost", typeof(float)); // New BaseCost = average of all rows' Cost values
@@ -1194,8 +1193,6 @@ namespace PosBranch_Win.Transaction
                     SetupColumn(band.Columns["BaseCost"], "Base Cost", 100, HAlign.Right, true, true, false, "N2");
                     SetupColumn(band.Columns["Cost"], "Cost", 100, HAlign.Right, false, true, false, "N2");
                     SetupColumn(band.Columns["Qty"], "Qty", 80, HAlign.Right, false, true);
-                    SetupColumn(band.Columns["Amount"], "Amount", 0, HAlign.Right, false, true, true);
-                    SetupColumn(band.Columns["TotalAmount"], "Total Amount", 0, HAlign.Right, false, true, true);
                     SetupColumn(band.Columns["Gross"], "Gross", 120, HAlign.Right, false, true, true); // Hidden
                     SetupColumn(band.Columns["NetAmt"], "Net Amount", 120, HAlign.Right, false, true, false); // Visible, editable
                     SetupColumn(band.Columns["NewBaseCost"], "New BaseCost", 120, HAlign.Right, true, true, true, "N2"); // Read-only, hidden by default, toggled by F5
@@ -1211,6 +1208,7 @@ namespace PosBranch_Win.Transaction
                     SetupColumn(band.Columns["UnitPrize"], "UnitPrize", 0, HAlign.Right, false, true, true);
                     SetupColumn(band.Columns["MarginPer"], "MarginPer", 0, HAlign.Right, false, true, true);
                     SetupColumn(band.Columns["MarginAmt"], "MarginAmt", 0, HAlign.Right, false, true, true);
+                    // Amount and TotalAmount columns removed from grid
                     SetupColumn(band.Columns["WholeSalePrice"], "WholeSalePrice", 0, HAlign.Right, false, true, true);
                     SetupColumn(band.Columns["CreditPrice"], "CreditPrice", 0, HAlign.Right, false, true, true);
                     SetupColumn(band.Columns["CardPrice"], "CardPrice", 0, HAlign.Right, false, true, true);
@@ -1613,8 +1611,6 @@ namespace PosBranch_Win.Transaction
                     newRow["BaseCost"] = baseCostWithoutTax;
                     newRow["Cost"] = costWithTax;
                     newRow["Qty"] = quantity;
-                    newRow["Amount"] = costWithTax * quantity;
-                    newRow["TotalAmount"] = costWithTax * quantity;
 
                     // Calculate NetAmt and Gross for new items
                     // NetAmt = Gross + TaxAmt (for both excl and incl when adding new items)
@@ -1661,10 +1657,9 @@ namespace PosBranch_Win.Transaction
                     // Add the row to the DataTable
                     dt.Rows.Add(newRow);
 
-                    // Update NetAmt and Gross visibility based on tax type, and Amount caption
+                    // Update NetAmt and Gross visibility based on tax type
                     UpdateNetAmtColumnVisibility();
                     UpdateGrossColumnVisibility();
-                    UpdateAmountColumnCaption();
 
                     // Select the newly added row
                     int newRowIndex = dt.Rows.Count - 1;
@@ -2003,7 +1998,7 @@ namespace PosBranch_Win.Transaction
                     {
                         string updateQuery = @"
                             UPDATE PriceSettings 
-                            SET WholeSalePrice = @WholeSalePrice
+                            SET RetailPrice = @RetailPrice
                             WHERE BranchId = @BranchId 
                                 AND CompanyId = @CompanyId
                                 AND ItemId = @ItemId 
@@ -2014,9 +2009,9 @@ namespace PosBranch_Win.Transaction
                             int unitId = unit.Item1;
                             float packing = unit.Item2;
 
-                            // Calculate the WholeSalePrice for this unit
-                            // WholeSalePrice = basePrice * packing
-                            float wholeSalePrice = basePrice * packing;
+                            // Calculate the RetailPrice for this unit
+                            // RetailPrice = basePrice * packing
+                            float retailPriceForUnit = basePrice * packing;
 
                             using (System.Data.SqlClient.SqlCommand updateCmd = new System.Data.SqlClient.SqlCommand(updateQuery, (System.Data.SqlClient.SqlConnection)drop.DataConnection))
                             {
@@ -2024,12 +2019,12 @@ namespace PosBranch_Win.Transaction
                                 updateCmd.Parameters.AddWithValue("@CompanyId", Convert.ToInt32(DataBase.CompanyId));
                                 updateCmd.Parameters.AddWithValue("@ItemId", itemId);
                                 updateCmd.Parameters.AddWithValue("@UnitId", unitId);
-                                updateCmd.Parameters.AddWithValue("@WholeSalePrice", wholeSalePrice);
+                                updateCmd.Parameters.AddWithValue("@RetailPrice", retailPriceForUnit);
 
                                 updateCmd.ExecuteNonQuery();
                             }
 
-                            System.Diagnostics.Debug.WriteLine($"Updated PriceSettings: ItemId={itemId}, UnitId={unitId}, Packing={packing}, WholeSalePrice={wholeSalePrice}");
+                            System.Diagnostics.Debug.WriteLine($"Updated PriceSettings: ItemId={itemId}, UnitId={unitId}, Packing={packing}, RetailPrice={retailPriceForUnit}");
                         }
 
                         // Raise event to notify other forms (like frmItemMasterNew) that prices were updated
@@ -2199,9 +2194,9 @@ namespace PosBranch_Win.Transaction
                 return;
             }
 
-            // Recalculate when Qty, Cost, BaseCost, TaxPer, TaxType, Amount, or TaxAmt is changed
+            // Recalculate when Qty, Cost, BaseCost, TaxPer, TaxType, or TaxAmt is changed
             if (e.Cell.Column.Key == "Qty" || e.Cell.Column.Key == "Cost" || e.Cell.Column.Key == "BaseCost" ||
-                e.Cell.Column.Key == "TaxPer" || e.Cell.Column.Key == "TaxType" || e.Cell.Column.Key == "Amount" || e.Cell.Column.Key == "TaxAmt")
+                e.Cell.Column.Key == "TaxPer" || e.Cell.Column.Key == "TaxType" || e.Cell.Column.Key == "TaxAmt")
             {
                 if (e.Cell.Row.Cells.Exists("Qty") && e.Cell.Row.Cells.Exists("Cost"))
                 {
@@ -2226,17 +2221,11 @@ namespace PosBranch_Win.Transaction
                                 RecalculateTaxForRow(e.Cell.Row, costWithTax, qty);
                             }
 
-                            // If TaxType was changed, update column visibility and caption
+                            // If TaxType was changed, update column visibility
                             if (e.Cell.Column.Key == "TaxType")
                             {
                                 UpdateNetAmtColumnVisibility();
                                 UpdateGrossColumnVisibility();
-                                UpdateAmountColumnCaption();
-                            }
-                            else
-                            {
-                                // Just update Amount caption in case tax type mix changed
-                                UpdateAmountColumnCaption();
                             }
 
                             // Update totals
@@ -2308,11 +2297,6 @@ namespace PosBranch_Win.Transaction
                             e.Cell.Row.Cells["Gross"].Value = newGross;
                         }
 
-                        // Also update Amount cell with Gross value for excl
-                        if (taxType == "excl" && e.Cell.Row.Cells.Exists("Amount"))
-                        {
-                            e.Cell.Row.Cells["Amount"].Value = newGross;
-                        }
                     }
 
                     // Recalculate totals to update label4 and txtInvoiceAmt
@@ -2367,8 +2351,7 @@ namespace PosBranch_Win.Transaction
                         row.Cells["TaxAmt"].Value = 0;
                     if (row.Cells.Exists("BaseCost"))
                         row.Cells["BaseCost"].Value = baseCost;
-                    row.Cells["Amount"].Value = costWithTax * qty;
-                    row.Cells["TotalAmount"].Value = costWithTax * qty;
+                    if (row.Cells.Exists("NetTotal")) row.Cells["NetTotal"].Value = costWithTax * qty;
                     return;
                 }
 
@@ -2417,10 +2400,9 @@ namespace PosBranch_Win.Transaction
                     row.Cells["TaxAmt"].Value = taxAmt;
                 }
 
-                // Update Amount and TotalAmount
+                // Update NetTotal
                 float amount = costWithTax * qty;
-                row.Cells["Amount"].Value = amount;
-                row.Cells["TotalAmount"].Value = amount;
+                if (row.Cells.Exists("NetTotal")) row.Cells["NetTotal"].Value = amount;
 
                 // Update NetAmt for excl tax type and Gross for incl tax type
                 UpdateNetAmtForRow(row);
@@ -2601,8 +2583,7 @@ namespace PosBranch_Win.Transaction
                     {
                         row.Cells["TaxAmt"].Value = 0;
                     }
-                    row.Cells["Amount"].Value = costWithTax * qty;
-                    row.Cells["TotalAmount"].Value = costWithTax * qty;
+                    if (row.Cells.Exists("NetTotal")) row.Cells["NetTotal"].Value = costWithTax * qty;
                     return;
                 }
 
@@ -2632,10 +2613,9 @@ namespace PosBranch_Win.Transaction
                     row.Cells["TaxAmt"].Value = taxAmt;
                 }
 
-                // Update Amount and TotalAmount (Qty × Cost)
+                // Update NetTotal (Qty × Cost)
                 float amount = costWithTax * qty;
-                row.Cells["Amount"].Value = amount;
-                row.Cells["TotalAmount"].Value = amount;
+                if (row.Cells.Exists("NetTotal")) row.Cells["NetTotal"].Value = amount;
 
                 // Update NetAmt for excl tax type: NetAmt = Amount + TaxAmt
                 UpdateNetAmtForRow(row);
@@ -2656,7 +2636,7 @@ namespace PosBranch_Win.Transaction
         {
             try
             {
-                if (row == null || !row.Cells.Exists("TaxType") || !row.Cells.Exists("Amount") || !row.Cells.Exists("TaxAmt"))
+                if (row == null || !row.Cells.Exists("TaxType") || !row.Cells.Exists("TaxAmt") || !row.Cells.Exists("Qty") || !row.Cells.Exists("Cost"))
                     return;
 
                 string taxType = "";
@@ -2665,12 +2645,19 @@ namespace PosBranch_Win.Transaction
                     taxType = NormalizeTaxType(row.Cells["TaxType"].Value.ToString());
                 }
 
-                float amount = 0;
+                float qty = 0;
+                float cost = 0;
                 float taxAmt = 0;
-                if (row.Cells["Amount"].Value != null)
-                    float.TryParse(row.Cells["Amount"].Value.ToString(), out amount);
+
+                if (row.Cells["Qty"].Value != null)
+                    float.TryParse(row.Cells["Qty"].Value.ToString(), out qty);
+                if (row.Cells["Cost"].Value != null)
+                    float.TryParse(row.Cells["Cost"].Value.ToString(), out cost);
                 if (row.Cells["TaxAmt"].Value != null)
                     float.TryParse(row.Cells["TaxAmt"].Value.ToString(), out taxAmt);
+
+                // Calculate local amount from Qty * Cost
+                float amount = qty * cost;
 
                 // Calculate and show NetAmt for both excl and incl tax types
                 if (row.Cells.Exists("NetAmt"))
@@ -2742,7 +2729,7 @@ namespace PosBranch_Win.Transaction
                 // The user's edited value must be preserved
 
                 // Also update Amount column caption based on tax type
-                UpdateAmountColumnCaption();
+
             }
             catch (Exception ex)
             {
@@ -2755,7 +2742,7 @@ namespace PosBranch_Win.Transaction
         {
             try
             {
-                if (row == null || !row.Cells.Exists("TaxType") || !row.Cells.Exists("Amount") || !row.Cells.Exists("TaxAmt"))
+                if (row == null || !row.Cells.Exists("TaxType") || !row.Cells.Exists("TaxAmt") || !row.Cells.Exists("Qty") || !row.Cells.Exists("Cost"))
                     return;
 
                 string taxType = "";
@@ -2764,12 +2751,19 @@ namespace PosBranch_Win.Transaction
                     taxType = NormalizeTaxType(row.Cells["TaxType"].Value.ToString());
                 }
 
-                float amount = 0;
+                float qty = 0;
+                float cost = 0;
                 float taxAmt = 0;
-                if (row.Cells["Amount"].Value != null)
-                    float.TryParse(row.Cells["Amount"].Value.ToString(), out amount);
+
+                if (row.Cells["Qty"].Value != null)
+                    float.TryParse(row.Cells["Qty"].Value.ToString(), out qty);
+                if (row.Cells["Cost"].Value != null)
+                    float.TryParse(row.Cells["Cost"].Value.ToString(), out cost);
                 if (row.Cells["TaxAmt"].Value != null)
                     float.TryParse(row.Cells["TaxAmt"].Value.ToString(), out taxAmt);
+
+                // Calculate local amount from Qty * Cost
+                float amount = qty * cost;
 
                 // Only calculate and show Gross for incl tax type
                 if (taxType == "incl" && row.Cells.Exists("Gross"))
@@ -2872,7 +2866,7 @@ namespace PosBranch_Win.Transaction
                 }
 
                 // Also update Amount column caption based on tax type
-                UpdateAmountColumnCaption();
+
             }
             catch (Exception ex)
             {
@@ -2880,70 +2874,6 @@ namespace PosBranch_Win.Transaction
             }
         }
 
-        // Helper method to update Amount column caption based on tax type
-        private void UpdateAmountColumnCaption()
-        {
-            try
-            {
-                if (ultraGrid1.DisplayLayout.Bands.Count == 0)
-                    return;
-
-                UltraGridColumn amountCol = ultraGrid1.DisplayLayout.Bands[0].Columns["Amount"];
-                if (amountCol == null)
-                    return;
-
-                DataTable dt = ultraGrid1.DataSource as DataTable;
-                if (dt == null || dt.Rows.Count == 0)
-                {
-                    // Default to "Amount" if no data
-                    amountCol.Header.Caption = "Amount";
-                    amountCol.Hidden = false;
-                    return;
-                }
-
-                // Check tax types in data
-                bool hasExclTax = false;
-                bool hasInclTax = false;
-                foreach (DataRow dataRow in dt.Rows)
-                {
-                    if (dataRow["TaxType"] != null && dataRow["TaxType"] != DBNull.Value)
-                    {
-                        string rowTaxType = NormalizeTaxType(dataRow["TaxType"].ToString());
-                        if (rowTaxType == "excl")
-                        {
-                            hasExclTax = true;
-                        }
-                        else if (rowTaxType == "incl")
-                        {
-                            hasInclTax = true;
-                        }
-                    }
-                }
-
-                // Update column based on tax type
-                if (hasExclTax)
-                {
-                    // For excl: Show and rename to "Gross"
-                    amountCol.Hidden = false;
-                    amountCol.Header.Caption = "Gross";
-                }
-                else if (hasInclTax)
-                {
-                    // For incl: Hide the Amount column
-                    amountCol.Hidden = true;
-                }
-                else
-                {
-                    // No tax: Show as "Amount"
-                    amountCol.Hidden = false;
-                    amountCol.Header.Caption = "Amount";
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine("Error updating Amount column caption: " + ex.Message);
-            }
-        }
 
         // Handle Free quantity changes: If Free >= 1, set Qty = Free and Cost = 0
         private void HandleFreeQuantityChange(UltraGridRow row, float freeValue)
@@ -2965,9 +2895,7 @@ namespace PosBranch_Win.Transaction
                     row.Cells["TaxAmt"].Value = 0f;
                     row.Cells["TaxPer"].Value = 0f;
 
-                    // Set Amount and TotalAmount to 0 since cost is 0
-                    row.Cells["Amount"].Value = 0f;
-                    row.Cells["TotalAmount"].Value = 0f;
+                    // Amount and TotalAmount removed from grid
 
                     // Set NetAmt and Gross to 0
                     if (row.Cells.Exists("NetAmt"))
@@ -3010,8 +2938,6 @@ namespace PosBranch_Win.Transaction
                 {
                     dataRow["TaxPer"] = 0;
                     dataRow["TaxAmt"] = 0;
-                    dataRow["Amount"] = costWithTax * qty;
-                    dataRow["TotalAmount"] = costWithTax * qty;
                     return;
                 }
 
@@ -3038,9 +2964,7 @@ namespace PosBranch_Win.Transaction
                 // Update TaxAmt (BaseCost and Cost remain unchanged - they are per-unit values)
                 dataRow["TaxAmt"] = taxAmt;
 
-                // Update Amount and TotalAmount (Qty × Cost)
-                dataRow["Amount"] = costWithTax * qty;
-                dataRow["TotalAmount"] = costWithTax * qty;
+                // Amount and TotalAmount removed from grid
 
                 // Recalculate NewBaseCost (average cost) for all rows
                 RecalculateNewBaseCostForAllRows();
@@ -3435,10 +3359,8 @@ namespace PosBranch_Win.Transaction
                                             ultraGrid1.ActiveRow.Cells["UnitPrize"].Value = newRetailPrice;
                                         }
 
-                                        // Update Amount and TotalAmount based on new cost and quantity
+                                        // Amount and TotalAmount removed from grid
                                         float newAmount = newCost * originalQty;
-                                        ultraGrid1.ActiveRow.Cells["Amount"].Value = newAmount;
-                                        ultraGrid1.ActiveRow.Cells["TotalAmount"].Value = newAmount;
                                     }
                                 }
                                 else
@@ -3519,10 +3441,8 @@ namespace PosBranch_Win.Transaction
                                                 ultraGrid1.ActiveRow.Cells["UnitPrize"].Value = (float)matchingItem.RetailPrice;
                                             }
 
-                                            // Update Amount and TotalAmount
+                                            // Amount and TotalAmount removed from grid
                                             float newAmount = newCost * originalQty;
-                                            ultraGrid1.ActiveRow.Cells["Amount"].Value = newAmount;
-                                            ultraGrid1.ActiveRow.Cells["TotalAmount"].Value = newAmount;
                                         }
                                     }
                                 }
@@ -3612,10 +3532,8 @@ namespace PosBranch_Win.Transaction
                                             ultraGrid1.ActiveRow.Cells["UnitPrize"].Value = newRetailPrice;
                                         }
 
-                                        // Update Amount and TotalAmount
+                                        // Amount and TotalAmount removed from grid
                                         float newAmount = newCost * originalQty;
-                                        ultraGrid1.ActiveRow.Cells["Amount"].Value = newAmount;
-                                        ultraGrid1.ActiveRow.Cells["TotalAmount"].Value = newAmount;
                                     }
                                 }
 
@@ -3699,11 +3617,8 @@ namespace PosBranch_Win.Transaction
                             if (ultraGrid1.ActiveRow.Cells.Exists("TaxType") && ultraGrid1.ActiveRow.Cells["TaxType"].Value != null)
                                 taxType = NormalizeTaxType(ultraGrid1.ActiveRow.Cells["TaxType"].Value.ToString());
 
-                            // Calculate Amount = Cost * Qty
+                            // Calculate Amount = Cost * Qty (Amount/TotalAmount removed from grid)
                             float newAmount = newCost * quantity;
-                            ultraGrid1.ActiveRow.Cells["Amount"].Value = newAmount;
-                            if (ultraGrid1.ActiveRow.Cells.Exists("TotalAmount"))
-                                ultraGrid1.ActiveRow.Cells["TotalAmount"].Value = newAmount;
 
                             // Calculate Tax Amount and related values based on tax type
                             float newTaxAmt = 0;
@@ -3986,8 +3901,6 @@ namespace PosBranch_Win.Transaction
                     newRow["BaseCost"] = baseCostWithoutTax;
                     newRow["Cost"] = costWithTax;
                     newRow["Qty"] = quantity;
-                    newRow["Amount"] = costWithTax * quantity;
-                    newRow["TotalAmount"] = costWithTax * quantity;
 
                     // Hidden columns - make sure UnitId is properly set
                     newRow["UnitId"] = itm.UnitId;
@@ -4167,8 +4080,6 @@ namespace PosBranch_Win.Transaction
                 tempGridView.Columns.Add("WholeSalePrice", "WholeSalePrice");
                 tempGridView.Columns.Add("CreditPrice", "CreditPrice");
                 tempGridView.Columns.Add("CardPrice", "CardPrice");
-                tempGridView.Columns.Add("Amount", "Amount");
-                tempGridView.Columns.Add("TotalAmount", "TotalAmount");
                 tempGridView.Columns.Add("NetAmt", "NetAmt");
                 tempGridView.Columns.Add("Gross", "Gross");
 
@@ -4214,8 +4125,6 @@ namespace PosBranch_Win.Transaction
                     }
                     tempGridView.Rows[index].Cells["CreditPrice"].Value = row["CreditPrice"] != DBNull.Value ? row["CreditPrice"] : 0f;
                     tempGridView.Rows[index].Cells["CardPrice"].Value = row["CardPrice"] != DBNull.Value ? row["CardPrice"] : 0f;
-                    tempGridView.Rows[index].Cells["Amount"].Value = row["Amount"] != DBNull.Value ? row["Amount"] : 0f;
-                    tempGridView.Rows[index].Cells["TotalAmount"].Value = row["TotalAmount"] != DBNull.Value ? row["TotalAmount"] : 0f;
                     tempGridView.Rows[index].Cells["NetAmt"].Value = row.Table.Columns.Contains("NetAmt") && row["NetAmt"] != null && row["NetAmt"] != DBNull.Value
                         ? row["NetAmt"]
                         : 0f;
@@ -4448,44 +4357,18 @@ namespace PosBranch_Win.Transaction
                         SubTotal += baseCost * qty;
                     }
 
-                    // Check if this row has "excl" tax type
-                    string taxType = string.Empty;
-                    if (dt.Rows[i]["TaxType"] != null && dt.Rows[i]["TaxType"] != DBNull.Value)
+                    // Use NetAmt column for totals since it is populated for both Incl and Excl
+                    if (dt.Columns.Contains("NetAmt") && dt.Rows[i]["NetAmt"] != null && dt.Rows[i]["NetAmt"] != DBNull.Value)
                     {
-                        taxType = NormalizeTaxType(dt.Rows[i]["TaxType"].ToString());
-                    }
-
-                    // Use NetAmt column for totals if available (since we now populate it for both Incl and Excl)
-                    if (dt.Columns.Contains("NetAmt"))
-                    {
-                        // Try to get NetAmt value first
-                        if (dt.Rows[i]["NetAmt"] != null && dt.Rows[i]["NetAmt"] != DBNull.Value &&
-                            float.TryParse(dt.Rows[i]["NetAmt"].ToString(), out float netAmt))
+                        if (float.TryParse(dt.Rows[i]["NetAmt"].ToString(), out float netAmt))
                         {
                             NetTotal += netAmt;
-                        }
-                        else
-                        {
-                            // Fallback to Amount if NetAmt is null/missing (shouldn't happen with our updates)
-                            if (dt.Rows[i]["Amount"] != DBNull.Value)
-                            {
-                                NetTotal += float.Parse(dt.Rows[i]["Amount"].ToString());
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // Fallback if NetAmt column doesn't exist at all
-                        if (dt.Rows[i]["Amount"] != DBNull.Value)
-                        {
-                            NetTotal += float.Parse(dt.Rows[i]["Amount"].ToString());
                         }
                     }
                 }
             }
 
-
-            // finalTotal is NetTotal which now contains NetAmt for excl items and Amount for others
+            // finalTotal is exactly NetTotal
             float finalTotal = NetTotal;
 
             // Store original net total for round off calculations
@@ -4907,11 +4790,9 @@ namespace PosBranch_Win.Transaction
                             newRow["Cost"] = (float)costWithTax;
                             newRow["Qty"] = Convert.ToSingle(pd.Qty);
 
-                            // Calculate amount from saved Cost and Qty
+                            // Calculate amount from saved Cost and Qty (Amount/TotalAmount columns removed)
                             double qty = Convert.ToDouble(pd.Qty.ToString());
                             float amount = (float)(costWithTax * qty);
-                            newRow["Amount"] = amount;
-                            newRow["TotalAmount"] = amount;
 
                             // NetAmt: ALWAYS use GrandTotal from PMaster (this is the saved/edited value)
                             // Do NOT use calculated value or value from PDetails
@@ -5039,7 +4920,7 @@ namespace PosBranch_Win.Transaction
                         // Update NetAmt and Gross column visibility after loading, and Amount caption
                         UpdateNetAmtColumnVisibility();
                         UpdateGrossColumnVisibility();
-                        UpdateAmountColumnCaption();
+
                     }
                 }
             }
@@ -5183,8 +5064,6 @@ namespace PosBranch_Win.Transaction
                 tempGridView.Columns.Add("WholeSalePrice", "WholeSalePrice");
                 tempGridView.Columns.Add("CreditPrice", "CreditPrice");
                 tempGridView.Columns.Add("CardPrice", "CardPrice");
-                tempGridView.Columns.Add("Amount", "Amount");
-                tempGridView.Columns.Add("TotalAmount", "TotalAmount");
                 tempGridView.Columns.Add("NetAmt", "NetAmt");
                 tempGridView.Columns.Add("Gross", "Gross");
 
@@ -5222,8 +5101,6 @@ namespace PosBranch_Win.Transaction
                     }
                     tempGridView.Rows[index].Cells["CreditPrice"].Value = row["CreditPrice"];
                     tempGridView.Rows[index].Cells["CardPrice"].Value = row["CardPrice"];
-                    tempGridView.Rows[index].Cells["Amount"].Value = row["Amount"];
-                    tempGridView.Rows[index].Cells["TotalAmount"].Value = row["TotalAmount"];
                     tempGridView.Rows[index].Cells["NetAmt"].Value = row.Table.Columns.Contains("NetAmt") && row["NetAmt"] != null && row["NetAmt"] != DBNull.Value
                         ? row["NetAmt"]
                         : 0f;
@@ -5602,7 +5479,7 @@ namespace PosBranch_Win.Transaction
                 // Update column visibility and caption after item removal
                 UpdateNetAmtColumnVisibility();
                 UpdateGrossColumnVisibility();
-                UpdateAmountColumnCaption();
+
 
                 // Select another row if available
                 if (dt.Rows.Count > 0)
@@ -5917,10 +5794,9 @@ namespace PosBranch_Win.Transaction
                                                     ultraGrid1.ActiveRow.Cells["UnitPrize"].Value = newRetailPrice;
                                                 }
 
-                                                // Update Amount and TotalAmount based on new cost and quantity
+                                                // Amount and TotalAmount removed from grid
                                                 float newAmount = newCost * originalQty;
-                                                ultraGrid1.ActiveRow.Cells["Amount"].Value = newAmount;
-                                                ultraGrid1.ActiveRow.Cells["TotalAmount"].Value = newAmount;
+                                                if (ultraGrid1.ActiveRow.Cells.Exists("NetTotal")) ultraGrid1.ActiveRow.Cells["NetTotal"].Value = newAmount;
                                             }
                                         }
                                         else
@@ -6003,8 +5879,7 @@ namespace PosBranch_Win.Transaction
 
                                                     // Update Amount and TotalAmount
                                                     float newAmount = newCost * originalQty;
-                                                    ultraGrid1.ActiveRow.Cells["Amount"].Value = newAmount;
-                                                    ultraGrid1.ActiveRow.Cells["TotalAmount"].Value = newAmount;
+                                                    if (ultraGrid1.ActiveRow.Cells.Exists("NetTotal")) ultraGrid1.ActiveRow.Cells["NetTotal"].Value = newAmount;
                                                 }
                                             }
                                         }
@@ -6093,10 +5968,9 @@ namespace PosBranch_Win.Transaction
                                                     ultraGrid1.ActiveRow.Cells["UnitPrize"].Value = newRetailPrice;
                                                 }
 
-                                                // Update Amount and TotalAmount
+                                                // Amount and TotalAmount removed from grid
                                                 float newAmount = newCost * originalQty;
-                                                ultraGrid1.ActiveRow.Cells["Amount"].Value = newAmount;
-                                                ultraGrid1.ActiveRow.Cells["TotalAmount"].Value = newAmount;
+                                                if (ultraGrid1.ActiveRow.Cells.Exists("NetTotal")) ultraGrid1.ActiveRow.Cells["NetTotal"].Value = newAmount;
                                             }
                                         } // End of if (!unitDataFound) block
                                     } // End of try block
@@ -6482,8 +6356,8 @@ namespace PosBranch_Win.Transaction
             if (column == null) return false;
 
             // Check if the column is one of these numeric types
-            return column.Key == "BaseCost" || column.Key == "Cost" || column.Key == "Qty" || column.Key == "Amount" ||
-                   column.Key == "TotalAmount" || column.Key == "Free" || column.Key == "RetailPrice" ||
+            return column.Key == "BaseCost" || column.Key == "Cost" || column.Key == "Qty" ||
+                   column.Key == "Free" || column.Key == "RetailPrice" ||
                    column.Key == "Packing" || column.Key == "MarginPer" || column.Key == "MarginAmt" ||
                    column.Key == "TaxPer" || column.Key == "TaxAmt" || column.Key == "UnitPrize" ||
                    column.Key == "WholeSalePrice" || column.Key == "CreditPrice" || column.Key == "CardPrice" ||
@@ -7301,7 +7175,7 @@ namespace PosBranch_Win.Transaction
                         string[] standardColumns = new string[] {
                             "SLNO", "BarCode", "Description", "Unit", "Packing", "Free",
                             "SellingPrice", "UnitSP", "BaseCost", "Cost", "Qty", "Gross", "NetAmt",
-                            "TaxPer", "TaxAmt", "TaxType", "Amount", "TotalAmount", "RetailPrice"
+                            "TaxPer", "TaxAmt", "TaxType", "RetailPrice"
                         };
 
                         if (standardColumns.Contains(column.Key))
@@ -7375,7 +7249,7 @@ namespace PosBranch_Win.Transaction
             string[] standardColumns = new string[] {
                 "SLNO", "BarCode", "Description", "Unit", "Packing", "Free",
                 "SellingPrice", "UnitSP", "BaseCost", "Cost", "Qty", "Gross", "NetAmt",
-                "TaxPer", "TaxAmt", "TaxType", "Amount", "TotalAmount", "RetailPrice"
+                "TaxPer", "TaxAmt", "TaxType", "RetailPrice"
             };
 
             Dictionary<string, string> displayNames = new Dictionary<string, string>()
@@ -7392,8 +7266,6 @@ namespace PosBranch_Win.Transaction
                 { "BaseCost", "Base Cost" },
                 { "Cost", "Cost" },
                 { "Qty", "Qty" },
-                { "Amount", "Amount" },
-                { "TotalAmount", "Total Amount" },
                 { "Gross", "Gross" },
                 { "NetAmt", "Net Amount" },
                 { "TaxPer", "Tax %" },
@@ -7460,7 +7332,7 @@ namespace PosBranch_Win.Transaction
                     string[] standardColumns = new string[] {
                         "SLNO", "BarCode", "Description", "Unit", "Packing", "Free",
                         "SellingPrice", "UnitSP", "BaseCost", "Cost", "Qty", "Gross", "NetAmt",
-                        "TaxPer", "TaxAmt", "TaxType", "Amount", "TotalAmount", "RetailPrice"
+                        "TaxPer", "TaxAmt", "TaxType", "RetailPrice"
                     };
 
                     if (standardColumns.Contains(column.Key))
@@ -7805,13 +7677,12 @@ namespace PosBranch_Win.Transaction
                                                     }
                                                 }
 
-                                                // Refresh grid display
-                                                ultraGrid1.Refresh();
-
-                                                // Update NetAmt if needed
+                                                // NOTE: ultraGrid1.Refresh() intentionally removed.
+                                                // Calling Refresh() here was stealing Windows focus from frmItemMasterNew
+                                                // (e.g. while the user was typing in txt_Retail), causing the caret to reset.
+                                                // The DataTable mutations above already propagate via data binding.
+                                                // CaluateTotals() will be called when the event fires on Leave/Enter (not on every keystroke).
                                                 UpdateNetAmtColumnVisibility();
-
-                                                // Recalculate totals
                                                 CaluateTotals();
                                             }
                                         }

@@ -603,14 +603,52 @@ namespace PosBranch_Win.Master
             // Connect txt_Retail KeyDown event for master field behavior
             txt_Retail.KeyDown += txt_Retail_KeyDown;
 
+            // When user leaves txt_Retail: run all recalculations that were previously in ValueChanged.
+            // This way, the caret is never stolen while the user types — updates happen only on focus loss.
+            txt_Retail.Leave += (s, ev) =>
+            {
+                try
+                {
+                    RefreshAllUnitPrices();
+                    UpdateProfitMarginForField(txt_Retail, ultraTextEditor4);
+                    UpdateInclusiveExclusiveTaxDisplay();
+                    if (!isLoadingItem && !isUpdatingMarkup) RecalculateMarkupPercentage();
+                    RecomputeTaxAmountFromRetailAndTax();
+                    NotifyItemMasterChanged();
+                }
+                catch (Exception ex2) { System.Diagnostics.Debug.WriteLine($"txt_Retail Leave error: {ex2.Message}"); }
+            };
+
             // Connect txt_CEP value changed event
             txt_CEP.ValueChanged += txt_CEP_ValueChanged;
+            txt_CEP.Leave += (s, ev) =>
+            {
+                try { RefreshAllUnitPrices(); UpdateProfitMarginForField(txt_CEP, ultraTextEditor9); CalculateMarkdownFromSellingPrice(txt_CEP, ultraTextEditor15); }
+                catch (Exception ex2) { System.Diagnostics.Debug.WriteLine($"txt_CEP Leave error: {ex2.Message}"); }
+            };
 
             // Connect txt_Mrp value changed event
             txt_Mrp.ValueChanged += txt_Mrp_ValueChanged;
+            txt_Mrp.Leave += (s, ev) =>
+            {
+                try { RefreshAllUnitPrices(); UpdateProfitMarginForField(txt_Mrp, ultraTextEditor8); CalculateMarkdownFromSellingPrice(txt_Mrp, ultraTextEditor14); }
+                catch (Exception ex2) { System.Diagnostics.Debug.WriteLine($"txt_Mrp Leave error: {ex2.Message}"); }
+            };
 
             // Connect txt_CardP value changed event
             txt_CardP.ValueChanged += txt_CardP_ValueChanged;
+            txt_CardP.Leave += (s, ev) =>
+            {
+                try { RefreshAllUnitPrices(); UpdateProfitMarginForField(txt_CardP, ultraTextEditor7); CalculateMarkdownFromSellingPrice(txt_CardP, ultraTextEditor13); }
+                catch (Exception ex2) { System.Diagnostics.Debug.WriteLine($"txt_CardP Leave error: {ex2.Message}"); }
+            };
+
+            // txt_walkin Leave: run recalculations deferred from ValueChanged
+            txt_walkin.Leave += (s, ev) =>
+            {
+                try { RefreshAllUnitPrices(); UpdateProfitMarginForField(txt_walkin, ultraTextEditor10); CalculateMarkdownFromSellingPrice(txt_walkin, ultraTextEditor16); RecomputeTaxAmountFromRetailAndTax(); NotifyItemMasterChanged(); }
+                catch (Exception ex2) { System.Diagnostics.Debug.WriteLine($"txt_walkin Leave error: {ex2.Message}"); }
+            };
 
             // Connect txt_SF and txt_MinP events if they exist (support any Control type)
             var txt_SF = this.Controls.Find("txt_SF", true).FirstOrDefault() as Control;
@@ -1104,13 +1142,14 @@ namespace PosBranch_Win.Master
                     var unit1 = getItem.List.FirstOrDefault(u => u.Packing == 1);
                     if (unit1 != null)
                     {
-                        // Update txt_Retail with RetailPrice
+                        // txt_Retail shows RetailPrice — FrmPurchase now writes SellingPrice to this column,
+                        // so changes from the purchase grid immediately appear in txt_Retail.
                         if (txt_Retail != null)
                         {
                             txt_Retail.Text = unit1.RetailPrice.ToString("0.00");
                         }
 
-                        // Update txt_walkin with WholeSalePrice (Walking Price)
+                        // txt_walkin shows WholeSalePrice (Walking Price)
                         if (txt_walkin != null)
                         {
                             txt_walkin.Text = unit1.WholeSalePrice.ToString("0.00");
@@ -8076,7 +8115,9 @@ namespace PosBranch_Win.Master
         {
             try
             {
-                // When walking price changes, mirror the value into the price grid's Walking column
+                // Update the WholeSalePrice in Ult_Price grid for the base unit row only.
+                // All heavy recalculations (RefreshAllUnitPrices, UpdateAllProfitMargins, etc.)
+                // are deferred to Enter-key or Leave to avoid cascading focus theft on every keystroke.
                 Infragistics.Win.UltraWinGrid.UltraGrid Ult_Price =
                     this.Controls.Find("Ult_Price", true).FirstOrDefault() as Infragistics.Win.UltraWinGrid.UltraGrid;
 
@@ -8085,31 +8126,15 @@ namespace PosBranch_Win.Master
                     float newWalking;
                     if (float.TryParse(txt_walkin.Text, out newWalking))
                     {
-                        // Only update base unit row (row 0), preserve user-entered values for other rows
                         if (Ult_Price.Rows.Count > 0)
                         {
                             var row = Ult_Price.Rows[0];
                             int packing = 1;
                             try { packing = Convert.ToInt32(row.Cells["Packing"].Value); } catch { }
-                            row.Cells["WholeSalePrice"].Value = newWalking * packing; // txt_walkin maps to WholeSalePrice ("Walking Price")
+                            row.Cells["WholeSalePrice"].Value = newWalking * packing;
                         }
                     }
                 }
-
-                // Refresh all unit prices to keep derived fields in sync
-                RefreshAllUnitPrices();
-
-                // Update profit margin for walking price
-                UpdateProfitMarginForField(txt_walkin, ultraTextEditor10);
-
-                // Also update walking markdown based on the entered price
-                CalculateMarkdownFromSellingPrice(txt_walkin, ultraTextEditor16);
-
-                // Recompute tax display when price changes
-                RecomputeTaxAmountFromRetailAndTax();
-
-                // Notify other forms of real-time change
-                NotifyItemMasterChanged();
             }
             catch (Exception ex)
             {
@@ -8122,26 +8147,26 @@ namespace PosBranch_Win.Master
         {
             try
             {
-                // Refresh all unit prices when base retail price changes
-                RefreshAllUnitPrices();
+                // Only update the WholeSalePrice column in Ult_Price for the base unit row.
+                // All heavy recalculations (RefreshAllUnitPrices, UpdateAllProfitMargins,
+                // RecalculateMarkupPercentage, UpdateInclusiveExclusiveTaxDisplay, etc.)
+                // are deferred to Enter-key (txt_Retail_KeyDown) or Leave to avoid cascading
+                // UI writes on every keystroke which steal focus and reset the caret.
+                Infragistics.Win.UltraWinGrid.UltraGrid Ult_Price =
+                    this.Controls.Find("Ult_Price", true).FirstOrDefault() as Infragistics.Win.UltraWinGrid.UltraGrid;
 
-                // Update profit margin for retail price
-                UpdateProfitMarginForField(txt_Retail, ultraTextEditor4);
-
-                // Update tax amount display (isinclexcl)
-                UpdateInclusiveExclusiveTaxDisplay();
-
-                // Recalculate markup % shown in textBox1 when user changes Retail
-                if (!isLoadingItem && !isUpdatingMarkup)
+                if (Ult_Price != null && Ult_Price.Rows.Count > 0)
                 {
-                    RecalculateMarkupPercentage();
+                    float newRetail;
+                    if (float.TryParse(txt_Retail.Text, out newRetail))
+                    {
+                        var row = Ult_Price.Rows[0];
+                        int packing = 1;
+                        try { packing = Convert.ToInt32(row.Cells["Packing"].Value); } catch { }
+                        // txt_Retail maps to WholeSalePrice column (see RefreshAllUnitPrices mapping)
+                        if (row.Cells.Exists("WholeSalePrice")) row.Cells["WholeSalePrice"].Value = newRetail * packing;
+                    }
                 }
-
-                // Recompute tax display when retail price changes
-                RecomputeTaxAmountFromRetailAndTax();
-
-                // Notify other forms of real-time change
-                NotifyItemMasterChanged();
             }
             catch (Exception ex)
             {
@@ -8223,35 +8248,23 @@ namespace PosBranch_Win.Master
         {
             try
             {
-                // Find Ult_Price control
+                // Only directly update CreditPrice in the price grid; all heavy recalculations
+                // (RefreshAllUnitPrices, profit margin, markdown, NotifyItemMasterChanged)
+                // are deferred to the Leave event to avoid stealing focus on every keystroke.
                 Infragistics.Win.UltraWinGrid.UltraGrid Ult_Price =
                     this.Controls.Find("Ult_Price", true).FirstOrDefault() as Infragistics.Win.UltraWinGrid.UltraGrid;
 
-                // Update the CreditPrice in the price grid when the credit price is changed
                 if (Ult_Price != null && Ult_Price.Rows.Count > 0 && txt_CEP.Text.Trim() != "")
                 {
                     float creditPrice = 0;
                     if (float.TryParse(txt_CEP.Text, out creditPrice))
                     {
-                        // Update all rows with the new credit price
                         foreach (Infragistics.Win.UltraWinGrid.UltraGridRow row in Ult_Price.Rows)
                         {
                             row.Cells["CreditPrice"].Value = creditPrice;
                         }
                     }
                 }
-
-                // Update profit margin for credit price
-                UpdateProfitMarginForField(txt_CEP, ultraTextEditor9);
-
-                // Also update credit markdown based on the entered price
-                CalculateMarkdownFromSellingPrice(txt_CEP, ultraTextEditor15);
-
-                // Recompute tax display when price changes
-                RecomputeTaxAmountFromRetailAndTax();
-
-                // Notify other forms of real-time change
-                NotifyItemMasterChanged();
             }
             catch (Exception ex)
             {
@@ -8264,20 +8277,8 @@ namespace PosBranch_Win.Master
         {
             try
             {
-                // Refresh all unit prices when base MRP changes
-                RefreshAllUnitPrices();
-
-                // Update profit margin for MRP
-                UpdateProfitMarginForField(txt_Mrp, ultraTextEditor8);
-
-                // Also update MRP markdown based on the entered price
-                CalculateMarkdownFromSellingPrice(txt_Mrp, ultraTextEditor14);
-
-                // Recompute tax display when price changes
-                RecomputeTaxAmountFromRetailAndTax();
-
-                // Notify other forms of real-time change
-                NotifyItemMasterChanged();
+                // Minimal update - defer heavy recalculations to Leave event
+                // to avoid stealing focus on every keystroke.
             }
             catch (Exception ex)
             {
@@ -8290,35 +8291,23 @@ namespace PosBranch_Win.Master
         {
             try
             {
-                // Find Ult_Price control
+                // Only directly update CardPrice in the price grid; all heavy recalculations
+                // (RefreshAllUnitPrices, profit margin, markdown, NotifyItemMasterChanged)
+                // are deferred to the Leave event to avoid stealing focus on every keystroke.
                 Infragistics.Win.UltraWinGrid.UltraGrid Ult_Price =
                     this.Controls.Find("Ult_Price", true).FirstOrDefault() as Infragistics.Win.UltraWinGrid.UltraGrid;
 
-                // Update the CardPrice in the price grid when the card price is changed
                 if (Ult_Price != null && Ult_Price.Rows.Count > 0 && txt_CardP.Text.Trim() != "")
                 {
                     float cardPrice = 0;
                     if (float.TryParse(txt_CardP.Text, out cardPrice))
                     {
-                        // Update all rows with the new card price
                         foreach (Infragistics.Win.UltraWinGrid.UltraGridRow row in Ult_Price.Rows)
                         {
                             row.Cells["CardPrice"].Value = cardPrice;
                         }
                     }
                 }
-
-                // Update profit margin for card price
-                UpdateProfitMarginForField(txt_CardP, ultraTextEditor7);
-
-                // Also update Card markdown based on the entered price
-                CalculateMarkdownFromSellingPrice(txt_CardP, ultraTextEditor13);
-
-                // Recompute tax display when price changes
-                RecomputeTaxAmountFromRetailAndTax();
-
-                // Notify other forms of real-time change
-                NotifyItemMasterChanged();
             }
             catch (Exception ex)
             {
