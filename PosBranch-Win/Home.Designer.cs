@@ -792,9 +792,9 @@
             this._Home_Toolbars_Dock_Area_Right.DockedPosition = Infragistics.Win.UltraWinToolbars.DockedPosition.Right;
             this._Home_Toolbars_Dock_Area_Right.ForeColor = System.Drawing.SystemColors.ControlText;
             this._Home_Toolbars_Dock_Area_Right.InitialResizeAreaExtent = 8;
-            this._Home_Toolbars_Dock_Area_Right.Location = new System.Drawing.Point(1356, 189);
+            this._Home_Toolbars_Dock_Area_Right.Location = new System.Drawing.Point(1356, 162);
             this._Home_Toolbars_Dock_Area_Right.Name = "_Home_Toolbars_Dock_Area_Right";
-            this._Home_Toolbars_Dock_Area_Right.Size = new System.Drawing.Size(8, 348);
+            this._Home_Toolbars_Dock_Area_Right.Size = new System.Drawing.Size(8, 375);
             this._Home_Toolbars_Dock_Area_Right.ToolbarsManager = this.ultraToolbarsManager1;
             // 
             // _Home_Toolbars_Dock_Area_Left
@@ -804,9 +804,9 @@
             this._Home_Toolbars_Dock_Area_Left.DockedPosition = Infragistics.Win.UltraWinToolbars.DockedPosition.Left;
             this._Home_Toolbars_Dock_Area_Left.ForeColor = System.Drawing.SystemColors.ControlText;
             this._Home_Toolbars_Dock_Area_Left.InitialResizeAreaExtent = 8;
-            this._Home_Toolbars_Dock_Area_Left.Location = new System.Drawing.Point(0, 189);
+            this._Home_Toolbars_Dock_Area_Left.Location = new System.Drawing.Point(0, 162);
             this._Home_Toolbars_Dock_Area_Left.Name = "_Home_Toolbars_Dock_Area_Left";
-            this._Home_Toolbars_Dock_Area_Left.Size = new System.Drawing.Size(8, 348);
+            this._Home_Toolbars_Dock_Area_Left.Size = new System.Drawing.Size(8, 375);
             this._Home_Toolbars_Dock_Area_Left.ToolbarsManager = this.ultraToolbarsManager1;
             // 
             // _Home_Toolbars_Dock_Area_Bottom
@@ -828,7 +828,7 @@
             this._Home_Toolbars_Dock_Area_Top.ForeColor = System.Drawing.SystemColors.ControlText;
             this._Home_Toolbars_Dock_Area_Top.Location = new System.Drawing.Point(0, 0);
             this._Home_Toolbars_Dock_Area_Top.Name = "_Home_Toolbars_Dock_Area_Top";
-            this._Home_Toolbars_Dock_Area_Top.Size = new System.Drawing.Size(1364, 189);
+            this._Home_Toolbars_Dock_Area_Top.Size = new System.Drawing.Size(1364, 162);
             this._Home_Toolbars_Dock_Area_Top.ToolbarsManager = this.ultraToolbarsManager1;
             // 
             // tabControlMain
@@ -840,7 +840,7 @@
             this.tabControlMain.Location = new System.Drawing.Point(0, 0);
             this.tabControlMain.Name = "tabControlMain";
             this.tabControlMain.SharedControlsPage = this.ultraTabSharedControlsPage1;
-            this.tabControlMain.Size = new System.Drawing.Size(1348, 348);
+            this.tabControlMain.Size = new System.Drawing.Size(1348, 375);
             this.tabControlMain.TabIndex = 10;
             this.tabControlMain.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             // 
@@ -868,15 +868,15 @@
             // 
             this.ultraTabSharedControlsPage1.Location = new System.Drawing.Point(2, 21);
             this.ultraTabSharedControlsPage1.Name = "ultraTabSharedControlsPage1";
-            this.ultraTabSharedControlsPage1.Size = new System.Drawing.Size(1344, 325);
+            this.ultraTabSharedControlsPage1.Size = new System.Drawing.Size(1344, 352);
             // 
             // panelMain
             // 
             this.panelMain.Controls.Add(this.tabControlMain);
             this.panelMain.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelMain.Location = new System.Drawing.Point(8, 189);
+            this.panelMain.Location = new System.Drawing.Point(8, 162);
             this.panelMain.Name = "panelMain";
-            this.panelMain.Size = new System.Drawing.Size(1348, 348);
+            this.panelMain.Size = new System.Drawing.Size(1348, 375);
             this.panelMain.TabIndex = 12;
             // 
             // Home

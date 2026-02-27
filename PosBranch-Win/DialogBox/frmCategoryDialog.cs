@@ -68,6 +68,14 @@ namespace PosBranch_Win.DialogBox
 
             // Register form closing event to clean up resources
             this.FormClosing += FrmCategoryDialog_FormClosing;
+
+            // Use Shown event to reliably set focus to search box after form is fully visible
+            this.Shown += (s, e) =>
+            {
+                textBoxsearch.Text = "";
+                this.ActiveControl = textBoxsearch;
+                textBoxsearch.Focus();
+            };
         }
 
         private void FrmCategoryDialog_FormClosing(object sender, FormClosingEventArgs e)
@@ -918,8 +926,8 @@ namespace PosBranch_Win.DialogBox
                 // Update record count
                 UpdateRecordCountLabel();
 
-                // Focus search box
-                textBoxsearch.Focus();
+                // Set ActiveControl to search box (Shown event will also ensure focus)
+                this.ActiveControl = textBoxsearch;
 
                 // Initialize saved column widths
                 InitializeSavedColumnWidths();
