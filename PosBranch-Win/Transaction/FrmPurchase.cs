@@ -745,6 +745,20 @@ namespace PosBranch_Win.Transaction
             // Wire up keyboard shortcut buttons (Click events)
             // Note: Click events for pbxExit, ultraPictureBox1, pbxSave, ultraPictureBox2
             // are already wired in the constructor — do NOT wire them again here
+
+            // Set initial focus to barcode field after form is fully rendered
+            this.Shown += (s, args) =>
+            {
+                this.ActiveControl = txtBarcode;
+                txtBarcode.Focus();
+                // Use BeginInvoke to ensure focus after any pending UI updates
+                txtBarcode.BeginInvoke(new Action(() =>
+                {
+                    txtBarcode.Clear();
+                    txtBarcode.Focus();
+                    txtBarcode.SelectionStart = txtBarcode.Text.Length;
+                }));
+            };
         }
 
         // Method to configure date pickers to match the format in the image
@@ -1993,12 +2007,12 @@ namespace PosBranch_Win.Transaction
                         }
                     }
 
-                    // Now update each unit's WholeSalePrice
+                    // Now update each unit's WholeSalePrice (DB.WholeSalePrice = retail/selling price → maps to txt_Retail)
                     if (unitsToUpdate.Count > 0)
                     {
                         string updateQuery = @"
                             UPDATE PriceSettings 
-                            SET RetailPrice = @RetailPrice
+                            SET WholeSalePrice = @WholeSalePrice
                             WHERE BranchId = @BranchId 
                                 AND CompanyId = @CompanyId
                                 AND ItemId = @ItemId 
@@ -2009,9 +2023,9 @@ namespace PosBranch_Win.Transaction
                             int unitId = unit.Item1;
                             float packing = unit.Item2;
 
-                            // Calculate the RetailPrice for this unit
-                            // RetailPrice = basePrice * packing
-                            float retailPriceForUnit = basePrice * packing;
+                            // Calculate the WholeSalePrice for this unit
+                            // WholeSalePrice = basePrice * packing
+                            float wholeSalePriceForUnit = basePrice * packing;
 
                             using (System.Data.SqlClient.SqlCommand updateCmd = new System.Data.SqlClient.SqlCommand(updateQuery, (System.Data.SqlClient.SqlConnection)drop.DataConnection))
                             {
@@ -2019,12 +2033,12 @@ namespace PosBranch_Win.Transaction
                                 updateCmd.Parameters.AddWithValue("@CompanyId", Convert.ToInt32(DataBase.CompanyId));
                                 updateCmd.Parameters.AddWithValue("@ItemId", itemId);
                                 updateCmd.Parameters.AddWithValue("@UnitId", unitId);
-                                updateCmd.Parameters.AddWithValue("@RetailPrice", retailPriceForUnit);
+                                updateCmd.Parameters.AddWithValue("@WholeSalePrice", wholeSalePriceForUnit);
 
                                 updateCmd.ExecuteNonQuery();
                             }
 
-                            System.Diagnostics.Debug.WriteLine($"Updated PriceSettings: ItemId={itemId}, UnitId={unitId}, Packing={packing}, RetailPrice={retailPriceForUnit}");
+                            System.Diagnostics.Debug.WriteLine($"Updated PriceSettings: ItemId={itemId}, UnitId={unitId}, Packing={packing}, WholeSalePrice={wholeSalePriceForUnit}");
                         }
 
                         // Raise event to notify other forms (like frmItemMasterNew) that prices were updated
@@ -2964,7 +2978,37 @@ namespace PosBranch_Win.Transaction
                 // Update TaxAmt (BaseCost and Cost remain unchanged - they are per-unit values)
                 dataRow["TaxAmt"] = taxAmt;
 
-                // Amount and TotalAmount removed from grid
+                // Recalculate NetAmt and Gross for the updated quantity
+                float amount = qty * costWithTax;
+                string normalizedTaxType = NormalizeTaxType(taxType);
+
+                if (dataRow.Table.Columns.Contains("NetAmt"))
+                {
+                    if (normalizedTaxType == "excl")
+                    {
+                        dataRow["NetAmt"] = amount + taxAmt;
+                    }
+                    else
+                    {
+                        dataRow["NetAmt"] = amount;
+                    }
+                }
+
+                if (dataRow.Table.Columns.Contains("Gross"))
+                {
+                    if (normalizedTaxType == "incl")
+                    {
+                        dataRow["Gross"] = amount - taxAmt;
+                    }
+                    else if (normalizedTaxType == "excl")
+                    {
+                        dataRow["Gross"] = amount;
+                    }
+                    else
+                    {
+                        dataRow["Gross"] = 0f;
+                    }
+                }
 
                 // Recalculate NewBaseCost (average cost) for all rows
                 RecalculateNewBaseCostForAllRows();
@@ -2985,11 +3029,24 @@ namespace PosBranch_Win.Transaction
                 // ... (rest of Enter logic) ...
                 if (grid != null && grid.ActiveCell != null)
                 {
+                    // Force an immediate update if the user presses Enter while editing NetAmt
+                    if (grid.ActiveCell.Column.Key == "NetAmt" && grid.ActiveCell.IsInEditMode)
+                    {
+                        grid.PerformAction(Infragistics.Win.UltraWinGrid.UltraGridAction.ExitEditMode);
+                    }
+
                     UltraGridCell nextCell = FindNextEditableCell(grid.ActiveRow, grid.ActiveCell);
                     // ...
                     if (nextCell != null)
                     {
                         grid.ActiveCell = nextCell;
+
+                        // Enter edit mode for the next cell automatically if it's not a checkbox
+                        if (nextCell.Column.DataType != typeof(bool))
+                        {
+                            grid.PerformAction(Infragistics.Win.UltraWinGrid.UltraGridAction.EnterEditMode);
+                        }
+
                         e.Handled = true;
                     }
                     else if (grid.Rows.Count > 0 && grid.ActiveRow.Index < grid.Rows.Count - 1)
@@ -3819,10 +3876,33 @@ namespace PosBranch_Win.Transaction
                     }
                     CheckExists = false;
                 }
-                else if (count > 1 || count == 0)
+                else if (count > 1)
                 {
-                    // Show item selection dialog
-                    ShowItemSelectionDialog();
+                    // Multiple matches found — take the first match directly (like frmSalesInvoice)
+                    AddItemToGrid(itemDataResult2, 1);
+                }
+                // If count == 0, try fallback lookup using GETITEMBYBARCODE
+            }
+            else
+            {
+                // Fallback: try GETITEMBYBARCODE operation (same as frmSalesInvoice)
+                DataBase.Operations = "GETITEMBYBARCODE";
+                ItemDDlGrid fallbackResult = drop.itemDDlGrid(barcode, "");
+                if (fallbackResult != null && fallbackResult.List != null && fallbackResult.List.Count() > 0)
+                {
+                    int existingItemIndex = -1;
+                    CheckBarcode(barcode, out existingItemIndex);
+                    if (!CheckExists)
+                    {
+                        AddItemToGrid(fallbackResult, 1);
+                    }
+                    else if (existingItemIndex >= 0 && existingItemIndex < ultraGrid1.Rows.Count)
+                    {
+                        ultraGrid1.ActiveRow = ultraGrid1.Rows[existingItemIndex];
+                        ultraGrid1.Selected.Rows.Clear();
+                        ultraGrid1.Selected.Rows.Add(ultraGrid1.ActiveRow);
+                    }
+                    CheckExists = false;
                 }
             }
 
@@ -3841,7 +3921,8 @@ namespace PosBranch_Win.Transaction
                 // Add a new row
                 DataRow newRow = dt.NewRow();
 
-                foreach (var itm in itemData.List)
+                var itm = itemData.List.FirstOrDefault();
+                if (itm != null)
                 {
                     newRow["SLNO"] = dt.Rows.Count + 1;
                     newRow["ItemId"] = itm.ItemId;
@@ -3914,6 +3995,24 @@ namespace PosBranch_Win.Transaction
                     newRow["CreditPrice"] = itm.CreditPrice;
                     newRow["CardPrice"] = itm.CardPrice;
                     newRow["NewBaseCost"] = 0f; // Will be recalculated after row is added
+
+                    // Calculate NetAmt and Gross based on tax type
+                    double amount = costWithTax * quantity;
+                    if (normalizedTaxType == "excl")
+                    {
+                        newRow["NetAmt"] = amount + calculatedTaxAmt;
+                        newRow["Gross"] = amount;
+                    }
+                    else if (normalizedTaxType == "incl")
+                    {
+                        newRow["NetAmt"] = amount;
+                        newRow["Gross"] = amount - calculatedTaxAmt;
+                    }
+                    else
+                    {
+                        newRow["NetAmt"] = amount;
+                        newRow["Gross"] = 0.0;
+                    }
                 }
 
                 // Add the row to the DataTable

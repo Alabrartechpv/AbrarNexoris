@@ -1102,8 +1102,8 @@ namespace PosBranch_Win.Master
                     row["TaxPer"] = getItem.List[i].TaxPer;
                     row["TaxAmt"] = getItem.List[i].TaxAmt;
                     row["MRP"] = getItem.List[i].MRP;
-                    row["RetailPrice"] = getItem.List[i].RetailPrice;
-                    row["WholeSalePrice"] = getItem.List[i].WholeSalePrice;
+                    row["RetailPrice"] = getItem.List[i].WholeSalePrice; // DB.WholeSalePrice = retail → grid RetailPrice (visual "Retail Price")
+                    row["WholeSalePrice"] = getItem.List[i].RetailPrice; // DB.RetailPrice = walking → grid WholeSalePrice (visual "Walking Price")
                     row["CreditPrice"] = getItem.List[i].CreditPrice;
                     row["CardPrice"] = getItem.List[i].CardPrice;
                     row["StaffPrice"] = getItem.List[i].StaffPrice;
@@ -1142,17 +1142,28 @@ namespace PosBranch_Win.Master
                     var unit1 = getItem.List.FirstOrDefault(u => u.Packing == 1);
                     if (unit1 != null)
                     {
-                        // txt_Retail shows RetailPrice — FrmPurchase now writes SellingPrice to this column,
-                        // so changes from the purchase grid immediately appear in txt_Retail.
+                        // txt_Retail shows WholeSalePrice (DB.WholeSalePrice = retail price)
                         if (txt_Retail != null)
                         {
-                            txt_Retail.Text = unit1.RetailPrice.ToString("0.00");
+                            string newRetailStr = unit1.WholeSalePrice.ToString("0.00");
+                            // Only trigger the ripple if the value actually changed to avoid unnecessary recalculations
+                            if (txt_Retail.Text != newRetailStr)
+                            {
+                                txt_Retail.Text = newRetailStr;
+
+                                // Act as if the user just typed into txt_Retail and hit Enter
+                                // This ripples the price to all other textboxes (walk-in, staff, etc.),
+                                // recalculates profit margins, and refreshes the entire unit price grid
+                                txt_Retail_KeyDown(null, new KeyEventArgs(Keys.Enter));
+                            }
                         }
 
-                        // txt_walkin shows WholeSalePrice (Walking Price)
+                        // txt_walkin shows RetailPrice (DB.RetailPrice = walking price)
+                        // It may have already been updated by the ripple above, but we set it here 
+                        // from DB just in case it doesn't auto-calculate from retail price
                         if (txt_walkin != null)
                         {
-                            txt_walkin.Text = unit1.WholeSalePrice.ToString("0.00");
+                            txt_walkin.Text = unit1.RetailPrice.ToString("0.00");
                         }
                     }
                 }
@@ -2481,8 +2492,8 @@ namespace PosBranch_Win.Master
                                 // Calculate values based on packing (1 UNIT = base values, other units = base * packing)
                                 newRow["Cost"] = baseCost * packing;
                                 newRow["MRP"] = baseMRP * packing;
-                                newRow["RetailPrice"] = baseWalkingPrice * packing; // Walking price
-                                newRow["WholeSalePrice"] = baseRetailPrice * packing; // Retail price
+                                newRow["RetailPrice"] = baseRetailPrice * packing; // Visual "Retail Price"
+                                newRow["WholeSalePrice"] = baseWalkingPrice * packing; // Visual "Walking Price"
                                 newRow["CreditPrice"] = baseCreditPrice * packing;
                                 newRow["CardPrice"] = baseCardPrice * packing;
                                 if (dtPrice.Columns.Contains("StaffPrice")) newRow["StaffPrice"] = 0f;
@@ -3603,13 +3614,13 @@ namespace PosBranch_Win.Master
                             float availableQty = stock - orderedStock;
                             txt_available.Text = availableQty.ToString("0");
 
-                            // Set walking price (retail price)
+                            // Set walking price (DB.RetailPrice stores walking price)
                             if (txt_walkin != null)
                             {
                                 txt_walkin.Text = getItem.List[0].RetailPrice.ToString();
                             }
 
-                            // Set retail price
+                            // Set retail price (DB.WholeSalePrice stores retail price)
                             if (txt_Retail != null)
                             {
                                 txt_Retail.Text = getItem.List[0].WholeSalePrice.ToString();
@@ -3762,8 +3773,8 @@ namespace PosBranch_Win.Master
                                 row["TaxPer"] = getItem.List[i].TaxPer;
                                 row["TaxAmt"] = getItem.List[i].TaxAmt;
                                 row["MRP"] = getItem.List[i].MRP;
-                                row["RetailPrice"] = getItem.List[i].RetailPrice;
-                                row["WholeSalePrice"] = getItem.List[i].WholeSalePrice;
+                                row["RetailPrice"] = getItem.List[i].WholeSalePrice; // DB.WholeSalePrice = retail → grid RetailPrice (visual "Retail Price")
+                                row["WholeSalePrice"] = getItem.List[i].RetailPrice; // DB.RetailPrice = walking → grid WholeSalePrice (visual "Walking Price")
                                 row["CreditPrice"] = getItem.List[i].CreditPrice;
                                 row["CardPrice"] = getItem.List[i].CardPrice;
                                 if (dtPrice.Columns.Contains("StaffPrice")) row["StaffPrice"] = getItem.List[i].StaffPrice;
@@ -5479,6 +5490,8 @@ namespace PosBranch_Win.Master
         // Event handler for Ult_Price cell value changed
         private void Ult_Price_CellChange(object sender, Infragistics.Win.UltraWinGrid.CellEventArgs e)
         {
+            // Skip heavy recalculations when the cell change comes from textbox typing
+            if (_isUpdatingPriceFromTextbox) return;
             try
             {
                 if (e.Cell == null || e.Cell.Row == null)
@@ -5746,22 +5759,22 @@ namespace PosBranch_Win.Master
                 float.TryParse(txt_TaxPer.Text, out taxPerVal); ItemPriceSettings.TaxPer = taxPerVal;
                 float.TryParse(txt_TaxAmount.Text, out taxAmtVal); ItemPriceSettings.TaxAmt = taxAmtVal;
 
-                // Set walking price (wholesale price) if available
+                // Set walking price: DB.RetailPrice stores walking price
                 if (txt_walkin != null && !string.IsNullOrEmpty(txt_walkin.Text))
                 {
                     float walkingPrice = 0;
                     if (float.TryParse(txt_walkin.Text, out walkingPrice))
                     {
-                        ItemPriceSettings.WholeSalePrice = walkingPrice;
+                        ItemPriceSettings.RetailPrice = walkingPrice;
                     }
                 }
-                // Set retail price (retail price) if available
+                // Set retail price: DB.WholeSalePrice stores retail price
                 if (txt_Retail != null && !string.IsNullOrEmpty(txt_Retail.Text))
                 {
                     float retailPrice = 0;
                     if (float.TryParse(txt_Retail.Text, out retailPrice))
                     {
-                        ItemPriceSettings.RetailPrice = retailPrice;
+                        ItemPriceSettings.WholeSalePrice = retailPrice;
                     }
                 }
                 // Set credit price if available
@@ -6268,7 +6281,7 @@ namespace PosBranch_Win.Master
                 float.TryParse(txt_TaxPer.Text, out taxPerVal); ItemPriceSettings.TaxPer = taxPerVal;
                 float.TryParse(txt_TaxAmount.Text, out taxAmtVal); ItemPriceSettings.TaxAmt = taxAmtVal;
 
-                // Set walking price (retail price) if available
+                // Set walking price: DB.RetailPrice stores walking price
                 if (txt_walkin != null && !string.IsNullOrEmpty(txt_walkin.Text))
                 {
                     float walkingPrice = 0;
@@ -6277,7 +6290,7 @@ namespace PosBranch_Win.Master
                         ItemPriceSettings.RetailPrice = walkingPrice;
                     }
                 }
-                // Set retail price (wholesale price) if available
+                // Set retail price: DB.WholeSalePrice stores retail price
                 if (txt_Retail != null && !string.IsNullOrEmpty(txt_Retail.Text))
                 {
                     float retailPrice = 0;
@@ -6659,7 +6672,7 @@ namespace PosBranch_Win.Master
             }
             catch { }
 
-            // Set walking price (retail price) if available
+            // Set walking price: DB.RetailPrice stores walking price
             if (txt_walkin != null && !string.IsNullOrEmpty(txt_walkin.Text))
             {
                 float walkingPrice = 0;
@@ -6668,7 +6681,7 @@ namespace PosBranch_Win.Master
                     ItemPriceSettings.RetailPrice = walkingPrice;
                 }
             }
-            // Set retail price (wholesale price) if available
+            // Set retail price: DB.WholeSalePrice stores retail price
             if (txt_Retail != null && !string.IsNullOrEmpty(txt_Retail.Text))
             {
                 float retailPrice = 0;
@@ -7793,8 +7806,8 @@ namespace PosBranch_Win.Master
                         newRow["Packing"] = Convert.ToInt32(packing);
                         newRow["Cost"] = baseCost * packing;
                         newRow["MRP"] = baseMRP * packing;
-                        newRow["RetailPrice"] = baseWalkingPrice * packing;
-                        newRow["WholeSalePrice"] = baseRetailPrice * packing;
+                        newRow["RetailPrice"] = baseRetailPrice * packing; // Visual "Retail Price"
+                        newRow["WholeSalePrice"] = baseWalkingPrice * packing; // Visual "Walking Price"
                         newRow["CreditPrice"] = baseCreditPrice * packing;
                         newRow["CardPrice"] = baseCardPrice * packing;
 
@@ -7877,8 +7890,8 @@ namespace PosBranch_Win.Master
                                 priceRow["Packing"] = Convert.ToInt32(packing);
                                 priceRow["Cost"] = baseCost * packing;
                                 priceRow["MRP"] = baseMRP * packing;
-                                priceRow["RetailPrice"] = baseWalkingPrice * packing;
-                                priceRow["WholeSalePrice"] = baseRetailPrice * packing;
+                                priceRow["RetailPrice"] = baseRetailPrice * packing; // Visual "Retail Price"
+                                priceRow["WholeSalePrice"] = baseWalkingPrice * packing; // Visual "Walking Price"
                                 priceRow["CreditPrice"] = baseCreditPrice * packing;
                                 priceRow["CardPrice"] = baseCardPrice * packing;
 
@@ -8110,14 +8123,17 @@ namespace PosBranch_Win.Master
             }
         }
 
+        // Guard flag to suppress Ult_Price_CellChange during textbox typing
+        private bool _isUpdatingPriceFromTextbox = false;
+
         // Event handler for txt_walkin value changed
         private void txt_walkin_ValueChanged(object sender, EventArgs e)
         {
             try
             {
-                // Update the WholeSalePrice in Ult_Price grid for the base unit row only.
-                // All heavy recalculations (RefreshAllUnitPrices, UpdateAllProfitMargins, etc.)
-                // are deferred to Enter-key or Leave to avoid cascading focus theft on every keystroke.
+                _isUpdatingPriceFromTextbox = true;
+                // Update WholeSalePrice in Ult_Price for visual feedback (caption "Walking Price").
+                // On Leave, RefreshAllUnitPrices rebuilds with correct DB mapping.
                 Infragistics.Win.UltraWinGrid.UltraGrid Ult_Price =
                     this.Controls.Find("Ult_Price", true).FirstOrDefault() as Infragistics.Win.UltraWinGrid.UltraGrid;
 
@@ -8140,6 +8156,10 @@ namespace PosBranch_Win.Master
             {
                 System.Diagnostics.Debug.WriteLine($"Error updating walking price: {ex.Message}");
             }
+            finally
+            {
+                _isUpdatingPriceFromTextbox = false;
+            }
         }
 
         // Event handler for txt_Retail value changed
@@ -8147,7 +8167,8 @@ namespace PosBranch_Win.Master
         {
             try
             {
-                // Only update the WholeSalePrice column in Ult_Price for the base unit row.
+                _isUpdatingPriceFromTextbox = true;
+                // Only update the RetailPrice column in Ult_Price for the base unit row.
                 // All heavy recalculations (RefreshAllUnitPrices, UpdateAllProfitMargins,
                 // RecalculateMarkupPercentage, UpdateInclusiveExclusiveTaxDisplay, etc.)
                 // are deferred to Enter-key (txt_Retail_KeyDown) or Leave to avoid cascading
@@ -8163,14 +8184,19 @@ namespace PosBranch_Win.Master
                         var row = Ult_Price.Rows[0];
                         int packing = 1;
                         try { packing = Convert.ToInt32(row.Cells["Packing"].Value); } catch { }
-                        // txt_Retail maps to WholeSalePrice column (see RefreshAllUnitPrices mapping)
-                        if (row.Cells.Exists("WholeSalePrice")) row.Cells["WholeSalePrice"].Value = newRetail * packing;
+                        // txt_Retail updates RetailPrice for visual feedback (caption "Retail Price")
+                        // On Leave, RefreshAllUnitPrices rebuilds with correct DB mapping.
+                        if (row.Cells.Exists("RetailPrice")) row.Cells["RetailPrice"].Value = newRetail * packing;
                     }
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error updating retail price: {ex.Message}");
+            }
+            finally
+            {
+                _isUpdatingPriceFromTextbox = false;
             }
         }
 
@@ -8604,10 +8630,9 @@ namespace PosBranch_Win.Master
                                 // Update all price values based on new base prices
                                 row.Cells["Cost"].Value = baseCost * packing;
                                 row.Cells["MRP"].Value = baseMRP * packing;
-                                // CORRECT MAPPING: txt_walkin → RetailPrice, txt_Retail → WholeSalePrice
-                                // (matches LoadItemById, UpdateItem, SaveMaster, UpdatePriceGridForBaseUnit)
-                                row.Cells["RetailPrice"].Value = baseWalkingPrice * packing;
-                                row.Cells["WholeSalePrice"].Value = baseRetailPrice * packing;
+                                // Visual mapping: RetailPrice = retail, WholeSalePrice = walking
+                                row.Cells["RetailPrice"].Value = baseRetailPrice * packing;
+                                row.Cells["WholeSalePrice"].Value = baseWalkingPrice * packing;
                                 row.Cells["CreditPrice"].Value = baseCreditPrice * packing;
                                 row.Cells["CardPrice"].Value = baseCardPrice * packing;
 
@@ -8883,8 +8908,10 @@ namespace PosBranch_Win.Master
                     tempDgv.Rows[rowIndex].Cells["TaxPer"].Value = row.Cells["TaxPer"].Value?.ToString() ?? "0";
                     tempDgv.Rows[rowIndex].Cells["TaxAmt"].Value = row.Cells["TaxAmt"].Value?.ToString() ?? "0";
                     tempDgv.Rows[rowIndex].Cells["MRP"].Value = row.Cells["MRP"].Value?.ToString() ?? "0";
-                    tempDgv.Rows[rowIndex].Cells["RetailPrice"].Value = row.Cells["RetailPrice"].Value?.ToString() ?? "0";
-                    tempDgv.Rows[rowIndex].Cells["WholeSalePrice"].Value = row.Cells["WholeSalePrice"].Value?.ToString() ?? "0";
+                    // SWAP for DB: grid RetailPrice (visual retail) → tempDgv WholeSalePrice (DB retail)
+                    //              grid WholeSalePrice (visual walking) → tempDgv RetailPrice (DB walking)
+                    tempDgv.Rows[rowIndex].Cells["RetailPrice"].Value = row.Cells["WholeSalePrice"].Value?.ToString() ?? "0";
+                    tempDgv.Rows[rowIndex].Cells["WholeSalePrice"].Value = row.Cells["RetailPrice"].Value?.ToString() ?? "0";
                     tempDgv.Rows[rowIndex].Cells["CreditPrice"].Value = row.Cells["CreditPrice"].Value?.ToString() ?? "0";
                     tempDgv.Rows[rowIndex].Cells["CardPrice"].Value = row.Cells["CardPrice"].Value?.ToString() ?? "0";
                     if (row.Cells.Exists("StaffPrice"))
