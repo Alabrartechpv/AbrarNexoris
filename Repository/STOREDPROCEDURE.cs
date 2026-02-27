@@ -84,6 +84,7 @@ namespace Repository
         public static string _POS_ItemReport = "_Test9";
         public static string _POS_StockReportAdvanced = "_Test16";
         public static string POS_RolePermission = "POS_RolePermission";
+        public static string _SalesProfitReport = "SalesProfitReport";
 
         #endregion
 

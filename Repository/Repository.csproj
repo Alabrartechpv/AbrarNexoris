@@ -82,6 +82,7 @@
     <Compile Include="ReportRepository\PurchaseReturnReportRepositoty.cs" />
     <Compile Include="ReportRepository\SalesReportRepository.cs" />
     <Compile Include="ReportRepository\SalesReturnReportRepository.cs" />
+    <Compile Include="ReportRepository\SalesProfitReportRepository.cs" />
     <Compile Include="ReportRepository\StockReportAdvanceRepo.cs" />
     <Compile Include="STOREDPROCEDURE.cs" />
     <Compile Include="TransactionRepository\frmSalesInvoice.cs" />

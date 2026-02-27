@@ -73,4 +73,17 @@ namespace ModelClass.Report
         public SalesReportMaster Master { get; set; }
         public List<SalesReportDetail> Details { get; set; } = new List<SalesReportDetail>();
     }
+
+    /// <summary>
+    /// Sales Profit Report - Bill-wise profit summary
+    /// </summary>
+    public class SalesProfitReport
+    {
+        public int BillNo { get; set; }
+        public DateTime BillDate { get; set; }
+        public double BillAmount { get; set; }
+        public double Profit { get; set; }
+        public string PayMode { get; set; }
+        public string CashMode { get; set; }
+    }
 }

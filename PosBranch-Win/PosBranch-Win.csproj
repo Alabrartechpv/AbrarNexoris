@@ -869,6 +869,12 @@
     <Compile Include="Reports\SalesReports\SalesReturnReport.Designer.cs">
       <DependentUpon>SalesReturnReport.cs</DependentUpon>
     </Compile>
+    <Compile Include="Reports\SalesReports\frmSalesProfit.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reports\SalesReports\frmSalesProfit.Designer.cs">
+      <DependentUpon>frmSalesProfit.cs</DependentUpon>
+    </Compile>
     <Compile Include="ReportViewer.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1251,6 +1257,9 @@
     <EmbeddedResource Include="Reports\SalesReports\frmSales_RPT.resx">
       <DependentUpon>frmSales_RPT.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Reports\SalesReports\frmSalesProfit.resx">
+      <DependentUpon>frmSalesProfit.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ReportViewer.resx">
       <DependentUpon>ReportViewer.cs</DependentUpon>
     </EmbeddedResource>
@@ -1419,6 +1428,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\uerroles.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\report.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

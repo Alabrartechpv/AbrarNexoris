@@ -1146,6 +1146,11 @@ namespace PosBranch_Win
                 Reports.SalesReports.SalesReturnReport frmSalesRetun = new Reports.SalesReports.SalesReturnReport();
                 OpenFormInTab(frmSalesRetun, "SalesReturn");
             }
+            if (e.Tool.Key == "SalesProfit")
+            {
+                Reports.SalesReports.frmSalesProfit frmSalesProfit = new Reports.SalesReports.frmSalesProfit();
+                OpenFormInTab(frmSalesProfit, "Sales Profit");
+            }
             if (e.Tool.Key == "Purchase Details")
             {
 
