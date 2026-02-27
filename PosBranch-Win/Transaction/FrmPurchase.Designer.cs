@@ -405,9 +405,9 @@ namespace PosBranch_Win.Transaction
             // 
             this.ultraPanel11.ClientArea.Controls.Add(this.ultraPanel10);
             this.ultraPanel11.ForeColor = System.Drawing.Color.Black;
-            this.ultraPanel11.Location = new System.Drawing.Point(983, 1);
+            this.ultraPanel11.Location = new System.Drawing.Point(979, 2);
             this.ultraPanel11.Name = "ultraPanel11";
-            this.ultraPanel11.Size = new System.Drawing.Size(236, 80);
+            this.ultraPanel11.Size = new System.Drawing.Size(244, 80);
             this.ultraPanel11.TabIndex = 41;
             this.ultraPanel11.UseFlatMode = Infragistics.Win.DefaultableBoolean.True;
             // 
@@ -429,9 +429,9 @@ namespace PosBranch_Win.Transaction
             // 
             this.ultraPanel10.ClientArea.Controls.Add(this.label4);
             this.ultraPanel10.ForeColor = System.Drawing.Color.Beige;
-            this.ultraPanel10.Location = new System.Drawing.Point(-2, 0);
+            this.ultraPanel10.Location = new System.Drawing.Point(2, 1);
             this.ultraPanel10.Name = "ultraPanel10";
-            this.ultraPanel10.Size = new System.Drawing.Size(233, 75);
+            this.ultraPanel10.Size = new System.Drawing.Size(237, 75);
             this.ultraPanel10.TabIndex = 42;
             this.ultraPanel10.UseFlatMode = Infragistics.Win.DefaultableBoolean.True;
             // 
@@ -442,7 +442,7 @@ namespace PosBranch_Win.Transaction
             this.label4.AutoSize = true;
             this.label4.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.label4.Font = new System.Drawing.Font("DS-Digital", 36F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label4.Location = new System.Drawing.Point(20, 11);
+            this.label4.Location = new System.Drawing.Point(26, 11);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(104, 47);
             this.label4.TabIndex = 0;
@@ -505,7 +505,7 @@ namespace PosBranch_Win.Transaction
             this.label6.AutoSize = true;
             this.label6.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.label6.Font = new System.Drawing.Font("DS-Digital", 36F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(18, 12);
+            this.label6.Location = new System.Drawing.Point(20, 12);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(104, 47);
             this.label6.TabIndex = 0;
