@@ -31,6 +31,7 @@ namespace ModelClass.Report
         public DateTime BillDate { get; set; }
         public string CustomerName { get; set; }
         public string PaymodeName { get; set; }
+        public string CashMode { get; set; }
         public double TaxPer { get; set; }
         public double TaxAmt { get; set; }
         public double SubTotal { get; set; }

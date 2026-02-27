@@ -184,6 +184,7 @@ namespace Repository.ReportRepository
                                     BillDate = Convert.ToDateTime(row["BillDate"]),
                                     CustomerName = row["customername"]?.ToString() ?? "",
                                     PaymodeName = row["paymodename"]?.ToString() ?? "",
+                            CashMode = row.Table.Columns.Contains("CashMode") ? (row["CashMode"]?.ToString() ?? "") : "",
                                     TaxAmt = Convert.ToDouble(row["TaxAmt"]),
                                     SubTotal = Convert.ToDouble(row["SubTotal"]),
                                     NetAmount = Convert.ToDouble(row["NetAmount"]),

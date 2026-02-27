@@ -110,6 +110,15 @@ namespace PosBranch_Win.Reports.SalesReports
             // Set placeholder text
             ultraTextEditorCustomer.NullText = "Enter customer name...";
 
+            // Initialize payment mode filter
+            ultraComboPaymentMode.Items.Clear();
+            ultraComboPaymentMode.Items.Add("All", "All Modes");
+            ultraComboPaymentMode.Items.Add("Cash", "Cash");
+            ultraComboPaymentMode.Items.Add("UPI", "UPI");
+            ultraComboPaymentMode.Items.Add("Card", "Card");
+            ultraComboPaymentMode.Items.Add("BankTransfer", "Bank Transfer");
+            ultraComboPaymentMode.Value = "All";
+
             // Add tooltips for better UX
             InitializeTooltips();
 
@@ -329,6 +338,7 @@ namespace PosBranch_Win.Reports.SalesReports
             masterTable.Columns.Add("BillDate", typeof(DateTime));
             masterTable.Columns.Add("customername", typeof(string));
             masterTable.Columns.Add("paymodename", typeof(string));
+            masterTable.Columns.Add("CashMode", typeof(string));
             // TaxPer removed - not available in master table
             masterTable.Columns.Add("TaxAmt", typeof(decimal));
             masterTable.Columns.Add("SubTotal", typeof(decimal));
@@ -621,9 +631,15 @@ namespace PosBranch_Win.Reports.SalesReports
             }
             if (masterBand.Columns["paymodename"] != null)
             {
-                masterBand.Columns["paymodename"].Header.Caption = "Payment Mode";
-                masterBand.Columns["paymodename"].Width = 120;
+                masterBand.Columns["paymodename"].Header.Caption = "Bill Type";
+                masterBand.Columns["paymodename"].Width = 100;
                 masterBand.Columns["paymodename"].CellAppearance.TextHAlign = Infragistics.Win.HAlign.Center;
+            }
+            if (masterBand.Columns["CashMode"] != null)
+            {
+                masterBand.Columns["CashMode"].Header.Caption = "Payment Mode";
+                masterBand.Columns["CashMode"].Width = 150;
+                masterBand.Columns["CashMode"].CellAppearance.TextHAlign = Infragistics.Win.HAlign.Center;
             }
         }
 
@@ -923,6 +939,7 @@ namespace PosBranch_Win.Reports.SalesReports
                         row["BillDate"] = bill.BillDate;
                         row["customername"] = bill.CustomerName ?? "";
                         row["paymodename"] = bill.PaymodeName ?? "";
+                        row["CashMode"] = bill.CashMode ?? "";
                         // TaxPer removed - not available in master table
                         row["TaxAmt"] = bill.TaxAmt;
                         row["SubTotal"] = bill.SubTotal;
@@ -1454,6 +1471,7 @@ namespace PosBranch_Win.Reports.SalesReports
                 ultraTextEditorCustomer.Text = string.Empty;
 
                 ultraComboPresetDates.Value = "ThisMonth";
+                ultraComboPaymentMode.Value = "All";
 
                 // Force UI update
                 Application.DoEvents();
@@ -1780,6 +1798,7 @@ namespace PosBranch_Win.Reports.SalesReports
                         row["BillDate"] = bill.BillDate;
                         row["customername"] = bill.CustomerName ?? "";
                         row["paymodename"] = bill.PaymodeName ?? "";
+                        row["CashMode"] = bill.CashMode ?? "";
                         row["TaxAmt"] = bill.TaxAmt;
                         row["SubTotal"] = bill.SubTotal;
                         row["NetAmount"] = bill.NetAmount;
@@ -1848,6 +1867,15 @@ namespace PosBranch_Win.Reports.SalesReports
             {
                 decimal toAmount = Convert.ToDecimal(ultraNumericEditorAmountTo.Value);
                 filtered = filtered.Where(x => x.NetAmount <= (double)toAmount);
+            }
+
+            // Filter by Payment Mode (CashMode column)
+            if (ultraComboPaymentMode.Value != null && ultraComboPaymentMode.Value.ToString() != "All")
+            {
+                string selectedMode = ultraComboPaymentMode.Value.ToString();
+                filtered = filtered.Where(x =>
+                    !string.IsNullOrEmpty(x.CashMode) &&
+                    x.CashMode.IndexOf(selectedMode, StringComparison.OrdinalIgnoreCase) >= 0);
             }
 
             return filtered.ToList();

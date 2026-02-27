@@ -36,6 +36,8 @@
             this.ultraLabelPreset = new Infragistics.Win.Misc.UltraLabel();
             this.ultraTextEditorCustomer = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.ultraLabelCustomerSearch = new Infragistics.Win.Misc.UltraLabel();
+            this.ultraComboPaymentMode = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
+            this.ultraLabelPaymentMode = new Infragistics.Win.Misc.UltraLabel();
             this.ultraNumericEditorBillNo = new Infragistics.Win.UltraWinEditors.UltraNumericEditor();
             this.ultraLabelBillNoSearch = new Infragistics.Win.Misc.UltraLabel();
             this.ultraNumericEditorAmountTo = new Infragistics.Win.UltraWinEditors.UltraNumericEditor();
@@ -66,6 +68,7 @@
             this.ultraPanelControls.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.ultraComboPresetDates)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ultraTextEditorCustomer)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraComboPaymentMode)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ultraNumericEditorBillNo)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ultraNumericEditorAmountTo)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ultraNumericEditorAmountFrom)).BeginInit();
@@ -92,6 +95,8 @@
             this.ultraPanelControls.ClientArea.Controls.Add(this.ultraLabelPreset);
             this.ultraPanelControls.ClientArea.Controls.Add(this.ultraTextEditorCustomer);
             this.ultraPanelControls.ClientArea.Controls.Add(this.ultraLabelCustomerSearch);
+            this.ultraPanelControls.ClientArea.Controls.Add(this.ultraComboPaymentMode);
+            this.ultraPanelControls.ClientArea.Controls.Add(this.ultraLabelPaymentMode);
             this.ultraPanelControls.ClientArea.Controls.Add(this.ultraNumericEditorBillNo);
             this.ultraPanelControls.ClientArea.Controls.Add(this.ultraLabelBillNoSearch);
             this.ultraPanelControls.ClientArea.Controls.Add(this.ultraNumericEditorAmountTo);
@@ -162,6 +167,22 @@
             this.ultraLabelCustomerSearch.Size = new System.Drawing.Size(60, 23);
             this.ultraLabelCustomerSearch.TabIndex = 15;
             this.ultraLabelCustomerSearch.Text = "Customer:";
+            // 
+            // ultraComboPaymentMode
+            // 
+            this.ultraComboPaymentMode.DropDownStyle = Infragistics.Win.DropDownStyle.DropDownList;
+            this.ultraComboPaymentMode.Location = new System.Drawing.Point(920, 50);
+            this.ultraComboPaymentMode.Name = "ultraComboPaymentMode";
+            this.ultraComboPaymentMode.Size = new System.Drawing.Size(130, 25);
+            this.ultraComboPaymentMode.TabIndex = 22;
+            // 
+            // ultraLabelPaymentMode
+            // 
+            this.ultraLabelPaymentMode.Location = new System.Drawing.Point(837, 53);
+            this.ultraLabelPaymentMode.Name = "ultraLabelPaymentMode";
+            this.ultraLabelPaymentMode.Size = new System.Drawing.Size(80, 23);
+            this.ultraLabelPaymentMode.TabIndex = 21;
+            this.ultraLabelPaymentMode.Text = "Pay Mode:";
             // 
             // ultraNumericEditorBillNo
             // 
@@ -417,6 +438,7 @@
             this.ultraPanelControls.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.ultraComboPresetDates)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ultraTextEditorCustomer)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraComboPaymentMode)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ultraNumericEditorBillNo)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ultraNumericEditorAmountTo)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ultraNumericEditorAmountFrom)).EndInit();
@@ -454,6 +476,8 @@
         private Infragistics.Win.UltraWinEditors.UltraComboEditor ultraComboPresetDates;
         private Infragistics.Win.Misc.UltraButton btnSearch;
         private Infragistics.Win.Misc.UltraButton btnClearFilters;
+        private Infragistics.Win.UltraWinEditors.UltraComboEditor ultraComboPaymentMode;
+        private Infragistics.Win.Misc.UltraLabel ultraLabelPaymentMode;
         private Infragistics.Win.UltraWinGrid.UltraGrid ultraGridMaster;
         private Infragistics.Win.Misc.UltraPanel ultraPanelSummary;
         private Infragistics.Win.Misc.UltraLabel ultraLabelNetTotalValue;
