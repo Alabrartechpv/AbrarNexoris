@@ -89,15 +89,15 @@ namespace PosBranch_Win.Reports.SalesReports
             ultraComboPresetDates.Items.Clear();
             ultraComboPresetDates.Items.Add("Today", "Today");
             ultraComboPresetDates.Items.Add("Yesterday", "Yesterday");
-            ultraComboPresetDates.Items.Add("This Week", "ThisWeek");
-            ultraComboPresetDates.Items.Add("Last Week", "LastWeek");
-            ultraComboPresetDates.Items.Add("This Month", "ThisMonth");
-            ultraComboPresetDates.Items.Add("Last Month", "LastMonth");
-            ultraComboPresetDates.Items.Add("This Quarter", "ThisQuarter");
-            ultraComboPresetDates.Items.Add("Last Quarter", "LastQuarter");
-            ultraComboPresetDates.Items.Add("This Year", "ThisYear");
-            ultraComboPresetDates.Items.Add("Last Year", "LastYear");
-            ultraComboPresetDates.Items.Add("Custom Range", "Custom");
+            ultraComboPresetDates.Items.Add("ThisWeek", "This Week");
+            ultraComboPresetDates.Items.Add("LastWeek", "Last Week");
+            ultraComboPresetDates.Items.Add("ThisMonth", "This Month");
+            ultraComboPresetDates.Items.Add("LastMonth", "Last Month");
+            ultraComboPresetDates.Items.Add("ThisQuarter", "This Quarter");
+            ultraComboPresetDates.Items.Add("LastQuarter", "Last Quarter");
+            ultraComboPresetDates.Items.Add("ThisYear", "This Year");
+            ultraComboPresetDates.Items.Add("LastYear", "Last Year");
+            ultraComboPresetDates.Items.Add("Custom", "Custom Range");
 
             // Set default to "This Month"
             ultraComboPresetDates.Value = "ThisMonth";
@@ -841,8 +841,8 @@ namespace PosBranch_Win.Reports.SalesReports
             {
                 isLoading = true;
 
-                DateTime fromDate = Convert.ToDateTime(ultraDateTimeEditorFrom.Value);
-                DateTime toDate = Convert.ToDateTime(ultraDateTimeEditorTo.Value);
+                DateTime fromDate = Convert.ToDateTime(ultraDateTimeEditorFrom.Value).Date;
+                DateTime toDate = Convert.ToDateTime(ultraDateTimeEditorTo.Value).Date.AddHours(23).AddMinutes(59).AddSeconds(59);
 
                 // STEP 1: Unbind grid completely
                 ultraGridMaster.DataSource = null;
@@ -1485,32 +1485,32 @@ namespace PosBranch_Win.Reports.SalesReports
                 {
                     case "Today":
                         fromDate = DateTime.Now.Date;
-                        toDate = DateTime.Now.Date;
+                        toDate = DateTime.Now.Date.AddHours(23).AddMinutes(59).AddSeconds(59);
                         break;
                     case "Yesterday":
                         fromDate = DateTime.Now.AddDays(-1).Date;
-                        toDate = DateTime.Now.AddDays(-1).Date;
+                        toDate = DateTime.Now.AddDays(-1).Date.AddHours(23).AddMinutes(59).AddSeconds(59);
                         break;
                     case "ThisWeek":
                         fromDate = DateTime.Now.AddDays(-(int)DateTime.Now.DayOfWeek).Date;
-                        toDate = DateTime.Now.Date;
+                        toDate = DateTime.Now.Date.AddHours(23).AddMinutes(59).AddSeconds(59);
                         break;
                     case "LastWeek":
                         fromDate = DateTime.Now.AddDays(-(int)DateTime.Now.DayOfWeek - 7).Date;
-                        toDate = DateTime.Now.AddDays(-(int)DateTime.Now.DayOfWeek - 1).Date;
+                        toDate = DateTime.Now.AddDays(-(int)DateTime.Now.DayOfWeek - 1).Date.AddHours(23).AddMinutes(59).AddSeconds(59);
                         break;
                     case "ThisMonth":
                         fromDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
-                        toDate = DateTime.Now.Date;
+                        toDate = DateTime.Now.Date.AddHours(23).AddMinutes(59).AddSeconds(59);
                         break;
                     case "LastMonth":
                         fromDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddMonths(-1);
-                        toDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(-1);
+                        toDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(-1).AddHours(23).AddMinutes(59).AddSeconds(59);
                         break;
                     case "ThisQuarter":
                         int quarter = (DateTime.Now.Month - 1) / 3 + 1;
                         fromDate = new DateTime(DateTime.Now.Year, (quarter - 1) * 3 + 1, 1);
-                        toDate = DateTime.Now.Date;
+                        toDate = DateTime.Now.Date.AddHours(23).AddMinutes(59).AddSeconds(59);
                         break;
                     case "LastQuarter":
                         int lastQuarter = (DateTime.Now.Month - 1) / 3;
@@ -1523,15 +1523,15 @@ namespace PosBranch_Win.Reports.SalesReports
                         {
                             fromDate = new DateTime(DateTime.Now.Year, (lastQuarter - 1) * 3 + 1, 1);
                         }
-                        toDate = fromDate.AddMonths(3).AddDays(-1);
+                        toDate = fromDate.AddMonths(3).AddDays(-1).AddHours(23).AddMinutes(59).AddSeconds(59);
                         break;
                     case "ThisYear":
                         fromDate = new DateTime(DateTime.Now.Year, 1, 1);
-                        toDate = DateTime.Now.Date;
+                        toDate = DateTime.Now.Date.AddHours(23).AddMinutes(59).AddSeconds(59);
                         break;
                     case "LastYear":
                         fromDate = new DateTime(DateTime.Now.Year - 1, 1, 1);
-                        toDate = new DateTime(DateTime.Now.Year - 1, 12, 31);
+                        toDate = new DateTime(DateTime.Now.Year - 1, 12, 31).AddHours(23).AddMinutes(59).AddSeconds(59);
                         break;
                     default:
                         return; // Custom range - don't change dates
@@ -1539,6 +1539,20 @@ namespace PosBranch_Win.Reports.SalesReports
 
                 ultraDateTimeEditorFrom.Value = fromDate;
                 ultraDateTimeEditorTo.Value = toDate;
+
+                // Auto-load data when a preset is selected (skip during form init)
+                if (!isLoading && dsHierarchical != null && dsHierarchical.Tables.Count > 0)
+                {
+                    this.Cursor = Cursors.WaitCursor;
+                    try
+                    {
+                        LoadSalesData();
+                    }
+                    finally
+                    {
+                        this.Cursor = Cursors.Default;
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -1557,8 +1571,8 @@ namespace PosBranch_Win.Reports.SalesReports
                 isLoading = true;
                 this.Cursor = Cursors.WaitCursor;
 
-                DateTime fromDate = Convert.ToDateTime(ultraDateTimeEditorFrom.Value);
-                DateTime toDate = Convert.ToDateTime(ultraDateTimeEditorTo.Value);
+                DateTime fromDate = Convert.ToDateTime(ultraDateTimeEditorFrom.Value).Date;
+                DateTime toDate = Convert.ToDateTime(ultraDateTimeEditorTo.Value).Date.AddHours(23).AddMinutes(59).AddSeconds(59);
 
                 // CRITICAL: Completely unbind and reset grid
                 ultraGridMaster.DataSource = null;

@@ -1034,7 +1034,7 @@ namespace PosBranch_Win.Transaction
             this.textBoxround.Location = new System.Drawing.Point(1178, 13);
             this.textBoxround.Multiline = true;
             this.textBoxround.Name = "textBoxround";
-            this.textBoxround.Size = new System.Drawing.Size(129, 21);
+            this.textBoxround.Size = new System.Drawing.Size(163, 21);
             this.textBoxround.TabIndex = 82;
             this.textBoxround.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             // 
