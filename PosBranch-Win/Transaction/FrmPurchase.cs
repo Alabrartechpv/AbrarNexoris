@@ -2265,52 +2265,44 @@ namespace PosBranch_Win.Transaction
                         taxType = NormalizeTaxType(e.Cell.Row.Cells["TaxType"].Value.ToString());
                     }
 
-                    // Only calculate for incl and excl tax types
-                    if (taxType == "incl" || taxType == "excl")
+                    // Calculate for all tax types
+
+                    // Get values
+                    float netAmount = 0;
+                    float qty = 1;
+                    float taxPer = 0;
+
+                    if (e.Cell.Value != null)
+                        float.TryParse(e.Cell.Value.ToString(), out netAmount);
+                    if (e.Cell.Row.Cells.Exists("Qty") && e.Cell.Row.Cells["Qty"].Value != null)
+                        float.TryParse(e.Cell.Row.Cells["Qty"].Value.ToString(), out qty);
+                    if (e.Cell.Row.Cells.Exists("TaxPer") && e.Cell.Row.Cells["TaxPer"].Value != null)
+                        float.TryParse(e.Cell.Row.Cells["TaxPer"].Value.ToString(), out taxPer);
+
+                    // Avoid division by zero
+                    if (qty <= 0) qty = 1;
+
+                    // Calculate Cost = Net Amount / Qty
+                    float newCost = netAmount / qty;
+                    if (e.Cell.Row.Cells.Exists("Cost"))
                     {
-                        // Get values
-                        float netAmount = 0;
-                        float qty = 1;
-                        float taxPer = 0;
+                        e.Cell.Row.Cells["Cost"].Value = newCost;
+                    }
 
-                        if (e.Cell.Value != null)
-                            float.TryParse(e.Cell.Value.ToString(), out netAmount);
-                        if (e.Cell.Row.Cells.Exists("Qty") && e.Cell.Row.Cells["Qty"].Value != null)
-                            float.TryParse(e.Cell.Row.Cells["Qty"].Value.ToString(), out qty);
-                        if (e.Cell.Row.Cells.Exists("TaxPer") && e.Cell.Row.Cells["TaxPer"].Value != null)
-                            float.TryParse(e.Cell.Row.Cells["TaxPer"].Value.ToString(), out taxPer);
+                    // Now that we have the new Cost, we should run the standard calculation
+                    // This will properly calculate BaseCost, TaxAmt, Gross, etc. exactly like
+                    // when the user types the Cost manually.
+                    RecalculateBaseCostAndTaxFromCost(e.Cell.Row, newCost, qty);
 
-                        // Avoid division by zero
-                        if (qty <= 0) qty = 1;
+                    // The RecalculateBaseCostAndTaxFromCost handles the math perfectly, 
+                    // but we need to ensure Gross is updated correctly
+                    float newTaxAmount = 0;
+                    if (e.Cell.Row.Cells.Exists("TaxAmt") && e.Cell.Row.Cells["TaxAmt"].Value != null)
+                        float.TryParse(e.Cell.Row.Cells["TaxAmt"].Value.ToString(), out newTaxAmount);
 
-                        // Calculate Cost = Net Amount / Qty
-                        float newCost = netAmount / qty;
-                        if (e.Cell.Row.Cells.Exists("Cost"))
-                        {
-                            e.Cell.Row.Cells["Cost"].Value = newCost;
-                        }
-
-                        // Recalculate Tax Amount based on new Net Amount
-                        // Tax Amount = Net Amount × Tax% / (100 + Tax%)
-                        float newTaxAmount = 0;
-                        if (taxPer > 0)
-                        {
-                            newTaxAmount = netAmount * taxPer / (100 + taxPer);
-                        }
-
-                        // Update Tax Amount cell
-                        if (e.Cell.Row.Cells.Exists("TaxAmt"))
-                        {
-                            e.Cell.Row.Cells["TaxAmt"].Value = newTaxAmount;
-                        }
-
-                        // Calculate Gross = Net Amount - new Tax Amount
-                        float newGross = netAmount - newTaxAmount;
-                        if (e.Cell.Row.Cells.Exists("Gross"))
-                        {
-                            e.Cell.Row.Cells["Gross"].Value = newGross;
-                        }
-
+                    if (e.Cell.Row.Cells.Exists("Gross"))
+                    {
+                        e.Cell.Row.Cells["Gross"].Value = netAmount - newTaxAmount;
                     }
 
                     // Recalculate totals to update label4 and txtInvoiceAmt
