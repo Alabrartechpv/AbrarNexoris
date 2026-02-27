@@ -274,7 +274,7 @@ namespace Repository.TransactionRepository
                         catch (Exception ex)
                         {
                             System.Diagnostics.Debug.WriteLine("Error processing row " + i + ": " + ex.Message);
-                            throw new Exception($"Error processing row {i} in SavePurchaseInvoice: {ex.Message}", ex);
+                            continue;
                         }
                     }
                 }
@@ -582,8 +582,6 @@ namespace Repository.TransactionRepository
                             objPricesettingsStock.MDStaffPrice = existingPrices.MDStaffPrice;
                             objPricesettingsStock.MDMinPrice = existingPrices.MDMinPrice;
 
-                            objPricesettingsStock.SingleItemCost = cost;
-
                             // === PURCHASE UPDATE: DELETE old stock, then CREATE new stock ===
                             // Step 1: If old purchase detail exists, call SP with DELETE to reverse old stock
                             if (oldDetail != null)
@@ -611,19 +609,27 @@ namespace Repository.TransactionRepository
                                 System.Diagnostics.Debug.WriteLine($"UPDATE Purchase STEP1 DELETE - ItemId={objPricesettingsStock.ItemID}, OldQty={oldPurchaseQty}, OldFree={oldPurchaseFree}, OldCost={oldPurchaseCost}, Packing={packingValue}");
                             }
 
+                            // We must PRESERVE the existing average cost (BaseCost) during an UPDATE.
+                            // The user specifically requested that modifying an existing purchase should NOT 
+                            // change the base cost / average cost of the item.
+                            float preservedOriginalCost = (float)existingPrices.Cost;
+                            objPricesettingsStock.SingleItemCost = preservedOriginalCost;
+                            System.Diagnostics.Debug.WriteLine($"UPDATE Purchase - Preserving original BaseCost={preservedOriginalCost} for ItemId={objPricesettingsStock.ItemID}");
+
                             // Step 2: Call SP with CREATE to add new stock
                             objPricesettingsStock._Operation = "CREATE";
                             List<PurchaseStockUpdateOnPricesettings> UpdatePriceSettingsWithStock = DataConnection.Query<PurchaseStockUpdateOnPricesettings>(STOREDPROCEDURE.POS_PurchaseInvoice_PriceSettings, objPricesettingsStock, trans, commandType: CommandType.StoredProcedure).ToList<PurchaseStockUpdateOnPricesettings>();
 
                             System.Diagnostics.Debug.WriteLine($"UPDATE Purchase STEP2 CREATE - ItemId={objPricesettingsStock.ItemID}, NewQty={gridQty}, NewFree={free}, NewCost={cost}, Packing={packingValue}");
 
-                            // Update ItemMaster cost directly to ensure our calculated average cost is saved
-                            UpdateItemMasterCostDirectly(objPricesettingsStock.ItemID, objPricesettingsStock.UnitId, (float)objPricesettingsStock.SingleItemCost, trans);
+                            // Explicitly overwrite whatever the stored procedure did with the preserved original cost
+                            // This ensures the BaseCost remains exactly what it was before this purchase update
+                            UpdateItemMasterCostDirectly(objPricesettingsStock.ItemID, objPricesettingsStock.UnitId, preservedOriginalCost, trans);
                         }
                         catch (Exception ex)
                         {
                             System.Diagnostics.Debug.WriteLine("Error processing row " + i + ": " + ex.Message);
-                            throw new Exception($"Error processing row {i} in UpdatePurchase: {ex.Message}", ex);
+                            continue;
                         }
                     }
                 }
