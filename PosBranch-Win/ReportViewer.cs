@@ -38,12 +38,67 @@ namespace PosBranch_Win
 
         public void setReportConnection(ReportDocument reportDoc)
         {
+            // Read connection details from C:\Connection\Config.txt (same as BaseRepostitory)
+            // Format: Data Source=SERVER;Initial Catalog=DB;User ID=user;Password=pass;
+            string serverName = "";
+            string databaseName = "";
+            string userId = "";
+            string password = "";
+
+            try
+            {
+                string configPath = @"C:\Connection\Config.txt";
+                if (File.Exists(configPath))
+                {
+                    string configLine = File.ReadAllText(configPath).Trim();
+                    string[] parts = configLine.Split(';');
+                    foreach (string part in parts)
+                    {
+                        string trimmed = part.Trim();
+                        if (string.IsNullOrEmpty(trimmed)) continue;
+
+                        string[] keyValue = trimmed.Split(new[] { '=' }, 2);
+                        if (keyValue.Length < 2) continue;
+
+                        string key = keyValue[0].Trim().ToLower();
+                        string val = keyValue[1].Trim();
+
+                        if (key == "data source")
+                            serverName = val;
+                        else if (key == "initial catalog")
+                            databaseName = val;
+                        else if (key == "user id")
+                            userId = val;
+                        else if (key == "password")
+                            password = val;
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Connection config file not found at C:\\Connection\\Config.txt.\nPlease create this file with your database connection details.\n\nFormat: Data Source=SERVER;Initial Catalog=DATABASE;User ID=USER;Password=PASS;",
+                        "Config File Missing", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error reading Config.txt: {ex.Message}", "Config Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(serverName) || string.IsNullOrEmpty(databaseName))
+            {
+                MessageBox.Show("Invalid connection details in C:\\Connection\\Config.txt.\nPlease ensure Data Source and Initial Catalog are specified.",
+                    "Config Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             ConnectionInfo connectionInfo = new ConnectionInfo
             {
-                ServerName = "192.168.1.232\\SQLEXPRESS",
-                DatabaseName = "RambaiTest",
-                UserID = "sa",
-                Password = "Abrar@123"
+                ServerName = serverName,
+                DatabaseName = databaseName,
+                UserID = userId,
+                Password = password
             };
 
             foreach (Table tbl in reportDoc.Database.Tables)

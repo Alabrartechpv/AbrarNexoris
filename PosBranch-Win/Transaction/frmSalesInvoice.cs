@@ -468,6 +468,20 @@ namespace PosBranch_Win.Transaction
                     ultraGrid1.DisplayLayout.LoadFromXml(GridLayoutPath);
                     gridLayoutLoaded = true;
 
+                    // Enforce essential columns to be visible regardless of saved layout
+                    if (ultraGrid1.DisplayLayout.Bands.Count > 0)
+                    {
+                        var band = ultraGrid1.DisplayLayout.Bands[0];
+                        string[] essentialColumns = { "SlNO", "BarCode", "ItemName", "Unit", "Qty", "UnitPrice", "TotalAmount", "Amount" };
+                        foreach (string colKey in essentialColumns)
+                        {
+                            if (band.Columns.Exists(colKey))
+                            {
+                                band.Columns[colKey].Hidden = false;
+                            }
+                        }
+                    }
+
                     // Reapply appearance settings after loading layout (layout file overrides colors)
                     ApplyGridAppearance();
                 }
@@ -6229,6 +6243,14 @@ namespace PosBranch_Win.Transaction
         {
             if (column != null && !column.Hidden)
             {
+                // Prevent hiding essential columns
+                string[] essentialColumns = { "SlNO", "BarCode", "ItemName", "Unit", "Qty", "UnitPrice", "TotalAmount", "Amount" };
+                if (essentialColumns.Contains(column.Key))
+                {
+                    MessageBox.Show($"The '{column.Header.Caption}' column is essential and cannot be hidden.", "Cannot Hide Column", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
                 savedColumnWidths[column.Key] = column.Width;
                 ultraGrid1.SuspendLayout();
                 column.Hidden = true;
