@@ -1432,5 +1432,10 @@
   <ItemGroup>
     <None Include="Resources\report.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\splash_logo.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

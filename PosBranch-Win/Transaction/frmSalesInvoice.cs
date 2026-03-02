@@ -2101,9 +2101,9 @@ namespace PosBranch_Win.Transaction
                 // Use the repository method to add the item to the grid
                 operations.AddItemToGrid(dt, item, qty, cmpPrice.Text);
 
-                // Find the row that was just added or updated
+                // Find the row that was just added or updated (search backwards to find the most recently added)
                 int rowIndex = -1;
-                for (int i = 0; i < dt.Rows.Count; i++)
+                for (int i = dt.Rows.Count - 1; i >= 0; i--)
                 {
                     // Use both ItemId and BarCode for comparison to handle items without barcodes
                     string existingItemId = dt.Rows[i]["ItemId"].ToString();
