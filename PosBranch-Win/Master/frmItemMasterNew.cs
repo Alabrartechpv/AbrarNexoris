@@ -459,8 +459,73 @@ namespace PosBranch_Win.Master
 
         }
 
+        private void SetupAutoComplete()
+        {
+            try
+            {
+                Repository.Dropdowns drop = new Repository.Dropdowns();
+
+                if (txt_Group != null)
+                {
+                    var groups = drop.getGroupDDl()?.List?.ToList();
+                    if (groups != null)
+                    {
+                        var groupSource = new AutoCompleteStringCollection();
+                        groupSource.AddRange(groups.Select(g => g.GroupName ?? "").Where(s => !string.IsNullOrEmpty(s)).ToArray());
+                        txt_Group.AutoCompleteCustomSource = groupSource;
+                        txt_Group.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
+                        txt_Group.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
+                    }
+                }
+
+                if (txt_Category != null)
+                {
+                    var cats = drop.getCategoryDDl("")?.List?.ToList();
+                    if (cats != null)
+                    {
+                        var catSource = new AutoCompleteStringCollection();
+                        catSource.AddRange(cats.Select(c => c.CategoryName ?? "").Where(s => !string.IsNullOrEmpty(s)).ToArray());
+                        txt_Category.AutoCompleteCustomSource = catSource;
+                        txt_Category.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
+                        txt_Category.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
+                    }
+                }
+
+                if (txt_ItemType != null)
+                {
+                    var types = drop.getItemTypeDDl()?.List?.ToList();
+                    if (types != null)
+                    {
+                        var typeSource = new AutoCompleteStringCollection();
+                        typeSource.AddRange(types.Select(t => t.ItemType ?? "").Where(s => !string.IsNullOrEmpty(s)).ToArray());
+                        txt_ItemType.AutoCompleteCustomSource = typeSource;
+                        txt_ItemType.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
+                        txt_ItemType.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
+                    }
+                }
+
+                if (txt_Brand != null)
+                {
+                    var brands = drop.getBrandDDl()?.List?.ToList();
+                    if (brands != null)
+                    {
+                        var brandSource = new AutoCompleteStringCollection();
+                        brandSource.AddRange(brands.Select(b => b.BrandName ?? "").Where(s => !string.IsNullOrEmpty(s)).ToArray());
+                        txt_Brand.AutoCompleteCustomSource = brandSource;
+                        txt_Brand.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
+                        txt_Brand.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error setting up autocomplete: {ex.Message}");
+            }
+        }
+
         private void frmItemMasterNew_Load(object sender, EventArgs e)
         {
+            SetupAutoComplete();
             KeyPreview = true;
             this.KeyDown += frmItemMasterNew_KeyDown;
             this.SetupUltraGrid();
@@ -1082,8 +1147,8 @@ namespace PosBranch_Win.Master
                 dtPrice.Columns.Add("MarginPer", typeof(float));
                 dtPrice.Columns.Add("TaxPer", typeof(float));
                 dtPrice.Columns.Add("TaxAmt", typeof(float));
-                dtPrice.Columns.Add("MRP", typeof(float));
                 dtPrice.Columns.Add("RetailPrice", typeof(float));
+                dtPrice.Columns.Add("MRP", typeof(float));
                 dtPrice.Columns.Add("WholeSalePrice", typeof(float));
                 dtPrice.Columns.Add("CreditPrice", typeof(float));
                 dtPrice.Columns.Add("CardPrice", typeof(float));
@@ -1101,8 +1166,8 @@ namespace PosBranch_Win.Master
                     row["MarginPer"] = getItem.List[i].MarginPer;
                     row["TaxPer"] = getItem.List[i].TaxPer;
                     row["TaxAmt"] = getItem.List[i].TaxAmt;
-                    row["MRP"] = getItem.List[i].MRP;
                     row["RetailPrice"] = getItem.List[i].WholeSalePrice; // DB.WholeSalePrice = retail → grid RetailPrice (visual "Retail Price")
+                    row["MRP"] = getItem.List[i].MRP;
                     row["WholeSalePrice"] = getItem.List[i].RetailPrice; // DB.RetailPrice = walking → grid WholeSalePrice (visual "Walking Price")
                     row["CreditPrice"] = getItem.List[i].CreditPrice;
                     row["CardPrice"] = getItem.List[i].CardPrice;
@@ -1124,8 +1189,8 @@ namespace PosBranch_Win.Master
                     if (band.Columns.Exists("MarginPer")) band.Columns["MarginPer"].Format = "N2";
                     if (band.Columns.Exists("TaxPer")) band.Columns["TaxPer"].Format = "N2";
                     if (band.Columns.Exists("TaxAmt")) band.Columns["TaxAmt"].Format = "N2";
-                    if (band.Columns.Exists("MRP")) band.Columns["MRP"].Format = "N2";
                     if (band.Columns.Exists("RetailPrice")) band.Columns["RetailPrice"].Format = "N2";
+                    if (band.Columns.Exists("MRP")) band.Columns["MRP"].Format = "N2";
                     if (band.Columns.Exists("WholeSalePrice")) band.Columns["WholeSalePrice"].Format = "N2";
                     if (band.Columns.Exists("CreditPrice")) band.Columns["CreditPrice"].Format = "N2";
                     if (band.Columns.Exists("CardPrice")) band.Columns["CardPrice"].Format = "N2";
@@ -5220,6 +5285,7 @@ namespace PosBranch_Win.Master
             frmCategoryDialog category = new frmCategoryDialog(Params);
             category.StartPosition = FormStartPosition.CenterScreen;
             category.ShowDialog();
+            SetupAutoComplete();
         }
 
         private void btn_Add_Grup_Click(object sender, EventArgs e)
@@ -5227,6 +5293,7 @@ namespace PosBranch_Win.Master
             frmGroupDialog groupDialog = new frmGroupDialog();
             groupDialog.StartPosition = FormStartPosition.CenterScreen;
             groupDialog.ShowDialog();
+            SetupAutoComplete();
         }
 
         private void btn_Add_Brand_Click(object sender, EventArgs e)
@@ -5334,7 +5401,8 @@ namespace PosBranch_Win.Master
         {
             if (e.KeyCode == Keys.Enter)
             {
-
+                txt_Category?.Focus();
+                e.Handled = true;
             }
         }
 
@@ -5342,8 +5410,35 @@ namespace PosBranch_Win.Master
         {
             if (e.KeyCode == Keys.Enter)
             {
-
-
+                string categoryName = txt_Category?.Text?.Trim() ?? string.Empty;
+                if (!string.IsNullOrEmpty(categoryName))
+                {
+                    Repository.Dropdowns drop = new Repository.Dropdowns();
+                    var cats = drop.getCategoryDDl(categoryName)?.List?.ToList();
+                    var match = cats?.FirstOrDefault(c => string.Equals(c.CategoryName, categoryName, StringComparison.OrdinalIgnoreCase));
+                    if (match == null)
+                    {
+                        try
+                        {
+                            var catRepo = new Repository.MasterRepositry.CategoryRepository();
+                            // If group is set, use it; otherwise 0
+                            int groupId = 0;
+                            string groupName = txt_Group?.Text?.Trim() ?? string.Empty;
+                            if (!string.IsNullOrEmpty(groupName))
+                            {
+                                var groups = drop.getGroupDDl()?.List?.ToList();
+                                var groupMatch = groups?.FirstOrDefault(g => string.Equals(g.GroupName, groupName, StringComparison.OrdinalIgnoreCase));
+                                if (groupMatch != null) groupId = groupMatch.Id;
+                            }
+                            var newCat = new ModelClass.Master.Category { CategoryName = categoryName, GroupId = groupId, _Operation = "CREATE" };
+                            catRepo.SaveCategory(newCat);
+                            SetupAutoComplete();
+                        }
+                        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error creating category on Enter: {ex.Message}"); }
+                    }
+                }
+                txt_Group?.Focus();
+                e.Handled = true;
             }
         }
 
@@ -5351,6 +5446,24 @@ namespace PosBranch_Win.Master
         {
             if (e.KeyCode == Keys.Enter)
             {
+                string groupName = txt_Group?.Text?.Trim() ?? string.Empty;
+                if (!string.IsNullOrEmpty(groupName))
+                {
+                    Repository.Dropdowns drop = new Repository.Dropdowns();
+                    var groups = drop.getGroupDDl()?.List?.ToList();
+                    var match = groups?.FirstOrDefault(g => string.Equals(g.GroupName, groupName, StringComparison.OrdinalIgnoreCase));
+                    if (match == null)
+                    {
+                        try
+                        {
+                            var groupRepo = new Repository.MasterRepositry.GroupRepository();
+                            var newGroup = new ModelClass.Master.Group { GroupName = groupName, _Operation = "CREATE", BranchId = 0 };
+                            groupRepo.SaveGroup(newGroup);
+                            SetupAutoComplete();
+                        }
+                        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error creating group on Enter: {ex.Message}"); }
+                    }
+                }
             }
         }
 
@@ -5358,7 +5471,26 @@ namespace PosBranch_Win.Master
         {
             if (e.KeyCode == Keys.Enter)
             {
-
+                string brandName = txt_Brand?.Text?.Trim() ?? string.Empty;
+                if (!string.IsNullOrEmpty(brandName))
+                {
+                    Repository.Dropdowns drop = new Repository.Dropdowns();
+                    var brands = drop.getBrandDDl()?.List?.ToList();
+                    var match = brands?.FirstOrDefault(b => string.Equals(b.BrandName, brandName, StringComparison.OrdinalIgnoreCase));
+                    if (match == null)
+                    {
+                        try
+                        {
+                            var clientOps = new Repository.ClientOperations();
+                            var newBrand = new ModelClass.Master.Brand { BrandName = brandName, _Operation = "CREATE" };
+                            clientOps.SaveBrand(newBrand);
+                            SetupAutoComplete();
+                        }
+                        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error creating brand on Enter: {ex.Message}"); }
+                    }
+                }
+                txt_BaseUnit?.Focus();
+                e.Handled = true;
             }
         }
 
@@ -6830,7 +6962,26 @@ namespace PosBranch_Win.Master
                 {
                     var groups = drop.getGroupDDl()?.List?.ToList();
                     var match = groups?.FirstOrDefault(g => string.Equals(g.GroupName, groupName, StringComparison.OrdinalIgnoreCase));
-                    if (match != null) ItemMaster.GroupId = match.Id;
+                    if (match != null)
+                    {
+                        ItemMaster.GroupId = match.Id;
+                    }
+                    else
+                    {
+                        // Auto-create missing group
+                        try
+                        {
+                            var groupRepo = new Repository.MasterRepositry.GroupRepository();
+                            var newGroup = new ModelClass.Master.Group { GroupName = groupName, _Operation = "CREATE", BranchId = 0 };
+                            groupRepo.SaveGroup(newGroup);
+
+                            // Re-fetch to get new ID
+                            var updatedGroups = drop.getGroupDDl()?.List?.ToList();
+                            var newMatch = updatedGroups?.FirstOrDefault(g => string.Equals(g.GroupName, groupName, StringComparison.OrdinalIgnoreCase));
+                            if (newMatch != null) ItemMaster.GroupId = newMatch.Id;
+                        }
+                        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Auto-create group failed: {ex.Message}"); }
+                    }
                 }
 
                 // Category
@@ -6839,7 +6990,26 @@ namespace PosBranch_Win.Master
                 {
                     var cats = drop.getCategoryDDl(categoryName)?.List?.ToList();
                     var match = cats?.FirstOrDefault(c => string.Equals(c.CategoryName, categoryName, StringComparison.OrdinalIgnoreCase));
-                    if (match != null) ItemMaster.CategoryId = match.Id;
+                    if (match != null)
+                    {
+                        ItemMaster.CategoryId = match.Id;
+                    }
+                    else
+                    {
+                        // Auto-create missing category
+                        try
+                        {
+                            var catRepo = new Repository.MasterRepositry.CategoryRepository();
+                            var newCat = new ModelClass.Master.Category { CategoryName = categoryName, GroupId = ItemMaster.GroupId > 0 ? ItemMaster.GroupId : 0, _Operation = "CREATE" };
+                            catRepo.SaveCategory(newCat);
+
+                            // Re-fetch to get new ID
+                            var updatedCats = drop.getCategoryDDl(categoryName)?.List?.ToList();
+                            var newMatch = updatedCats?.FirstOrDefault(c => string.Equals(c.CategoryName, categoryName, StringComparison.OrdinalIgnoreCase));
+                            if (newMatch != null) ItemMaster.CategoryId = newMatch.Id;
+                        }
+                        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Auto-create category failed: {ex.Message}"); }
+                    }
                 }
 
                 // Base Unit

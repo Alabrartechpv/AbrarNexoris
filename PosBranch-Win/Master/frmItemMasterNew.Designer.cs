@@ -1970,7 +1970,6 @@
             this.txt_ItemNo.Name = "txt_ItemNo";
             this.txt_ItemNo.Size = new System.Drawing.Size(156, 26);
             this.txt_ItemNo.TabIndex = 191;
-            this.txt_ItemNo.Text = " ";
             // 
             // label8
             // 
@@ -2027,7 +2026,7 @@
             this.txt_Brand.Name = "txt_Brand";
             this.txt_Brand.Size = new System.Drawing.Size(181, 28);
             this.txt_Brand.TabIndex = 16;
-            this.txt_Brand.Text = " ";
+            this.txt_Brand.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txt_Brand_KeyDown);
             // 
             // txt_LocalLanguage
             // 
@@ -2039,7 +2038,6 @@
             this.txt_LocalLanguage.Size = new System.Drawing.Size(509, 28);
             this.txt_LocalLanguage.TabIndex = 18;
             this.txt_LocalLanguage.Tag = " ";
-            this.txt_LocalLanguage.Text = " ";
             this.txt_LocalLanguage.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txt_LocalLanguage_KeyDown);
             // 
             // txt_ItemType
@@ -2053,7 +2051,7 @@
             this.txt_ItemType.Name = "txt_ItemType";
             this.txt_ItemType.Size = new System.Drawing.Size(529, 28);
             this.txt_ItemType.TabIndex = 7;
-            this.txt_ItemType.Text = " ";
+            this.txt_ItemType.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txt_ItemType_KeyDown);
             // 
             // ultraPanel8
             // 
@@ -2189,7 +2187,6 @@
             this.txt_BaseUnit.Name = "txt_BaseUnit";
             this.txt_BaseUnit.Size = new System.Drawing.Size(181, 29);
             this.txt_BaseUnit.TabIndex = 21;
-            this.txt_BaseUnit.Text = " ";
             // 
             // txt_Category
             // 
@@ -2202,7 +2199,7 @@
             this.txt_Category.Name = "txt_Category";
             this.txt_Category.Size = new System.Drawing.Size(529, 28);
             this.txt_Category.TabIndex = 10;
-            this.txt_Category.Text = " ";
+            this.txt_Category.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txt_Category_KeyDown);
             // 
             // ultraPanel11
             // 
@@ -2261,7 +2258,6 @@
             this.txt_Group.Name = "txt_Group";
             this.txt_Group.Size = new System.Drawing.Size(529, 28);
             this.txt_Group.TabIndex = 13;
-            this.txt_Group.Text = " ";
             // 
             // label9
             // 
@@ -2283,7 +2279,6 @@
             this.txt_description.Name = "txt_description";
             this.txt_description.Size = new System.Drawing.Size(509, 29);
             this.txt_description.TabIndex = 24;
-            this.txt_description.Text = " ";
             this.txt_description.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txt_BaseUnit_KeyDown);
             // 
             // ultraTabSharedControlsPage1
@@ -2301,7 +2296,6 @@
             this.txt_CustomerType.Name = "txt_CustomerType";
             this.txt_CustomerType.Size = new System.Drawing.Size(202, 28);
             this.txt_CustomerType.TabIndex = 190;
-            this.txt_CustomerType.Text = " ";
             // 
             // ultraPanel1
             // 
@@ -2407,7 +2401,6 @@
             this.txt_barcode.Name = "txt_barcode";
             this.txt_barcode.Size = new System.Drawing.Size(202, 28);
             this.txt_barcode.TabIndex = 206;
-            this.txt_barcode.Text = " ";
             // 
             // btn_Add_Cate
             // 
@@ -2687,7 +2680,6 @@
             this.ultraTabControl1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            appearance85.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             appearance85.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             appearance85.BackColorDisabled = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             appearance85.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(174)))), ((int)(((byte)(239)))));

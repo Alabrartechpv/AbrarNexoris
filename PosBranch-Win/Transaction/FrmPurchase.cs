@@ -599,6 +599,21 @@ namespace PosBranch_Win.Transaction
             LblPid.Visible = false;
             lblVoucherId.Visible = false;
 
+            // Load custom DS-Digital font from embedded resources for label4 and label6
+            try
+            {
+                Utilities.CustomFontLoader.Initialize();
+                System.Drawing.Font dsFont = Utilities.CustomFontLoader.GetDSDigitalFont(36, FontStyle.Bold);
+
+                if (label4 != null) label4.Font = dsFont;
+                if (label6 != null) label6.Font = dsFont;
+            }
+            catch (Exception fontEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to load custom DS-Digital font: {fontEx.Message}");
+                // Font will fall back to default if loading fails
+            }
+
             // Store default background color
             defaultBackColor = textBox1.BackColor;
 
