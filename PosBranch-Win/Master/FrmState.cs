@@ -39,10 +39,10 @@ namespace PosBranch_Win.Master
             KeyPreview = true;
 
             CountryDDLGrid cp = drop.CountryDDl();
-            cp.List.ToString();
-
-            // Set data source for UltraGrid
-            ultraGrid1.DataSource = cp.List;
+            if (cp != null && cp.List != null)
+            {
+                ultraGrid1.DataSource = cp.List;
+            }
             
             // Ensure proper button state on load
             SetButtonMode(false);
@@ -285,9 +285,16 @@ namespace PosBranch_Win.Master
         public void RefreshState()
         {
             try
-        {
-            StateDDlGrid stgrid = drop.getStateDDl();
-                ultraGrid1.DataSource = stgrid.List;
+            {
+                StateDDlGrid stgrid = drop.getStateDDl();
+                if (stgrid != null && stgrid.List != null)
+                {
+                    ultraGrid1.DataSource = stgrid.List;
+                }
+                else
+                {
+                    ultraGrid1.DataSource = null;
+                }
                 
                 // Configure columns after data is loaded
                 ConfigureGridColumns();
