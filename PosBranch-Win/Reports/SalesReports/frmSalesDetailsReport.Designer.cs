@@ -231,7 +231,7 @@
             // 
             // btnExport
             // 
-            this.btnExport.Location = new System.Drawing.Point(633, 14);
+            this.btnExport.Location = new System.Drawing.Point(713, 14);
             this.btnExport.Name = "btnExport";
             this.btnExport.Size = new System.Drawing.Size(105, 30);
             this.btnExport.TabIndex = 7;
@@ -241,7 +241,7 @@
             // 
             // btnPrint
             // 
-            this.btnPrint.Location = new System.Drawing.Point(523, 14);
+            this.btnPrint.Location = new System.Drawing.Point(603, 14);
             this.btnPrint.Name = "btnPrint";
             this.btnPrint.Size = new System.Drawing.Size(100, 30);
             this.btnPrint.TabIndex = 6;
@@ -251,7 +251,7 @@
             // 
             // btnRefresh
             // 
-            this.btnRefresh.Location = new System.Drawing.Point(408, 14);
+            this.btnRefresh.Location = new System.Drawing.Point(488, 14);
             this.btnRefresh.Name = "btnRefresh";
             this.btnRefresh.Size = new System.Drawing.Size(105, 30);
             this.btnRefresh.TabIndex = 5;
@@ -261,14 +261,14 @@
             // 
             // ultraDateTimeEditorTo
             // 
-            this.ultraDateTimeEditorTo.Location = new System.Drawing.Point(276, 16);
+            this.ultraDateTimeEditorTo.Location = new System.Drawing.Point(316, 16);
             this.ultraDateTimeEditorTo.Name = "ultraDateTimeEditorTo";
-            this.ultraDateTimeEditorTo.Size = new System.Drawing.Size(120, 25);
+            this.ultraDateTimeEditorTo.Size = new System.Drawing.Size(160, 25);
             this.ultraDateTimeEditorTo.TabIndex = 4;
             // 
             // ultraLabelToDate
             // 
-            this.ultraLabelToDate.Location = new System.Drawing.Point(220, 19);
+            this.ultraLabelToDate.Location = new System.Drawing.Point(260, 19);
             this.ultraLabelToDate.Name = "ultraLabelToDate";
             this.ultraLabelToDate.Size = new System.Drawing.Size(50, 23);
             this.ultraLabelToDate.TabIndex = 3;
@@ -278,7 +278,7 @@
             // 
             this.ultraDateTimeEditorFrom.Location = new System.Drawing.Point(85, 16);
             this.ultraDateTimeEditorFrom.Name = "ultraDateTimeEditorFrom";
-            this.ultraDateTimeEditorFrom.Size = new System.Drawing.Size(120, 25);
+            this.ultraDateTimeEditorFrom.Size = new System.Drawing.Size(160, 25);
             this.ultraDateTimeEditorFrom.TabIndex = 2;
             // 
             // ultraLabelFromDate

@@ -75,12 +75,15 @@ namespace PosBranch_Win.Reports.SalesReports
         private void InitializeDateControls()
         {
             // Set default date range (last 30 days)
-            ultraDateTimeEditorFrom.Value = DateTime.Now.AddDays(-30);
-            ultraDateTimeEditorTo.Value = DateTime.Now;
+            DateTime today = DateTime.Now;
+            ultraDateTimeEditorFrom.Value = new DateTime(today.Year, today.Month, today.Day, 0, 0, 0).AddDays(-30);
+            ultraDateTimeEditorTo.Value = new DateTime(today.Year, today.Month, today.Day, 23, 59, 59);
 
             // Set date format
-            ultraDateTimeEditorFrom.FormatString = "dd/MM/yyyy";
-            ultraDateTimeEditorTo.FormatString = "dd/MM/yyyy";
+            ultraDateTimeEditorFrom.MaskInput = "{date} {time}";
+            ultraDateTimeEditorTo.MaskInput = "{date} {time}";
+            ultraDateTimeEditorFrom.FormatString = "dd/MM/yyyy hh:mm tt";
+            ultraDateTimeEditorTo.FormatString = "dd/MM/yyyy hh:mm tt";
         }
 
         private void InitializeSearchControls()
@@ -578,9 +581,9 @@ namespace PosBranch_Win.Reports.SalesReports
             // Format date column
             if (masterBand.Columns["BillDate"] != null)
             {
-                masterBand.Columns["BillDate"].Format = "dd/MM/yyyy";
-                masterBand.Columns["BillDate"].Header.Caption = "Bill Date";
-                masterBand.Columns["BillDate"].Width = 100;
+                masterBand.Columns["BillDate"].Format = "dd/MM/yyyy hh:mm tt";
+                masterBand.Columns["BillDate"].Header.Caption = "Date & Time";
+                masterBand.Columns["BillDate"].Width = 140;
             }
 
             // Format currency columns with modern styling
@@ -857,8 +860,8 @@ namespace PosBranch_Win.Reports.SalesReports
             {
                 isLoading = true;
 
-                DateTime fromDate = Convert.ToDateTime(ultraDateTimeEditorFrom.Value).Date;
-                DateTime toDate = Convert.ToDateTime(ultraDateTimeEditorTo.Value).Date.AddHours(23).AddMinutes(59).AddSeconds(59);
+                DateTime fromDate = Convert.ToDateTime(ultraDateTimeEditorFrom.Value);
+                DateTime toDate = Convert.ToDateTime(ultraDateTimeEditorTo.Value);
 
                 // STEP 1: Unbind grid completely
                 ultraGridMaster.DataSource = null;
@@ -1250,7 +1253,7 @@ namespace PosBranch_Win.Reports.SalesReports
                 yPosition += 30;
 
                 // Print date range
-                string dateRange = $"From: {ultraDateTimeEditorFrom.Value:dd/MM/yyyy} To: {ultraDateTimeEditorTo.Value:dd/MM/yyyy}";
+                string dateRange = $"From: {ultraDateTimeEditorFrom.Value:dd/MM/yyyy hh:mm tt} To: {ultraDateTimeEditorTo.Value:dd/MM/yyyy hh:mm tt}";
                 e.Graphics.DrawString(dateRange, dataFont, Brushes.Black, leftMargin, yPosition);
                 yPosition += 20;
 
@@ -1274,8 +1277,8 @@ namespace PosBranch_Win.Reports.SalesReports
                 yPosition += 30;
 
                 // Print master data headers
-                string[] headers = { "Bill No", "Date", "Customer", "Payment", "Sub Total", "Tax", "Net Amount" };
-                float[] columnWidths = { 80, 80, 150, 100, 100, 80, 100 };
+                string[] headers = { "Bill No", "Date & Time", "Customer", "Payment", "Sub Total", "Tax", "Net Amount" };
+                float[] columnWidths = { 70, 130, 140, 90, 90, 70, 100 };
                 float xPosition = leftMargin;
 
                 for (int i = 0; i < headers.Length; i++)
@@ -1301,7 +1304,7 @@ namespace PosBranch_Win.Reports.SalesReports
                     xPosition = leftMargin;
                     string[] values = {
                         row["BillNo"].ToString(),
-                        Convert.ToDateTime(row["BillDate"]).ToString("dd/MM/yyyy"),
+                        Convert.ToDateTime(row["BillDate"]).ToString("dd/MM/yyyy hh:mm tt"),
                         row["customername"].ToString(),
                         row["paymodename"].ToString(),
                         Convert.ToDecimal(row["SubTotal"]).ToString("N2"),
@@ -1460,8 +1463,9 @@ namespace PosBranch_Win.Reports.SalesReports
             try
             {
                 // Clear all search filters
-                ultraDateTimeEditorFrom.Value = DateTime.Now.AddDays(-30);
-                ultraDateTimeEditorTo.Value = DateTime.Now;
+                DateTime today = DateTime.Now;
+                ultraDateTimeEditorFrom.Value = new DateTime(today.Year, today.Month, today.Day, 0, 0, 0).AddDays(-30);
+                ultraDateTimeEditorTo.Value = new DateTime(today.Year, today.Month, today.Day, 23, 59, 59);
                 ultraNumericEditorAmountFrom.Value = null;
                 ultraNumericEditorAmountTo.Value = null;
                 ultraNumericEditorBillNo.Value = null;
@@ -1589,8 +1593,8 @@ namespace PosBranch_Win.Reports.SalesReports
                 isLoading = true;
                 this.Cursor = Cursors.WaitCursor;
 
-                DateTime fromDate = Convert.ToDateTime(ultraDateTimeEditorFrom.Value).Date;
-                DateTime toDate = Convert.ToDateTime(ultraDateTimeEditorTo.Value).Date.AddHours(23).AddMinutes(59).AddSeconds(59);
+                DateTime fromDate = Convert.ToDateTime(ultraDateTimeEditorFrom.Value);
+                DateTime toDate = Convert.ToDateTime(ultraDateTimeEditorTo.Value);
 
                 // CRITICAL: Completely unbind and reset grid
                 ultraGridMaster.DataSource = null;
