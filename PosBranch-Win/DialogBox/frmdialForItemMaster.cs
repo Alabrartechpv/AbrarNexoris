@@ -691,12 +691,11 @@ namespace PosBranch_Win.DialogBox
             columnChooserListBox.Items.Clear();
 
             // Define the standard columns that should be tracked in the column chooser
-            string[] standardColumns = new string[] { "BarCode", "Description", "UnitId", "Unit", "Cost", "RetailPrice", "Stock" };
+            string[] standardColumns = new string[] { "BarCode", "Description", "Unit", "Cost", "RetailPrice", "Stock" };
             Dictionary<string, string> displayNames = new Dictionary<string, string>()
                 {
                     { "BarCode", "Barcode" },
                     { "Description", "Item Name" },
-                    { "UnitId", "UnitId" },
                     { "Unit", "Unit" },
                     { "Cost", "Cost" },
                     { "RetailPrice", "Price" },
@@ -1186,7 +1185,7 @@ namespace PosBranch_Win.DialogBox
                     }
 
                     // Define the columns to show in the specified order
-                    string[] columnsToShow = new string[] { "BarCode", "Description", "UnitId", "Unit", "Cost", "RetailPrice", "Stock" };
+                    string[] columnsToShow = new string[] { "BarCode", "Description", "Unit", "Cost", "RetailPrice", "Stock" };
 
                     // Show and configure only the specified columns in the specified order
                     for (int i = 0; i < columnsToShow.Length; i++)
@@ -1209,10 +1208,6 @@ namespace PosBranch_Win.DialogBox
                                 case "Description":
                                     col.Header.Caption = "Item Name";
                                     col.Width = 250;
-                                    break;
-                                case "UnitId":
-                                    col.Header.Caption = "UnitId";
-                                    col.Width = 80;
                                     break;
                                 case "Unit":
                                     col.Header.Caption = "Unit";
@@ -1919,9 +1914,6 @@ namespace PosBranch_Win.DialogBox
                 case "Item Name":
                     colsToSearch.Add("Description");
                     break;
-                case "UnitID":
-                    colsToSearch.Add("UnitId");
-                    break;
                 case "Unit":
                     colsToSearch.Add("Unit");
                     break;
@@ -1929,7 +1921,6 @@ namespace PosBranch_Win.DialogBox
                 default:
                     colsToSearch.Add("BarCode");
                     colsToSearch.Add("Description");
-                    colsToSearch.Add("UnitId");
                     colsToSearch.Add("Unit");
                     break;
             }
@@ -2047,9 +2038,6 @@ namespace PosBranch_Win.DialogBox
                 case "Item Name":
                     return $"Description LIKE '%{escapedSearchText}%'";
 
-                case "UnitID":
-                    return $"CONVERT(UnitId, 'System.String') LIKE '%{escapedSearchText}%'";
-
                 case "Unit":
                     return $"Unit LIKE '%{escapedSearchText}%'";
 
@@ -2058,7 +2046,6 @@ namespace PosBranch_Win.DialogBox
                     // Search across all relevant columns
                     return $"BarCode LIKE '%{escapedSearchText}%' OR " +
                         $"Description LIKE '%{escapedSearchText}%' OR " +
-                        $"CONVERT(UnitId, 'System.String') LIKE '%{escapedSearchText}%' OR " +
                         $"Unit LIKE '%{escapedSearchText}%'";
             }
         }
@@ -2267,7 +2254,7 @@ namespace PosBranch_Win.DialogBox
                 }
 
                 // Define the columns to show in the specified order
-                string[] columnsToShow = new string[] { "BarCode", "Description", "UnitId", "Unit", "Cost", "RetailPrice", "Stock" };
+                string[] columnsToShow = new string[] { "BarCode", "Description", "Unit", "Cost", "RetailPrice", "Stock" };
 
                 // Show and configure only the specified columns in the specified order
                 for (int i = 0; i < columnsToShow.Length; i++)
@@ -2301,10 +2288,6 @@ namespace PosBranch_Win.DialogBox
                             case "Description":
                                 col.Header.Caption = "Item Name";
                                 col.Width = 250;
-                                break;
-                            case "UnitId":
-                                col.Header.Caption = "UnitId";
-                                col.Width = 80;
                                 break;
                             case "Unit":
                                 col.Header.Caption = "Unit";
@@ -3689,7 +3672,7 @@ namespace PosBranch_Win.DialogBox
                 }
 
                 // Define the columns to show in the specified order
-                string[] columnsToShow = new string[] { "BarCode", "Description", "UnitId", "Unit", "Cost", "RetailPrice", "Stock" };
+                string[] columnsToShow = new string[] { "BarCode", "Description", "Unit", "Cost", "RetailPrice", "Stock" };
 
                 // Show and configure only the specified columns in the specified order
                 for (int i = 0; i < columnsToShow.Length; i++)
@@ -3722,10 +3705,6 @@ namespace PosBranch_Win.DialogBox
                             case "Description":
                                 col.Header.Caption = "Item Name";
                                 col.Width = columnWidths.ContainsKey(colKey) ? columnWidths[colKey] : 250;
-                                break;
-                            case "UnitId":
-                                col.Header.Caption = "UnitId";
-                                col.Width = columnWidths.ContainsKey(colKey) ? columnWidths[colKey] : 80;
                                 break;
                             case "Unit":
                                 col.Header.Caption = "Unit";
@@ -3765,7 +3744,6 @@ namespace PosBranch_Win.DialogBox
             comboBox1.Items.Add("Select all");
             comboBox1.Items.Add("Barcode");
             comboBox1.Items.Add("Item Name");
-            comboBox1.Items.Add("UnitID");
             comboBox1.Items.Add("Unit");
 
             // Select "Select all" by default
@@ -3795,7 +3773,6 @@ namespace PosBranch_Win.DialogBox
             // Add column options for reordering (removed "Default Order")
             comboBox2.Items.Add("Barcode");
             comboBox2.Items.Add("Item Name");
-            comboBox2.Items.Add("UnitId");
             comboBox2.Items.Add("Unit");
 
             // Select "Barcode" by default (since "Default Order" is removed)
@@ -3849,7 +3826,7 @@ namespace PosBranch_Win.DialogBox
                 wasSuspended = true;
 
                 // Define the columns to show in the specified order
-                List<string> columnsToShow = new List<string> { "BarCode", "Description", "UnitId", "Unit", "Cost", "RetailPrice", "Stock" };
+                List<string> columnsToShow = new List<string> { "BarCode", "Description", "Unit", "Cost", "RetailPrice", "Stock" };
 
                 // Move selected column to the front (always do this since "Default Order" is removed)
                 string columnKey = GetColumnKeyFromDisplayName(selectedColumn);
@@ -3910,10 +3887,6 @@ namespace PosBranch_Win.DialogBox
                     col.Header.Caption = "Item Name";
                     if (col.Width <= 0) col.Width = 250;
                     break;
-                case "UnitId":
-                    col.Header.Caption = "UnitId";
-                    if (col.Width <= 0) col.Width = 80;
-                    break;
                 case "Unit":
                     col.Header.Caption = "Unit";
                     if (col.Width <= 0) col.Width = 80;
@@ -3946,7 +3919,6 @@ namespace PosBranch_Win.DialogBox
             {
                 case "Barcode": return "BarCode";
                 case "Item Name": return "Description";
-                case "UnitId": return "UnitId";
                 case "Unit": return "Unit";
                 default: return "";
             }
