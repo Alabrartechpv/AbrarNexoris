@@ -731,8 +731,8 @@ namespace PosBranch_Win.Transaction
             }
             if (e.KeyCode == Keys.Space)
             {
-                // Prevent Spacebar shortcut when in update mode
-                if (updtbtn.Visible)
+                // Block spacebar when editing a bill from Sales List (not a held bill)
+                if (updtbtn.Visible && !isEditingHoldBill)
                 {
                     MessageBox.Show("Please use the Update button to save changes.", "Update Mode", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
@@ -809,8 +809,8 @@ namespace PosBranch_Win.Transaction
             }
             else if (e.KeyCode == Keys.F8)
             {
-                // Prevent F8 shortcut when in update mode
-                if (updtbtn.Visible)
+                // Block F8 when editing a bill from Sales List (not a held bill)
+                if (updtbtn.Visible && !isEditingHoldBill)
                 {
                     MessageBox.Show("Please use the Update button to save changes.", "Update Mode", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;

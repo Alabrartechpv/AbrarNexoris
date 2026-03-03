@@ -34,6 +34,15 @@ namespace PosBranch_Win.Transaction
         private const string GRID_LAYOUT_FILE = "StockAdjustmentGridLayout.xml";
         private string GridLayoutPath => Path.Combine(Application.StartupPath, GRID_LAYOUT_FILE);
 
+        // Column chooser and drag state
+        private Form columnChooserForm = null;
+        private ListBox columnChooserListBox = null;
+        private Dictionary<string, int> savedColumnWidths = new Dictionary<string, int>();
+        private Point startPoint;
+        private Infragistics.Win.UltraWinGrid.UltraGridColumn columnToMove = null;
+        private bool isDraggingColumn = false;
+        private System.Windows.Forms.ToolTip toolTip = new System.Windows.Forms.ToolTip();
+
         public FrmStockAdjustment()
         {
             InitializeComponent();
@@ -224,6 +233,9 @@ namespace PosBranch_Win.Transaction
 
                 // Apply styling AFTER loading layout to ensure styles are not overwritten
                 StyleGrid();
+
+                // Setup column chooser functionality
+                SetupColumnChooserMenu();
 
                 // Register UltraGrid event handlers
                 ultraGrid1.AfterCellUpdate += UltraGrid1_AfterCellUpdate;
@@ -1575,6 +1587,315 @@ namespace PosBranch_Win.Transaction
                 }
             }
         }
+
+        // ========== Column Chooser Functionality ==========
+        private void SetupColumnChooserMenu()
+        {
+            ContextMenuStrip gridContextMenu = new ContextMenuStrip();
+            ToolStripMenuItem columnChooserMenuItem = new ToolStripMenuItem("Field/Column Chooser");
+            columnChooserMenuItem.Click += ColumnChooserMenuItem_Click;
+            gridContextMenu.Items.Add(columnChooserMenuItem);
+            ultraGrid1.ContextMenuStrip = gridContextMenu;
+            SetupDirectHeaderDragDrop();
+        }
+
+        private void SetupDirectHeaderDragDrop()
+        {
+            ultraGrid1.AllowDrop = true;
+            ultraGrid1.MouseDown += UltraGrid1_CC_MouseDown;
+            ultraGrid1.MouseMove += UltraGrid1_CC_MouseMove;
+            ultraGrid1.MouseUp += UltraGrid1_CC_MouseUp;
+            ultraGrid1.DragOver += UltraGrid1_CC_DragOver;
+            ultraGrid1.DragDrop += UltraGrid1_CC_DragDrop;
+            CreateColumnChooserForm();
+        }
+
+        private void CreateColumnChooserForm()
+        {
+            columnChooserForm = new Form
+            {
+                Text = "Customization",
+                Size = new Size(220, 280),
+                FormBorderStyle = FormBorderStyle.FixedSingle,
+                StartPosition = FormStartPosition.Manual,
+                TopMost = true,
+                MaximizeBox = false,
+                MinimizeBox = false,
+                BackColor = Color.FromArgb(240, 240, 240),
+                ShowIcon = false,
+                ShowInTaskbar = false
+            };
+            columnChooserForm.FormClosing += (s, e) => { columnChooserListBox = null; };
+            columnChooserForm.Shown += (s, e) => PositionColumnChooserAtBottomRight();
+            columnChooserListBox = new ListBox
+            {
+                Dock = DockStyle.Fill,
+                AllowDrop = true,
+                DrawMode = DrawMode.OwnerDrawFixed,
+                BorderStyle = BorderStyle.None,
+                BackColor = Color.FromArgb(240, 240, 240),
+                ItemHeight = 30,
+                IntegralHeight = false
+            };
+            // Custom DrawItem handler for blue rounded button style
+            columnChooserListBox.DrawItem += (s, evt) =>
+            {
+                if (evt.Index < 0) return;
+                ColumnItem item = columnChooserListBox.Items[evt.Index] as ColumnItem;
+                if (item == null) return;
+                Rectangle rect = evt.Bounds;
+                rect.Inflate(-3, -3);
+                Color bgColor = Color.FromArgb(33, 150, 243);
+                using (SolidBrush bgBrush = new SolidBrush(bgColor))
+                {
+                    using (System.Drawing.Drawing2D.GraphicsPath path = new System.Drawing.Drawing2D.GraphicsPath())
+                    {
+                        int radius = 4;
+                        int diameter = radius * 2;
+                        Rectangle arcRect = new Rectangle(rect.Location, new Size(diameter, diameter));
+                        path.AddArc(arcRect, 180, 90);
+                        arcRect.X = rect.Right - diameter;
+                        path.AddArc(arcRect, 270, 90);
+                        arcRect.Y = rect.Bottom - diameter;
+                        path.AddArc(arcRect, 0, 90);
+                        arcRect.X = rect.Left;
+                        path.AddArc(arcRect, 90, 90);
+                        path.CloseFigure();
+                        evt.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                        evt.Graphics.FillPath(bgBrush, path);
+                    }
+                }
+                using (SolidBrush textBrush = new SolidBrush(Color.White))
+                {
+                    StringFormat sf = new StringFormat();
+                    sf.LineAlignment = StringAlignment.Center;
+                    sf.Alignment = StringAlignment.Center;
+                    evt.Graphics.DrawString(item.DisplayText, evt.Font, textBrush, rect, sf);
+                }
+                if ((evt.State & DrawItemState.Selected) == DrawItemState.Selected)
+                {
+                    using (Pen focusPen = new Pen(Color.White, 1.5f))
+                    {
+                        focusPen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dot;
+                        Rectangle focusRect = rect;
+                        focusRect.Inflate(-2, -2);
+                        evt.Graphics.DrawRectangle(focusPen, focusRect);
+                    }
+                }
+            };
+            columnChooserListBox.MouseDown += ColumnChooserListBox_MouseDown;
+            columnChooserListBox.DragOver += ColumnChooserListBox_DragOver;
+            columnChooserListBox.DragDrop += ColumnChooserListBox_DragDrop;
+            columnChooserForm.Controls.Add(columnChooserListBox);
+            PopulateColumnChooserListBox();
+        }
+
+        private void PositionColumnChooserAtBottomRight()
+        {
+            if (columnChooserForm != null && !columnChooserForm.IsDisposed && columnChooserForm.Visible)
+            {
+                columnChooserForm.Location = new Point(
+                    this.Right - columnChooserForm.Width - 20,
+                    this.Bottom - columnChooserForm.Height - 20);
+                columnChooserForm.TopMost = true;
+                columnChooserForm.BringToFront();
+            }
+        }
+
+        private void ColumnChooserMenuItem_Click(object sender, EventArgs e)
+        {
+            ShowColumnChooser();
+        }
+
+        private void ShowColumnChooser()
+        {
+            PopulateColumnChooserListBox();
+            if (columnChooserForm != null && !columnChooserForm.IsDisposed)
+            {
+                columnChooserForm.Show();
+                PositionColumnChooserAtBottomRight();
+                return;
+            }
+            CreateColumnChooserForm();
+            columnChooserForm.Show(this);
+            PositionColumnChooserAtBottomRight();
+        }
+
+        private void PopulateColumnChooserListBox()
+        {
+            if (columnChooserListBox == null) return;
+            columnChooserListBox.Items.Clear();
+            if (ultraGrid1.DisplayLayout.Bands.Count > 0)
+            {
+                foreach (UltraGridColumn col in ultraGrid1.DisplayLayout.Bands[0].Columns)
+                {
+                    if (col.Hidden)
+                    {
+                        string displayText = !string.IsNullOrEmpty(col.Header.Caption) ? col.Header.Caption : col.Key;
+                        columnChooserListBox.Items.Add(new ColumnItem(col.Key, displayText));
+                    }
+                }
+            }
+        }
+
+        private class ColumnItem
+        {
+            public string ColumnKey { get; set; }
+            public string DisplayText { get; set; }
+            public ColumnItem(string key, string text) { ColumnKey = key; DisplayText = text; }
+            public override string ToString() => DisplayText;
+        }
+
+        private void UltraGrid1_CC_MouseDown(object sender, MouseEventArgs e)
+        {
+            isDraggingColumn = false;
+            columnToMove = null;
+            startPoint = new Point(e.X, e.Y);
+
+            Infragistics.Win.UIElement element = ultraGrid1.DisplayLayout.UIElement.ElementFromPoint(e.Location);
+            if (element != null)
+            {
+                Infragistics.Win.UltraWinGrid.HeaderUIElement headerElement = element.GetAncestor(typeof(Infragistics.Win.UltraWinGrid.HeaderUIElement)) as Infragistics.Win.UltraWinGrid.HeaderUIElement;
+                if (headerElement != null)
+                {
+                    Infragistics.Win.UltraWinGrid.UltraGridColumn col = headerElement.GetContext(typeof(Infragistics.Win.UltraWinGrid.UltraGridColumn)) as Infragistics.Win.UltraWinGrid.UltraGridColumn;
+                    if (col != null && !col.Hidden)
+                    {
+                        columnToMove = col;
+                        isDraggingColumn = true;
+                    }
+                }
+            }
+        }
+
+        private void UltraGrid1_CC_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (isDraggingColumn && columnToMove != null && e.Button == MouseButtons.Left)
+            {
+                int deltaX = Math.Abs(e.X - startPoint.X);
+                int deltaY = Math.Abs(e.Y - startPoint.Y);
+                if (deltaX > SystemInformation.DragSize.Width || deltaY > SystemInformation.DragSize.Height)
+                {
+                    bool isDraggingDown = (e.Y > startPoint.Y && deltaY > deltaX);
+                    if (isDraggingDown)
+                    {
+                        ultraGrid1.Cursor = Cursors.No;
+                        string columnName = !string.IsNullOrEmpty(columnToMove.Header.Caption) ? columnToMove.Header.Caption : columnToMove.Key;
+                        toolTip.SetToolTip(ultraGrid1, $"Drag down to hide '{columnName}' column");
+                        if (e.Y - startPoint.Y > 50)
+                        {
+                            HideColumn(columnToMove);
+                            columnToMove = null;
+                            isDraggingColumn = false;
+                            ultraGrid1.Cursor = Cursors.Default;
+                            toolTip.SetToolTip(ultraGrid1, "");
+                        }
+                    }
+                }
+            }
+        }
+
+        private void UltraGrid1_CC_MouseUp(object sender, MouseEventArgs e)
+        {
+            ultraGrid1.Cursor = Cursors.Default;
+            toolTip.SetToolTip(ultraGrid1, "");
+            isDraggingColumn = false;
+            columnToMove = null;
+        }
+
+        private void HideColumn(UltraGridColumn column)
+        {
+            if (column != null && !column.Hidden)
+            {
+                // Prevent hiding essential columns
+                string[] essentialColumns = { "NO", "BarCode", "Description", "Adjustment Qty" };
+                if (essentialColumns.Contains(column.Key))
+                {
+                    MessageBox.Show($"The '{column.Header.Caption}' column is essential and cannot be hidden.",
+                        "Cannot Hide Column", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                savedColumnWidths[column.Key] = column.Width;
+                ultraGrid1.SuspendLayout();
+                column.Hidden = true;
+                foreach (UltraGridColumn col in ultraGrid1.DisplayLayout.Bands[0].Columns)
+                {
+                    if (!col.Hidden && savedColumnWidths.ContainsKey(col.Key))
+                    {
+                        col.Width = savedColumnWidths[col.Key];
+                    }
+                }
+                ultraGrid1.ResumeLayout();
+                if (columnChooserForm == null || columnChooserForm.IsDisposed)
+                {
+                    CreateColumnChooserForm();
+                }
+                if (columnChooserListBox != null)
+                {
+                    bool alreadyExists = false;
+                    foreach (object item in columnChooserListBox.Items)
+                    {
+                        if (item is ColumnItem columnItem && columnItem.ColumnKey == column.Key)
+                        {
+                            alreadyExists = true;
+                            break;
+                        }
+                    }
+                    if (!alreadyExists)
+                    {
+                        string columnName = !string.IsNullOrEmpty(column.Header.Caption) ? column.Header.Caption : column.Key;
+                        columnChooserListBox.Items.Add(new ColumnItem(column.Key, columnName));
+                    }
+                }
+                PopulateColumnChooserListBox();
+            }
+        }
+
+        private void ColumnChooserListBox_MouseDown(object sender, MouseEventArgs e)
+        {
+            int index = columnChooserListBox.IndexFromPoint(e.Location);
+            if (index != ListBox.NoMatches)
+            {
+                if (columnChooserListBox.Items[index] is ColumnItem item)
+                {
+                    columnChooserListBox.DoDragDrop(item, DragDropEffects.Move);
+                }
+            }
+        }
+
+        private void ColumnChooserListBox_DragOver(object sender, DragEventArgs e)
+        {
+            e.Effect = e.Data.GetDataPresent(typeof(UltraGridColumn)) ? DragDropEffects.Move : DragDropEffects.None;
+        }
+
+        private void ColumnChooserListBox_DragDrop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetData(typeof(UltraGridColumn)) is UltraGridColumn column && !column.Hidden)
+            {
+                string name = !string.IsNullOrEmpty(column.Header.Caption) ? column.Header.Caption : column.Key;
+                column.Hidden = true;
+                columnChooserListBox.Items.Add(new ColumnItem(column.Key, name));
+            }
+        }
+
+        private void UltraGrid1_CC_DragOver(object sender, DragEventArgs e)
+        {
+            e.Effect = e.Data.GetDataPresent(typeof(ColumnItem)) ? DragDropEffects.Move : DragDropEffects.None;
+        }
+
+        private void UltraGrid1_CC_DragDrop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetData(typeof(ColumnItem)) is ColumnItem item)
+            {
+                if (ultraGrid1.DisplayLayout.Bands.Count > 0 && ultraGrid1.DisplayLayout.Bands[0].Columns.Exists(item.ColumnKey))
+                {
+                    var column = ultraGrid1.DisplayLayout.Bands[0].Columns[item.ColumnKey];
+                    column.Hidden = false;
+                    columnChooserListBox.Items.Remove(item);
+                    toolTip.Show($"'{item.DisplayText}' restored", ultraGrid1, ultraGrid1.PointToClient(MousePosition), 1500);
+                }
+            }
+        }
     }
 }
-
