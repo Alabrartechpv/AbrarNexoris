@@ -66,10 +66,10 @@ namespace PosBranch_Win.Transaction
             stockAdjustmentTable.Columns.Add("ItemNo", typeof(int));
             stockAdjustmentTable.Columns.Add("Description", typeof(string));
             stockAdjustmentTable.Columns.Add("UOM", typeof(string));
-            stockAdjustmentTable.Columns.Add("Qty On Hand", typeof(int));
-            stockAdjustmentTable.Columns.Add("Adjustment Qty", typeof(int)); // Amount to add/subtract
-            stockAdjustmentTable.Columns.Add("New Balance", typeof(int));
-            stockAdjustmentTable.Columns.Add("Qty Difference", typeof(int));
+            stockAdjustmentTable.Columns.Add("Qty On Hand", typeof(decimal));
+            stockAdjustmentTable.Columns.Add("Adjustment Qty", typeof(decimal)); // Amount to add/subtract
+            stockAdjustmentTable.Columns.Add("New Balance", typeof(decimal));
+            stockAdjustmentTable.Columns.Add("Qty Difference", typeof(decimal));
             stockAdjustmentTable.Columns.Add("Status", typeof(string));
 
             // Set the DataTable as the grid's data source
@@ -99,7 +99,7 @@ namespace PosBranch_Win.Transaction
             // Configure column properties
             foreach (UltraGridColumn col in ultraGrid1.DisplayLayout.Bands[0].Columns)
             {
-                col.CellAppearance.TextHAlign = HAlign.Left;
+                col.CellAppearance.TextHAlign = HAlign.Center;
                 col.Header.Appearance.TextHAlign = HAlign.Center;
                 col.Header.Appearance.FontData.Bold = DefaultableBoolean.True;
                 col.Header.Appearance.BackColor = Color.FromArgb(52, 152, 219);
@@ -157,17 +157,19 @@ namespace PosBranch_Win.Transaction
             if (qtyOnHandCol != null)
             {
                 qtyOnHandCol.Width = 110;
-                qtyOnHandCol.CellAppearance.TextHAlign = HAlign.Right;
+                qtyOnHandCol.CellAppearance.TextHAlign = HAlign.Center;
                 qtyOnHandCol.Header.Caption = "Current Stock";
+                qtyOnHandCol.Format = "0.000";
             }
 
             UltraGridColumn adjQtyCol = ultraGrid1.DisplayLayout.Bands[0].Columns["Adjustment Qty"];
             if (adjQtyCol != null)
             {
                 adjQtyCol.Width = 100;
-                adjQtyCol.CellAppearance.TextHAlign = HAlign.Right;
+                adjQtyCol.CellAppearance.TextHAlign = HAlign.Center;
                 adjQtyCol.CellAppearance.BackColor = Color.FromArgb(240, 248, 255);
                 adjQtyCol.Header.Caption = "Adjustment Qty";
+                adjQtyCol.Format = "0.000";
                 // The header color is now set in the foreach loop above to ensure consistency
             }
 
@@ -175,17 +177,19 @@ namespace PosBranch_Win.Transaction
             if (newBalCol != null)
             {
                 newBalCol.Width = 110;
-                newBalCol.CellAppearance.TextHAlign = HAlign.Right;
+                newBalCol.CellAppearance.TextHAlign = HAlign.Center;
+                newBalCol.Format = "0.000";
             }
 
             UltraGridColumn qtyDiffCol = ultraGrid1.DisplayLayout.Bands[0].Columns["Qty Difference"];
             if (qtyDiffCol != null)
             {
                 qtyDiffCol.Width = 120;
-                qtyDiffCol.CellAppearance.TextHAlign = HAlign.Right;
+                qtyDiffCol.CellAppearance.TextHAlign = HAlign.Center;
                 qtyDiffCol.Header.Appearance.BackColor = Color.FromArgb(41, 128, 185);
                 qtyDiffCol.Header.Appearance.FontData.Bold = DefaultableBoolean.True;
                 qtyDiffCol.CellAppearance.BackColor = Color.FromArgb(235, 245, 251);
+                qtyDiffCol.Format = "0.000";
             }
 
             UltraGridColumn statusCol = ultraGrid1.DisplayLayout.Bands[0].Columns["Status"];
@@ -658,15 +662,15 @@ namespace PosBranch_Win.Transaction
                 {
                     if (row.Cells["Adjustment Qty"].Value != null && row.Cells["Qty On Hand"].Value != null)
                     {
-                        int adjQty = Convert.ToInt32(row.Cells["Adjustment Qty"].Value);
-                        int sysQty = Convert.ToInt32(row.Cells["Qty On Hand"].Value);
+                        decimal adjQty = Convert.ToDecimal(row.Cells["Adjustment Qty"].Value);
+                        decimal sysQty = Convert.ToDecimal(row.Cells["Qty On Hand"].Value);
 
                         // Calculate New Balance = Current Stock + Adjustment Qty
-                        int newBalance = sysQty + adjQty;
+                        decimal newBalance = sysQty + adjQty;
                         row.Cells["New Balance"].Value = newBalance;
 
                         // Qty Difference is the same as Adjustment Qty
-                        int difference = adjQty;
+                        decimal difference = adjQty;
                         row.Cells["Qty Difference"].Value = difference;
 
                         // Apply color formatting based on difference
@@ -713,15 +717,15 @@ namespace PosBranch_Win.Transaction
                 {
                     if (row.Cells["Adjustment Qty"].Value != null && row.Cells["Qty On Hand"].Value != null)
                     {
-                        int adjQty = Convert.ToInt32(row.Cells["Adjustment Qty"].Value);
-                        int sysQty = Convert.ToInt32(row.Cells["Qty On Hand"].Value);
+                        decimal adjQty = Convert.ToDecimal(row.Cells["Adjustment Qty"].Value);
+                        decimal sysQty = Convert.ToDecimal(row.Cells["Qty On Hand"].Value);
 
                         // Calculate New Balance = Current Stock + Adjustment Qty
-                        int newBalance = sysQty + adjQty;
+                        decimal newBalance = sysQty + adjQty;
                         row.Cells["New Balance"].Value = newBalance;
 
                         // Qty Difference is the same as Adjustment Qty
-                        int difference = adjQty;
+                        decimal difference = adjQty;
                         row.Cells["Qty Difference"].Value = difference;
 
                         // Apply color formatting based on difference
@@ -753,7 +757,7 @@ namespace PosBranch_Win.Transaction
         }
 
         // Helper method to apply color formatting based on difference
-        private void ApplyColorFormatting(UltraGridRow row, int difference)
+        private void ApplyColorFormatting(UltraGridRow row, decimal difference)
         {
             if (difference < 0)
             {
@@ -798,7 +802,7 @@ namespace PosBranch_Win.Transaction
                 if (input.StartsWith("*") && input.Length > 1)
                 {
                     string quantityText = input.Substring(1);
-                    if (int.TryParse(quantityText, out int quantity))
+                    if (decimal.TryParse(quantityText, out decimal quantity))
                     {
                         // If we have an active row, update its Adjustment Qty
                         if (ultraGrid1.ActiveRow != null)
@@ -818,15 +822,15 @@ namespace PosBranch_Win.Transaction
                             if (adjQtyCell != null && adjQtyCell.Value != null &&
                                 qtyOnHandCell != null && qtyOnHandCell.Value != null)
                             {
-                                int adjQty = Convert.ToInt32(adjQtyCell.Value);
-                                int sysQty = Convert.ToInt32(qtyOnHandCell.Value);
+                                decimal adjQty = Convert.ToDecimal(adjQtyCell.Value);
+                                decimal sysQty = Convert.ToDecimal(qtyOnHandCell.Value);
 
                                 // Calculate New Balance = Current Stock + Adjustment Qty
-                                int newBalance = sysQty + adjQty;
+                                decimal newBalance = sysQty + adjQty;
                                 newBalanceCell.Value = newBalance;
 
                                 // Qty Difference is the same as Adjustment Qty
-                                int difference = adjQty;
+                                decimal difference = adjQty;
                                 qtyDifferenceCell.Value = difference;
 
                                 // Apply color formatting based on difference
@@ -1438,7 +1442,7 @@ namespace PosBranch_Win.Transaction
         }
 
         // Public method to add items to the UltraGrid from dialog classes
-        public int AddItemToGrid(string itemId, string barcode, string description, string uom, string qtyOnHand, int adjQty = 0, bool focusGrid = false)
+        public int AddItemToGrid(string itemId, string barcode, string description, string uom, string qtyOnHand, decimal adjQty = 0, bool focusGrid = false)
         {
             try
             {
@@ -1464,12 +1468,12 @@ namespace PosBranch_Win.Transaction
                 newRow["Qty On Hand"] = qtyOnHand;
                 newRow["Adjustment Qty"] = adjQty; // Amount to add/subtract
 
-                int adjAmount = adjQty;
-                int sysQty = Convert.ToInt32(qtyOnHand);
+                decimal adjAmount = adjQty;
+                decimal sysQty = Convert.ToDecimal(qtyOnHand);
 
                 // Calculate New Balance = Current Stock + Adjustment Qty
-                int newBalance = sysQty + adjAmount;
-                int difference = adjAmount; // Qty Difference is the same as Adjustment Qty
+                decimal newBalance = sysQty + adjAmount;
+                decimal difference = adjAmount; // Qty Difference is the same as Adjustment Qty
 
                 // Set New Balance and Qty Difference
                 newRow["New Balance"] = newBalance;

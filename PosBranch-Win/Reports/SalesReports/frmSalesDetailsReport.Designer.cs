@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            Infragistics.Win.Appearance appearance2 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance1 = new Infragistics.Win.Appearance();
             this.ultraPanelControls = new Infragistics.Win.Misc.UltraPanel();
             this.btnClearFilters = new Infragistics.Win.Misc.UltraButton();
             this.btnSearch = new Infragistics.Win.Misc.UltraButton();
@@ -48,8 +48,10 @@
             this.btnPrint = new Infragistics.Win.Misc.UltraButton();
             this.btnRefresh = new Infragistics.Win.Misc.UltraButton();
             this.ultraDateTimeEditorTo = new Infragistics.Win.UltraWinEditors.UltraDateTimeEditor();
+            this.ultraDateTimeEditorToTime = new Infragistics.Win.UltraWinEditors.UltraDateTimeEditor();
             this.ultraLabelToDate = new Infragistics.Win.Misc.UltraLabel();
             this.ultraDateTimeEditorFrom = new Infragistics.Win.UltraWinEditors.UltraDateTimeEditor();
+            this.ultraDateTimeEditorFromTime = new Infragistics.Win.UltraWinEditors.UltraDateTimeEditor();
             this.ultraLabelFromDate = new Infragistics.Win.Misc.UltraLabel();
             this.ultraPanelMaster = new Infragistics.Win.Misc.UltraPanel();
             this.ultraGridMaster = new Infragistics.Win.UltraWinGrid.UltraGrid();
@@ -73,7 +75,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.ultraNumericEditorAmountTo)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ultraNumericEditorAmountFrom)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ultraDateTimeEditorTo)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraDateTimeEditorToTime)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ultraDateTimeEditorFrom)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraDateTimeEditorFromTime)).BeginInit();
             this.ultraPanelMaster.ClientArea.SuspendLayout();
             this.ultraPanelMaster.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.ultraGridMaster)).BeginInit();
@@ -83,9 +87,9 @@
             // 
             // ultraPanelControls
             // 
-            appearance2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(236)))), ((int)(((byte)(240)))), ((int)(((byte)(245)))));
-            appearance2.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(200)))), ((int)(((byte)(210)))), ((int)(((byte)(220)))));
-            this.ultraPanelControls.Appearance = appearance2;
+            appearance1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(236)))), ((int)(((byte)(240)))), ((int)(((byte)(245)))));
+            appearance1.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(200)))), ((int)(((byte)(210)))), ((int)(((byte)(220)))));
+            this.ultraPanelControls.Appearance = appearance1;
             // 
             // ultraPanelControls.ClientArea
             // 
@@ -107,8 +111,10 @@
             this.ultraPanelControls.ClientArea.Controls.Add(this.btnPrint);
             this.ultraPanelControls.ClientArea.Controls.Add(this.btnRefresh);
             this.ultraPanelControls.ClientArea.Controls.Add(this.ultraDateTimeEditorTo);
+            this.ultraPanelControls.ClientArea.Controls.Add(this.ultraDateTimeEditorToTime);
             this.ultraPanelControls.ClientArea.Controls.Add(this.ultraLabelToDate);
             this.ultraPanelControls.ClientArea.Controls.Add(this.ultraDateTimeEditorFrom);
+            this.ultraPanelControls.ClientArea.Controls.Add(this.ultraDateTimeEditorFromTime);
             this.ultraPanelControls.ClientArea.Controls.Add(this.ultraLabelFromDate);
             this.ultraPanelControls.Dock = System.Windows.Forms.DockStyle.Top;
             this.ultraPanelControls.Location = new System.Drawing.Point(0, 0);
@@ -231,7 +237,7 @@
             // 
             // btnExport
             // 
-            this.btnExport.Location = new System.Drawing.Point(713, 14);
+            this.btnExport.Location = new System.Drawing.Point(753, 14);
             this.btnExport.Name = "btnExport";
             this.btnExport.Size = new System.Drawing.Size(105, 30);
             this.btnExport.TabIndex = 7;
@@ -241,7 +247,7 @@
             // 
             // btnPrint
             // 
-            this.btnPrint.Location = new System.Drawing.Point(603, 14);
+            this.btnPrint.Location = new System.Drawing.Point(643, 14);
             this.btnPrint.Name = "btnPrint";
             this.btnPrint.Size = new System.Drawing.Size(100, 30);
             this.btnPrint.TabIndex = 6;
@@ -251,7 +257,7 @@
             // 
             // btnRefresh
             // 
-            this.btnRefresh.Location = new System.Drawing.Point(488, 14);
+            this.btnRefresh.Location = new System.Drawing.Point(528, 14);
             this.btnRefresh.Name = "btnRefresh";
             this.btnRefresh.Size = new System.Drawing.Size(105, 30);
             this.btnRefresh.TabIndex = 5;
@@ -261,14 +267,21 @@
             // 
             // ultraDateTimeEditorTo
             // 
-            this.ultraDateTimeEditorTo.Location = new System.Drawing.Point(316, 16);
+            this.ultraDateTimeEditorTo.Location = new System.Drawing.Point(245, 16);
             this.ultraDateTimeEditorTo.Name = "ultraDateTimeEditorTo";
-            this.ultraDateTimeEditorTo.Size = new System.Drawing.Size(160, 25);
+            this.ultraDateTimeEditorTo.Size = new System.Drawing.Size(100, 25);
             this.ultraDateTimeEditorTo.TabIndex = 4;
+            // 
+            // ultraDateTimeEditorToTime
+            // 
+            this.ultraDateTimeEditorToTime.Location = new System.Drawing.Point(440, 16);
+            this.ultraDateTimeEditorToTime.Name = "ultraDateTimeEditorToTime";
+            this.ultraDateTimeEditorToTime.Size = new System.Drawing.Size(80, 25);
+            this.ultraDateTimeEditorToTime.TabIndex = 24;
             // 
             // ultraLabelToDate
             // 
-            this.ultraLabelToDate.Location = new System.Drawing.Point(260, 19);
+            this.ultraLabelToDate.Location = new System.Drawing.Point(191, 19);
             this.ultraLabelToDate.Name = "ultraLabelToDate";
             this.ultraLabelToDate.Size = new System.Drawing.Size(50, 23);
             this.ultraLabelToDate.TabIndex = 3;
@@ -278,8 +291,15 @@
             // 
             this.ultraDateTimeEditorFrom.Location = new System.Drawing.Point(85, 16);
             this.ultraDateTimeEditorFrom.Name = "ultraDateTimeEditorFrom";
-            this.ultraDateTimeEditorFrom.Size = new System.Drawing.Size(160, 25);
+            this.ultraDateTimeEditorFrom.Size = new System.Drawing.Size(100, 25);
             this.ultraDateTimeEditorFrom.TabIndex = 2;
+            // 
+            // ultraDateTimeEditorFromTime
+            // 
+            this.ultraDateTimeEditorFromTime.Location = new System.Drawing.Point(354, 16);
+            this.ultraDateTimeEditorFromTime.Name = "ultraDateTimeEditorFromTime";
+            this.ultraDateTimeEditorFromTime.Size = new System.Drawing.Size(80, 25);
+            this.ultraDateTimeEditorFromTime.TabIndex = 23;
             // 
             // ultraLabelFromDate
             // 
@@ -443,7 +463,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.ultraNumericEditorAmountTo)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ultraNumericEditorAmountFrom)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ultraDateTimeEditorTo)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraDateTimeEditorToTime)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ultraDateTimeEditorFrom)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraDateTimeEditorFromTime)).EndInit();
             this.ultraPanelMaster.ClientArea.ResumeLayout(false);
             this.ultraPanelMaster.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.ultraGridMaster)).EndInit();
@@ -458,8 +480,10 @@
         private Infragistics.Win.Misc.UltraPanel ultraPanelControls;
         private Infragistics.Win.Misc.UltraLabel ultraLabelFromDate;
         private Infragistics.Win.UltraWinEditors.UltraDateTimeEditor ultraDateTimeEditorFrom;
+        private Infragistics.Win.UltraWinEditors.UltraDateTimeEditor ultraDateTimeEditorFromTime;
         private Infragistics.Win.Misc.UltraLabel ultraLabelToDate;
         private Infragistics.Win.UltraWinEditors.UltraDateTimeEditor ultraDateTimeEditorTo;
+        private Infragistics.Win.UltraWinEditors.UltraDateTimeEditor ultraDateTimeEditorToTime;
         private Infragistics.Win.Misc.UltraButton btnRefresh;
         private Infragistics.Win.Misc.UltraButton btnPrint;
         private Infragistics.Win.Misc.UltraButton btnExport;
