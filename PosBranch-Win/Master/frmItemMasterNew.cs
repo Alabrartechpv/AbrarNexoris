@@ -542,6 +542,45 @@ namespace PosBranch_Win.Master
             // Connect Ult_Price events
             this.ConnectUltPriceEvents();
 
+            // Attach generic formatting handler to all price fields to strictly enforce 3 decimals
+            var priceFields = new Infragistics.Win.UltraWinEditors.UltraTextEditor[]
+            {
+                this.txt_Retail, this.txt_walkin, this.txt_CEP, this.txt_Mrp, this.txt_CardP, this.txt_SF, this.txt_MinP
+            };
+            foreach (var field in priceFields)
+            {
+                if (field != null)
+                {
+                    field.Leave -= FormatPriceToThreeDecimals; // Prevent double subscription
+                    field.Leave += FormatPriceToThreeDecimals;
+                }
+            }
+
+            // Attach generic formatting handler to all percentage/markup/markdown fields to strictly enforce 2 decimals
+            var pctFields = new Infragistics.Win.UltraWinEditors.UltraTextEditor[]
+            {
+                this.ultraTextEditor16, this.ultraTextEditor15, this.ultraTextEditor14, this.ultraTextEditor13,
+                this.ultraTextEditor12, this.ultraTextEditor11, this.ultraTextEditor4, this.ultraTextEditor10,
+                this.ultraTextEditor5, this.ultraTextEditor9, this.ultraTextEditor8, this.ultraTextEditor7,
+                this.ultraTextEditor6
+            };
+
+            // Attach to textBox1 (TextBox, not UltraTextEditor)
+            if (this.textBox1 != null)
+            {
+                this.textBox1.Leave -= FormatPercentageToTwoDecimals;
+                this.textBox1.Leave += FormatPercentageToTwoDecimals;
+            }
+
+            foreach (var field in pctFields)
+            {
+                if (field != null)
+                {
+                    field.Leave -= FormatPercentageToTwoDecimals; // Prevent double subscription
+                    field.Leave += FormatPercentageToTwoDecimals;
+                }
+            }
+
             // Connect ultraGrid1 events for better behavior
             ultraGrid1.BeforeCellUpdate += UltraGrid1_BeforeCellUpdate;
             ultraGrid1.AfterCellUpdate += UltraGrid1_AfterCellUpdate;
@@ -669,7 +708,7 @@ namespace PosBranch_Win.Master
             txt_Retail.KeyDown += txt_Retail_KeyDown;
 
             // When user leaves txt_Retail: run all recalculations that were previously in ValueChanged.
-            // This way, the caret is never stolen while the user types — updates happen only on focus loss.
+            // This way, the caret is never stolen while the user types ? updates happen only on focus loss.
             txt_Retail.Leave += (s, ev) =>
             {
                 try
@@ -962,12 +1001,103 @@ namespace PosBranch_Win.Master
             };
         }
 
+        private void FormatPriceToThreeDecimals(object sender, EventArgs e)
+        {
+            if (sender is Infragistics.Win.UltraWinEditors.UltraTextEditor editor)
+            {
+                if (decimal.TryParse(editor.Text, out decimal val))
+                {
+                    editor.Text = val.ToString("0.000");
+                }
+                else if (string.IsNullOrWhiteSpace(editor.Text))
+                {
+                    editor.Text = "0.000";
+                }
+            }
+            else if (sender is TextBox textBox)
+            {
+                if (decimal.TryParse(textBox.Text, out decimal val))
+                {
+                    textBox.Text = val.ToString("0.000");
+                }
+                else if (string.IsNullOrWhiteSpace(textBox.Text))
+                {
+                    textBox.Text = "0.000";
+                }
+            }
+        }
+
+        private void FormatPercentageToTwoDecimals(object sender, EventArgs e)
+        {
+            if (sender is Infragistics.Win.UltraWinEditors.UltraTextEditor editor)
+            {
+                if (decimal.TryParse(editor.Text, out decimal val))
+                {
+                    editor.Text = val.ToString("0.00");
+                }
+                else if (string.IsNullOrWhiteSpace(editor.Text))
+                {
+                    editor.Text = "0.00";
+                }
+            }
+            else if (sender is TextBox textBox)
+            {
+                if (decimal.TryParse(textBox.Text, out decimal val))
+                {
+                    textBox.Text = val.ToString("0.00");
+                }
+                else if (string.IsNullOrWhiteSpace(textBox.Text))
+                {
+                    textBox.Text = "0.00";
+                }
+            }
+        }
+
         /// <summary>
         /// Sets up Enter key focus navigation for specific fields only.
-        /// Navigation sequence: txt_barcode → txt_description → txt_LocalLanguage → Txt_UnitCost → txt_Retail
+        /// Navigation sequence: txt_barcode ? txt_description ? txt_LocalLanguage ? Txt_UnitCost ? txt_Retail
         /// </summary>
         private void SetupEnterKeyFocusNavigation()
         {
+            // Setup markdown editors Enter key sequence (16 -> 15 -> 14 -> 13 -> 12 -> 11)
+            var mdEditors = new Infragistics.Win.UltraWinEditors.UltraTextEditor[]
+            {
+                this.ultraTextEditor16, this.ultraTextEditor15, this.ultraTextEditor14,
+                this.ultraTextEditor13, this.ultraTextEditor12, this.ultraTextEditor11
+            };
+
+            for (int i = 0; i < mdEditors.Length; i++)
+            {
+                var currentEditor = mdEditors[i];
+                var nextEditor = (i + 1 < mdEditors.Length) ? mdEditors[i + 1] : null;
+
+                if (currentEditor != null)
+                {
+                    currentEditor.KeyDown += (s, e) =>
+                    {
+                        if (e.KeyCode == Keys.Enter)
+                        {
+                            e.Handled = true;
+                            e.SuppressKeyPress = true;
+
+                            // Format current editor
+                            FormatPercentageToTwoDecimals(currentEditor, EventArgs.Empty);
+
+                            // Move focus and select text
+                            if (nextEditor != null)
+                            {
+                                nextEditor.Focus();
+                                nextEditor.SelectAll();
+                            }
+                            else
+                            {
+                                currentEditor.SelectAll();
+                            }
+                        }
+                    };
+                }
+            }
+
             // Field 1: txt_barcode - on Enter, search for item by barcode and load it
             // If barcode is found in PriceSettings (BarCode or AliasBarcode), load the complete item
             // If not found, go to txt_description
@@ -1083,9 +1213,122 @@ namespace PosBranch_Win.Master
                 };
             }
 
-            // Field 5: txt_Retail - end of sequence (no further navigation)
-            // Note: txt_Retail already has a KeyDown handler for syncing prices
+            // Field 5: txt_Retail → txt_walkin → txt_CEP → txt_Mrp → txt_CardP → txt_SF → txt_MinP
+            // Each field formats its value to .000 on Enter and moves focus to the next field.
+            void WireEnterFocusForPriceField(
+                Infragistics.Win.UltraWinEditors.UltraTextEditor current,
+                Control next)
+            {
+                if (current == null) return;
+                current.KeyDown += (s, e) =>
+                {
+                    if (e.KeyCode == Keys.Enter)
+                    {
+                        e.Handled = true;
+                        e.SuppressKeyPress = true;
+                        // Format current value to 3 decimal places
+                        if (float.TryParse(current.Text, out float v))
+                            current.Text = v.ToString("0.000");
+                        if (next != null)
+                        {
+                            next.Focus();
+                            if (next is Infragistics.Win.UltraWinEditors.UltraTextEditor ute)
+                                ute.SelectAll();
+                        }
+                    }
+                };
+                // Also format on Leave
+                current.Leave += (s, e) =>
+                {
+                    if (float.TryParse(current.Text, out float v))
+                        current.Text = v.ToString("0.000");
+                };
+            }
+
+            // Find txt_SF and txt_MinP — they are UltraTextEditor, so cast as Control
+            var txtSFCtrl = this.Controls.Find("txt_SF", true).FirstOrDefault() as Control;
+            var txtMinPCtrl = this.Controls.Find("txt_MinP", true).FirstOrDefault() as Control;
+
+            // Helper: focus a Control and select all its text
+            void FocusAndSelect(Control ctrl)
+            {
+                if (ctrl == null) return;
+                ctrl.Focus();
+                // SelectAll works for both UltraTextEditor and TextBox via dynamic
+                try { ((dynamic)ctrl).SelectAll(); } catch { /* no-op if method absent */ }
+            }
+
+            // Build the chain: txt_Retail → txt_walkin → txt_CEP → txt_Mrp → txt_CardP → txt_SF → txt_MinP
+            WireEnterFocusForPriceField(txt_Retail, txt_walkin);
+            WireEnterFocusForPriceField(txt_walkin, txt_CEP);
+            WireEnterFocusForPriceField(txt_CEP, txt_Mrp);
+            WireEnterFocusForPriceField(txt_Mrp, txt_CardP);
+
+            // txt_CardP → txt_SF
+            if (txt_CardP != null)
+            {
+                txt_CardP.KeyDown += (s, e) =>
+                {
+                    if (e.KeyCode == Keys.Enter)
+                    {
+                        e.Handled = true;
+                        e.SuppressKeyPress = true;
+                        if (float.TryParse(txt_CardP.Text, out float v))
+                            txt_CardP.Text = v.ToString("0.000");
+                        FocusAndSelect(txtSFCtrl);
+                    }
+                };
+                txt_CardP.Leave += (s, e) =>
+                {
+                    if (float.TryParse(txt_CardP.Text, out float v))
+                        txt_CardP.Text = v.ToString("0.000");
+                };
+            }
+
+            // txt_SF → txt_MinP
+            if (txtSFCtrl != null)
+            {
+                txtSFCtrl.KeyDown += (s, e) =>
+                {
+                    if (e.KeyCode == Keys.Enter)
+                    {
+                        e.Handled = true;
+                        e.SuppressKeyPress = true;
+                        if (float.TryParse(txtSFCtrl.Text, out float v))
+                            txtSFCtrl.Text = v.ToString("0.000");
+                        FocusAndSelect(txtMinPCtrl);
+                    }
+                };
+                txtSFCtrl.Leave += (s, e) =>
+                {
+                    if (float.TryParse(txtSFCtrl.Text, out float v))
+                        txtSFCtrl.Text = v.ToString("0.000");
+                };
+            }
+
+            // txt_MinP — end of chain
+            if (txtMinPCtrl != null)
+            {
+                txtMinPCtrl.KeyDown += (s, e) =>
+                {
+                    if (e.KeyCode == Keys.Enter)
+                    {
+                        e.Handled = true;
+                        e.SuppressKeyPress = true;
+                        if (float.TryParse(txtMinPCtrl.Text, out float v))
+                            txtMinPCtrl.Text = v.ToString("0.000");
+                        // End of chain — keep focus here, select all for convenience
+                        FocusAndSelect(txtMinPCtrl);
+                    }
+                };
+                txtMinPCtrl.Leave += (s, e) =>
+                {
+                    if (float.TryParse(txtMinPCtrl.Text, out float v))
+                        txtMinPCtrl.Text = v.ToString("0.000");
+                };
+            }
         }
+
 
         /// <summary>
         /// Handler for FrmPurchase price update event - refreshes price grid from database if the updated item matches current item
@@ -1166,9 +1409,9 @@ namespace PosBranch_Win.Master
                     row["MarginPer"] = getItem.List[i].MarginPer;
                     row["TaxPer"] = getItem.List[i].TaxPer;
                     row["TaxAmt"] = getItem.List[i].TaxAmt;
-                    row["RetailPrice"] = getItem.List[i].WholeSalePrice; // DB.WholeSalePrice = retail → grid RetailPrice (visual "Retail Price")
+                    row["RetailPrice"] = getItem.List[i].WholeSalePrice; // DB.WholeSalePrice = retail ? grid RetailPrice (visual "Retail Price")
                     row["MRP"] = getItem.List[i].MRP;
-                    row["WholeSalePrice"] = getItem.List[i].RetailPrice; // DB.RetailPrice = walking → grid WholeSalePrice (visual "Walking Price")
+                    row["WholeSalePrice"] = getItem.List[i].RetailPrice; // DB.RetailPrice = walking ? grid WholeSalePrice (visual "Walking Price")
                     row["CreditPrice"] = getItem.List[i].CreditPrice;
                     row["CardPrice"] = getItem.List[i].CardPrice;
                     row["StaffPrice"] = getItem.List[i].StaffPrice;
@@ -1228,7 +1471,7 @@ namespace PosBranch_Win.Master
                         // from DB just in case it doesn't auto-calculate from retail price
                         if (txt_walkin != null)
                         {
-                            txt_walkin.Text = unit1.RetailPrice.ToString("0.00");
+                            txt_walkin.Text = unit1.RetailPrice.ToString("0.000");
                         }
                     }
                 }
@@ -1621,8 +1864,8 @@ namespace PosBranch_Win.Master
                 dt.Columns.Add("MarginPer", typeof(float));
                 dt.Columns.Add("TaxPer", typeof(float));
                 dt.Columns.Add("TaxAmt", typeof(float));
-                dt.Columns.Add("MRP", typeof(float));
                 dt.Columns.Add("RetailPrice", typeof(float));
+                dt.Columns.Add("MRP", typeof(float));
                 dt.Columns.Add("WholeSalePrice", typeof(float));
                 dt.Columns.Add("CreditPrice", typeof(float));
                 dt.Columns.Add("CardPrice", typeof(float));
@@ -1745,7 +1988,7 @@ namespace PosBranch_Win.Master
                 // Prevent recursive calls when we're updating cells programmatically
                 if (isUpdatingCostCell) return;
 
-                // Auto-calculate Cost when Packing changes: Cost = Packing × Txt_UnitCost
+                // Auto-calculate Cost when Packing changes: Cost = Packing ? Txt_UnitCost
                 if (e.Cell.Column.Key == colPacking)
                 {
                     // Get the packing value
@@ -2235,43 +2478,43 @@ namespace PosBranch_Win.Master
                 if (txt_qty != null) txt_qty.Clear();
                 if (txt_available != null) txt_available.Clear();
                 if (txt_hold != null) txt_hold.Text = "0.00";
-                if (txt_walkin != null) txt_walkin.Text = "0.00000";
-                if (txt_Retail != null) txt_Retail.Text = "0.00000";
-                if (txt_CEP != null) txt_CEP.Text = "0.00000";
-                if (txt_Mrp != null) txt_Mrp.Text = "0.00000";
-                if (txt_CardP != null) txt_CardP.Text = "0.00000";
+                if (txt_walkin != null) txt_walkin.Text = "0.000";
+                if (txt_Retail != null) txt_Retail.Text = "0.000";
+                if (txt_CEP != null) txt_CEP.Text = "0.000";
+                if (txt_Mrp != null) txt_Mrp.Text = "0.000";
+                if (txt_CardP != null) txt_CardP.Text = "0.000";
 
                 // Clear selling price fields (use Control type to match Load event handling)
                 var txt_SF = this.Controls.Find("txt_SF", true).FirstOrDefault() as Control;
                 if (txt_SF != null)
                 {
-                    txt_SF.Text = "0.00000";
+                    txt_SF.Text = "0.000";
                 }
 
                 var txt_MinP = this.Controls.Find("txt_MinP", true).FirstOrDefault() as Control;
                 if (txt_MinP != null)
                 {
-                    txt_MinP.Text = "0.00000";
+                    txt_MinP.Text = "0.000";
                 }
 
                 // Clear markdown fields
                 var ultraTextEditor11 = this.Controls.Find("ultraTextEditor11", true).FirstOrDefault() as Infragistics.Win.UltraWinEditors.UltraTextEditor;
-                if (ultraTextEditor11 != null) ultraTextEditor11.Text = "0";
+                if (ultraTextEditor11 != null) ultraTextEditor11.Text = "0.00";
 
                 var ultraTextEditor12 = this.Controls.Find("ultraTextEditor12", true).FirstOrDefault() as Infragistics.Win.UltraWinEditors.UltraTextEditor;
-                if (ultraTextEditor12 != null) ultraTextEditor12.Text = "0";
+                if (ultraTextEditor12 != null) ultraTextEditor12.Text = "0.00";
 
                 var ultraTextEditor13 = this.Controls.Find("ultraTextEditor13", true).FirstOrDefault() as Infragistics.Win.UltraWinEditors.UltraTextEditor;
-                if (ultraTextEditor13 != null) ultraTextEditor13.Text = "0";
+                if (ultraTextEditor13 != null) ultraTextEditor13.Text = "0.00";
 
                 var ultraTextEditor14 = this.Controls.Find("ultraTextEditor14", true).FirstOrDefault() as Infragistics.Win.UltraWinEditors.UltraTextEditor;
-                if (ultraTextEditor14 != null) ultraTextEditor14.Text = "0";
+                if (ultraTextEditor14 != null) ultraTextEditor14.Text = "0.00";
 
                 var ultraTextEditor15 = this.Controls.Find("ultraTextEditor15", true).FirstOrDefault() as Infragistics.Win.UltraWinEditors.UltraTextEditor;
-                if (ultraTextEditor15 != null) ultraTextEditor15.Text = "0";
+                if (ultraTextEditor15 != null) ultraTextEditor15.Text = "0.00";
 
                 var ultraTextEditor16 = this.Controls.Find("ultraTextEditor16", true).FirstOrDefault() as Infragistics.Win.UltraWinEditors.UltraTextEditor;
-                if (ultraTextEditor16 != null) ultraTextEditor16.Text = "0";
+                if (ultraTextEditor16 != null) ultraTextEditor16.Text = "0.00";
 
                 // Clear profit margin fields
                 ClearAllProfitMargins();
@@ -3657,7 +3900,8 @@ namespace PosBranch_Win.Master
                     {
                         if (getItem.List[0] != null)
                         {
-                            Txt_UnitCost.Text = getItem.List[0].Cost.ToString();
+                            // Txt_UnitCost always shows 3 decimal places (.000) on load
+                            Txt_UnitCost.Text = getItem.List[0].Cost.ToString("0.000");
 
                             // Set tax information
                             txt_TaxType.Text = getItem.List[0].TaxType;
@@ -3682,31 +3926,31 @@ namespace PosBranch_Win.Master
                             // Set walking price (DB.RetailPrice stores walking price)
                             if (txt_walkin != null)
                             {
-                                txt_walkin.Text = getItem.List[0].RetailPrice.ToString();
+                                txt_walkin.Text = getItem.List[0].RetailPrice.ToString("0.000");
                             }
 
                             // Set retail price (DB.WholeSalePrice stores retail price)
                             if (txt_Retail != null)
                             {
-                                txt_Retail.Text = getItem.List[0].WholeSalePrice.ToString();
+                                txt_Retail.Text = getItem.List[0].WholeSalePrice.ToString("0.000");
                             }
 
                             // Set credit price
                             if (txt_CEP != null)
                             {
-                                txt_CEP.Text = getItem.List[0].CreditPrice.ToString();
+                                txt_CEP.Text = getItem.List[0].CreditPrice.ToString("0.000");
                             }
 
                             // Set MRP
                             if (txt_Mrp != null)
                             {
-                                txt_Mrp.Text = getItem.List[0].MRP.ToString();
+                                txt_Mrp.Text = getItem.List[0].MRP.ToString("0.000");
                             }
 
                             // Set Card Price
                             if (txt_CardP != null)
                             {
-                                txt_CardP.Text = getItem.List[0].CardPrice.ToString();
+                                txt_CardP.Text = getItem.List[0].CardPrice.ToString("0.000");
                             }
 
                             // Load markdown values from the first price setting record
@@ -3747,14 +3991,14 @@ namespace PosBranch_Win.Master
                             var txt_SF = this.Controls.Find("txt_SF", true).FirstOrDefault() as Control;
                             if (txt_SF != null)
                             {
-                                txt_SF.Text = getItem.List[0].StaffPrice.ToString("0.00000");
+                                txt_SF.Text = getItem.List[0].StaffPrice.ToString("0.000");
                             }
 
                             // Set txt_MinP with MinPrice from database
                             var txt_MinP = this.Controls.Find("txt_MinP", true).FirstOrDefault() as Control;
                             if (txt_MinP != null)
                             {
-                                txt_MinP.Text = getItem.List[0].MinPrice.ToString("0.00000");
+                                txt_MinP.Text = getItem.List[0].MinPrice.ToString("0.000");
                             }
 
                             // Load item image using repository helper that reads from PriceSettings
@@ -3818,8 +4062,8 @@ namespace PosBranch_Win.Master
                             dtPrice.Columns.Add("MarginPer", typeof(float));
                             dtPrice.Columns.Add("TaxPer", typeof(float));
                             dtPrice.Columns.Add("TaxAmt", typeof(float));
-                            dtPrice.Columns.Add("MRP", typeof(float));
                             dtPrice.Columns.Add("RetailPrice", typeof(float));
+                            dtPrice.Columns.Add("MRP", typeof(float));
                             dtPrice.Columns.Add("WholeSalePrice", typeof(float));
                             dtPrice.Columns.Add("CreditPrice", typeof(float));
                             dtPrice.Columns.Add("CardPrice", typeof(float));
@@ -3838,8 +4082,8 @@ namespace PosBranch_Win.Master
                                 row["TaxPer"] = getItem.List[i].TaxPer;
                                 row["TaxAmt"] = getItem.List[i].TaxAmt;
                                 row["MRP"] = getItem.List[i].MRP;
-                                row["RetailPrice"] = getItem.List[i].WholeSalePrice; // DB.WholeSalePrice = retail → grid RetailPrice (visual "Retail Price")
-                                row["WholeSalePrice"] = getItem.List[i].RetailPrice; // DB.RetailPrice = walking → grid WholeSalePrice (visual "Walking Price")
+                                row["RetailPrice"] = getItem.List[i].WholeSalePrice; // DB.WholeSalePrice = retail ? grid RetailPrice (visual "Retail Price")
+                                row["WholeSalePrice"] = getItem.List[i].RetailPrice; // DB.RetailPrice = walking ? grid WholeSalePrice (visual "Walking Price")
                                 row["CreditPrice"] = getItem.List[i].CreditPrice;
                                 row["CardPrice"] = getItem.List[i].CardPrice;
                                 if (dtPrice.Columns.Contains("StaffPrice")) row["StaffPrice"] = getItem.List[i].StaffPrice;
@@ -5393,7 +5637,12 @@ namespace PosBranch_Win.Master
         {
             if (e.KeyCode == Keys.Enter)
             {
-                this.ActiveControl = btn_Add_ItemIype;
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                if (txt_Brand != null)
+                {
+                    this.BeginInvoke((MethodInvoker)delegate { txt_Brand.Focus(); });
+                }
             }
         }
 
@@ -5471,26 +5720,44 @@ namespace PosBranch_Win.Master
         {
             if (e.KeyCode == Keys.Enter)
             {
-                string brandName = txt_Brand?.Text?.Trim() ?? string.Empty;
-                if (!string.IsNullOrEmpty(brandName))
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                HandleBrandAutoCreate();
+                if (Txt_UnitCost != null)
                 {
-                    Repository.Dropdowns drop = new Repository.Dropdowns();
-                    var brands = drop.getBrandDDl()?.List?.ToList();
-                    var match = brands?.FirstOrDefault(b => string.Equals(b.BrandName, brandName, StringComparison.OrdinalIgnoreCase));
-                    if (match == null)
+                    this.BeginInvoke((MethodInvoker)delegate { Txt_UnitCost.Focus(); });
+                }
+            }
+        }
+
+        private void txt_Brand_Leave(object sender, EventArgs e)
+        {
+            HandleBrandAutoCreate();
+        }
+
+        private void HandleBrandAutoCreate()
+        {
+            string brandName = txt_Brand?.Text?.Trim() ?? string.Empty;
+            if (!string.IsNullOrEmpty(brandName))
+            {
+                Repository.Dropdowns drop = new Repository.Dropdowns();
+                var brands = drop.getBrandDDl()?.List?.ToList();
+                var match = brands?.FirstOrDefault(b => string.Equals(b.BrandName, brandName, StringComparison.OrdinalIgnoreCase));
+
+                if (match == null)
+                {
+                    try
                     {
-                        try
-                        {
-                            var clientOps = new Repository.ClientOperations();
-                            var newBrand = new ModelClass.Master.Brand { BrandName = brandName, _Operation = "CREATE" };
-                            clientOps.SaveBrand(newBrand);
-                            SetupAutoComplete();
-                        }
-                        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error creating brand on Enter: {ex.Message}"); }
+                        var clientOps = new Repository.ClientOperations();
+                        var newBrand = new ModelClass.Master.Brand { BrandName = brandName, _Operation = "CREATE" };
+                        clientOps.SaveBrand(newBrand);
+                        SetupAutoComplete(); // Refresh the autocomplete list
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error creating brand on auto-create: {ex.Message}");
                     }
                 }
-                txt_BaseUnit?.Focus();
-                e.Handled = true;
             }
         }
 
@@ -5532,12 +5799,30 @@ namespace PosBranch_Win.Master
                 }));
             }, null, 500, System.Threading.Timeout.Infinite);
         }
+        private void Txt_UnitCost_Leave(object sender, EventArgs e)
+        {
+            if (float.TryParse(Txt_UnitCost.Text, out float unitCost))
+            {
+                Txt_UnitCost.Text = unitCost.ToString("0.000");
+            }
+        }
 
         private void Txt_UnitCost_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
             {
+                // Trigger formatting when Enter is pressed as well
+                if (float.TryParse(Txt_UnitCost.Text, out float unitCost))
+                {
+                    Txt_UnitCost.Text = unitCost.ToString("0.000");
+                }
 
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                if (txt_Retail != null)
+                {
+                    this.BeginInvoke((MethodInvoker)delegate { txt_Retail.Focus(); });
+                }
             }
         }
 
@@ -5557,7 +5842,7 @@ namespace PosBranch_Win.Master
                                            // Recalculate price grid values based on the updated 
                                            // Recalculate price grid values based on the updated Unit Cost
 
-                // Recalculate Cost cells in ultraGrid1: Cost = Packing × Txt_UnitCost
+                // Recalculate Cost cells in ultraGrid1: Cost = Packing ? Txt_UnitCost
                 if (ultraGrid1 != null && ultraGrid1.Rows != null)
                 {
                     float unitCost = 0;
@@ -5599,7 +5884,7 @@ namespace PosBranch_Win.Master
                     {
                         double markupPercent = (retailPrice / unitCost - 1.0) * 100.0;
                         isUpdatingMarkup = true;
-                        textBox1.Text = markupPercent.ToString("0.00000");
+                        textBox1.Text = markupPercent.ToString("0.00");
                         isUpdatingMarkup = false;
 
                         // Reflect the markup change into the calculator, if open
@@ -7197,7 +7482,7 @@ namespace PosBranch_Win.Master
             }
 
             // Get margin percentage from Ult_Price grid if available
-            string marginPercentage = "0.00000";
+            string marginPercentage = "0.00";
             Infragistics.Win.UltraWinGrid.UltraGrid Ult_Price =
                 this.Controls.Find("Ult_Price", true).FirstOrDefault() as Infragistics.Win.UltraWinGrid.UltraGrid;
 
@@ -7211,13 +7496,13 @@ namespace PosBranch_Win.Master
             }
 
             // Pass the RETAIL PRICE (not walking price) to the calculator
-            string retailPrice = (txt_Retail != null && !string.IsNullOrEmpty(txt_Retail.Text)) ? txt_Retail.Text : "0.00000";
+            string retailPrice = (txt_Retail != null && !string.IsNullOrEmpty(txt_Retail.Text)) ? txt_Retail.Text : "0.000";
             string markup = textBox1.Text; // Assuming textBox1 is used for markup %
             string unitCost = Txt_UnitCost.Text;
 
             // IMPORTANT: Only set last values if we don't have a valid markup from textBox1
             // This prevents overwriting user-entered markup values
-            if (string.IsNullOrWhiteSpace(markup) || markup == "0" || markup == "0.00000")
+            if (string.IsNullOrWhiteSpace(markup) || markup == "0" || markup == "0.000" || markup == "0.00")
             {
                 // No saved markup, use default values
                 unitCostCalculator.SetLastValues(retailPrice, marginPercentage, unitCost);
@@ -7363,7 +7648,7 @@ namespace PosBranch_Win.Master
 
                 // selling price from markup: SP = UC * (1 + markup/100)
                 double sellingPrice = unitCost * (1.0 + (markupPercent / 100.0));
-                string sp = sellingPrice.ToString("0.00000");
+                string sp = sellingPrice.ToString("0.000");
 
                 // Apply master retail (txt_Retail) using this selling price
                 if (txt_Retail != null) txt_Retail.Text = sp;
@@ -7432,17 +7717,17 @@ namespace PosBranch_Win.Master
                     if (ultraTextEditor7 != null) ultraTextEditor7.Text = "0.00";
 
                     // Reset selling price fields
-                    if (txt_Retail != null) txt_Retail.Text = "0.00000";
-                    if (txt_walkin != null) txt_walkin.Text = "0.00000";
-                    if (txt_CEP != null) txt_CEP.Text = "0.00000";
-                    if (txt_Mrp != null) txt_Mrp.Text = "0.00000";
-                    if (txt_CardP != null) txt_CardP.Text = "0.00000";
+                    if (txt_Retail != null) txt_Retail.Text = "0.000";
+                    if (txt_walkin != null) txt_walkin.Text = "0.000";
+                    if (txt_CEP != null) txt_CEP.Text = "0.000";
+                    if (txt_Mrp != null) txt_Mrp.Text = "0.000";
+                    if (txt_CardP != null) txt_CardP.Text = "0.000";
 
                     // Reset markup field
                     if (textBox1 != null)
                     {
                         isUpdatingMarkup = true;
-                        textBox1.Text = "0.00000";
+                        textBox1.Text = "0.00";
                         isUpdatingMarkup = false;
                     }
 
@@ -7473,7 +7758,7 @@ namespace PosBranch_Win.Master
                 if (unitCost > 0)
                 {
                     double sellingPrice = unitCost / (1.0 - (marginPercent / 100.0));
-                    string sp = sellingPrice.ToString("0.00000");
+                    string sp = sellingPrice.ToString("0.000");
 
                     if (txt_Retail != null) txt_Retail.Text = sp;
 
@@ -7486,7 +7771,7 @@ namespace PosBranch_Win.Master
                     {
                         double markupPercent = (sellingPrice / unitCost - 1.0) * 100.0;
                         isUpdatingMarkup = true;
-                        textBox1.Text = markupPercent.ToString("0.00000");
+                        textBox1.Text = markupPercent.ToString("0.00");
                         isUpdatingMarkup = false;
                     }
 
@@ -7541,6 +7826,8 @@ namespace PosBranch_Win.Master
             }
         }
 
+        private int lastF8PressTime = 0;
+
         private void frmItemMasterNew_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.F1)
@@ -7556,6 +7843,15 @@ namespace PosBranch_Win.Master
             }
             else if (e.KeyCode == Keys.F8)
             {
+                // Prevent auto-repeat or double-press within 1000ms from firing a second save/validation
+                if (Environment.TickCount - lastF8PressTime < 1000)
+                {
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    return;
+                }
+                lastF8PressTime = Environment.TickCount;
+
                 // Save or Update based on whether item exists
                 if (!string.IsNullOrWhiteSpace(txt_ItemNo.Text) && CurrentItemId > 0)
                 {
@@ -7567,6 +7863,8 @@ namespace PosBranch_Win.Master
                     // New item - Save
                     this.SaveMaster();
                 }
+                e.Handled = true;
+                e.SuppressKeyPress = true;
             }
         }
 
@@ -7611,6 +7909,12 @@ namespace PosBranch_Win.Master
                     ultraGrid1.DisplayLayout.Bands[0].Columns["TaxPer"].Hidden = true;
                 if (ultraGrid1.DisplayLayout.Bands[0].Columns.Exists("TaxAmt"))
                     ultraGrid1.DisplayLayout.Bands[0].Columns["TaxAmt"].Hidden = true;
+
+                // Make Cost column read-only — it is auto-calculated (Packing × Txt_UnitCost)
+                if (ultraGrid1.DisplayLayout.Bands[0].Columns.Exists("Cost"))
+                {
+                    ultraGrid1.DisplayLayout.Bands[0].Columns["Cost"].CellActivation = Infragistics.Win.UltraWinGrid.Activation.NoEdit;
+                }
             }
         }
 
@@ -7640,6 +7944,36 @@ namespace PosBranch_Win.Master
         public void SetLoadingFlag(bool loading)
         {
             isLoadingItem = loading;
+
+            // Re-apply 2-decimal formatting right at the end of the item load cycle.
+            // This safely forces .00 onto any Mark Down or Profit Margin editors that lost their decimals
+            // due to binding syncs or hidden numeric casting in the background.
+            if (!loading)
+            {
+                try
+                {
+                    Infragistics.Win.UltraWinEditors.UltraTextEditor[] allPercentageEditors = new Infragistics.Win.UltraWinEditors.UltraTextEditor[]
+                    {
+                        ultraTextEditor4, ultraTextEditor5, ultraTextEditor6, ultraTextEditor7, ultraTextEditor8, ultraTextEditor9, ultraTextEditor10,
+                        ultraTextEditor11, ultraTextEditor12, ultraTextEditor13, ultraTextEditor14, ultraTextEditor15, ultraTextEditor16
+                    };
+
+                    foreach (var editor in allPercentageEditors)
+                    {
+                        if (editor != null && !string.IsNullOrWhiteSpace(editor.Text))
+                        {
+                            if (double.TryParse(editor.Text, out double val))
+                            {
+                                editor.Text = val.ToString("0.00");
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error re-formatting percentage editors at load finish: {ex.Message}");
+                }
+            }
         }
 
         /// <summary>
@@ -8436,6 +8770,21 @@ namespace PosBranch_Win.Master
                 {
                     System.Diagnostics.Debug.WriteLine($"Error in txt_Retail_KeyDown: {ex.Message}");
                 }
+
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+
+                // Format all price fields to .000 immediately without waiting for Leave event
+                var priceFieldsToFormat = new Control[] { txt_Retail, txt_walkin, txt_CEP, txt_Mrp, txt_CardP, txt_MinP };
+                foreach (var pField in priceFieldsToFormat)
+                {
+                    if (pField != null) FormatPriceToThreeDecimals(pField, EventArgs.Empty);
+                }
+                var txt_SF_Control = this.Controls.Find("txt_SF", true).FirstOrDefault();
+                if (txt_SF_Control != null) FormatPriceToThreeDecimals(txt_SF_Control, EventArgs.Empty);
+
+                // Focus deliberately remains on txt_Retail as requested, and text is selected for rapid overwriting
+                txt_Retail.SelectAll();
             }
         }
 
@@ -8609,7 +8958,7 @@ namespace PosBranch_Win.Master
                         double markupPercent = (retailPrice / unitCost - 1.0) * 100.0;
 
                         isUpdatingMarkup = true;
-                        textBox1.Text = markupPercent.ToString("0.00000");
+                        textBox1.Text = markupPercent.ToString("0.00");
                         isUpdatingMarkup = false;
 
                         System.Diagnostics.Debug.WriteLine($"Recalculated markup percentage: {markupPercent}%");
@@ -9048,8 +9397,8 @@ namespace PosBranch_Win.Master
             tempDgv.Columns.Add("MarginPer", "MarginPer");
             tempDgv.Columns.Add("TaxPer", "TaxPer");
             tempDgv.Columns.Add("TaxAmt", "TaxAmt");
-            tempDgv.Columns.Add("MRP", "MRP");
             tempDgv.Columns.Add("RetailPrice", "RetailPrice");
+            tempDgv.Columns.Add("MRP", "MRP");
             tempDgv.Columns.Add("WholeSalePrice", "WholeSalePrice");
             tempDgv.Columns.Add("CreditPrice", "CreditPrice");
             tempDgv.Columns.Add("CardPrice", "CardPrice");
@@ -9078,8 +9427,8 @@ namespace PosBranch_Win.Master
                     tempDgv.Rows[rowIndex].Cells["TaxPer"].Value = row.Cells["TaxPer"].Value?.ToString() ?? "0";
                     tempDgv.Rows[rowIndex].Cells["TaxAmt"].Value = row.Cells["TaxAmt"].Value?.ToString() ?? "0";
                     tempDgv.Rows[rowIndex].Cells["MRP"].Value = row.Cells["MRP"].Value?.ToString() ?? "0";
-                    // SWAP for DB: grid RetailPrice (visual retail) → tempDgv WholeSalePrice (DB retail)
-                    //              grid WholeSalePrice (visual walking) → tempDgv RetailPrice (DB walking)
+                    // SWAP for DB: grid RetailPrice (visual retail) ? tempDgv WholeSalePrice (DB retail)
+                    //              grid WholeSalePrice (visual walking) ? tempDgv RetailPrice (DB walking)
                     tempDgv.Rows[rowIndex].Cells["RetailPrice"].Value = row.Cells["WholeSalePrice"].Value?.ToString() ?? "0";
                     tempDgv.Rows[rowIndex].Cells["WholeSalePrice"].Value = row.Cells["RetailPrice"].Value?.ToString() ?? "0";
                     tempDgv.Rows[rowIndex].Cells["CreditPrice"].Value = row.Cells["CreditPrice"].Value?.ToString() ?? "0";
@@ -9528,7 +9877,7 @@ namespace PosBranch_Win.Master
                 if (sellingPrice <= 0)
                     return 0;
 
-                // Profit Margin % = (Selling Price − Cost) ÷ Selling Price × 100
+                // Profit Margin % = (Selling Price - Cost) ? Selling Price ? 100
                 double profitMargin = ((sellingPrice - unitCost) / sellingPrice) * 100;
                 return Math.Round(profitMargin, 2); // Round to 2 decimal places
             }
@@ -9872,7 +10221,7 @@ namespace PosBranch_Win.Master
                 newPrice = retail * (1.0 - (markdownPercent / 100.0));
             }
 
-            return newPrice.ToString("0.00000");
+            return newPrice.ToString("0.000");
         }
 
         // Calculate markdown percentage from selling price: markdown = (1 - sellingPrice/masterRetail) * 100
@@ -9939,7 +10288,7 @@ namespace PosBranch_Win.Master
                 double sellingPrice = unitCost / (1.0 - (profitMarginPercent / 100.0));
 
                 // Update the selling price field
-                sellingPriceField.Text = sellingPrice.ToString("0.00000");
+                sellingPriceField.Text = sellingPrice.ToString("0.000");
 
                 // Also calculate and set the corresponding markdown from the new selling price
                 // for non-master fields so both values stay in sync
@@ -10187,7 +10536,7 @@ namespace PosBranch_Win.Master
                 {
                     try
                     {
-                        linkedPrice.Text = "0.00000";
+                        linkedPrice.Text = "0.000";
                         var profitEditor = GetProfitEditorForPriceControl(linkedPrice);
                         if (profitEditor != null) profitEditor.Text = "0.00";
 
@@ -10277,7 +10626,7 @@ namespace PosBranch_Win.Master
                         {
                             if (!isEditingStaffPrice)
                             {
-                                string newVal = staffSelling.ToString("0.00000");
+                                string newVal = staffSelling.ToString("0.000");
                                 if (!string.Equals(txt_SF_ctrl.Text, newVal, StringComparison.Ordinal))
                                 {
                                     txt_SF_ctrl.Text = newVal;
@@ -10324,7 +10673,7 @@ namespace PosBranch_Win.Master
                         {
                             if (!isEditingMinPrice)
                             {
-                                string newVal2 = minSelling.ToString("0.00000");
+                                string newVal2 = minSelling.ToString("0.000");
                                 if (!string.Equals(txt_MinP_ctrl.Text, newVal2, StringComparison.Ordinal))
                                 {
                                     txt_MinP_ctrl.Text = newVal2;
@@ -10449,3 +10798,6 @@ namespace PosBranch_Win.Master
         }
     }
 }
+
+
+

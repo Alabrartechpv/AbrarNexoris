@@ -88,7 +88,7 @@ namespace PosBranch_Win.Master
                 ultraGrid1.DisplayLayout.InterBandSpacing = 10;
                 ultraGrid1.DisplayLayout.Override.ExpansionIndicator = Infragistics.Win.UltraWinGrid.ShowExpansionIndicator.Never;
                 ultraGrid1.DisplayLayout.Override.RowSpacingBefore = 0;
-                
+
                 // Set row sizing to fixed height for compact appearance
                 ultraGrid1.DisplayLayout.Override.RowSizing = Infragistics.Win.UltraWinGrid.RowSizing.Fixed;
                 ultraGrid1.DisplayLayout.Override.DefaultRowHeight = 25;
@@ -96,7 +96,7 @@ namespace PosBranch_Win.Master
 
                 // Configure columns after data is loaded
                 ConfigureGridColumns();
-                
+
                 // Connect grid events
                 ConnectGridEvents();
             }
@@ -113,7 +113,7 @@ namespace PosBranch_Win.Master
                 if (ultraGrid1.DisplayLayout.Bands.Count > 0)
                 {
                     var band = ultraGrid1.DisplayLayout.Bands[0];
-                    
+
                     // Id column
                     if (band.Columns.Exists("Id"))
                     {
@@ -123,7 +123,7 @@ namespace PosBranch_Win.Master
                         band.Columns["Id"].CellActivation = Infragistics.Win.UltraWinGrid.Activation.NoEdit;
                         band.Columns["Id"].MinWidth = 60;
                     }
-                    
+
                     // BrandName column
                     if (band.Columns.Exists("BrandName"))
                     {
@@ -147,7 +147,7 @@ namespace PosBranch_Win.Master
             {
                 // Add keyboard event handler for navigation
                 ultraGrid1.KeyDown += UltraGrid1_KeyDown;
-                
+
                 // Add row selection event
                 ultraGrid1.AfterRowActivate += UltraGrid1_AfterRowActivate;
             }
@@ -213,18 +213,18 @@ namespace PosBranch_Win.Master
 
                 if (!string.IsNullOrEmpty(openFileDialog1.FileName) && File.Exists(openFileDialog1.FileName))
                 {
-            Byte[] brandPhoto = File.ReadAllBytes(openFileDialog1.FileName);
-            brnd.Photo = brandPhoto;
+                    Byte[] brandPhoto = File.ReadAllBytes(openFileDialog1.FileName);
+                    brnd.Photo = brandPhoto;
                 }
 
-            brnd._Operation = "CREATE";
-            string message = operations.SaveBrand(brnd);
-                
+                brnd._Operation = "CREATE";
+                string message = operations.SaveBrand(brnd);
+
                 // Show success dialog like other forms
                 frmSuccesMsg msg = new frmSuccesMsg();
                 msg.ShowDialog();
-                
-            this.RefreshBrand();
+
+                this.RefreshBrand();
             }
             catch (Exception ex)
             {
@@ -242,10 +242,10 @@ namespace PosBranch_Win.Master
         public void RefreshBrand()
         {
             try
-        {
-            BrandDDLGrid brndGrid = drp.getBrandDDL();
+            {
+                BrandDDLGrid brndGrid = drp.getBrandDDL();
                 ultraGrid1.DataSource = brndGrid.List;
-                
+
                 // Configure columns after data is loaded
                 ConfigureGridColumns();
             }
@@ -275,7 +275,7 @@ namespace PosBranch_Win.Master
                             MemoryStream ms = new MemoryStream(brandPhoto);
                             pictureBoxBrand.Image = Image.FromStream(ms);
                         }
-                        
+
                         // Switch to edit mode
                         SetButtonMode(true);
                     }
@@ -301,11 +301,11 @@ namespace PosBranch_Win.Master
                 }
                 brnd._Operation = "Update";
                 Brand message = operations.UpdateBrand(brnd);
-                
+
                 MessageBox.Show("Brand updated successfully!", "Update Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                
+
                 this.RefreshBrand();
-                
+
                 // Clear form and reset to new entry mode
                 ultraTextBrandName.Text = "";
                 pictureBoxBrand.Image = null;
@@ -323,10 +323,10 @@ namespace PosBranch_Win.Master
         {
             ultraTextBrandName.Text = "";
             pictureBoxBrand.Image = null;
-            
+
             // Reset to new entry mode
             SetButtonMode(false);
-            
+
             // Reset Id for new entry
             Id = 0;
         }
@@ -339,22 +339,22 @@ namespace PosBranch_Win.Master
                 {
                     int selectedId = Convert.ToInt32(ultraGrid1.ActiveRow.Cells["Id"].Value);
                     string brandName = ultraGrid1.ActiveRow.Cells["BrandName"].Value?.ToString() ?? "Unknown";
-                    
+
                     DialogResult result = MessageBox.Show(
-                        $"Are you sure you want to delete the brand '{brandName}'?", 
-                        "Confirm Delete", 
-                        MessageBoxButtons.YesNo, 
+                        $"Are you sure you want to delete the brand '{brandName}'?",
+                        "Confirm Delete",
+                        MessageBoxButtons.YesNo,
                         MessageBoxIcon.Warning);
-                    
+
                     if (result == DialogResult.Yes)
                     {
                         brnd.Id = selectedId;
                         operations.DeleteBrand(brnd);
-                        
+
                         MessageBox.Show("Brand deleted successfully!", "Delete Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        
+
                         this.RefreshBrand();
-                        
+
                         // Clear form and reset to new entry mode
                         ultraTextBrandName.Text = "";
                         pictureBoxBrand.Image = null;
@@ -386,7 +386,7 @@ namespace PosBranch_Win.Master
                 BrandDDLGrid bddlg = new BrandDDLGrid();
                 bddlg = operations.BrandSearch(brd);
                 ultraGrid1.DataSource = bddlg.List;
-                
+
                 // Configure columns after search results are loaded
                 ConfigureGridColumns();
             }
@@ -401,7 +401,7 @@ namespace PosBranch_Win.Master
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
                 pictureBoxBrand.Load(openFileDialog1.FileName);
-                 string s =openFileDialog1.FileName;
+                string s = openFileDialog1.FileName;
 
                 Byte[] bphoto = File.ReadAllBytes(openFileDialog1.FileName);
                 string sphoto = Convert.ToBase64String(bphoto);
@@ -415,12 +415,12 @@ namespace PosBranch_Win.Master
             MemoryStream ms = new MemoryStream();
             imagein.Save(ms, System.Drawing.Imaging.ImageFormat.Gif);
             return ms.ToArray();
-            
+
         }
 
         private void FrmBrand_KeyDown(object sender, KeyEventArgs e)
         {
-            if(e.KeyCode==Keys.Escape)
+            if (e.KeyCode == Keys.Escape)
             {
                 this.Close();
             }

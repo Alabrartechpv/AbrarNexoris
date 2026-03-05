@@ -162,7 +162,7 @@
             this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel1.Location = new System.Drawing.Point(0, 0);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(1366, 730);
+            this.panel1.Size = new System.Drawing.Size(1364, 730);
             this.panel1.TabIndex = 0;
             // 
             // ultraPanel2
@@ -176,7 +176,7 @@
             this.ultraPanel2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ultraPanel2.Location = new System.Drawing.Point(0, 165);
             this.ultraPanel2.Name = "ultraPanel2";
-            this.ultraPanel2.Size = new System.Drawing.Size(1131, 475);
+            this.ultraPanel2.Size = new System.Drawing.Size(1129, 475);
             this.ultraPanel2.TabIndex = 34;
             // 
             // ultraGrid1
@@ -239,7 +239,7 @@
             this.ultraGrid1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ultraGrid1.Location = new System.Drawing.Point(0, 0);
             this.ultraGrid1.Name = "ultraGrid1";
-            this.ultraGrid1.Size = new System.Drawing.Size(1127, 445);
+            this.ultraGrid1.Size = new System.Drawing.Size(1125, 445);
             this.ultraGrid1.TabIndex = 23;
             this.ultraGrid1.Text = "ultraGrid1";
             this.ultraGrid1.InitializeLayout += new Infragistics.Win.UltraWinGrid.InitializeLayoutEventHandler(this.ultraGrid1_InitializeLayout);
@@ -255,7 +255,7 @@
             this.gridFooterPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.gridFooterPanel.Location = new System.Drawing.Point(0, 445);
             this.gridFooterPanel.Name = "gridFooterPanel";
-            this.gridFooterPanel.Size = new System.Drawing.Size(1127, 26);
+            this.gridFooterPanel.Size = new System.Drawing.Size(1125, 26);
             this.gridFooterPanel.TabIndex = 24;
             // 
             // panel5
@@ -276,7 +276,7 @@
             this.panel5.ClientArea.Controls.Add(this.pbxSave);
             this.panel5.ClientArea.Controls.Add(this.updtbtn);
             this.panel5.Dock = System.Windows.Forms.DockStyle.Right;
-            this.panel5.Location = new System.Drawing.Point(1131, 165);
+            this.panel5.Location = new System.Drawing.Point(1129, 165);
             this.panel5.Name = "panel5";
             this.panel5.Size = new System.Drawing.Size(235, 475);
             this.panel5.TabIndex = 22;
@@ -462,7 +462,7 @@
             this.ultraPanel3.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.ultraPanel3.Location = new System.Drawing.Point(0, 640);
             this.ultraPanel3.Name = "ultraPanel3";
-            this.ultraPanel3.Size = new System.Drawing.Size(1366, 90);
+            this.ultraPanel3.Size = new System.Drawing.Size(1364, 90);
             this.ultraPanel3.TabIndex = 35;
             // 
             // ultraPanel8
@@ -481,7 +481,7 @@
             // ultraPanel8.ClientArea
             // 
             this.ultraPanel8.ClientArea.Controls.Add(this.ultraPanel9);
-            this.ultraPanel8.Location = new System.Drawing.Point(1130, 6);
+            this.ultraPanel8.Location = new System.Drawing.Point(1128, 6);
             this.ultraPanel8.Name = "ultraPanel8";
             this.ultraPanel8.Size = new System.Drawing.Size(229, 75);
             this.ultraPanel8.TabIndex = 70;
@@ -524,7 +524,7 @@
             // 
             this.SubTotal.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.SubTotal.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.SubTotal.Location = new System.Drawing.Point(862, 11);
+            this.SubTotal.Location = new System.Drawing.Point(860, 11);
             this.SubTotal.Name = "SubTotal";
             this.SubTotal.Size = new System.Drawing.Size(95, 25);
             this.SubTotal.TabIndex = 28;
@@ -537,7 +537,7 @@
             this.TxtSubTotal.Appearance = appearance29;
             this.TxtSubTotal.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
             this.TxtSubTotal.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.TxtSubTotal.Location = new System.Drawing.Point(963, 9);
+            this.TxtSubTotal.Location = new System.Drawing.Point(961, 9);
             this.TxtSubTotal.Name = "TxtSubTotal";
             this.TxtSubTotal.Size = new System.Drawing.Size(151, 31);
             this.TxtSubTotal.TabIndex = 29;
@@ -562,7 +562,7 @@
             this.ultraPanel1.Dock = System.Windows.Forms.DockStyle.Top;
             this.ultraPanel1.Location = new System.Drawing.Point(0, 85);
             this.ultraPanel1.Name = "ultraPanel1";
-            this.ultraPanel1.Size = new System.Drawing.Size(1366, 80);
+            this.ultraPanel1.Size = new System.Drawing.Size(1364, 80);
             this.ultraPanel1.TabIndex = 33;
             // 
             // barbtn
@@ -703,7 +703,7 @@
             this.panel2.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel2.Location = new System.Drawing.Point(0, 0);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(1366, 85);
+            this.panel2.Size = new System.Drawing.Size(1364, 85);
             this.panel2.TabIndex = 10;
             // 
             // label1
@@ -746,7 +746,7 @@
             this.button1.BackColor = System.Drawing.Color.Transparent;
             this.button1.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("button1.BackgroundImage")));
             this.button1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.button1.Location = new System.Drawing.Point(1239, 34);
+            this.button1.Location = new System.Drawing.Point(1237, 34);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(31, 31);
             this.button1.TabIndex = 4;
@@ -760,7 +760,7 @@
             this.dtSReturnDate.Appearance = appearance35;
             this.dtSReturnDate.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
             this.dtSReturnDate.FormatString = "yy/MM/dd";
-            this.dtSReturnDate.Location = new System.Drawing.Point(897, 38);
+            this.dtSReturnDate.Location = new System.Drawing.Point(895, 38);
             this.dtSReturnDate.Name = "dtSReturnDate";
             this.dtSReturnDate.Size = new System.Drawing.Size(144, 19);
             this.dtSReturnDate.TabIndex = 3;
@@ -773,7 +773,7 @@
             this.TxtSRNO.Appearance = appearance36;
             this.TxtSRNO.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
             this.TxtSRNO.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.TxtSRNO.Location = new System.Drawing.Point(1102, 34);
+            this.TxtSRNO.Location = new System.Drawing.Point(1100, 34);
             this.TxtSRNO.Name = "TxtSRNO";
             this.TxtSRNO.Size = new System.Drawing.Size(137, 31);
             this.TxtSRNO.TabIndex = 14;
@@ -783,7 +783,7 @@
             // 
             this.labelSRNO.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.labelSRNO.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelSRNO.Location = new System.Drawing.Point(1104, 9);
+            this.labelSRNO.Location = new System.Drawing.Point(1102, 9);
             this.labelSRNO.Name = "labelSRNO";
             this.labelSRNO.Size = new System.Drawing.Size(74, 25);
             this.labelSRNO.TabIndex = 13;
@@ -793,7 +793,7 @@
             // 
             this.labelDate.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.labelDate.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelDate.Location = new System.Drawing.Point(900, 9);
+            this.labelDate.Location = new System.Drawing.Point(898, 9);
             this.labelDate.Name = "labelDate";
             this.labelDate.Size = new System.Drawing.Size(53, 25);
             this.labelDate.TabIndex = 11;
@@ -858,7 +858,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
-            this.ClientSize = new System.Drawing.Size(1366, 730);
+            this.ClientSize = new System.Drawing.Size(1364, 730);
             this.Controls.Add(this.panel1);
             this.MinimizeBox = false;
             this.Name = "frmSalesReturn";

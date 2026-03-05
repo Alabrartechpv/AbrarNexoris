@@ -138,7 +138,7 @@ namespace PosBranch_Win.DialogBox
             // Register events to preserve column widths
             ultraGrid1.AfterRowsDeleted += UltraGrid1_AfterRowsDeleted;
             ultraGrid1.AfterSortChange += UltraGrid1_AfterSortChange;
-            ultraGrid1.InitializeLayout += ultraGrid1_InitializeLayout;
+            ultraGrid1.AfterColPosChanged += UltraGrid1_AfterColPosChanged;
 
             // Add handler for form resize to preserve column widths
             this.SizeChanged += FrmDialForItemMaster_SizeChanged;
@@ -169,6 +169,10 @@ namespace PosBranch_Win.DialogBox
             PreserveColumnWidths();
         }
 
+        private void UltraGrid1_AfterColPosChanged(object sender, AfterColPosChangedEventArgs e)
+        {
+            PreserveColumnWidths();
+        }
 
         // Helper method to preserve column widths
         private void PreserveColumnWidths()
@@ -1042,6 +1046,12 @@ namespace PosBranch_Win.DialogBox
                 ultraGrid1.DisplayLayout.Override.AllowUpdate = Infragistics.Win.DefaultableBoolean.True;
                 ultraGrid1.DisplayLayout.Override.RowSelectors = Infragistics.Win.DefaultableBoolean.True;
                 ultraGrid1.DisplayLayout.Override.SelectTypeRow = Infragistics.Win.UltraWinGrid.SelectType.Single;
+                ultraGrid1.DisplayLayout.Override.HeaderClickAction = Infragistics.Win.UltraWinGrid.HeaderClickAction.SortSingle;
+
+                // Enable column moving and dragging
+                ultraGrid1.DisplayLayout.Override.AllowColMoving = Infragistics.Win.UltraWinGrid.AllowColMoving.WithinBand;
+                ultraGrid1.DisplayLayout.Override.AllowColSizing = Infragistics.Win.UltraWinGrid.AllowColSizing.Free;
+                ultraGrid1.DisplayLayout.Override.AllowColSwapping = Infragistics.Win.UltraWinGrid.AllowColSwapping.WithinBand;
 
                 // Important: This setting ensures we get only row selection on click, not automatic action
                 ultraGrid1.DisplayLayout.Override.CellClickAction = Infragistics.Win.UltraWinGrid.CellClickAction.RowSelect;
@@ -1175,6 +1185,9 @@ namespace PosBranch_Win.DialogBox
 
                 // Auto-fit settings - DISABLE to prevent column resizing during filtering
                 ultraGrid1.DisplayLayout.AutoFitStyle = Infragistics.Win.UltraWinGrid.AutoFitStyle.None;
+
+                // Disable automatic column sizing
+                ultraGrid1.DisplayLayout.Override.ColumnAutoSizeMode = Infragistics.Win.UltraWinGrid.ColumnAutoSizeMode.None;
 
                 // IMPORTANT: Add code to ensure only the specified columns are visible
                 if (ultraGrid1.DisplayLayout.Bands.Count > 0)
@@ -1821,42 +1834,22 @@ namespace PosBranch_Win.DialogBox
                     // Get the selected search filter option
                     string filterOption = comboBox1.SelectedItem?.ToString() ?? "Select all";
 
-                    DataTable searchResultsTable = dv.ToTable().Clone();
+                    // Build a filter based on the selected option
+                    string filter = BuildFilterString(searchText, filterOption);
 
-                    // Apply fuzzy search
-                    var searchResults = new List<Tuple<int, DataRow>>();
-
-                    foreach (DataRowView drv in dv)
-                    {
-                        int score = CalculateFuzzyMatchScore(drv.Row, searchText.Trim(), filterOption);
-                        if (score > 0)
-                        {
-                            searchResults.Add(new Tuple<int, DataRow>(score, drv.Row));
-                        }
-                    }
-
-                    // Sort by highest score first
-                    var sortedResults = searchResults.OrderByDescending(x => x.Item1).ToList();
-
-                    foreach (var match in sortedResults)
-                    {
-                        searchResultsTable.ImportRow(match.Item2);
-                    }
+                    dv.RowFilter = filter;
 
                     // Update status with filter info
-                    UpdateStatus($"Filter applied (fuzzy): Found {searchResultsTable.Rows.Count} matching rows");
+                    UpdateStatus($"Filter applied: '{filter}' - Found {dv.Count} matching rows (Latest first)");
 
                     // Update title with filter results
-                    this.Text = $"Item Master - Showing {searchResultsTable.Rows.Count} of {fullDataTable.Rows.Count} items (Matches Sorted)";
+                    this.Text = $"Item Master - Showing {dv.Count} of {fullDataTable.Rows.Count} items (Latest first)";
 
                     // Update textBox3 with the filtered count
                     if (textBox3 != null)
                     {
-                        textBox3.Text = searchResultsTable.Rows.Count.ToString();
+                        textBox3.Text = dv.Count.ToString();
                     }
-                    
-                    // Apply the filtered view to the grid
-                    ultraGrid1.DataSource = searchResultsTable;
                 }
                 else
                 {
@@ -1871,10 +1864,10 @@ namespace PosBranch_Win.DialogBox
                     {
                         textBox3.Text = fullDataTable.Rows.Count.ToString();
                     }
-
-                    // Apply the unfiltered view to the grid
-                    ultraGrid1.DataSource = dv;
                 }
+
+                // Apply the filtered view to the grid
+                ultraGrid1.DataSource = dv;
 
                 // Configure visible columns but preserve widths and positions
                 ConfigureVisibleColumnsPreserveLayout(columnWidths, columnPositions);
@@ -1893,7 +1886,7 @@ namespace PosBranch_Win.DialogBox
                 ultraGrid1.ResumeLayout(true);
 
                 // Final status update
-                UpdateStatus($"Grid updated with {ultraGrid1.Rows.Count} rows.");
+                UpdateStatus($"Grid updated with {ultraGrid1.Rows.Count} rows. Filter: {(string.IsNullOrEmpty(dv.RowFilter) ? "None" : dv.RowFilter)}");
             }
             catch (Exception ex)
             {
@@ -1901,135 +1894,6 @@ namespace PosBranch_Win.DialogBox
                 try { ultraGrid1.ResumeLayout(true); } catch { }
                 UpdateStatus($"Error applying filter: {ex.Message}");
             }
-        }
-
-        // Calculate a score for how well a row matches a search string
-        private int CalculateFuzzyMatchScore(DataRow row, string searchText, string filterOption)
-        {
-            searchText = searchText.ToLower();
-            int maxScore = 0;
-
-            // Columns to search based on filter option
-            var colsToSearch = new List<string>();
-            switch (filterOption)
-            {
-                case "Barcode":
-                    colsToSearch.Add("BarCode");
-                    break;
-                case "Item Name":
-                    colsToSearch.Add("Description");
-                    break;
-                case "UnitID":
-                    colsToSearch.Add("UnitId");
-                    break;
-                case "Unit":
-                    colsToSearch.Add("Unit");
-                    break;
-                case "Select all":
-                default:
-                    colsToSearch.Add("BarCode");
-                    colsToSearch.Add("Description");
-                    colsToSearch.Add("UnitId");
-                    colsToSearch.Add("Unit");
-                    break;
-            }
-
-            foreach (string colName in colsToSearch)
-            {
-                if (row.Table.Columns.Contains(colName) && row[colName] != DBNull.Value)
-                {
-                    string cellValue = row[colName].ToString().ToLower();
-                    maxScore = Math.Max(maxScore, GetFuzzyMatchScore(cellValue, searchText));
-                }
-            }
-
-            return maxScore;
-        }
-
-        private int GetFuzzyMatchScore(string text, string query)
-        {
-            if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(query)) return 0;
-            
-            // Exact full match
-            if (text == query) return 1000;
-            
-            // Exact prefix match
-            if (text.StartsWith(query)) return 500;
-            
-            // Exact substring match
-            if (text.Contains(query)) return 100;
-
-            // Levenshtein / Word proximity match
-            string[] queryWords = query.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            string[] textWords = text.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            
-            int totalScore = 0;
-            foreach (string qWord in queryWords)
-            {
-                int bestWordScore = 0;
-                foreach (string tWord in textWords)
-                {
-                    // Exact word match
-                    if (tWord == qWord)
-                    {
-                        bestWordScore = Math.Max(bestWordScore, 50);
-                    }
-                    // Word prefix match
-                    else if (tWord.StartsWith(qWord))
-                    {
-                        bestWordScore = Math.Max(bestWordScore, 20);
-                    }
-                    else
-                    {
-                        int maxLen = Math.Max(tWord.Length, qWord.Length);
-                        int distance = ComputeLevenshteinDistance(tWord, qWord);
-                        
-                        // Roughly define "close enough" 
-                        // If distance is 1 for a 4+ char word, or 2 for an 8+ char word
-                        if (distance == 1 && maxLen >= 4)
-                        {
-                            bestWordScore = Math.Max(bestWordScore, 10);
-                        }
-                        else if (distance <= 2 && maxLen >= 8)
-                        {
-                            bestWordScore = Math.Max(bestWordScore, 5); 
-                        }
-                    }
-                }
-                
-                // If a query word completely misses everything, severe penalty
-                if (bestWordScore == 0) return 0; 
-                
-                totalScore += bestWordScore;
-            }
-
-            return totalScore;
-        }
-
-        private int ComputeLevenshteinDistance(string s, string t)
-        {
-            if (string.IsNullOrEmpty(s)) return string.IsNullOrEmpty(t) ? 0 : t.Length;
-            if (string.IsNullOrEmpty(t)) return s.Length;
-
-            int n = s.Length;
-            int m = t.Length;
-            int[,] d = new int[n + 1, m + 1];
-
-            for (int i = 0; i <= n; d[i, 0] = i++) { }
-            for (int j = 0; j <= m; d[0, j] = j++) { }
-
-            for (int i = 1; i <= n; i++)
-            {
-                for (int j = 1; j <= m; j++)
-                {
-                    int cost = (t[j - 1] == s[i - 1]) ? 0 : 1;
-
-                    d[i, j] = Math.Min(
-                        Math.Min(d[i - 1, j] + 1, d[i, j - 1] + 1),
-                        d[i - 1, j - 1] + cost);
-                }
-            }
-            return d[n, m];
         }
 
         // Build filter string based on selected filter option
@@ -2215,17 +2079,10 @@ namespace PosBranch_Win.DialogBox
             ultraGrid1.ResumeLayout();
         }
 
-        private void ultraGrid1_InitializeLayout(object sender, Infragistics.Win.UltraWinGrid.InitializeLayoutEventArgs e)
+        private void ultraGrid1_InitializeLayout(object sender, InitializeLayoutEventArgs e)
         {
             try
             {
-                // Ensure column sizing is allowed at the layout level
-                e.Layout.Override.AllowColSizing = Infragistics.Win.UltraWinGrid.AllowColSizing.Free;
-                e.Layout.Override.AllowColMoving = Infragistics.Win.UltraWinGrid.AllowColMoving.WithinBand;
-
-                // Enable double-click to auto-size
-                e.Layout.Override.ColumnAutoSizeMode = Infragistics.Win.UltraWinGrid.ColumnAutoSizeMode.VisibleRows;
-
                 // Apply proper grid line styles
                 e.Layout.Override.BorderStyleRow = Infragistics.Win.UIElementBorderStyle.Solid;
                 e.Layout.Override.BorderStyleCell = Infragistics.Win.UIElementBorderStyle.Solid;
@@ -2737,12 +2594,7 @@ namespace PosBranch_Win.DialogBox
                             else
                                 decimal.TryParse(ultraGrid1.ActiveRow.Cells["WholeSalePrice"].Value?.ToString(), out unitPrice); // Default to RetailPrice (WholeSalePrice field)
 
-                            // Read Packing from item master row (default to 1 if not available)
-                            float packing = 1f;
-                            if (ultraGrid1.ActiveRow.Cells.Exists("Packing") && ultraGrid1.ActiveRow.Cells["Packing"].Value != null)
-                                float.TryParse(ultraGrid1.ActiveRow.Cells["Packing"].Value.ToString(), out packing);
-
-                            parentForm.AddItemToGrid(itemId, itemName, barcode, unit, unitPrice, 1, unitPrice, packing);
+                            parentForm.AddItemToGrid(itemId, itemName, barcode, unit, unitPrice, 1, unitPrice);
                             this.DialogResult = DialogResult.OK;
                             this.Close();
                         }
@@ -3037,11 +2889,11 @@ namespace PosBranch_Win.DialogBox
                     if (baseUnitList != null && baseUnitList.Length > 0)
                     {
                         var baseUnit = baseUnitList[0];
-                        ItemMaster.SetWalkingPriceValue(baseUnit.RetailPrice.ToString());
-                        ItemMaster.SetRetailPriceValue(baseUnit.WholeSalePrice.ToString());
-                        ItemMaster.SetCreditPriceValue(baseUnit.CreditPrice.ToString());
-                        ItemMaster.SetMrpValue(baseUnit.MRP.ToString());
-                        ItemMaster.SetCardPriceValue(baseUnit.CardPrice.ToString());
+                        ItemMaster.SetWalkingPriceValue(baseUnit.RetailPrice.ToString("0.000"));
+                        ItemMaster.SetRetailPriceValue(baseUnit.WholeSalePrice.ToString("0.000"));
+                        ItemMaster.SetCreditPriceValue(baseUnit.CreditPrice.ToString("0.000"));
+                        ItemMaster.SetMrpValue(baseUnit.MRP.ToString("0.000"));
+                        ItemMaster.SetCardPriceValue(baseUnit.CardPrice.ToString("0.000"));
 
                         // Mirror LoadItemById: also load ALL markdown values and compute txt_SF/txt_MinP + their profit margins
                         try
@@ -3061,11 +2913,17 @@ namespace PosBranch_Win.DialogBox
                             if (mdStaffEditor != null) mdStaffEditor.Text = baseUnit.MDStaffPrice.ToString("0.00");
                             if (mdMinEditor != null) mdMinEditor.Text = baseUnit.MDMinPrice.ToString("0.00");
 
-                            // Use stored StaffPrice and MinPrice from database directly
-                            var txtSF = FindControlRecursive(ItemMaster, "txt_SF") as TextBox;
-                            var txtMinP = FindControlRecursive(ItemMaster, "txt_MinP") as TextBox;
-                            if (txtSF != null) txtSF.Text = baseUnit.StaffPrice.ToString("0.00000");
-                            if (txtMinP != null) txtMinP.Text = baseUnit.MinPrice.ToString("0.00000");
+                            // Use stored StaffPrice and MinPrice from database directly.
+                            // If the user didn't set individual values (i.e. they are 0),
+                            // default them to the master retail price (WholeSalePrice).
+                            // NOTE: txt_SF and txt_MinP are UltraTextEditor, NOT TextBox — cast as Control
+                            var txtSF = FindControlRecursive(ItemMaster, "txt_SF") as Control;
+                            var txtMinP = FindControlRecursive(ItemMaster, "txt_MinP") as Control;
+                            double retailDefault = baseUnit.WholeSalePrice; // WholeSalePrice = stored retail price
+                            double sfPrice = baseUnit.StaffPrice > 0 ? baseUnit.StaffPrice : retailDefault;
+                            double minPrice = baseUnit.MinPrice > 0 ? baseUnit.MinPrice : retailDefault;
+                            if (txtSF != null) txtSF.Text = sfPrice.ToString("0.000");
+                            if (txtMinP != null) txtMinP.Text = minPrice.ToString("0.000");
 
                             // Let the ItemMaster form handle profit margin calculation using its UpdateAllProfitMargins method
                             // This ensures consistent calculation logic and handles all edge cases properly
@@ -3083,6 +2941,41 @@ namespace PosBranch_Win.DialogBox
                     // Update all profit margins after setting all price fields
                     ItemMaster.UpdateAllProfitMargins();
 
+                    // TRIPLE-CHECK: Sometimes UpdateAllProfitMargins or Refresh recalculates markdown values
+                    // without proper ".00" formatting. Ensure all 6 markdowns firmly receive ".00" now.
+                    var mdWalkinF = FindControlRecursive(ItemMaster, "ultraTextEditor16") as Infragistics.Win.UltraWinEditors.UltraTextEditor;
+                    var mdCreditF = FindControlRecursive(ItemMaster, "ultraTextEditor15") as Infragistics.Win.UltraWinEditors.UltraTextEditor;
+                    var mdMrpF = FindControlRecursive(ItemMaster, "ultraTextEditor14") as Infragistics.Win.UltraWinEditors.UltraTextEditor;
+                    var mdCardF = FindControlRecursive(ItemMaster, "ultraTextEditor13") as Infragistics.Win.UltraWinEditors.UltraTextEditor;
+                    var mdStaffF = FindControlRecursive(ItemMaster, "ultraTextEditor12") as Infragistics.Win.UltraWinEditors.UltraTextEditor;
+                    var mdMinF = FindControlRecursive(ItemMaster, "ultraTextEditor11") as Infragistics.Win.UltraWinEditors.UltraTextEditor;
+
+                    if (baseUnitList != null && baseUnitList.Length > 0)
+                    {
+                        var baseUnit = baseUnitList[0];
+                        if (mdWalkinF != null) mdWalkinF.Text = baseUnit.MDWalkinPrice.ToString("0.00");
+                        if (mdCreditF != null) mdCreditF.Text = baseUnit.MDCreditPrice.ToString("0.00");
+                        if (mdMrpF != null) mdMrpF.Text = baseUnit.MDMrpPrice.ToString("0.00");
+                        if (mdCardF != null) mdCardF.Text = baseUnit.MDCardPrice.ToString("0.00");
+                        if (mdStaffF != null) mdStaffF.Text = baseUnit.MDStaffPrice.ToString("0.00");
+                        if (mdMinF != null) mdMinF.Text = baseUnit.MDMinPrice.ToString("0.00");
+                    }
+
+                    // FINAL: Ensure txt_SF and txt_MinP show the correct value.
+                    // Must run AFTER UpdateAllProfitMargins() which may overwrite them.
+                    // txt_SF and txt_MinP are UltraTextEditor — cast as Control (NOT TextBox!)
+                    if (baseUnitList != null && baseUnitList.Length > 0)
+                    {
+                        var baseUnit2 = baseUnitList[0];
+                        var txtSFFinal = FindControlRecursive(ItemMaster, "txt_SF") as Control;
+                        var txtMinPFinal = FindControlRecursive(ItemMaster, "txt_MinP") as Control;
+                        double retailFinal = baseUnit2.WholeSalePrice; // WholeSalePrice = stored retail price
+                        double sfFinal = baseUnit2.StaffPrice > 0 ? baseUnit2.StaffPrice : retailFinal;
+                        double minFinal = baseUnit2.MinPrice > 0 ? baseUnit2.MinPrice : retailFinal;
+                        if (txtSFFinal != null) txtSFFinal.Text = sfFinal.ToString("0.000");
+                        if (txtMinPFinal != null) txtMinPFinal.Text = minFinal.ToString("0.000");
+                    }
+
                     // Log values for debugging
                     System.Diagnostics.Debug.WriteLine($"Setting stock values - Qty: {stockValue}, Available: {stockValue}, Hold: {holdValue}");
                 }
@@ -3099,7 +2992,7 @@ namespace PosBranch_Win.DialogBox
 
                 // Set the base unit text without triggering synchronization
                 // We'll set it after populating the UOM grid to avoid clearing the grid
-                ItemMaster.Txt_UnitCost.Text = getItem.List[0].Cost.ToString();
+                ItemMaster.Txt_UnitCost.Text = getItem.List[0].Cost.ToString("0.000");
                 ItemMaster.txt_Brand.Text = getItem.BrandName;
                 ItemMaster.txt_Category.Text = getItem.CategoryName;
 
@@ -3436,11 +3329,11 @@ namespace PosBranch_Win.DialogBox
                     {
                         // Calculate markup percentage: ((Retail Price / Unit Cost) - 1) * 100
                         double markupPercent = (retailPrice / unitCost - 1.0) * 100.0;
-                        ItemMaster.textBox1.Text = markupPercent.ToString("0.00000");
+                        ItemMaster.textBox1.Text = markupPercent.ToString("0.00");
                     }
                     else
                     {
-                        ItemMaster.textBox1.Text = "0.00000";
+                        ItemMaster.textBox1.Text = "0.00";
                     }
                 }
 
@@ -3503,11 +3396,11 @@ namespace PosBranch_Win.DialogBox
                     }
                     if (txt_SF != null)
                     {
-                        txt_SF.Text = staffPrice.ToString("0.00000");
+                        txt_SF.Text = staffPrice.ToString("0.000");
                     }
                     if (mdStaffCtrl != null)
                     {
-                        mdStaffCtrl.Text = baseUnit.MDStaffPrice.ToString();
+                        mdStaffCtrl.Text = baseUnit.MDStaffPrice.ToString("0.00");
                     }
                     if (staffMarginCtrl != null)
                     {
@@ -3534,11 +3427,11 @@ namespace PosBranch_Win.DialogBox
                     }
                     if (txt_MinP != null)
                     {
-                        txt_MinP.Text = minPrice.ToString("0.00000");
+                        txt_MinP.Text = minPrice.ToString("0.000");
                     }
                     if (mdMinCtrl != null)
                     {
-                        mdMinCtrl.Text = baseUnit.MDMinPrice.ToString();
+                        mdMinCtrl.Text = baseUnit.MDMinPrice.ToString("0.00");
                     }
                     if (minMarginCtrl != null)
                     {
@@ -3606,41 +3499,52 @@ namespace PosBranch_Win.DialogBox
                 // Suspend layout while sorting
                 ultraGrid1.SuspendLayout();
 
-                // Get the DataView from the grid's data source
-                DataView dataView = null;
-                if (ultraGrid1.DataSource is DataView dv)
-                {
-                    dataView = dv;
-                }
-                else if (ultraGrid1.DataSource is DataTable dt)
-                {
-                    dataView = dt.DefaultView;
-                }
-
-                if (dataView != null)
+                // Get the current DataView
+                if (ultraGrid1.DataSource is DataView dataView)
                 {
                     // Check if we have the OriginalRowOrder column
                     if (dataView.Table.Columns.Contains("OriginalRowOrder"))
                     {
                         // Sort by the original row order column
-                        dataView.Sort = isOriginalOrder ? "OriginalRowOrder ASC" : "OriginalRowOrder DESC";
+                        if (isOriginalOrder)
+                        {
+                            dataView.Sort = "OriginalRowOrder ASC";
+                        }
+                        else
+                        {
+                            dataView.Sort = "OriginalRowOrder DESC";
+                        }
                     }
                     else
                     {
-                        // Fallback: search for a visible column to sort by
-                        string sortCol = "";
-                        foreach (Infragistics.Win.UltraWinGrid.UltraGridColumn col in ultraGrid1.DisplayLayout.Bands[0].Columns)
+                        // Fallback to sorting by the first visible column if OriginalRowOrder doesn't exist
+                        if (isOriginalOrder)
                         {
-                            if (!col.Hidden)
-                            {
-                                sortCol = col.Key;
-                                break;
-                            }
+                            dataView.Sort = "";  // Clear sort to restore original order
                         }
-
-                        if (!string.IsNullOrEmpty(sortCol))
+                        else
                         {
-                            dataView.Sort = isOriginalOrder ? $"{sortCol} ASC" : $"{sortCol} DESC";
+                            // Find the first visible column to sort by
+                            string sortColumn = "";
+
+                            if (ultraGrid1.DisplayLayout.Bands.Count > 0 && ultraGrid1.DisplayLayout.Bands[0].Columns.Count > 0)
+                            {
+                                // Find the first visible column
+                                foreach (Infragistics.Win.UltraWinGrid.UltraGridColumn col in ultraGrid1.DisplayLayout.Bands[0].Columns)
+                                {
+                                    if (!col.Hidden)
+                                    {
+                                        sortColumn = col.Key;
+                                        break;
+                                    }
+                                }
+
+                                // If we found a column, sort by it in descending order
+                                if (!string.IsNullOrEmpty(sortColumn))
+                                {
+                                    dataView.Sort = sortColumn + " DESC";
+                                }
+                            }
                         }
                     }
 
@@ -4151,9 +4055,6 @@ namespace PosBranch_Win.DialogBox
                 ultraPictureBox2.Click += PerformCloseAction;
                 label3.Click += PerformCloseAction;
 
-                // Connect Sort/Refresh button click events (ultraPanel9)
-                ConnectNavigationPanelEvents(ultraPanel9, ultraPictureBox4, ultraPictureBox4_Click);
-
                 // Update status
                 UpdateStatus("Item Master click events connected");
             }
@@ -4541,8 +4442,8 @@ namespace PosBranch_Win.DialogBox
                         // Log what we're sending to the Stock Adjustment form
                         System.Diagnostics.Debug.WriteLine($"Sending to Stock Adjustment: ItemId={itemId}, Description={description}, Stock={stockQty}");
 
-                        // Add item to the parent form's grid - default adjustment qty is 0, focusGrid is false to return focus to barcode
-                        parentForm.AddItemToGrid(itemId, barcode, description, unit, stockQty, 0, false);
+                        // Add item to the parent form's grid - default adjustment qty is 1
+                        parentForm.AddItemToGrid(itemId, barcode, description, unit, stockQty);
 
                         // Set dialog result and close
                         this.DialogResult = DialogResult.OK;
@@ -4687,3 +4588,5 @@ namespace PosBranch_Win.DialogBox
         }
     }
 }
+
+

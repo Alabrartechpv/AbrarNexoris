@@ -29,15 +29,15 @@ namespace PosBranch_Win.DialogBox
         /// </summary>
         private void InitializeComponent()
         {
-            Infragistics.Win.Appearance appearance5 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance1 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance2 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance3 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance4 = new Infragistics.Win.Appearance();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmSuccesMsg));
-            Infragistics.Win.Appearance appearance8 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance6 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance7 = new Infragistics.Win.Appearance();
             this.ultraPanel1 = new Infragistics.Win.Misc.UltraPanel();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            this.ultraLabel1 = new Infragistics.Win.Misc.UltraLabel();
             this.ultraButton1 = new Infragistics.Win.Misc.UltraButton();
+            this.ultraLabel1 = new Infragistics.Win.Misc.UltraLabel();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.ultraPanel1.ClientArea.SuspendLayout();
             this.ultraPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
@@ -45,10 +45,10 @@ namespace PosBranch_Win.DialogBox
             // 
             // ultraPanel1
             // 
-            appearance5.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
-            appearance5.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            appearance5.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
-            this.ultraPanel1.Appearance = appearance5;
+            appearance1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
+            appearance1.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
+            appearance1.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
+            this.ultraPanel1.Appearance = appearance1;
             // 
             // ultraPanel1.ClientArea
             // 
@@ -61,54 +61,54 @@ namespace PosBranch_Win.DialogBox
             this.ultraPanel1.Size = new System.Drawing.Size(330, 300);
             this.ultraPanel1.TabIndex = 0;
             // 
-            // pictureBox1
-            // 
-            this.pictureBox1.BackColor = System.Drawing.Color.Transparent;
-            this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(64, 12);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(198, 178);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.pictureBox1.TabIndex = 0;
-            this.pictureBox1.TabStop = false;
-            // 
-            // ultraLabel1
-            // 
-            appearance8.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
-            appearance8.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            appearance8.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
-            appearance8.ForeColor = System.Drawing.Color.Black;
-            this.ultraLabel1.Appearance = appearance8;
-            this.ultraLabel1.Font = new System.Drawing.Font("OCR-A-Seagull", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ultraLabel1.Location = new System.Drawing.Point(51, 205);
-            this.ultraLabel1.Name = "ultraLabel1";
-            this.ultraLabel1.Size = new System.Drawing.Size(254, 55);
-            this.ultraLabel1.TabIndex = 1;
-            this.ultraLabel1.Text = "Saved  SuccessFully";
-            // 
             // ultraButton1
             // 
-            appearance6.BackColor = System.Drawing.Color.Teal;
-            appearance6.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
-            appearance6.BackColorDisabled = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
-            appearance6.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
-            appearance6.BackHatchStyle = Infragistics.Win.BackHatchStyle.Horizontal;
-            this.ultraButton1.Appearance = appearance6;
+            appearance2.BackColor = System.Drawing.Color.Teal;
+            appearance2.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
+            appearance2.BackColorDisabled = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
+            appearance2.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
+            appearance2.BackHatchStyle = Infragistics.Win.BackHatchStyle.Horizontal;
+            this.ultraButton1.Appearance = appearance2;
             this.ultraButton1.ButtonStyle = Infragistics.Win.UIElementButtonStyle.Button3D;
             this.ultraButton1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ultraButton1.Location = new System.Drawing.Point(117, 248);
+            this.ultraButton1.Location = new System.Drawing.Point(124, 248);
             this.ultraButton1.Name = "ultraButton1";
-            appearance7.BackColor = System.Drawing.Color.Teal;
-            appearance7.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            appearance7.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
-            appearance7.BorderColor = System.Drawing.Color.Teal;
-            this.ultraButton1.PressedAppearance = appearance7;
+            appearance3.BackColor = System.Drawing.Color.Teal;
+            appearance3.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
+            appearance3.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
+            appearance3.BorderColor = System.Drawing.Color.Teal;
+            this.ultraButton1.PressedAppearance = appearance3;
             this.ultraButton1.Size = new System.Drawing.Size(83, 40);
             this.ultraButton1.TabIndex = 2;
             this.ultraButton1.Text = "OK";
             this.ultraButton1.UseFlatMode = Infragistics.Win.DefaultableBoolean.True;
             this.ultraButton1.UseOsThemes = Infragistics.Win.DefaultableBoolean.True;
             this.ultraButton1.Click += new System.EventHandler(this.ultraButton1_Click);
+            // 
+            // ultraLabel1
+            // 
+            appearance4.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
+            appearance4.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
+            appearance4.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
+            appearance4.ForeColor = System.Drawing.Color.Black;
+            this.ultraLabel1.Appearance = appearance4;
+            this.ultraLabel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ultraLabel1.Location = new System.Drawing.Point(71, 147);
+            this.ultraLabel1.Name = "ultraLabel1";
+            this.ultraLabel1.Size = new System.Drawing.Size(198, 55);
+            this.ultraLabel1.TabIndex = 1;
+            this.ultraLabel1.Text = "Saved  SuccessFully";
+            // 
+            // pictureBox1
+            // 
+            this.pictureBox1.BackColor = System.Drawing.Color.Transparent;
+            this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
+            this.pictureBox1.Location = new System.Drawing.Point(87, 12);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(158, 129);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBox1.TabIndex = 0;
+            this.pictureBox1.TabStop = false;
             // 
             // frmSuccesMsg
             // 

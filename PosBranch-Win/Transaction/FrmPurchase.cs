@@ -298,7 +298,7 @@ namespace PosBranch_Win.Transaction
 
                 if (purchaseNo > 0)
                 {
-                    txtPurchaseNo.Text = purchaseNo.ToString();
+                    txtPurchaseNo.Text = "GRN-" + purchaseNo.ToString();
                     System.Diagnostics.Debug.WriteLine($"Generated and displayed PurchaseNo: {purchaseNo} for CompanyId={companyId}, BranchId={branchId}");
                 }
                 else
@@ -4267,6 +4267,13 @@ namespace PosBranch_Win.Transaction
                     ObjPurchaseDetails.TaxType = dt.Rows[0]["TaxType"].ToString();
                 }
 
+                // Show confirmation dialog before saving
+                DialogBox.frmSuccesMsg confirmDialog = new DialogBox.frmSuccesMsg(txtPurchaseNo.Text.Replace("GRN-", ""));
+                if (confirmDialog.ShowDialog() != DialogResult.Yes)
+                {
+                    return; // User chose not to save
+                }
+
                 // Call the repository method to save the purchase invoice
                 string message = ObjPurchaseInviceRepo.SavePurchaseInvoice(ObjPurchaseMaster, ObjPurchaseDetails, tempGridView);
 
@@ -4275,13 +4282,12 @@ namespace PosBranch_Win.Transaction
                     // Display the generated purchase number before clearing
                     if (ObjPurchaseMaster.PurchaseNo > 0)
                     {
-                        txtPurchaseNo.Text = ObjPurchaseMaster.PurchaseNo.ToString();
+                        txtPurchaseNo.Text = "GRN-" + ObjPurchaseMaster.PurchaseNo.ToString();
                         System.Diagnostics.Debug.WriteLine($"Displayed saved PurchaseNo: {ObjPurchaseMaster.PurchaseNo}");
                     }
 
-                    // Show success message
-                    DialogBox.frmSuccesMsg success = new DialogBox.frmSuccesMsg();
-                    success.ShowDialog();
+                    // Show a simple success message now instead of the popup
+                    MessageBox.Show("Saved Successfully", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                     // Clear fields after successful save (this will regenerate the next purchase number)
                     Clear();
@@ -4763,7 +4769,7 @@ namespace PosBranch_Win.Transaction
                     // Load master data to form controls
                     foreach (PurchaseMaster pm in purchaseInvoiceGrid.Listpmaster)
                     {
-                        txtPurchaseNo.Text = pm.PurchaseNo.ToString();
+                        txtPurchaseNo.Text = "GRN-" + pm.PurchaseNo.ToString();
                         dtpPurchaseDate.Value = Convert.ToDateTime(pm.PurchaseDate.ToShortDateString());
 
                         // Set vendor combobox by LedgerID value
@@ -5122,7 +5128,7 @@ namespace PosBranch_Win.Transaction
                 // Set currency information dynamically
                 SetCurrencyInfo(ObjPurchaseMaster);
                 ObjPurchaseMaster.SeriesID = 0;
-                ObjPurchaseMaster.PurchaseNo = Convert.ToInt32(txtPurchaseNo.Text);
+                ObjPurchaseMaster.PurchaseNo = Convert.ToInt32(txtPurchaseNo.Text.Replace("GRN-", ""));
                 ObjPurchaseMaster.Pid = Convert.ToInt32(LblPid.Text);
                 ObjPurchaseMaster.VoucherID = Convert.ToInt32(lblVoucherId.Text);
                 ObjPurchaseMaster.IsSyncd = false;
@@ -5243,14 +5249,20 @@ namespace PosBranch_Win.Transaction
                     ObjPurchaseDetails.PurchaseNo = ObjPurchaseMaster.PurchaseNo;
                 }
 
+                // Show confirmation dialog before updating
+                DialogBox.frmSuccesMsg confirmDialog = new DialogBox.frmSuccesMsg(txtPurchaseNo.Text.Replace("GRN-", ""));
+                if (confirmDialog.ShowDialog() != DialogResult.Yes)
+                {
+                    return; // User chose not to update
+                }
+
                 // Call the repository method to update the purchase invoice
                 string message = ObjPurchaseInviceRepo.UpdatePurchase(ObjPurchaseMaster, ObjPurchaseDetails, tempGridView);
 
                 if (string.IsNullOrEmpty(message) || message.ToLower().Contains("success"))
                 {
-                    // Show success message
-                    DialogBox.frmSuccesMsg success = new DialogBox.frmSuccesMsg();
-                    success.ShowDialog();
+                    // Show a simple success message now instead of the popup
+                    MessageBox.Show("Updated Successfully", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                     // Clear fields after successful update
                     Clear();
@@ -5516,7 +5528,7 @@ namespace PosBranch_Win.Transaction
 
                 if (result == DialogResult.Yes)
                 {
-                    int purchaseNo = int.Parse(txtPurchaseNo.Text);
+                    int purchaseNo = int.Parse(txtPurchaseNo.Text.Replace("GRN-", ""));
                     int voucherId = int.Parse(lblVoucherId.Text);
 
                     // Get the original FinYearId to ensure data consistency
