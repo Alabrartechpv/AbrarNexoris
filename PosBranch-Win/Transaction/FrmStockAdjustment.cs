@@ -34,6 +34,15 @@ namespace PosBranch_Win.Transaction
         private const string GRID_LAYOUT_FILE = "StockAdjustmentGridLayout.xml";
         private string GridLayoutPath => Path.Combine(Application.StartupPath, GRID_LAYOUT_FILE);
 
+        // Column chooser and drag state
+        private Form columnChooserForm = null;
+        private ListBox columnChooserListBox = null;
+        private Dictionary<string, int> savedColumnWidths = new Dictionary<string, int>();
+        private Point startPoint;
+        private Infragistics.Win.UltraWinGrid.UltraGridColumn columnToMove = null;
+        private bool isDraggingColumn = false;
+        private System.Windows.Forms.ToolTip toolTip = new System.Windows.Forms.ToolTip();
+
         public FrmStockAdjustment()
         {
             InitializeComponent();
@@ -57,10 +66,10 @@ namespace PosBranch_Win.Transaction
             stockAdjustmentTable.Columns.Add("ItemNo", typeof(int));
             stockAdjustmentTable.Columns.Add("Description", typeof(string));
             stockAdjustmentTable.Columns.Add("UOM", typeof(string));
-            stockAdjustmentTable.Columns.Add("Qty On Hand", typeof(int));
-            stockAdjustmentTable.Columns.Add("Adjustment Qty", typeof(int)); // Amount to add/subtract
-            stockAdjustmentTable.Columns.Add("New Balance", typeof(int));
-            stockAdjustmentTable.Columns.Add("Qty Difference", typeof(int));
+            stockAdjustmentTable.Columns.Add("Qty On Hand", typeof(decimal));
+            stockAdjustmentTable.Columns.Add("Adjustment Qty", typeof(decimal)); // Amount to add/subtract
+            stockAdjustmentTable.Columns.Add("New Balance", typeof(decimal));
+            stockAdjustmentTable.Columns.Add("Qty Difference", typeof(decimal));
             stockAdjustmentTable.Columns.Add("Status", typeof(string));
 
             // Set the DataTable as the grid's data source
@@ -90,7 +99,7 @@ namespace PosBranch_Win.Transaction
             // Configure column properties
             foreach (UltraGridColumn col in ultraGrid1.DisplayLayout.Bands[0].Columns)
             {
-                col.CellAppearance.TextHAlign = HAlign.Left;
+                col.CellAppearance.TextHAlign = HAlign.Center;
                 col.Header.Appearance.TextHAlign = HAlign.Center;
                 col.Header.Appearance.FontData.Bold = DefaultableBoolean.True;
                 col.Header.Appearance.BackColor = Color.FromArgb(52, 152, 219);
@@ -148,17 +157,19 @@ namespace PosBranch_Win.Transaction
             if (qtyOnHandCol != null)
             {
                 qtyOnHandCol.Width = 110;
-                qtyOnHandCol.CellAppearance.TextHAlign = HAlign.Right;
+                qtyOnHandCol.CellAppearance.TextHAlign = HAlign.Center;
                 qtyOnHandCol.Header.Caption = "Current Stock";
+                qtyOnHandCol.Format = "0.000";
             }
 
             UltraGridColumn adjQtyCol = ultraGrid1.DisplayLayout.Bands[0].Columns["Adjustment Qty"];
             if (adjQtyCol != null)
             {
                 adjQtyCol.Width = 100;
-                adjQtyCol.CellAppearance.TextHAlign = HAlign.Right;
+                adjQtyCol.CellAppearance.TextHAlign = HAlign.Center;
                 adjQtyCol.CellAppearance.BackColor = Color.FromArgb(240, 248, 255);
                 adjQtyCol.Header.Caption = "Adjustment Qty";
+                adjQtyCol.Format = "0.000";
                 // The header color is now set in the foreach loop above to ensure consistency
             }
 
@@ -166,17 +177,19 @@ namespace PosBranch_Win.Transaction
             if (newBalCol != null)
             {
                 newBalCol.Width = 110;
-                newBalCol.CellAppearance.TextHAlign = HAlign.Right;
+                newBalCol.CellAppearance.TextHAlign = HAlign.Center;
+                newBalCol.Format = "0.000";
             }
 
             UltraGridColumn qtyDiffCol = ultraGrid1.DisplayLayout.Bands[0].Columns["Qty Difference"];
             if (qtyDiffCol != null)
             {
                 qtyDiffCol.Width = 120;
-                qtyDiffCol.CellAppearance.TextHAlign = HAlign.Right;
+                qtyDiffCol.CellAppearance.TextHAlign = HAlign.Center;
                 qtyDiffCol.Header.Appearance.BackColor = Color.FromArgb(41, 128, 185);
                 qtyDiffCol.Header.Appearance.FontData.Bold = DefaultableBoolean.True;
                 qtyDiffCol.CellAppearance.BackColor = Color.FromArgb(235, 245, 251);
+                qtyDiffCol.Format = "0.000";
             }
 
             UltraGridColumn statusCol = ultraGrid1.DisplayLayout.Bands[0].Columns["Status"];
@@ -224,6 +237,9 @@ namespace PosBranch_Win.Transaction
 
                 // Apply styling AFTER loading layout to ensure styles are not overwritten
                 StyleGrid();
+
+                // Setup column chooser functionality
+                SetupColumnChooserMenu();
 
                 // Register UltraGrid event handlers
                 ultraGrid1.AfterCellUpdate += UltraGrid1_AfterCellUpdate;
@@ -646,15 +662,15 @@ namespace PosBranch_Win.Transaction
                 {
                     if (row.Cells["Adjustment Qty"].Value != null && row.Cells["Qty On Hand"].Value != null)
                     {
-                        int adjQty = Convert.ToInt32(row.Cells["Adjustment Qty"].Value);
-                        int sysQty = Convert.ToInt32(row.Cells["Qty On Hand"].Value);
+                        decimal adjQty = Convert.ToDecimal(row.Cells["Adjustment Qty"].Value);
+                        decimal sysQty = Convert.ToDecimal(row.Cells["Qty On Hand"].Value);
 
                         // Calculate New Balance = Current Stock + Adjustment Qty
-                        int newBalance = sysQty + adjQty;
+                        decimal newBalance = sysQty + adjQty;
                         row.Cells["New Balance"].Value = newBalance;
 
                         // Qty Difference is the same as Adjustment Qty
-                        int difference = adjQty;
+                        decimal difference = adjQty;
                         row.Cells["Qty Difference"].Value = difference;
 
                         // Apply color formatting based on difference
@@ -701,15 +717,15 @@ namespace PosBranch_Win.Transaction
                 {
                     if (row.Cells["Adjustment Qty"].Value != null && row.Cells["Qty On Hand"].Value != null)
                     {
-                        int adjQty = Convert.ToInt32(row.Cells["Adjustment Qty"].Value);
-                        int sysQty = Convert.ToInt32(row.Cells["Qty On Hand"].Value);
+                        decimal adjQty = Convert.ToDecimal(row.Cells["Adjustment Qty"].Value);
+                        decimal sysQty = Convert.ToDecimal(row.Cells["Qty On Hand"].Value);
 
                         // Calculate New Balance = Current Stock + Adjustment Qty
-                        int newBalance = sysQty + adjQty;
+                        decimal newBalance = sysQty + adjQty;
                         row.Cells["New Balance"].Value = newBalance;
 
                         // Qty Difference is the same as Adjustment Qty
-                        int difference = adjQty;
+                        decimal difference = adjQty;
                         row.Cells["Qty Difference"].Value = difference;
 
                         // Apply color formatting based on difference
@@ -741,7 +757,7 @@ namespace PosBranch_Win.Transaction
         }
 
         // Helper method to apply color formatting based on difference
-        private void ApplyColorFormatting(UltraGridRow row, int difference)
+        private void ApplyColorFormatting(UltraGridRow row, decimal difference)
         {
             if (difference < 0)
             {
@@ -786,7 +802,7 @@ namespace PosBranch_Win.Transaction
                 if (input.StartsWith("*") && input.Length > 1)
                 {
                     string quantityText = input.Substring(1);
-                    if (int.TryParse(quantityText, out int quantity))
+                    if (decimal.TryParse(quantityText, out decimal quantity))
                     {
                         // If we have an active row, update its Adjustment Qty
                         if (ultraGrid1.ActiveRow != null)
@@ -806,15 +822,15 @@ namespace PosBranch_Win.Transaction
                             if (adjQtyCell != null && adjQtyCell.Value != null &&
                                 qtyOnHandCell != null && qtyOnHandCell.Value != null)
                             {
-                                int adjQty = Convert.ToInt32(adjQtyCell.Value);
-                                int sysQty = Convert.ToInt32(qtyOnHandCell.Value);
+                                decimal adjQty = Convert.ToDecimal(adjQtyCell.Value);
+                                decimal sysQty = Convert.ToDecimal(qtyOnHandCell.Value);
 
                                 // Calculate New Balance = Current Stock + Adjustment Qty
-                                int newBalance = sysQty + adjQty;
+                                decimal newBalance = sysQty + adjQty;
                                 newBalanceCell.Value = newBalance;
 
                                 // Qty Difference is the same as Adjustment Qty
-                                int difference = adjQty;
+                                decimal difference = adjQty;
                                 qtyDifferenceCell.Value = difference;
 
                                 // Apply color formatting based on difference
@@ -1426,7 +1442,7 @@ namespace PosBranch_Win.Transaction
         }
 
         // Public method to add items to the UltraGrid from dialog classes
-        public int AddItemToGrid(string itemId, string barcode, string description, string uom, string qtyOnHand, int adjQty = 0, bool focusGrid = false)
+        public int AddItemToGrid(string itemId, string barcode, string description, string uom, string qtyOnHand, decimal adjQty = 0, bool focusGrid = false)
         {
             try
             {
@@ -1452,12 +1468,12 @@ namespace PosBranch_Win.Transaction
                 newRow["Qty On Hand"] = qtyOnHand;
                 newRow["Adjustment Qty"] = adjQty; // Amount to add/subtract
 
-                int adjAmount = adjQty;
-                int sysQty = Convert.ToInt32(qtyOnHand);
+                decimal adjAmount = adjQty;
+                decimal sysQty = Convert.ToDecimal(qtyOnHand);
 
                 // Calculate New Balance = Current Stock + Adjustment Qty
-                int newBalance = sysQty + adjAmount;
-                int difference = adjAmount; // Qty Difference is the same as Adjustment Qty
+                decimal newBalance = sysQty + adjAmount;
+                decimal difference = adjAmount; // Qty Difference is the same as Adjustment Qty
 
                 // Set New Balance and Qty Difference
                 newRow["New Balance"] = newBalance;
@@ -1575,6 +1591,315 @@ namespace PosBranch_Win.Transaction
                 }
             }
         }
+
+        // ========== Column Chooser Functionality ==========
+        private void SetupColumnChooserMenu()
+        {
+            ContextMenuStrip gridContextMenu = new ContextMenuStrip();
+            ToolStripMenuItem columnChooserMenuItem = new ToolStripMenuItem("Field/Column Chooser");
+            columnChooserMenuItem.Click += ColumnChooserMenuItem_Click;
+            gridContextMenu.Items.Add(columnChooserMenuItem);
+            ultraGrid1.ContextMenuStrip = gridContextMenu;
+            SetupDirectHeaderDragDrop();
+        }
+
+        private void SetupDirectHeaderDragDrop()
+        {
+            ultraGrid1.AllowDrop = true;
+            ultraGrid1.MouseDown += UltraGrid1_CC_MouseDown;
+            ultraGrid1.MouseMove += UltraGrid1_CC_MouseMove;
+            ultraGrid1.MouseUp += UltraGrid1_CC_MouseUp;
+            ultraGrid1.DragOver += UltraGrid1_CC_DragOver;
+            ultraGrid1.DragDrop += UltraGrid1_CC_DragDrop;
+            CreateColumnChooserForm();
+        }
+
+        private void CreateColumnChooserForm()
+        {
+            columnChooserForm = new Form
+            {
+                Text = "Customization",
+                Size = new Size(220, 280),
+                FormBorderStyle = FormBorderStyle.FixedSingle,
+                StartPosition = FormStartPosition.Manual,
+                TopMost = true,
+                MaximizeBox = false,
+                MinimizeBox = false,
+                BackColor = Color.FromArgb(240, 240, 240),
+                ShowIcon = false,
+                ShowInTaskbar = false
+            };
+            columnChooserForm.FormClosing += (s, e) => { columnChooserListBox = null; };
+            columnChooserForm.Shown += (s, e) => PositionColumnChooserAtBottomRight();
+            columnChooserListBox = new ListBox
+            {
+                Dock = DockStyle.Fill,
+                AllowDrop = true,
+                DrawMode = DrawMode.OwnerDrawFixed,
+                BorderStyle = BorderStyle.None,
+                BackColor = Color.FromArgb(240, 240, 240),
+                ItemHeight = 30,
+                IntegralHeight = false
+            };
+            // Custom DrawItem handler for blue rounded button style
+            columnChooserListBox.DrawItem += (s, evt) =>
+            {
+                if (evt.Index < 0) return;
+                ColumnItem item = columnChooserListBox.Items[evt.Index] as ColumnItem;
+                if (item == null) return;
+                Rectangle rect = evt.Bounds;
+                rect.Inflate(-3, -3);
+                Color bgColor = Color.FromArgb(33, 150, 243);
+                using (SolidBrush bgBrush = new SolidBrush(bgColor))
+                {
+                    using (System.Drawing.Drawing2D.GraphicsPath path = new System.Drawing.Drawing2D.GraphicsPath())
+                    {
+                        int radius = 4;
+                        int diameter = radius * 2;
+                        Rectangle arcRect = new Rectangle(rect.Location, new Size(diameter, diameter));
+                        path.AddArc(arcRect, 180, 90);
+                        arcRect.X = rect.Right - diameter;
+                        path.AddArc(arcRect, 270, 90);
+                        arcRect.Y = rect.Bottom - diameter;
+                        path.AddArc(arcRect, 0, 90);
+                        arcRect.X = rect.Left;
+                        path.AddArc(arcRect, 90, 90);
+                        path.CloseFigure();
+                        evt.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                        evt.Graphics.FillPath(bgBrush, path);
+                    }
+                }
+                using (SolidBrush textBrush = new SolidBrush(Color.White))
+                {
+                    StringFormat sf = new StringFormat();
+                    sf.LineAlignment = StringAlignment.Center;
+                    sf.Alignment = StringAlignment.Center;
+                    evt.Graphics.DrawString(item.DisplayText, evt.Font, textBrush, rect, sf);
+                }
+                if ((evt.State & DrawItemState.Selected) == DrawItemState.Selected)
+                {
+                    using (Pen focusPen = new Pen(Color.White, 1.5f))
+                    {
+                        focusPen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dot;
+                        Rectangle focusRect = rect;
+                        focusRect.Inflate(-2, -2);
+                        evt.Graphics.DrawRectangle(focusPen, focusRect);
+                    }
+                }
+            };
+            columnChooserListBox.MouseDown += ColumnChooserListBox_MouseDown;
+            columnChooserListBox.DragOver += ColumnChooserListBox_DragOver;
+            columnChooserListBox.DragDrop += ColumnChooserListBox_DragDrop;
+            columnChooserForm.Controls.Add(columnChooserListBox);
+            PopulateColumnChooserListBox();
+        }
+
+        private void PositionColumnChooserAtBottomRight()
+        {
+            if (columnChooserForm != null && !columnChooserForm.IsDisposed && columnChooserForm.Visible)
+            {
+                columnChooserForm.Location = new Point(
+                    this.Right - columnChooserForm.Width - 20,
+                    this.Bottom - columnChooserForm.Height - 20);
+                columnChooserForm.TopMost = true;
+                columnChooserForm.BringToFront();
+            }
+        }
+
+        private void ColumnChooserMenuItem_Click(object sender, EventArgs e)
+        {
+            ShowColumnChooser();
+        }
+
+        private void ShowColumnChooser()
+        {
+            PopulateColumnChooserListBox();
+            if (columnChooserForm != null && !columnChooserForm.IsDisposed)
+            {
+                columnChooserForm.Show();
+                PositionColumnChooserAtBottomRight();
+                return;
+            }
+            CreateColumnChooserForm();
+            columnChooserForm.Show(this);
+            PositionColumnChooserAtBottomRight();
+        }
+
+        private void PopulateColumnChooserListBox()
+        {
+            if (columnChooserListBox == null) return;
+            columnChooserListBox.Items.Clear();
+            if (ultraGrid1.DisplayLayout.Bands.Count > 0)
+            {
+                foreach (UltraGridColumn col in ultraGrid1.DisplayLayout.Bands[0].Columns)
+                {
+                    if (col.Hidden)
+                    {
+                        string displayText = !string.IsNullOrEmpty(col.Header.Caption) ? col.Header.Caption : col.Key;
+                        columnChooserListBox.Items.Add(new ColumnItem(col.Key, displayText));
+                    }
+                }
+            }
+        }
+
+        private class ColumnItem
+        {
+            public string ColumnKey { get; set; }
+            public string DisplayText { get; set; }
+            public ColumnItem(string key, string text) { ColumnKey = key; DisplayText = text; }
+            public override string ToString() => DisplayText;
+        }
+
+        private void UltraGrid1_CC_MouseDown(object sender, MouseEventArgs e)
+        {
+            isDraggingColumn = false;
+            columnToMove = null;
+            startPoint = new Point(e.X, e.Y);
+
+            Infragistics.Win.UIElement element = ultraGrid1.DisplayLayout.UIElement.ElementFromPoint(e.Location);
+            if (element != null)
+            {
+                Infragistics.Win.UltraWinGrid.HeaderUIElement headerElement = element.GetAncestor(typeof(Infragistics.Win.UltraWinGrid.HeaderUIElement)) as Infragistics.Win.UltraWinGrid.HeaderUIElement;
+                if (headerElement != null)
+                {
+                    Infragistics.Win.UltraWinGrid.UltraGridColumn col = headerElement.GetContext(typeof(Infragistics.Win.UltraWinGrid.UltraGridColumn)) as Infragistics.Win.UltraWinGrid.UltraGridColumn;
+                    if (col != null && !col.Hidden)
+                    {
+                        columnToMove = col;
+                        isDraggingColumn = true;
+                    }
+                }
+            }
+        }
+
+        private void UltraGrid1_CC_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (isDraggingColumn && columnToMove != null && e.Button == MouseButtons.Left)
+            {
+                int deltaX = Math.Abs(e.X - startPoint.X);
+                int deltaY = Math.Abs(e.Y - startPoint.Y);
+                if (deltaX > SystemInformation.DragSize.Width || deltaY > SystemInformation.DragSize.Height)
+                {
+                    bool isDraggingDown = (e.Y > startPoint.Y && deltaY > deltaX);
+                    if (isDraggingDown)
+                    {
+                        ultraGrid1.Cursor = Cursors.No;
+                        string columnName = !string.IsNullOrEmpty(columnToMove.Header.Caption) ? columnToMove.Header.Caption : columnToMove.Key;
+                        toolTip.SetToolTip(ultraGrid1, $"Drag down to hide '{columnName}' column");
+                        if (e.Y - startPoint.Y > 50)
+                        {
+                            HideColumn(columnToMove);
+                            columnToMove = null;
+                            isDraggingColumn = false;
+                            ultraGrid1.Cursor = Cursors.Default;
+                            toolTip.SetToolTip(ultraGrid1, "");
+                        }
+                    }
+                }
+            }
+        }
+
+        private void UltraGrid1_CC_MouseUp(object sender, MouseEventArgs e)
+        {
+            ultraGrid1.Cursor = Cursors.Default;
+            toolTip.SetToolTip(ultraGrid1, "");
+            isDraggingColumn = false;
+            columnToMove = null;
+        }
+
+        private void HideColumn(UltraGridColumn column)
+        {
+            if (column != null && !column.Hidden)
+            {
+                // Prevent hiding essential columns
+                string[] essentialColumns = { "NO", "BarCode", "Description", "Adjustment Qty" };
+                if (essentialColumns.Contains(column.Key))
+                {
+                    MessageBox.Show($"The '{column.Header.Caption}' column is essential and cannot be hidden.",
+                        "Cannot Hide Column", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                savedColumnWidths[column.Key] = column.Width;
+                ultraGrid1.SuspendLayout();
+                column.Hidden = true;
+                foreach (UltraGridColumn col in ultraGrid1.DisplayLayout.Bands[0].Columns)
+                {
+                    if (!col.Hidden && savedColumnWidths.ContainsKey(col.Key))
+                    {
+                        col.Width = savedColumnWidths[col.Key];
+                    }
+                }
+                ultraGrid1.ResumeLayout();
+                if (columnChooserForm == null || columnChooserForm.IsDisposed)
+                {
+                    CreateColumnChooserForm();
+                }
+                if (columnChooserListBox != null)
+                {
+                    bool alreadyExists = false;
+                    foreach (object item in columnChooserListBox.Items)
+                    {
+                        if (item is ColumnItem columnItem && columnItem.ColumnKey == column.Key)
+                        {
+                            alreadyExists = true;
+                            break;
+                        }
+                    }
+                    if (!alreadyExists)
+                    {
+                        string columnName = !string.IsNullOrEmpty(column.Header.Caption) ? column.Header.Caption : column.Key;
+                        columnChooserListBox.Items.Add(new ColumnItem(column.Key, columnName));
+                    }
+                }
+                PopulateColumnChooserListBox();
+            }
+        }
+
+        private void ColumnChooserListBox_MouseDown(object sender, MouseEventArgs e)
+        {
+            int index = columnChooserListBox.IndexFromPoint(e.Location);
+            if (index != ListBox.NoMatches)
+            {
+                if (columnChooserListBox.Items[index] is ColumnItem item)
+                {
+                    columnChooserListBox.DoDragDrop(item, DragDropEffects.Move);
+                }
+            }
+        }
+
+        private void ColumnChooserListBox_DragOver(object sender, DragEventArgs e)
+        {
+            e.Effect = e.Data.GetDataPresent(typeof(UltraGridColumn)) ? DragDropEffects.Move : DragDropEffects.None;
+        }
+
+        private void ColumnChooserListBox_DragDrop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetData(typeof(UltraGridColumn)) is UltraGridColumn column && !column.Hidden)
+            {
+                string name = !string.IsNullOrEmpty(column.Header.Caption) ? column.Header.Caption : column.Key;
+                column.Hidden = true;
+                columnChooserListBox.Items.Add(new ColumnItem(column.Key, name));
+            }
+        }
+
+        private void UltraGrid1_CC_DragOver(object sender, DragEventArgs e)
+        {
+            e.Effect = e.Data.GetDataPresent(typeof(ColumnItem)) ? DragDropEffects.Move : DragDropEffects.None;
+        }
+
+        private void UltraGrid1_CC_DragDrop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetData(typeof(ColumnItem)) is ColumnItem item)
+            {
+                if (ultraGrid1.DisplayLayout.Bands.Count > 0 && ultraGrid1.DisplayLayout.Bands[0].Columns.Exists(item.ColumnKey))
+                {
+                    var column = ultraGrid1.DisplayLayout.Bands[0].Columns[item.ColumnKey];
+                    column.Hidden = false;
+                    columnChooserListBox.Items.Remove(item);
+                    toolTip.Show($"'{item.DisplayText}' restored", ultraGrid1, ultraGrid1.PointToClient(MousePosition), 1500);
+                }
+            }
+        }
     }
 }
-

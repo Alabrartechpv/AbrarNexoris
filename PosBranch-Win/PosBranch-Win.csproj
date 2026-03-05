@@ -1434,6 +1434,9 @@
     <None Include="Resources\report.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\heart.png" />
+    <Content Include="Resources\color-selection.png" />
+    <Content Include="Resources\languages %282%29.png" />
     <Content Include="Resources\splash_logo.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

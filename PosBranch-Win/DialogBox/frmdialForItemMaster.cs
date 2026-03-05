@@ -695,12 +695,11 @@ namespace PosBranch_Win.DialogBox
             columnChooserListBox.Items.Clear();
 
             // Define the standard columns that should be tracked in the column chooser
-            string[] standardColumns = new string[] { "BarCode", "Description", "UnitId", "Unit", "Cost", "RetailPrice", "Stock" };
+            string[] standardColumns = new string[] { "BarCode", "Description", "Unit", "Cost", "RetailPrice", "Stock" };
             Dictionary<string, string> displayNames = new Dictionary<string, string>()
                 {
                     { "BarCode", "Barcode" },
                     { "Description", "Item Name" },
-                    { "UnitId", "UnitId" },
                     { "Unit", "Unit" },
                     { "Cost", "Cost" },
                     { "RetailPrice", "Price" },
@@ -1199,7 +1198,7 @@ namespace PosBranch_Win.DialogBox
                     }
 
                     // Define the columns to show in the specified order
-                    string[] columnsToShow = new string[] { "BarCode", "Description", "UnitId", "Unit", "Cost", "RetailPrice", "Stock" };
+                    string[] columnsToShow = new string[] { "BarCode", "Description", "Unit", "Cost", "RetailPrice", "Stock" };
 
                     // Show and configure only the specified columns in the specified order
                     for (int i = 0; i < columnsToShow.Length; i++)
@@ -1222,10 +1221,6 @@ namespace PosBranch_Win.DialogBox
                                 case "Description":
                                     col.Header.Caption = "Item Name";
                                     col.Width = 250;
-                                    break;
-                                case "UnitId":
-                                    col.Header.Caption = "UnitId";
-                                    col.Width = 80;
                                     break;
                                 case "Unit":
                                     col.Header.Caption = "Unit";
@@ -1896,6 +1891,131 @@ namespace PosBranch_Win.DialogBox
             }
         }
 
+        // Calculate a score for how well a row matches a search string
+        private int CalculateFuzzyMatchScore(DataRow row, string searchText, string filterOption)
+        {
+            searchText = searchText.ToLower();
+            int maxScore = 0;
+
+            // Columns to search based on filter option
+            var colsToSearch = new List<string>();
+            switch (filterOption)
+            {
+                case "Barcode":
+                    colsToSearch.Add("BarCode");
+                    break;
+                case "Item Name":
+                    colsToSearch.Add("Description");
+                    break;
+                case "Unit":
+                    colsToSearch.Add("Unit");
+                    break;
+                case "Select all":
+                default:
+                    colsToSearch.Add("BarCode");
+                    colsToSearch.Add("Description");
+                    colsToSearch.Add("Unit");
+                    break;
+            }
+
+            foreach (string colName in colsToSearch)
+            {
+                if (row.Table.Columns.Contains(colName) && row[colName] != DBNull.Value)
+                {
+                    string cellValue = row[colName].ToString().ToLower();
+                    maxScore = Math.Max(maxScore, GetFuzzyMatchScore(cellValue, searchText));
+                }
+            }
+
+            return maxScore;
+        }
+
+        private int GetFuzzyMatchScore(string text, string query)
+        {
+            if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(query)) return 0;
+            
+            // Exact full match
+            if (text == query) return 1000;
+            
+            // Exact prefix match
+            if (text.StartsWith(query)) return 500;
+            
+            // Exact substring match
+            if (text.Contains(query)) return 100;
+
+            // Levenshtein / Word proximity match
+            string[] queryWords = query.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            string[] textWords = text.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            
+            int totalScore = 0;
+            foreach (string qWord in queryWords)
+            {
+                int bestWordScore = 0;
+                foreach (string tWord in textWords)
+                {
+                    // Exact word match
+                    if (tWord == qWord)
+                    {
+                        bestWordScore = Math.Max(bestWordScore, 50);
+                    }
+                    // Word prefix match
+                    else if (tWord.StartsWith(qWord))
+                    {
+                        bestWordScore = Math.Max(bestWordScore, 20);
+                    }
+                    else
+                    {
+                        int maxLen = Math.Max(tWord.Length, qWord.Length);
+                        int distance = ComputeLevenshteinDistance(tWord, qWord);
+                        
+                        // Roughly define "close enough" 
+                        // If distance is 1 for a 4+ char word, or 2 for an 8+ char word
+                        if (distance == 1 && maxLen >= 4)
+                        {
+                            bestWordScore = Math.Max(bestWordScore, 10);
+                        }
+                        else if (distance <= 2 && maxLen >= 8)
+                        {
+                            bestWordScore = Math.Max(bestWordScore, 5); 
+                        }
+                    }
+                }
+                
+                // If a query word completely misses everything, severe penalty
+                if (bestWordScore == 0) return 0; 
+                
+                totalScore += bestWordScore;
+            }
+
+            return totalScore;
+        }
+
+        private int ComputeLevenshteinDistance(string s, string t)
+        {
+            if (string.IsNullOrEmpty(s)) return string.IsNullOrEmpty(t) ? 0 : t.Length;
+            if (string.IsNullOrEmpty(t)) return s.Length;
+
+            int n = s.Length;
+            int m = t.Length;
+            int[,] d = new int[n + 1, m + 1];
+
+            for (int i = 0; i <= n; d[i, 0] = i++) { }
+            for (int j = 0; j <= m; d[0, j] = j++) { }
+
+            for (int i = 1; i <= n; i++)
+            {
+                for (int j = 1; j <= m; j++)
+                {
+                    int cost = (t[j - 1] == s[i - 1]) ? 0 : 1;
+
+                    d[i, j] = Math.Min(
+                        Math.Min(d[i - 1, j] + 1, d[i, j - 1] + 1),
+                        d[i - 1, j - 1] + cost);
+                }
+            }
+            return d[n, m];
+        }
+
         // Build filter string based on selected filter option
         private string BuildFilterString(string searchText, string filterOption)
         {
@@ -1911,9 +2031,6 @@ namespace PosBranch_Win.DialogBox
                 case "Item Name":
                     return $"Description LIKE '%{escapedSearchText}%'";
 
-                case "UnitID":
-                    return $"CONVERT(UnitId, 'System.String') LIKE '%{escapedSearchText}%'";
-
                 case "Unit":
                     return $"Unit LIKE '%{escapedSearchText}%'";
 
@@ -1922,7 +2039,6 @@ namespace PosBranch_Win.DialogBox
                     // Search across all relevant columns
                     return $"BarCode LIKE '%{escapedSearchText}%' OR " +
                         $"Description LIKE '%{escapedSearchText}%' OR " +
-                        $"CONVERT(UnitId, 'System.String') LIKE '%{escapedSearchText}%' OR " +
                         $"Unit LIKE '%{escapedSearchText}%'";
             }
         }
@@ -2124,7 +2240,7 @@ namespace PosBranch_Win.DialogBox
                 }
 
                 // Define the columns to show in the specified order
-                string[] columnsToShow = new string[] { "BarCode", "Description", "UnitId", "Unit", "Cost", "RetailPrice", "Stock" };
+                string[] columnsToShow = new string[] { "BarCode", "Description", "Unit", "Cost", "RetailPrice", "Stock" };
 
                 // Show and configure only the specified columns in the specified order
                 for (int i = 0; i < columnsToShow.Length; i++)
@@ -2158,10 +2274,6 @@ namespace PosBranch_Win.DialogBox
                             case "Description":
                                 col.Header.Caption = "Item Name";
                                 col.Width = 250;
-                                break;
-                            case "UnitId":
-                                col.Header.Caption = "UnitId";
-                                col.Width = 80;
                                 break;
                             case "Unit":
                                 col.Header.Caption = "Unit";
@@ -3593,7 +3705,7 @@ namespace PosBranch_Win.DialogBox
                 }
 
                 // Define the columns to show in the specified order
-                string[] columnsToShow = new string[] { "BarCode", "Description", "UnitId", "Unit", "Cost", "RetailPrice", "Stock" };
+                string[] columnsToShow = new string[] { "BarCode", "Description", "Unit", "Cost", "RetailPrice", "Stock" };
 
                 // Show and configure only the specified columns in the specified order
                 for (int i = 0; i < columnsToShow.Length; i++)
@@ -3626,10 +3738,6 @@ namespace PosBranch_Win.DialogBox
                             case "Description":
                                 col.Header.Caption = "Item Name";
                                 col.Width = columnWidths.ContainsKey(colKey) ? columnWidths[colKey] : 250;
-                                break;
-                            case "UnitId":
-                                col.Header.Caption = "UnitId";
-                                col.Width = columnWidths.ContainsKey(colKey) ? columnWidths[colKey] : 80;
                                 break;
                             case "Unit":
                                 col.Header.Caption = "Unit";
@@ -3669,7 +3777,6 @@ namespace PosBranch_Win.DialogBox
             comboBox1.Items.Add("Select all");
             comboBox1.Items.Add("Barcode");
             comboBox1.Items.Add("Item Name");
-            comboBox1.Items.Add("UnitID");
             comboBox1.Items.Add("Unit");
 
             // Select "Select all" by default
@@ -3699,7 +3806,6 @@ namespace PosBranch_Win.DialogBox
             // Add column options for reordering (removed "Default Order")
             comboBox2.Items.Add("Barcode");
             comboBox2.Items.Add("Item Name");
-            comboBox2.Items.Add("UnitId");
             comboBox2.Items.Add("Unit");
 
             // Select "Barcode" by default (since "Default Order" is removed)
@@ -3753,7 +3859,7 @@ namespace PosBranch_Win.DialogBox
                 wasSuspended = true;
 
                 // Define the columns to show in the specified order
-                List<string> columnsToShow = new List<string> { "BarCode", "Description", "UnitId", "Unit", "Cost", "RetailPrice", "Stock" };
+                List<string> columnsToShow = new List<string> { "BarCode", "Description", "Unit", "Cost", "RetailPrice", "Stock" };
 
                 // Move selected column to the front (always do this since "Default Order" is removed)
                 string columnKey = GetColumnKeyFromDisplayName(selectedColumn);
@@ -3814,10 +3920,6 @@ namespace PosBranch_Win.DialogBox
                     col.Header.Caption = "Item Name";
                     if (col.Width <= 0) col.Width = 250;
                     break;
-                case "UnitId":
-                    col.Header.Caption = "UnitId";
-                    if (col.Width <= 0) col.Width = 80;
-                    break;
                 case "Unit":
                     col.Header.Caption = "Unit";
                     if (col.Width <= 0) col.Width = 80;
@@ -3850,7 +3952,6 @@ namespace PosBranch_Win.DialogBox
             {
                 case "Barcode": return "BarCode";
                 case "Item Name": return "Description";
-                case "UnitId": return "UnitId";
                 case "Unit": return "Unit";
                 default: return "";
             }

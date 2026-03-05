@@ -1,4 +1,4 @@
-﻿﻿namespace PosBranch_Win.Transaction
+﻿namespace PosBranch_Win.Transaction
 {
     partial class frmSalesReturn
     {
@@ -66,7 +66,6 @@
             Infragistics.Win.Appearance appearance35 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance36 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance37 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance38 = new Infragistics.Win.Appearance();
             this.panel1 = new Infragistics.Win.Misc.UltraPanel();
             this.ultraPanel2 = new Infragistics.Win.Misc.UltraPanel();
             this.ultraGrid1 = new Infragistics.Win.UltraWinGrid.UltraGrid();
@@ -112,8 +111,6 @@
             this.cmbPaymntMethod = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
             this.labelPaymentMethod = new Infragistics.Win.Misc.UltraLabel();
             this.labelCustomerName = new Infragistics.Win.Misc.UltraLabel();
-            this.cmbBranch = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
-            this.labelBranch = new Infragistics.Win.Misc.UltraLabel();
             this.panel1.ClientArea.SuspendLayout();
             this.panel1.SuspendLayout();
             this.ultraPanel2.ClientArea.SuspendLayout();
@@ -141,7 +138,6 @@
             ((System.ComponentModel.ISupportInitialize)(this.dtSReturnDate)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.TxtSRNO)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.cmbPaymntMethod)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cmbBranch)).BeginInit();
             this.SuspendLayout();
             // 
             // panel1
@@ -569,7 +565,7 @@
             // 
             this.barbtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(122)))), ((int)(((byte)(204)))));
             this.barbtn.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.barbtn.Location = new System.Drawing.Point(201, 31);
+            this.barbtn.Location = new System.Drawing.Point(213, 31);
             this.barbtn.Name = "barbtn";
             this.barbtn.Size = new System.Drawing.Size(38, 33);
             this.barbtn.TabIndex = 2;
@@ -580,7 +576,7 @@
             // labelBarcode
             // 
             this.labelBarcode.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelBarcode.Location = new System.Drawing.Point(15, 4);
+            this.labelBarcode.Location = new System.Drawing.Point(24, 4);
             this.labelBarcode.Name = "labelBarcode";
             this.labelBarcode.Size = new System.Drawing.Size(85, 25);
             this.labelBarcode.TabIndex = 1;
@@ -591,7 +587,7 @@
             this.btn_Add_Custm.BackColor = System.Drawing.Color.Transparent;
             this.btn_Add_Custm.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("btn_Add_Custm.BackgroundImage")));
             this.btn_Add_Custm.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.btn_Add_Custm.Location = new System.Drawing.Point(441, 32);
+            this.btn_Add_Custm.Location = new System.Drawing.Point(460, 30);
             this.btn_Add_Custm.Name = "btn_Add_Custm";
             this.btn_Add_Custm.Size = new System.Drawing.Size(29, 33);
             this.btn_Add_Custm.TabIndex = 5;
@@ -604,7 +600,7 @@
             this.dtInvoiceDate.Appearance = appearance30;
             this.dtInvoiceDate.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
             this.dtInvoiceDate.FormatString = "yy/MM/dd";
-            this.dtInvoiceDate.Location = new System.Drawing.Point(892, 37);
+            this.dtInvoiceDate.Location = new System.Drawing.Point(853, 37);
             this.dtInvoiceDate.Name = "dtInvoiceDate";
             this.dtInvoiceDate.Size = new System.Drawing.Size(144, 19);
             this.dtInvoiceDate.TabIndex = 6;
@@ -616,7 +612,7 @@
             this.textBox1.Appearance = appearance31;
             this.textBox1.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
             this.textBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox1.Location = new System.Drawing.Point(277, 33);
+            this.textBox1.Location = new System.Drawing.Point(296, 31);
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(165, 31);
             this.textBox1.TabIndex = 30;
@@ -630,7 +626,7 @@
             this.TxtBarcode.Appearance = appearance32;
             this.TxtBarcode.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
             this.TxtBarcode.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.TxtBarcode.Location = new System.Drawing.Point(14, 32);
+            this.TxtBarcode.Location = new System.Drawing.Point(24, 32);
             this.TxtBarcode.Name = "TxtBarcode";
             this.TxtBarcode.Size = new System.Drawing.Size(189, 31);
             this.TxtBarcode.TabIndex = 7;
@@ -643,9 +639,9 @@
             this.TxtInvoiceAmnt.Appearance = appearance33;
             this.TxtInvoiceAmnt.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
             this.TxtInvoiceAmnt.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.TxtInvoiceAmnt.Location = new System.Drawing.Point(512, 34);
+            this.TxtInvoiceAmnt.Location = new System.Drawing.Point(559, 33);
             this.TxtInvoiceAmnt.Name = "TxtInvoiceAmnt";
-            this.TxtInvoiceAmnt.Size = new System.Drawing.Size(200, 31);
+            this.TxtInvoiceAmnt.Size = new System.Drawing.Size(176, 31);
             this.TxtInvoiceAmnt.TabIndex = 19;
             this.TxtInvoiceAmnt.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             this.TxtInvoiceAmnt.ValueChanged += new System.EventHandler(this.TxtInvoiceAmnt_TextChanged);
@@ -654,7 +650,7 @@
             // 
             this.labelInvoiceDate.AutoSize = true;
             this.labelInvoiceDate.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelInvoiceDate.Location = new System.Drawing.Point(895, 9);
+            this.labelInvoiceDate.Location = new System.Drawing.Point(856, 9);
             this.labelInvoiceDate.Name = "labelInvoiceDate";
             this.labelInvoiceDate.Size = new System.Drawing.Size(122, 26);
             this.labelInvoiceDate.TabIndex = 16;
@@ -664,7 +660,7 @@
             // 
             this.labelInvoiceAmount.AutoSize = true;
             this.labelInvoiceAmount.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelInvoiceAmount.Location = new System.Drawing.Point(515, 6);
+            this.labelInvoiceAmount.Location = new System.Drawing.Point(560, 6);
             this.labelInvoiceAmount.Name = "labelInvoiceAmount";
             this.labelInvoiceAmount.Size = new System.Drawing.Size(149, 26);
             this.labelInvoiceAmount.TabIndex = 17;
@@ -675,7 +671,7 @@
             // 
             this.labelInvoiceNo.AutoSize = true;
             this.labelInvoiceNo.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelInvoiceNo.Location = new System.Drawing.Point(280, 6);
+            this.labelInvoiceNo.Location = new System.Drawing.Point(296, 6);
             this.labelInvoiceNo.Name = "labelInvoiceNo";
             this.labelInvoiceNo.Size = new System.Drawing.Size(110, 26);
             this.labelInvoiceNo.TabIndex = 15;
@@ -698,8 +694,6 @@
             this.panel2.ClientArea.Controls.Add(this.cmbPaymntMethod);
             this.panel2.ClientArea.Controls.Add(this.labelPaymentMethod);
             this.panel2.ClientArea.Controls.Add(this.labelCustomerName);
-            this.panel2.ClientArea.Controls.Add(this.cmbBranch);
-            this.panel2.ClientArea.Controls.Add(this.labelBranch);
             this.panel2.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel2.Location = new System.Drawing.Point(0, 0);
             this.panel2.Name = "panel2";
@@ -709,7 +703,7 @@
             // label1
             // 
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(427, 7);
+            this.label1.Location = new System.Drawing.Point(183, 7);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(51, 25);
             this.label1.TabIndex = 35;
@@ -721,7 +715,7 @@
             this.button2.BackColor = System.Drawing.Color.Transparent;
             this.button2.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("button2.BackgroundImage")));
             this.button2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.button2.Location = new System.Drawing.Point(440, 34);
+            this.button2.Location = new System.Drawing.Point(213, 35);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(29, 33);
             this.button2.TabIndex = 1;
@@ -734,9 +728,9 @@
             this.textBox2.Appearance = appearance34;
             this.textBox2.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
             this.textBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox2.Location = new System.Drawing.Point(276, 35);
+            this.textBox2.Location = new System.Drawing.Point(24, 36);
             this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(165, 31);
+            this.textBox2.Size = new System.Drawing.Size(189, 31);
             this.textBox2.TabIndex = 33;
             this.textBox2.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             // 
@@ -761,6 +755,7 @@
             this.dtSReturnDate.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
             this.dtSReturnDate.FormatString = "yy/MM/dd";
             this.dtSReturnDate.Location = new System.Drawing.Point(895, 38);
+            this.dtSReturnDate.Location = new System.Drawing.Point(853, 40);
             this.dtSReturnDate.Name = "dtSReturnDate";
             this.dtSReturnDate.Size = new System.Drawing.Size(144, 19);
             this.dtSReturnDate.TabIndex = 3;
@@ -793,7 +788,7 @@
             // 
             this.labelDate.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.labelDate.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelDate.Location = new System.Drawing.Point(898, 9);
+            this.labelDate.Location = new System.Drawing.Point(900, 9);
             this.labelDate.Name = "labelDate";
             this.labelDate.Size = new System.Drawing.Size(53, 25);
             this.labelDate.TabIndex = 11;
@@ -805,9 +800,9 @@
             this.cmbPaymntMethod.Appearance = appearance37;
             this.cmbPaymntMethod.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
             this.cmbPaymntMethod.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cmbPaymntMethod.Location = new System.Drawing.Point(510, 35);
+            this.cmbPaymntMethod.Location = new System.Drawing.Point(296, 34);
             this.cmbPaymntMethod.Name = "cmbPaymntMethod";
-            this.cmbPaymntMethod.Size = new System.Drawing.Size(202, 31);
+            this.cmbPaymntMethod.Size = new System.Drawing.Size(192, 31);
             this.cmbPaymntMethod.TabIndex = 2;
             this.cmbPaymntMethod.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             this.cmbPaymntMethod.ValueChanged += new System.EventHandler(this.cmbPaymntMethod_SelectedIndexChanged);
@@ -816,7 +811,7 @@
             // 
             this.labelPaymentMethod.AutoSize = true;
             this.labelPaymentMethod.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelPaymentMethod.Location = new System.Drawing.Point(510, 6);
+            this.labelPaymentMethod.Location = new System.Drawing.Point(302, 6);
             this.labelPaymentMethod.Name = "labelPaymentMethod";
             this.labelPaymentMethod.Size = new System.Drawing.Size(163, 26);
             this.labelPaymentMethod.TabIndex = 9;
@@ -826,32 +821,11 @@
             // 
             this.labelCustomerName.AutoSize = true;
             this.labelCustomerName.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelCustomerName.Location = new System.Drawing.Point(269, 6);
+            this.labelCustomerName.Location = new System.Drawing.Point(25, 6);
             this.labelCustomerName.Name = "labelCustomerName";
             this.labelCustomerName.Size = new System.Drawing.Size(157, 26);
             this.labelCustomerName.TabIndex = 7;
             this.labelCustomerName.Text = "Customer Name";
-            // 
-            // cmbBranch
-            // 
-            appearance38.BorderColor = System.Drawing.Color.DeepSkyBlue;
-            this.cmbBranch.Appearance = appearance38;
-            this.cmbBranch.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
-            this.cmbBranch.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cmbBranch.Location = new System.Drawing.Point(13, 34);
-            this.cmbBranch.Name = "cmbBranch";
-            this.cmbBranch.Size = new System.Drawing.Size(225, 31);
-            this.cmbBranch.TabIndex = 8;
-            this.cmbBranch.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
-            // 
-            // labelBranch
-            // 
-            this.labelBranch.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelBranch.Location = new System.Drawing.Point(13, 6);
-            this.labelBranch.Name = "labelBranch";
-            this.labelBranch.Size = new System.Drawing.Size(74, 25);
-            this.labelBranch.TabIndex = 1;
-            this.labelBranch.Text = "Branch";
             // 
             // frmSalesReturn
             // 
@@ -897,7 +871,6 @@
             ((System.ComponentModel.ISupportInitialize)(this.dtSReturnDate)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.TxtSRNO)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.cmbPaymntMethod)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cmbBranch)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -933,8 +906,6 @@
         public Infragistics.Win.UltraWinEditors.UltraComboEditor cmbPaymntMethod;
         private Infragistics.Win.Misc.UltraLabel labelPaymentMethod;
         private Infragistics.Win.Misc.UltraLabel labelCustomerName;
-        private Infragistics.Win.UltraWinEditors.UltraComboEditor cmbBranch;
-        private Infragistics.Win.Misc.UltraLabel labelBranch;
         private Infragistics.Win.Misc.UltraLabel labelInvoiceNo;
         private Infragistics.Win.Misc.UltraPanel ultraPanel1;
         private System.Windows.Forms.Button barbtn;

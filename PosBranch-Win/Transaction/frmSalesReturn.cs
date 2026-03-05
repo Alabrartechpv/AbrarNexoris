@@ -397,7 +397,6 @@ namespace PosBranch_Win.Transaction
                 KeyPreview = true;
 
                 // Load data in the proper sequence to ensure dependencies are met
-                this.RefreshBranch();
                 this.RefreshPaymode();
 
                 // Add a delay to ensure payment methods are loaded before continuing
@@ -454,7 +453,6 @@ namespace PosBranch_Win.Transaction
             btn_Add_Custm.TabIndex = 5;
             button1.TabIndex = 6;
             dtInvoiceDate.TabIndex = 7;
-            cmbBranch.TabIndex = 8;
         }
 
         // Override ProcessTabKey to implement custom tab order
@@ -501,33 +499,6 @@ namespace PosBranch_Win.Transaction
             return base.ProcessTabKey(forward);
         }
 
-        public void RefreshBranch()
-        {
-            System.Data.DataRow dr;
-
-            using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_Branch, (SqlConnection)con.DataConnection))
-            {
-                cmd.CommandType = CommandType.StoredProcedure;
-                using (SqlDataAdapter adapt = new SqlDataAdapter(cmd))
-                {
-                    cmd.Parameters.AddWithValue("_Operation", "GETALL");
-                    DataTable dt = new DataTable();//fdf
-                    adapt.Fill(dt);
-                    dr = dt.NewRow();
-                    //dr.ItemArray = new object[] { 0, "--Select Branch--" };
-                    //dt.Rows.InsertAt(dr, 0);
-                    cmbBranch.ValueMember = "Id";
-                    cmbBranch.DisplayMember = "BranchName";
-                    cmbBranch.DataSource = dt;
-
-                    // Always select the first branch as default
-                    if (cmbBranch.Items.Count > 0)
-                    {
-                        cmbBranch.SelectedIndex = 0;
-                    }
-                }
-            }
-        }
         public void RefreshPaymode()
         {
             try

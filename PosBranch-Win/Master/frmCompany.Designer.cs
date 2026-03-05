@@ -43,6 +43,7 @@ namespace PosBranch_Win.Master
             this.button4 = new System.Windows.Forms.Button();
             this.txtBusinessType = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.label5 = new Infragistics.Win.Misc.UltraLabel();
+            this.txtCompanyName = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.btnSave = new System.Windows.Forms.Button();
             this.btnNew = new System.Windows.Forms.Button();
             this.ultraGroupBoxAddress = new Infragistics.Win.Misc.UltraGroupBox();
@@ -104,13 +105,13 @@ namespace PosBranch_Win.Master
             this.ultralblCountryId = new Infragistics.Win.Misc.UltraLabel();
             this.ultralblTaxId = new Infragistics.Win.Misc.UltraLabel();
             this.ultraLblCurrencyId = new Infragistics.Win.Misc.UltraLabel();
-            this.txtCompanyName = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.ultraPanel1.ClientArea.SuspendLayout();
             this.ultraPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.ultraGroupBoxBasicInfo)).BeginInit();
             this.ultraGroupBoxBasicInfo.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.txtCompanyCaption)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtBusinessType)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtCompanyName)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ultraGroupBoxAddress)).BeginInit();
             this.ultraGroupBoxAddress.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.txtAddress1)).BeginInit();
@@ -141,7 +142,6 @@ namespace PosBranch_Win.Master
             this.ultraGroupBoxLogo.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.picLogo)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtBackupPath)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtCompanyName)).BeginInit();
             this.SuspendLayout();
             // 
             // ultraPanel1
@@ -273,6 +273,18 @@ namespace PosBranch_Win.Master
             this.label5.Size = new System.Drawing.Size(101, 22);
             this.label5.TabIndex = 4;
             this.label5.Text = "Business Type:";
+            // 
+            // txtCompanyName
+            // 
+            appearance5.BorderColor = System.Drawing.SystemColors.Highlight;
+            this.txtCompanyName.Appearance = appearance5;
+            this.txtCompanyName.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
+            this.txtCompanyName.Font = new System.Drawing.Font("Segoe UI", 11F);
+            this.txtCompanyName.Location = new System.Drawing.Point(120, 30);
+            this.txtCompanyName.Name = "txtCompanyName";
+            this.txtCompanyName.Size = new System.Drawing.Size(300, 27);
+            this.txtCompanyName.TabIndex = 1;
+            this.txtCompanyName.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             // 
             // btnSave
             // 
@@ -983,22 +995,10 @@ namespace PosBranch_Win.Master
             this.ultraLblCurrencyId.Text = "0";
             this.ultraLblCurrencyId.Visible = false;
             // 
-            // txtCompanyName
-            // 
-            appearance5.BorderColor = System.Drawing.SystemColors.Highlight;
-            this.txtCompanyName.Appearance = appearance5;
-            this.txtCompanyName.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
-            this.txtCompanyName.Font = new System.Drawing.Font("Segoe UI", 11F);
-            this.txtCompanyName.Location = new System.Drawing.Point(120, 30);
-            this.txtCompanyName.Name = "txtCompanyName";
-            this.txtCompanyName.Size = new System.Drawing.Size(300, 27);
-            this.txtCompanyName.TabIndex = 1;
-            this.txtCompanyName.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
-            // 
             // frmCompany
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.ClientSize = new System.Drawing.Size(1349, 520);
             this.Controls.Add(this.ultraPanel1);
             this.Font = new System.Drawing.Font("Segoe UI", 10F);
@@ -1014,6 +1014,7 @@ namespace PosBranch_Win.Master
             this.ultraGroupBoxBasicInfo.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.txtCompanyCaption)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtBusinessType)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtCompanyName)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ultraGroupBoxAddress)).EndInit();
             this.ultraGroupBoxAddress.ResumeLayout(false);
             this.ultraGroupBoxAddress.PerformLayout();
@@ -1049,7 +1050,6 @@ namespace PosBranch_Win.Master
             this.ultraGroupBoxLogo.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.picLogo)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtBackupPath)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtCompanyName)).EndInit();
             this.ResumeLayout(false);
 
         }
