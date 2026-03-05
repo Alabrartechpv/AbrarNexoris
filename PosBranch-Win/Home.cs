@@ -27,6 +27,8 @@ namespace PosBranch_Win
         private bool enableTabScrolling = true; // Enable tab scrolling feature
         private Timer scrollTimer = new Timer(); // Timer for smooth scrolling
         private int scrollDirection = 0; // 0 = none, -1 = left, 1 = right
+        private string _lastActivatedToolKey = null; // Track which toolbar key opened the current form
+        private bool _openingFromFavourite = false; // When true, allow duplicate form instances
 
 
         public Home()
@@ -331,19 +333,34 @@ namespace PosBranch_Win
         {
             try
             {
-                // Check if tab already exists
-                foreach (Infragistics.Win.UltraWinTabControl.UltraTab tab in tabControlMain.Tabs)
+                // Check if tab already exists (skip when opening from favourites to allow multiple instances)
+                if (!_openingFromFavourite)
                 {
-                    if (tab.Text == tabName)
+                    foreach (Infragistics.Win.UltraWinTabControl.UltraTab tab in tabControlMain.Tabs)
                     {
-                        tabControlMain.SelectedTab = tab; // Use SelectedTab instead of ActiveTab
-                        return;
+                        if (tab.Text == tabName)
+                        {
+                            tabControlMain.SelectedTab = tab;
+                            return;
+                        }
+                    }
+                }
+                else
+                {
+                    // Generate unique tab name for favourite duplicates
+                    int count = 1;
+                    string originalName = tabName;
+                    while (tabControlMain.Tabs.Cast<Infragistics.Win.UltraWinTabControl.UltraTab>().Any(t => t.Text == tabName))
+                    {
+                        count++;
+                        tabName = $"{originalName} ({count})";
                     }
                 }
 
                 // Create new tab
                 string uniqueKey = $"Tab_{DateTime.Now.Ticks}_{tabName}";
                 var newTab = tabControlMain.Tabs.Add(uniqueKey, tabName);
+                newTab.Tag = _lastActivatedToolKey; // Store toolbar key for favorites
 
                 // CRITICAL FIX: Ensure form is properly initialized BEFORE setting properties
                 EnsureFormIsReady(formToOpen);
@@ -492,32 +509,45 @@ namespace PosBranch_Win
         {
             try
             {
-                // Check if tab already exists
-                foreach (Infragistics.Win.UltraWinTabControl.UltraTab tab in tabControlMain.Tabs)
+                // Check if tab already exists (skip when opening from favourites to allow multiple instances)
+                if (!_openingFromFavourite)
                 {
-                    if (tab.Text == tabName)
+                    foreach (Infragistics.Win.UltraWinTabControl.UltraTab tab in tabControlMain.Tabs)
                     {
-                        // If form exists but is disposed, remove the tab and recreate
-                        if (tab.TabPage.Controls.Count > 0 && tab.TabPage.Controls[0] is Form existingForm)
+                        if (tab.Text == tabName)
                         {
-                            if (existingForm.IsDisposed)
+                            if (tab.TabPage.Controls.Count > 0 && tab.TabPage.Controls[0] is Form existingForm)
                             {
-                                tabControlMain.Tabs.Remove(tab);
-                                break; // Exit loop and create new tab below
+                                if (existingForm.IsDisposed)
+                                {
+                                    tabControlMain.Tabs.Remove(tab);
+                                    break;
+                                }
+                                else
+                                {
+                                    tabControlMain.SelectedTab = tab;
+                                    existingForm.BringToFront();
+                                    existingForm.Focus();
+                                    return;
+                                }
                             }
                             else
                             {
                                 tabControlMain.SelectedTab = tab;
-                                existingForm.BringToFront();
-                                existingForm.Focus();
                                 return;
                             }
                         }
-                        else
-                        {
-                            tabControlMain.SelectedTab = tab;
-                            return;
-                        }
+                    }
+                }
+                else
+                {
+                    // Generate unique tab name for favourite duplicates
+                    int count = 1;
+                    string originalName = tabName;
+                    while (tabControlMain.Tabs.Cast<Infragistics.Win.UltraWinTabControl.UltraTab>().Any(t => t.Text == tabName))
+                    {
+                        count++;
+                        tabName = $"{originalName} ({count})";
                     }
                 }
 
@@ -544,6 +574,7 @@ namespace PosBranch_Win
                 // Create new tab
                 string uniqueKey = $"Tab_{DateTime.Now.Ticks}_{tabName}";
                 var newTab = tabControlMain.Tabs.Add(uniqueKey, tabName);
+                newTab.Tag = _lastActivatedToolKey; // Store toolbar key for favorites
 
                 // Add form to tab page
                 newTab.TabPage.Controls.Add(formToOpen);
@@ -606,6 +637,141 @@ namespace PosBranch_Win
             toolStripStatusLabel1.Text = DataBase.Branch;
             toolStripStatusUserValLabel3.Text = DataBase.UserName;
             ultraRadialMenu1.Show(this, new Point(Bounds.Right, Bounds.Top));
+
+            // Set ExplorerBar Style to Outlook Navigation Pane
+            ultraExplorerBarSideMenu.Style = Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarStyle.OutlookNavigationPane;
+            try
+            {
+                // Ensure Sidebar is minimized initially (like IRS POS reference)
+                ultraExplorerBarSideMenu.NavigationPaneExpandedState = Infragistics.Win.UltraWinExplorerBar.NavigationPaneExpandedState.Collapsed;
+                ultraExplorerBarSideMenu.Style = Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarStyle.OutlookNavigationPane;
+
+                // Handle item removing to bypass any built-in confirmation prompt
+                ultraExplorerBarSideMenu.ItemRemoving += (s, args) =>
+                {
+                    // Just let it remove without prompt, but check if it's the Add button
+                    if (args.Item.Key == "AddToFavourite")
+                        args.Cancel = true; // Never allow removing the add button
+                };
+
+                // Handle item removed to persist the removal to file
+                ultraExplorerBarSideMenu.ItemRemoved += (s, args) =>
+                {
+                    SaveAllFavorites();
+                };
+
+                // Add styling globally
+                ultraExplorerBarSideMenu.NavigationPaneExpansionMode = Infragistics.Win.UltraWinExplorerBar.NavigationPaneExpansionMode.OnButtonClick;
+                ultraExplorerBarSideMenu.NavigationOverflowButtonAreaVisible = false;
+                ultraExplorerBarSideMenu.ItemClick += ultraExplorerBarSideMenu_ItemClick;
+                ultraExplorerBarSideMenu.ContextMenuInitializing += ultraExplorerBarSideMenu_ContextMenuInitializing;
+                LoadFavorites();
+
+                // === STYLING TO MATCH IRS POS DESIGN ===
+
+                // Style the overall ExplorerBar background
+                ultraExplorerBarSideMenu.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+                ultraExplorerBarSideMenu.Appearance.BackColor = Color.FromArgb(215, 236, 255);
+
+                // Style the "My Favourite Menu" group header
+                var favGroup = ultraExplorerBarSideMenu.Groups["MyFavouriteMenu"];
+                if (favGroup != null)
+                {
+                    // Set collapsed pane text to show "My Favourite Menu" instead of "Navigation Pane"
+                    favGroup.Settings.NavigationPaneCollapsedGroupAreaText = "My Favourite Menu";
+                    // Group header appearance - vibrant gradient
+                    favGroup.Settings.AppearancesSmall.HeaderAppearance.BackColor = Color.FromArgb(0, 174, 219);
+                    favGroup.Settings.AppearancesSmall.HeaderAppearance.BackColor2 = Color.FromArgb(0, 140, 186);
+                    favGroup.Settings.AppearancesSmall.HeaderAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
+                    favGroup.Settings.AppearancesSmall.HeaderAppearance.ForeColor = Color.White;
+                    favGroup.Settings.AppearancesSmall.HeaderAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
+                    favGroup.Settings.AppearancesSmall.HeaderAppearance.FontData.SizeInPoints = 9f;
+
+                    // Add heart icon to the group header (shows in minimized view)
+                    try
+                    {
+                        favGroup.Settings.AppearancesSmall.HeaderAppearance.Image = PosBranch_Win.Properties.Resources.heart;
+                    }
+                    catch { }
+
+
+                    favGroup.Settings.AppearancesSmall.HeaderAppearance.FontData.Name = "Segoe UI";
+
+                    // Hot-track (hover) for group header 
+                    favGroup.Settings.AppearancesSmall.HeaderHotTrackAppearance.BackColor = Color.FromArgb(0, 190, 235);
+                    favGroup.Settings.AppearancesSmall.HeaderHotTrackAppearance.BackColor2 = Color.FromArgb(0, 155, 200);
+                    favGroup.Settings.AppearancesSmall.HeaderHotTrackAppearance.ForeColor = Color.White;
+
+                    // Item area background - clean light blue
+                    favGroup.Settings.AppearancesSmall.ItemAreaAppearance.BackColor = Color.FromArgb(215, 236, 255);
+
+                    // Equal padding on both sides so buttons don't touch the border
+                    favGroup.Settings.ItemAreaInnerMargins.Left = 8;
+                    favGroup.Settings.ItemAreaInnerMargins.Right = 8;
+                    favGroup.Settings.ItemAreaInnerMargins.Top = 3;
+                    favGroup.Settings.ItemAreaInnerMargins.Bottom = 3;
+                    favGroup.Settings.ItemAreaOuterMargins.Left = 0;
+                    favGroup.Settings.ItemAreaOuterMargins.Right = 0;
+                    favGroup.Settings.ItemAreaOuterMargins.Top = 0;
+                    favGroup.Settings.ItemAreaOuterMargins.Bottom = 0;
+
+                    // Style all items in the favourite group as flat blue buttons
+                    foreach (Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarItem item in favGroup.Items)
+                    {
+                        StyleFavouriteItem(item);
+                    }
+
+                    // Force refresh after styling
+                    ultraExplorerBarSideMenu.Refresh();
+                }
+
+                // Style "My Screen Colour" group header
+                var screenGroup = ultraExplorerBarSideMenu.Groups["MyScreenColour"];
+                if (screenGroup != null)
+                {
+                    screenGroup.Settings.AppearancesSmall.HeaderAppearance.BackColor = Color.FromArgb(0, 174, 219);
+                    screenGroup.Settings.AppearancesSmall.HeaderAppearance.BackColor2 = Color.FromArgb(0, 140, 186);
+                    screenGroup.Settings.AppearancesSmall.HeaderAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
+                    screenGroup.Settings.AppearancesSmall.HeaderAppearance.ForeColor = Color.White;
+                    screenGroup.Settings.AppearancesSmall.HeaderAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
+                    screenGroup.Settings.AppearancesSmall.HeaderAppearance.FontData.SizeInPoints = 9f;
+                    screenGroup.Settings.AppearancesSmall.HeaderHotTrackAppearance.BackColor = Color.FromArgb(0, 190, 235);
+                    screenGroup.Settings.AppearancesSmall.HeaderHotTrackAppearance.ForeColor = Color.White;
+
+                    // Add icon to the group header (shows in minimized view)
+                    try
+                    {
+                        string colorPath = System.IO.Path.Combine(System.Windows.Forms.Application.StartupPath, @"..\..\Resources\color-selection.png");
+                        if (System.IO.File.Exists(colorPath))
+                            screenGroup.Settings.AppearancesSmall.HeaderAppearance.Image = System.Drawing.Image.FromFile(colorPath);
+                    }
+                    catch { }
+                }
+
+                // Style "My Language" group header
+                var langGroup = ultraExplorerBarSideMenu.Groups["MyLanguage"];
+                if (langGroup != null)
+                {
+                    langGroup.Settings.AppearancesSmall.HeaderAppearance.BackColor = Color.FromArgb(0, 174, 219);
+                    langGroup.Settings.AppearancesSmall.HeaderAppearance.BackColor2 = Color.FromArgb(0, 140, 186);
+                    langGroup.Settings.AppearancesSmall.HeaderAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
+                    langGroup.Settings.AppearancesSmall.HeaderAppearance.ForeColor = Color.White;
+                    langGroup.Settings.AppearancesSmall.HeaderAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
+                    langGroup.Settings.AppearancesSmall.HeaderAppearance.FontData.SizeInPoints = 9f;
+                    langGroup.Settings.AppearancesSmall.HeaderHotTrackAppearance.BackColor = Color.FromArgb(0, 190, 235);
+                    langGroup.Settings.AppearancesSmall.HeaderHotTrackAppearance.ForeColor = Color.White;
+
+                    // Add icon to the group header (shows in minimized view)
+                    try
+                    {
+                        string langPath = System.IO.Path.Combine(System.Windows.Forms.Application.StartupPath, @"..\..\Resources\languages (2).png");
+                        if (System.IO.File.Exists(langPath))
+                            langGroup.Settings.AppearancesSmall.HeaderAppearance.Image = System.Drawing.Image.FromFile(langPath);
+                    }
+                    catch { }
+                }
+            }
+            catch { } // If property doesn't exist
 
             // Fix tab control appearance
             AdjustTabControlAppearance();
@@ -943,6 +1109,7 @@ namespace PosBranch_Win
         {
             // Debug the clicked tool key
             System.Diagnostics.Debug.WriteLine($"Tool Clicked: {e.Tool.Key}");
+            _lastActivatedToolKey = e.Tool.Key; // Store for favorites tracking
 
             // Map aliases to permission keys
             string permissionKey = e.Tool.Key;
@@ -1730,6 +1897,260 @@ namespace PosBranch_Win
                 System.Diagnostics.Debug.WriteLine($"Error applying language: {ex.Message}");
             }
         }
-    }
 
+        private string GetFavoritesFilePath()
+        {
+            return System.IO.Path.Combine(Application.StartupPath, "favorites.txt");
+        }
+
+        private void LoadFavorites()
+        {
+            try
+            {
+                string path = GetFavoritesFilePath();
+                if (System.IO.File.Exists(path))
+                {
+                    var lines = System.IO.File.ReadAllLines(path);
+                    var group = ultraExplorerBarSideMenu.Groups["MyFavouriteMenu"];
+                    if (group != null)
+                    {
+                        foreach (var line in lines)
+                        {
+                            var parts = line.Split('|');
+                            if (parts.Length == 2)
+                            {
+                                string toolKey = parts[0];
+                                string caption = parts[1];
+
+                                // Prevent duplicates
+                                if (!group.Items.Exists(toolKey))
+                                {
+                                    var newItem = new Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarItem();
+                                    newItem.Key = toolKey;
+                                    newItem.Text = caption;
+                                    group.Items.Add(newItem);
+                                    StyleFavouriteItem(newItem);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to load favorites: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Rewrites the favourites file from the current items in the group (persists removals)
+        /// </summary>
+        private void SaveAllFavorites()
+        {
+            try
+            {
+                var group = ultraExplorerBarSideMenu.Groups["MyFavouriteMenu"];
+                if (group != null)
+                {
+                    var lines = new System.Collections.Generic.List<string>();
+                    foreach (Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarItem item in group.Items)
+                    {
+                        if (item.Key != "AddToFavourite")
+                        {
+                            lines.Add($"{item.Key}|{item.Text}");
+                        }
+                    }
+                    System.IO.File.WriteAllLines(GetFavoritesFilePath(), lines);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to save favorites: {ex.Message}");
+            }
+        }
+
+        private void ultraExplorerBarSideMenu_ItemClick(object sender, Infragistics.Win.UltraWinExplorerBar.ItemEventArgs e)
+        {
+            try
+            {
+                if (e.Item.Key == "AddToFavourite")
+                {
+                    if (tabControlMain.SelectedTab != null)
+                    {
+                        string activeTabText = tabControlMain.SelectedTab.Text;
+                        // Read the tool key stored in the Tab's Tag property
+                        string matchedToolKey = tabControlMain.SelectedTab.Tag as string;
+
+                        if (string.IsNullOrEmpty(matchedToolKey))
+                        {
+                            MessageBox.Show("Could not determine the toolbar action for this form.");
+                            return;
+                        }
+
+                        var group = ultraExplorerBarSideMenu.Groups["MyFavouriteMenu"];
+                        if (group != null)
+                        {
+                            if (!group.Items.Exists(matchedToolKey))
+                            {
+                                var newItem = new Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarItem();
+                                newItem.Key = matchedToolKey;
+                                newItem.Text = activeTabText;
+                                group.Items.Add(newItem);
+                                StyleFavouriteItem(newItem);
+
+                                // Save to file
+                                SaveAllFavorites();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("Please open a form first to add it to favorites.");
+                    }
+                }
+                else
+                {
+                    // It's a favorite item click — always open a new instance
+                    string keyToExecute = e.Item.Key;
+                    if (ultraToolbarsManager1.Tools.Exists(keyToExecute))
+                    {
+                        _openingFromFavourite = true;
+                        try
+                        {
+                            var tool = ultraToolbarsManager1.Tools[keyToExecute];
+                            var eventArgs = new Infragistics.Win.UltraWinToolbars.ToolClickEventArgs(tool, null);
+                            ultraToolbarsManager1_ToolClick_1(this, eventArgs);
+                        }
+                        finally
+                        {
+                            _openingFromFavourite = false;
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Could not find the action for this favorite item: {e.Item.Text}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error in favorites: {ex.Message}");
+            }
+        }
+
+        private void ultraExplorerBarSideMenu_ContextMenuInitializing(object sender, Infragistics.Win.UltraWinExplorerBar.CancelableContextMenuInitializingEventArgs e)
+        {
+            try
+            {
+                // Only modify context menu for items, not groups
+                if (e.Item != null)
+                {
+                    // "Add To Favourite" cannot be renamed or removed
+                    if (e.Item.Key == "AddToFavourite")
+                    {
+                        e.Cancel = true;
+                        return;
+                    }
+
+                    // Cancel the default context menu entirely
+                    e.Cancel = true;
+
+                    // Build our own simple context menu with just "Remove"
+                    var customMenu = new System.Windows.Forms.ContextMenuStrip();
+                    var removeMenuItem = new System.Windows.Forms.ToolStripMenuItem("Remove");
+                    var itemToRemove = e.Item;
+                    removeMenuItem.Click += (s2, e2) =>
+                    {
+                        var group = itemToRemove.Group;
+                        if (group != null)
+                        {
+                            group.Items.Remove(itemToRemove);
+                            SaveAllFavorites();
+                        }
+                    };
+                    customMenu.Items.Add(removeMenuItem);
+                    customMenu.Show(ultraExplorerBarSideMenu, ultraExplorerBarSideMenu.PointToClient(System.Windows.Forms.Cursor.Position));
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error initializing context menu: {ex.Message}");
+            }
+        }
+
+        private void StyleFavouriteItem(Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarItem item)
+        {
+            try
+            {
+                item.Settings.ReserveImageSpace = Infragistics.Win.DefaultableBoolean.True;
+
+                // ===== BUTTON STYLE =====
+                item.Settings.Style = Infragistics.Win.UltraWinExplorerBar.ItemStyle.Button;
+                item.Settings.MaxLines = 2;
+
+                // ===== HEIGHT TO MATCH IRS POS =====
+                item.Settings.Height = 28;
+
+                // ===== REMOVE THEMED ELEMENT =====
+                item.Settings.AppearancesSmall.Appearance.ThemedElementAlpha =
+                    Infragistics.Win.Alpha.Transparent;
+                item.Settings.AppearancesSmall.HotTrackAppearance.ThemedElementAlpha =
+                    Infragistics.Win.Alpha.Transparent;
+                item.Settings.AppearancesSmall.ActiveAppearance.ThemedElementAlpha =
+                    Infragistics.Win.Alpha.Transparent;
+
+                // ===== BLUE GRADIENT BACKGROUND =====
+                item.Settings.AppearancesSmall.Appearance.BackColor = Color.FromArgb(28, 151, 234);
+                item.Settings.AppearancesSmall.Appearance.BackColor2 = Color.FromArgb(10, 120, 200);
+                item.Settings.AppearancesSmall.Appearance.BackGradientStyle =
+                    Infragistics.Win.GradientStyle.Vertical;
+
+                // ===== REMOVE HARD BORDER =====
+                item.Settings.AppearancesSmall.Appearance.BorderAlpha =
+                    Infragistics.Win.Alpha.Transparent;
+
+                // ===== FONT STYLING =====
+                item.Settings.AppearancesSmall.Appearance.FontData.Bold =
+                    Infragistics.Win.DefaultableBoolean.True;
+                item.Settings.AppearancesSmall.Appearance.FontData.SizeInPoints = 8.5f;
+                item.Settings.AppearancesSmall.Appearance.FontData.Name = "Segoe UI";
+
+                // ===== CENTER TEXT =====
+                item.Settings.AppearancesSmall.Appearance.TextHAlignAsString = "Center";
+                item.Settings.AppearancesSmall.Appearance.TextVAlignAsString = "Middle";
+
+                // ===== HOVER APPEARANCE =====
+                item.Settings.AppearancesSmall.HotTrackAppearance.BackColor =
+                    Color.FromArgb(50, 170, 250);
+                item.Settings.AppearancesSmall.HotTrackAppearance.BackColor2 =
+                    Color.FromArgb(20, 140, 220);
+                item.Settings.AppearancesSmall.HotTrackAppearance.BackGradientStyle =
+                    Infragistics.Win.GradientStyle.Vertical;
+                item.Settings.AppearancesSmall.HotTrackAppearance.BorderAlpha =
+                    Infragistics.Win.Alpha.Transparent;
+                item.Settings.AppearancesSmall.HotTrackAppearance.FontData.Bold =
+                    Infragistics.Win.DefaultableBoolean.True;
+                item.Settings.AppearancesSmall.HotTrackAppearance.FontData.SizeInPoints = 8.5f;
+                item.Settings.AppearancesSmall.HotTrackAppearance.FontData.Name = "Segoe UI";
+
+                // ===== ADD TO FAVOURITE vs REGULAR ITEMS =====
+                if (item.Key == "AddToFavourite")
+                {
+                    // Blue background, RED text (IRS POS style)
+                    item.Settings.AppearancesSmall.Appearance.ForeColor = Color.Red;
+                    item.Settings.AppearancesSmall.HotTrackAppearance.ForeColor = Color.Red;
+                }
+                else
+                {
+                    // Blue background, WHITE text (IRS POS style)
+                    item.Settings.AppearancesSmall.Appearance.ForeColor = Color.White;
+                    item.Settings.AppearancesSmall.HotTrackAppearance.ForeColor = Color.White;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error styling favourite item: {ex.Message}");
+            }
+        }
+    }
 }
