@@ -46,6 +46,14 @@ namespace PosBranch_Win
             tabControlMain.MouseLeave += tabControlMain_MouseLeave;
             tabControlMain.MouseWheel += tabControlMain_MouseWheel;
 
+            // Wire up mouse events for auto-focusing the Home ribbon tab
+            tabControlMain.MouseEnter += MainWorkspace_MouseEnter;
+            tabControlMain.MouseMove += MainWorkspace_MouseEnter;
+            ultraTabSharedControlsPage1.MouseEnter += MainWorkspace_MouseEnter;
+            ultraTabSharedControlsPage1.MouseMove += MainWorkspace_MouseEnter;
+            panelMain.MouseEnter += MainWorkspace_MouseEnter;
+            panelMain.MouseMove += MainWorkspace_MouseEnter;
+
             // Set up the timer for smooth scrolling
             scrollTimer.Interval = 50;
             scrollTimer.Tick += ScrollTimer_Tick;
@@ -115,6 +123,48 @@ namespace PosBranch_Win
             catch
             {
                 // If reflection fails, continue without close buttons
+            }
+        }
+
+        private void MainWorkspace_MouseEnter(object sender, EventArgs e)
+        {
+            try
+            {
+                if (ultraToolbarsManager1.Ribbon.SelectedTab != null &&
+                    ultraToolbarsManager1.Ribbon.SelectedTab.Key != "Home")
+                {
+                    if (ultraToolbarsManager1.Ribbon.Tabs.Exists("Home"))
+                    {
+                        ultraToolbarsManager1.Ribbon.SelectedTab = ultraToolbarsManager1.Ribbon.Tabs["Home"];
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error auto-selecting Home tab: {ex.Message}");
+            }
+        }
+
+        private void AttachMouseEnterRecursively(Control parentControl)
+        {
+            try
+            {
+                // Attach to the current control
+                parentControl.MouseEnter -= MainWorkspace_MouseEnter;
+                parentControl.MouseMove -= MainWorkspace_MouseEnter;
+
+                parentControl.MouseEnter += MainWorkspace_MouseEnter;
+                parentControl.MouseMove += MainWorkspace_MouseEnter;
+
+                // Recursively attach to all child controls
+                foreach (Control child in parentControl.Controls)
+                {
+                    AttachMouseEnterRecursively(child);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error attaching mouse enter recursively: {ex.Message}");
             }
         }
 
@@ -397,6 +447,9 @@ namespace PosBranch_Win
                 formToOpen.Show();
                 formToOpen.BringToFront();
 
+                // User Request: Apply auto-focus Home tab event to the fully loaded form
+                AttachMouseEnterRecursively(formToOpen);
+
                 // CRITICAL FIX: Resume layout and force proper sizing
                 formToOpen.ResumeLayout(false);
                 newTab.TabPage.ResumeLayout(false);
@@ -589,6 +642,9 @@ namespace PosBranch_Win
                 formToOpen.Show();
                 formToOpen.BringToFront();
                 formToOpen.Focus();
+
+                // User Request: Apply auto-focus Home tab event to the fully loaded form
+                AttachMouseEnterRecursively(formToOpen);
 
                 // Force layout and refresh
                 newTab.TabPage.PerformLayout();
@@ -1105,6 +1161,28 @@ namespace PosBranch_Win
             return true;
         }
 
+        /// <summary>
+        /// Gets the Form embedded in the currently active/selected tab.
+        /// </summary>
+        private Form GetActiveTabForm()
+        {
+            try
+            {
+                if (tabControlMain.ActiveTab != null &&
+                    tabControlMain.ActiveTab.TabPage.Controls.Count > 0 &&
+                    tabControlMain.ActiveTab.TabPage.Controls[0] is Form form &&
+                    !form.IsDisposed)
+                {
+                    return form;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error getting active tab form: {ex.Message}");
+            }
+            return null;
+        }
+
         private void ultraToolbarsManager1_ToolClick_1(object sender, Infragistics.Win.UltraWinToolbars.ToolClickEventArgs e)
         {
             // Debug the clicked tool key
@@ -1118,6 +1196,106 @@ namespace PosBranch_Win
             // Check permission before opening any form
             if (!CheckViewPermission(permissionKey))
                 return;
+
+            // Universal Save button — delegates to the active tab's form save method
+            // Covers all forms: FrmPurchase (SavePurchase), most Master/Accounts/Settings forms (btnSave_Click),
+            // frmSalesReturn/frmPurchaseReturn (pbxSave_Click), and any form with a public Save()/SaveData() method.
+            if (e.Tool.Key == "Save")
+            {
+                try
+                {
+                    Form activeForm = GetActiveTabForm();
+                    if (activeForm == null || activeForm.IsDisposed)
+                    {
+                        MessageBox.Show("No active form to save.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
+
+                    bool saved = false;
+
+                    // 1. FrmPurchase — has a dedicated public SavePurchase() method
+                    if (activeForm is Transaction.FrmPurchase purchaseForm)
+                    {
+                        purchaseForm.SavePurchase();
+                        saved = true;
+                    }
+
+                    // 2. Try btnSave_Click (used by most Master, Accounts, Utilities, Settings forms)
+                    //    e.g. FrmBranch, FrmBrand, FrmCategory, FrmGroup, frmItemMasterNew, frmLine,
+                    //    frmCompany, frmRack, FrmRow, FrmState, FrmCountry, FrmUsers, FrmUnitMaster,
+                    //    FrmCustomer, FrmVendor, FrmLedgers, FrmAccountGroup, FrmReceipt, FrmPayment,
+                    //    FrmContra, FrmJournal, FrmDebitNote, FrmCreditNote, FrmStockAdjustment,
+                    //    frmOpeningStock, frmPOSSettings, FrmRolePermissions, frmClosing, frmBarcode
+                    if (!saved)
+                    {
+                        var btnSaveMethod = activeForm.GetType().GetMethod("btnSave_Click",
+                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                        if (btnSaveMethod != null)
+                        {
+                            btnSaveMethod.Invoke(activeForm, new object[] { this, EventArgs.Empty });
+                            saved = true;
+                        }
+                    }
+
+                    // 3. Try pbxSave_Click (used by frmSalesReturn, frmPurchaseReturn)
+                    if (!saved)
+                    {
+                        var pbxSaveMethod = activeForm.GetType().GetMethod("pbxSave_Click",
+                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                        if (pbxSaveMethod != null)
+                        {
+                            pbxSaveMethod.Invoke(activeForm, new object[] { this, EventArgs.Empty });
+                            saved = true;
+                        }
+                    }
+
+                    // 4. Try btnUpdate_Click (for forms using update instead of save)
+                    if (!saved)
+                    {
+                        var btnUpdateMethod = activeForm.GetType().GetMethod("btnUpdate_Click",
+                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                        if (btnUpdateMethod != null)
+                        {
+                            btnUpdateMethod.Invoke(activeForm, new object[] { this, EventArgs.Empty });
+                            saved = true;
+                        }
+                    }
+
+                    // 5. Generic fallback: try public Save() or SaveData() methods
+                    if (!saved)
+                    {
+                        var saveMethod = activeForm.GetType().GetMethod("Save",
+                            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance,
+                            null, Type.EmptyTypes, null)
+                            ?? activeForm.GetType().GetMethod("SaveData",
+                            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance,
+                            null, Type.EmptyTypes, null);
+                        if (saveMethod != null)
+                        {
+                            saveMethod.Invoke(activeForm, null);
+                            saved = true;
+                        }
+                    }
+
+                    if (!saved)
+                    {
+                        MessageBox.Show("Save is not supported for this form.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                }
+                catch (System.Reflection.TargetInvocationException tie)
+                {
+                    // Unwrap the inner exception from reflection
+                    var innerEx = tie.InnerException ?? tie;
+                    System.Diagnostics.Debug.WriteLine($"Error in universal save: {innerEx.Message}");
+                    MessageBox.Show($"Error saving: {innerEx.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error in universal save: {ex.Message}");
+                    MessageBox.Show($"Error saving: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                return;
+            }
 
             if (e.Tool.Key == "Pos")
             {

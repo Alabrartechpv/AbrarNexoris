@@ -65,9 +65,7 @@ namespace PosBranch_Win.Transaction
             this.VendorName = new System.Windows.Forms.TextBox();
             this.vendorid = new Infragistics.Win.Misc.UltraLabel();
             this.TxtSRNO = new System.Windows.Forms.TextBox();
-            this.cmbBranch = new System.Windows.Forms.ComboBox();
             this.lblVendor = new System.Windows.Forms.Label();
-            this.lblBranch = new System.Windows.Forms.Label();
             this.ultraDateTimeEditor1 = new Infragistics.Win.UltraWinEditors.UltraDateTimeEditor();
             this.lblDte = new System.Windows.Forms.Label();
             this.lblPRno = new System.Windows.Forms.Label();
@@ -89,6 +87,8 @@ namespace PosBranch_Win.Transaction
             this.panelSubtotalLine = new Infragistics.Win.Misc.UltraPanel();
             this.SubTotal = new System.Windows.Forms.Label();
             this.TxtSubTotal = new System.Windows.Forms.TextBox();
+            this.lblBranch = new System.Windows.Forms.Label();
+            this.cmbBranch = new System.Windows.Forms.ComboBox();
             this.ultraPanel3 = new Infragistics.Win.Misc.UltraPanel();
             this.ultraGrid1 = new Infragistics.Win.UltraWinGrid.UltraGrid();
             this.ultraPanel4 = new Infragistics.Win.Misc.UltraPanel();
@@ -197,13 +197,14 @@ namespace PosBranch_Win.Transaction
             // 
             // button1
             // 
+            this.button1.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.button1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(122)))), ((int)(((byte)(204)))));
             this.button1.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("button1.BackgroundImage")));
             this.button1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button1.ForeColor = System.Drawing.Color.Aquamarine;
             this.button1.ImageKey = "(none)";
-            this.button1.Location = new System.Drawing.Point(1151, 32);
+            this.button1.Location = new System.Drawing.Point(966, 34);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(35, 30);
             this.button1.TabIndex = 41;
@@ -246,25 +247,13 @@ namespace PosBranch_Win.Transaction
             // 
             // TxtSRNO
             // 
+            this.TxtSRNO.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.TxtSRNO.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.TxtSRNO.Location = new System.Drawing.Point(990, 33);
+            this.TxtSRNO.Location = new System.Drawing.Point(805, 35);
             this.TxtSRNO.Name = "TxtSRNO";
             this.TxtSRNO.Size = new System.Drawing.Size(155, 30);
             this.TxtSRNO.TabIndex = 33;
             this.TxtSRNO.TextChanged += new System.EventHandler(this.TxtSRNO_TextChanged);
-            // 
-            // cmbBranch
-            // 
-            this.cmbBranch.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
-            this.cmbBranch.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
-            this.cmbBranch.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cmbBranch.FormattingEnabled = true;
-            this.cmbBranch.Location = new System.Drawing.Point(114, 52);
-            this.cmbBranch.Name = "cmbBranch";
-            this.cmbBranch.Size = new System.Drawing.Size(203, 33);
-            this.cmbBranch.TabIndex = 35;
-            this.cmbBranch.Visible = false;
-            this.cmbBranch.SelectedIndexChanged += new System.EventHandler(this.cmbBranch_SelectedIndexChanged);
             // 
             // lblVendor
             // 
@@ -277,25 +266,15 @@ namespace PosBranch_Win.Transaction
             this.lblVendor.Text = "Vendor ";
             this.lblVendor.Click += new System.EventHandler(this.lblVendor_Click);
             // 
-            // lblBranch
-            // 
-            this.lblBranch.AutoSize = true;
-            this.lblBranch.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblBranch.Location = new System.Drawing.Point(142, 9);
-            this.lblBranch.Name = "lblBranch";
-            this.lblBranch.Size = new System.Drawing.Size(80, 25);
-            this.lblBranch.TabIndex = 6;
-            this.lblBranch.Text = "Branch";
-            this.lblBranch.Visible = false;
-            this.lblBranch.Click += new System.EventHandler(this.lblBranch_Click);
-            // 
             // ultraDateTimeEditor1
             // 
+            this.ultraDateTimeEditor1.DateTime = new System.DateTime(2026, 3, 4, 0, 0, 0, 0);
             this.ultraDateTimeEditor1.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ultraDateTimeEditor1.Location = new System.Drawing.Point(624, 33);
             this.ultraDateTimeEditor1.Name = "ultraDateTimeEditor1";
             this.ultraDateTimeEditor1.Size = new System.Drawing.Size(140, 33);
             this.ultraDateTimeEditor1.TabIndex = 4;
+            this.ultraDateTimeEditor1.Value = new System.DateTime(2026, 3, 4, 0, 0, 0, 0);
             this.ultraDateTimeEditor1.ValueChanged += new System.EventHandler(this.ultraDateTimeEditor1_ValueChanged);
             // 
             // lblDte
@@ -311,9 +290,10 @@ namespace PosBranch_Win.Transaction
             // 
             // lblPRno
             // 
+            this.lblPRno.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.lblPRno.AutoSize = true;
             this.lblPRno.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblPRno.Location = new System.Drawing.Point(993, 5);
+            this.lblPRno.Location = new System.Drawing.Point(808, 7);
             this.lblPRno.Name = "lblPRno";
             this.lblPRno.Size = new System.Drawing.Size(90, 25);
             this.lblPRno.TabIndex = 10;
@@ -361,7 +341,7 @@ namespace PosBranch_Win.Transaction
             this.btnAddPurchaceList.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.btnAddPurchaceList.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnAddPurchaceList.ForeColor = System.Drawing.Color.Aquamarine;
-            this.btnAddPurchaceList.Location = new System.Drawing.Point(532, 32);
+            this.btnAddPurchaceList.Location = new System.Drawing.Point(436, 32);
             this.btnAddPurchaceList.Name = "btnAddPurchaceList";
             this.btnAddPurchaceList.Size = new System.Drawing.Size(36, 33);
             this.btnAddPurchaceList.TabIndex = 40;
@@ -381,7 +361,7 @@ namespace PosBranch_Win.Transaction
             // textBox2
             // 
             this.textBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox2.Location = new System.Drawing.Point(631, 35);
+            this.textBox2.Location = new System.Drawing.Point(490, 33);
             this.textBox2.Name = "textBox2";
             this.textBox2.Size = new System.Drawing.Size(168, 30);
             this.textBox2.TabIndex = 41;
@@ -392,7 +372,7 @@ namespace PosBranch_Win.Transaction
             this.TxtBarcode.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.TxtBarcode.Location = new System.Drawing.Point(21, 35);
             this.TxtBarcode.Name = "TxtBarcode";
-            this.TxtBarcode.Size = new System.Drawing.Size(243, 30);
+            this.TxtBarcode.Size = new System.Drawing.Size(176, 30);
             this.TxtBarcode.TabIndex = 38;
             this.TxtBarcode.TextChanged += new System.EventHandler(this.TxtBarcode_TextChanged);
             // 
@@ -403,7 +383,7 @@ namespace PosBranch_Win.Transaction
             this.BtnDial.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BtnDial.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.BtnDial.ForeColor = System.Drawing.Color.Aquamarine;
-            this.BtnDial.Location = new System.Drawing.Point(267, 33);
+            this.BtnDial.Location = new System.Drawing.Point(192, 34);
             this.BtnDial.Name = "BtnDial";
             this.BtnDial.Size = new System.Drawing.Size(49, 33);
             this.BtnDial.TabIndex = 37;
@@ -414,7 +394,7 @@ namespace PosBranch_Win.Transaction
             // textBox1
             // 
             this.textBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox1.Location = new System.Drawing.Point(364, 34);
+            this.textBox1.Location = new System.Drawing.Point(268, 34);
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(165, 30);
             this.textBox1.TabIndex = 39;
@@ -422,18 +402,21 @@ namespace PosBranch_Win.Transaction
             // 
             // ultraDateTimeEditor2
             // 
+            this.ultraDateTimeEditor2.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.ultraDateTimeEditor2.DateTime = new System.DateTime(2026, 3, 4, 0, 0, 0, 0);
             this.ultraDateTimeEditor2.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ultraDateTimeEditor2.Location = new System.Drawing.Point(870, 34);
+            this.ultraDateTimeEditor2.Location = new System.Drawing.Point(683, 32);
             this.ultraDateTimeEditor2.Name = "ultraDateTimeEditor2";
             this.ultraDateTimeEditor2.Size = new System.Drawing.Size(140, 31);
             this.ultraDateTimeEditor2.TabIndex = 5;
+            this.ultraDateTimeEditor2.Value = new System.DateTime(2026, 3, 4, 0, 0, 0, 0);
             this.ultraDateTimeEditor2.ValueChanged += new System.EventHandler(this.ultraDateTimeEditor2_ValueChanged);
             // 
             // lblPno
             // 
             this.lblPno.AutoSize = true;
             this.lblPno.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblPno.Location = new System.Drawing.Point(359, 5);
+            this.lblPno.Location = new System.Drawing.Point(269, 8);
             this.lblPno.Name = "lblPno";
             this.lblPno.Size = new System.Drawing.Size(142, 25);
             this.lblPno.TabIndex = 11;
@@ -443,7 +426,7 @@ namespace PosBranch_Win.Transaction
             // 
             this.lblPRamount.AutoSize = true;
             this.lblPRamount.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblPRamount.Location = new System.Drawing.Point(630, 7);
+            this.lblPRamount.Location = new System.Drawing.Point(489, 5);
             this.lblPRamount.Name = "lblPRamount";
             this.lblPRamount.Size = new System.Drawing.Size(152, 25);
             this.lblPRamount.TabIndex = 13;
@@ -451,9 +434,10 @@ namespace PosBranch_Win.Transaction
             // 
             // lblDte2
             // 
+            this.lblDte2.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.lblDte2.AutoSize = true;
             this.lblDte2.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblDte2.Location = new System.Drawing.Point(867, 7);
+            this.lblDte2.Location = new System.Drawing.Point(680, 5);
             this.lblDte2.Name = "lblDte2";
             this.lblDte2.Size = new System.Drawing.Size(160, 25);
             this.lblDte2.TabIndex = 12;
@@ -545,6 +529,31 @@ namespace PosBranch_Win.Transaction
             this.TxtSubTotal.Size = new System.Drawing.Size(223, 30);
             this.TxtSubTotal.TabIndex = 31;
             this.TxtSubTotal.TextChanged += new System.EventHandler(this.TxtSubTotal_TextChanged);
+            // 
+            // lblBranch
+            // 
+            this.lblBranch.AutoSize = true;
+            this.lblBranch.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblBranch.Location = new System.Drawing.Point(142, 9);
+            this.lblBranch.Name = "lblBranch";
+            this.lblBranch.Size = new System.Drawing.Size(80, 25);
+            this.lblBranch.TabIndex = 6;
+            this.lblBranch.Text = "Branch";
+            this.lblBranch.Visible = false;
+            this.lblBranch.Click += new System.EventHandler(this.lblBranch_Click);
+            // 
+            // cmbBranch
+            // 
+            this.cmbBranch.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this.cmbBranch.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            this.cmbBranch.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cmbBranch.FormattingEnabled = true;
+            this.cmbBranch.Location = new System.Drawing.Point(114, 52);
+            this.cmbBranch.Name = "cmbBranch";
+            this.cmbBranch.Size = new System.Drawing.Size(203, 33);
+            this.cmbBranch.TabIndex = 35;
+            this.cmbBranch.Visible = false;
+            this.cmbBranch.SelectedIndexChanged += new System.EventHandler(this.cmbBranch_SelectedIndexChanged);
             // 
             // ultraPanel3
             // 

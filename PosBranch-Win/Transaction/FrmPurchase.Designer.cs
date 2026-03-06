@@ -32,6 +32,7 @@ namespace PosBranch_Win.Transaction
         {
             Infragistics.Win.Appearance appearance1 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance2 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance3 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance4 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance5 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance6 = new Infragistics.Win.Appearance();
@@ -63,12 +64,11 @@ namespace PosBranch_Win.Transaction
             Infragistics.Win.Appearance appearance31 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance32 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance33 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance34 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance35 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance36 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance37 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance38 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance34 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance3 = new Infragistics.Win.Appearance();
             this.lblPurchaseNo = new System.Windows.Forms.Label();
             this.txtPurchaseNo = new System.Windows.Forms.TextBox();
             this.dtpPurchaseDate = new System.Windows.Forms.DateTimePicker();
@@ -88,17 +88,20 @@ namespace PosBranch_Win.Transaction
             this.lblBarcode = new System.Windows.Forms.Label();
             this.ultraPanel1 = new Infragistics.Win.Misc.UltraPanel();
             this.ultraPanel5 = new Infragistics.Win.Misc.UltraPanel();
+            this.ultraCheckEditorApplyRounding = new Infragistics.Win.UltraWinEditors.UltraCheckEditor();
             this.ultraPanel11 = new Infragistics.Win.Misc.UltraPanel();
             this.ultraPanel10 = new Infragistics.Win.Misc.UltraPanel();
             this.label4 = new System.Windows.Forms.Label();
             this.ultraPanel12 = new Infragistics.Win.Misc.UltraPanel();
             this.ultraPanel9 = new Infragistics.Win.Misc.UltraPanel();
             this.label6 = new System.Windows.Forms.Label();
+            this.CmboBranch = new System.Windows.Forms.ComboBox();
             this.lblSubTotalAmt = new System.Windows.Forms.Label();
             this.textBox2 = new System.Windows.Forms.TextBox();
             this.txtBilledBy = new System.Windows.Forms.TextBox();
             this.txtRoundOff = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
+            this.lblBranch = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.Disc = new System.Windows.Forms.Label();
             this.lblsub = new System.Windows.Forms.Label();
@@ -106,11 +109,11 @@ namespace PosBranch_Win.Transaction
             this.ultraPanel2 = new Infragistics.Win.Misc.UltraPanel();
             this.button1 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
-            this.CmboBranch = new System.Windows.Forms.ComboBox();
             this.textBox1 = new System.Windows.Forms.TextBox();
-            this.lblBranch = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.ultraPanel7 = new Infragistics.Win.Misc.UltraPanel();
+            this.comboBox1 = new System.Windows.Forms.ComboBox();
+            this.label17 = new System.Windows.Forms.Label();
             this.lblVoucherId = new System.Windows.Forms.Label();
             this.ultraLabel4 = new Infragistics.Win.Misc.UltraLabel();
             this.pbxSave = new Infragistics.Win.UltraWinEditors.UltraPictureBox();
@@ -126,20 +129,18 @@ namespace PosBranch_Win.Transaction
             this.ultraPictureBox4 = new Infragistics.Win.UltraWinEditors.UltraPictureBox();
             this.ultraPanel4 = new Infragistics.Win.Misc.UltraPanel();
             this.ultraGrid1 = new Infragistics.Win.UltraWinGrid.UltraGrid();
+            this.ultraPanel3 = new Infragistics.Win.Misc.UltraPanel();
             this.ultraPanel6 = new Infragistics.Win.Misc.UltraPanel();
             this.label1 = new System.Windows.Forms.Label();
             this.ultraPictureBox8 = new Infragistics.Win.UltraWinEditors.UltraPictureBox();
-            this.comboBox1 = new System.Windows.Forms.ComboBox();
             this.ultraPictureBox5 = new Infragistics.Win.UltraWinEditors.UltraPictureBox();
-            this.ultraPictureBox6 = new Infragistics.Win.UltraWinEditors.UltraPictureBox();
-            this.label17 = new System.Windows.Forms.Label();
-            this.ultraPanel3 = new Infragistics.Win.Misc.UltraPanel();
             this.label5 = new System.Windows.Forms.Label();
-            this.ultraCheckEditorApplyRounding = new Infragistics.Win.UltraWinEditors.UltraCheckEditor();
+            this.ultraPictureBox6 = new Infragistics.Win.UltraWinEditors.UltraPictureBox();
             this.ultraPanel1.ClientArea.SuspendLayout();
             this.ultraPanel1.SuspendLayout();
             this.ultraPanel5.ClientArea.SuspendLayout();
             this.ultraPanel5.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraCheckEditorApplyRounding)).BeginInit();
             this.ultraPanel11.ClientArea.SuspendLayout();
             this.ultraPanel11.SuspendLayout();
             this.ultraPanel10.ClientArea.SuspendLayout();
@@ -155,18 +156,18 @@ namespace PosBranch_Win.Transaction
             this.ultraPanel4.ClientArea.SuspendLayout();
             this.ultraPanel4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.ultraGrid1)).BeginInit();
-            this.ultraPanel6.ClientArea.SuspendLayout();
-            this.ultraPanel6.SuspendLayout();
             this.ultraPanel3.ClientArea.SuspendLayout();
             this.ultraPanel3.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.ultraCheckEditorApplyRounding)).BeginInit();
+            this.ultraPanel6.ClientArea.SuspendLayout();
+            this.ultraPanel6.SuspendLayout();
             this.SuspendLayout();
             // 
             // lblPurchaseNo
             // 
+            this.lblPurchaseNo.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.lblPurchaseNo.AutoSize = true;
             this.lblPurchaseNo.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblPurchaseNo.Location = new System.Drawing.Point(1016, 18);
+            this.lblPurchaseNo.Location = new System.Drawing.Point(1027, 3);
             this.lblPurchaseNo.Name = "lblPurchaseNo";
             this.lblPurchaseNo.Size = new System.Drawing.Size(61, 18);
             this.lblPurchaseNo.TabIndex = 2;
@@ -174,24 +175,27 @@ namespace PosBranch_Win.Transaction
             // 
             // txtPurchaseNo
             // 
+            this.txtPurchaseNo.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.txtPurchaseNo.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtPurchaseNo.Font = new System.Drawing.Font("Microsoft Tai Le", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtPurchaseNo.Location = new System.Drawing.Point(1074, 17);
+            this.txtPurchaseNo.Location = new System.Drawing.Point(1026, 20);
             this.txtPurchaseNo.Name = "txtPurchaseNo";
-            this.txtPurchaseNo.Size = new System.Drawing.Size(127, 23);
+            this.txtPurchaseNo.Size = new System.Drawing.Size(113, 23);
             this.txtPurchaseNo.TabIndex = 3;
             // 
             // dtpPurchaseDate
             // 
+            this.dtpPurchaseDate.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.dtpPurchaseDate.CalendarFont = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.dtpPurchaseDate.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.dtpPurchaseDate.Location = new System.Drawing.Point(204, 25);
+            this.dtpPurchaseDate.Location = new System.Drawing.Point(178, 25);
             this.dtpPurchaseDate.Name = "dtpPurchaseDate";
             this.dtpPurchaseDate.Size = new System.Drawing.Size(172, 21);
             this.dtpPurchaseDate.TabIndex = 5;
             // 
             // CmboVendor
             // 
+            this.CmboVendor.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.CmboVendor.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
             this.CmboVendor.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             this.CmboVendor.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -203,9 +207,10 @@ namespace PosBranch_Win.Transaction
             // 
             // lblPayMode
             // 
+            this.lblPayMode.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.lblPayMode.AutoSize = true;
             this.lblPayMode.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblPayMode.Location = new System.Drawing.Point(417, 4);
+            this.lblPayMode.Location = new System.Drawing.Point(425, 3);
             this.lblPayMode.Name = "lblPayMode";
             this.lblPayMode.Size = new System.Drawing.Size(125, 18);
             this.lblPayMode.TabIndex = 8;
@@ -213,30 +218,33 @@ namespace PosBranch_Win.Transaction
             // 
             // CmboPayment
             // 
+            this.CmboPayment.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.CmboPayment.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
             this.CmboPayment.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             this.CmboPayment.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.CmboPayment.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.CmboPayment.FormattingEnabled = true;
-            this.CmboPayment.Location = new System.Drawing.Point(418, 22);
+            this.CmboPayment.Location = new System.Drawing.Point(424, 22);
             this.CmboPayment.Name = "CmboPayment";
             this.CmboPayment.Size = new System.Drawing.Size(168, 23);
             this.CmboPayment.TabIndex = 9;
             // 
             // txtInvoiceAmt
             // 
+            this.txtInvoiceAmt.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.txtInvoiceAmt.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtInvoiceAmt.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtInvoiceAmt.Location = new System.Drawing.Point(829, 22);
+            this.txtInvoiceAmt.Location = new System.Drawing.Point(845, 22);
             this.txtInvoiceAmt.Name = "txtInvoiceAmt";
-            this.txtInvoiceAmt.Size = new System.Drawing.Size(168, 21);
+            this.txtInvoiceAmt.Size = new System.Drawing.Size(113, 21);
             this.txtInvoiceAmt.TabIndex = 7;
             // 
             // lblInvoiceNo
             // 
+            this.lblInvoiceNo.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.lblInvoiceNo.AutoSize = true;
             this.lblInvoiceNo.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblInvoiceNo.Location = new System.Drawing.Point(829, 3);
+            this.lblInvoiceNo.Location = new System.Drawing.Point(846, 3);
             this.lblInvoiceNo.Name = "lblInvoiceNo";
             this.lblInvoiceNo.Size = new System.Drawing.Size(105, 18);
             this.lblInvoiceNo.TabIndex = 6;
@@ -244,18 +252,20 @@ namespace PosBranch_Win.Transaction
             // 
             // DtpInoviceDate
             // 
+            this.DtpInoviceDate.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.DtpInoviceDate.CalendarFont = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.DtpInoviceDate.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.DtpInoviceDate.Location = new System.Drawing.Point(626, 23);
+            this.DtpInoviceDate.Location = new System.Drawing.Point(636, 22);
             this.DtpInoviceDate.Name = "DtpInoviceDate";
             this.DtpInoviceDate.Size = new System.Drawing.Size(168, 21);
             this.DtpInoviceDate.TabIndex = 5;
             // 
             // lblInvoiceDate
             // 
+            this.lblInvoiceDate.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.lblInvoiceDate.AutoSize = true;
             this.lblInvoiceDate.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblInvoiceDate.Location = new System.Drawing.Point(623, 4);
+            this.lblInvoiceDate.Location = new System.Drawing.Point(635, 3);
             this.lblInvoiceDate.Name = "lblInvoiceDate";
             this.lblInvoiceDate.Size = new System.Drawing.Size(85, 18);
             this.lblInvoiceDate.TabIndex = 4;
@@ -263,6 +273,7 @@ namespace PosBranch_Win.Transaction
             // 
             // txtInvoiceNo
             // 
+            this.txtInvoiceNo.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.txtInvoiceNo.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtInvoiceNo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtInvoiceNo.Location = new System.Drawing.Point(13, 25);
@@ -272,6 +283,7 @@ namespace PosBranch_Win.Transaction
             // 
             // lblnvoice
             // 
+            this.lblnvoice.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.lblnvoice.AutoSize = true;
             this.lblnvoice.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblnvoice.Location = new System.Drawing.Point(10, 6);
@@ -303,12 +315,13 @@ namespace PosBranch_Win.Transaction
             // 
             // btnFInd
             // 
+            this.btnFInd.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.btnFInd.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(122)))), ((int)(((byte)(204)))));
             this.btnFInd.FlatAppearance.BorderColor = System.Drawing.Color.Black;
             this.btnFInd.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnFInd.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnFInd.ForeColor = System.Drawing.Color.White;
-            this.btnFInd.Location = new System.Drawing.Point(633, 23);
+            this.btnFInd.Location = new System.Drawing.Point(538, 23);
             this.btnFInd.Name = "btnFInd";
             this.btnFInd.Size = new System.Drawing.Size(39, 24);
             this.btnFInd.TabIndex = 3;
@@ -317,9 +330,10 @@ namespace PosBranch_Win.Transaction
             // 
             // txtBarcode
             // 
+            this.txtBarcode.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.txtBarcode.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtBarcode.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtBarcode.Location = new System.Drawing.Point(458, 23);
+            this.txtBarcode.Location = new System.Drawing.Point(362, 23);
             this.txtBarcode.Name = "txtBarcode";
             this.txtBarcode.Size = new System.Drawing.Size(214, 24);
             this.txtBarcode.TabIndex = 2;
@@ -328,9 +342,10 @@ namespace PosBranch_Win.Transaction
             // 
             // lblBarcode
             // 
+            this.lblBarcode.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.lblBarcode.AutoSize = true;
             this.lblBarcode.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblBarcode.Location = new System.Drawing.Point(396, 25);
+            this.lblBarcode.Location = new System.Drawing.Point(362, 4);
             this.lblBarcode.Name = "lblBarcode";
             this.lblBarcode.Size = new System.Drawing.Size(64, 18);
             this.lblBarcode.TabIndex = 1;
@@ -388,6 +403,19 @@ namespace PosBranch_Win.Transaction
             this.ultraPanel5.Name = "ultraPanel5";
             this.ultraPanel5.Size = new System.Drawing.Size(1210, 95);
             this.ultraPanel5.TabIndex = 11;
+            // 
+            // ultraCheckEditorApplyRounding
+            // 
+            this.ultraCheckEditorApplyRounding.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            appearance3.FontData.BoldAsString = "True";
+            this.ultraCheckEditorApplyRounding.Appearance = appearance3;
+            this.ultraCheckEditorApplyRounding.BackColor = System.Drawing.Color.Transparent;
+            this.ultraCheckEditorApplyRounding.BackColorInternal = System.Drawing.Color.Transparent;
+            this.ultraCheckEditorApplyRounding.Location = new System.Drawing.Point(568, 37);
+            this.ultraCheckEditorApplyRounding.Name = "ultraCheckEditorApplyRounding";
+            this.ultraCheckEditorApplyRounding.Size = new System.Drawing.Size(74, 20);
+            this.ultraCheckEditorApplyRounding.TabIndex = 82;
+            this.ultraCheckEditorApplyRounding.Text = "Rounding";
             // 
             // ultraPanel11
             // 
@@ -513,6 +541,20 @@ namespace PosBranch_Win.Transaction
             this.label6.TabIndex = 0;
             this.label6.Text = "0.00";
             // 
+            // CmboBranch
+            // 
+            this.CmboBranch.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this.CmboBranch.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            this.CmboBranch.BackColor = System.Drawing.SystemColors.Window;
+            this.CmboBranch.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.CmboBranch.ForeColor = System.Drawing.Color.Black;
+            this.CmboBranch.FormattingEnabled = true;
+            this.CmboBranch.Location = new System.Drawing.Point(13, 35);
+            this.CmboBranch.Name = "CmboBranch";
+            this.CmboBranch.Size = new System.Drawing.Size(215, 24);
+            this.CmboBranch.TabIndex = 1;
+            this.CmboBranch.Visible = false;
+            // 
             // lblSubTotalAmt
             // 
             this.lblSubTotalAmt.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -568,6 +610,18 @@ namespace PosBranch_Win.Transaction
             this.label2.Size = new System.Drawing.Size(70, 16);
             this.label2.TabIndex = 68;
             this.label2.Text = "BIlled By";
+            // 
+            // lblBranch
+            // 
+            this.lblBranch.AutoSize = true;
+            this.lblBranch.Font = new System.Drawing.Font("Microsoft YaHei", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblBranch.Location = new System.Drawing.Point(13, 17);
+            this.lblBranch.Name = "lblBranch";
+            this.lblBranch.Size = new System.Drawing.Size(58, 20);
+            this.lblBranch.TabIndex = 0;
+            this.lblBranch.Text = "Branch";
+            this.lblBranch.Visible = false;
+            this.lblBranch.Click += new System.EventHandler(this.lblBranch_Click);
             // 
             // label3
             // 
@@ -627,9 +681,9 @@ namespace PosBranch_Win.Transaction
             this.ultraPanel2.ClientArea.Controls.Add(this.txtInvoiceAmt);
             this.ultraPanel2.ClientArea.Controls.Add(this.button1);
             this.ultraPanel2.ClientArea.Controls.Add(this.button2);
-            this.ultraPanel2.ClientArea.Controls.Add(this.txtPurchaseNo);
             this.ultraPanel2.ClientArea.Controls.Add(this.CmboPayment);
             this.ultraPanel2.ClientArea.Controls.Add(this.lblInvoiceNo);
+            this.ultraPanel2.ClientArea.Controls.Add(this.txtPurchaseNo);
             this.ultraPanel2.ClientArea.Controls.Add(this.CmboVendor);
             this.ultraPanel2.ClientArea.Controls.Add(this.textBox1);
             this.ultraPanel2.ClientArea.Controls.Add(this.lblInvoiceDate);
@@ -643,6 +697,7 @@ namespace PosBranch_Win.Transaction
             // 
             // button1
             // 
+            this.button1.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.button1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(122)))), ((int)(((byte)(204)))));
             this.button1.FlatAppearance.BorderColor = System.Drawing.SystemColors.ActiveCaptionText;
             this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -657,34 +712,22 @@ namespace PosBranch_Win.Transaction
             // 
             // button2
             // 
+            this.button2.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.button2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(122)))), ((int)(((byte)(204)))));
             this.button2.FlatAppearance.BorderColor = System.Drawing.Color.Black;
             this.button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.button2.ForeColor = System.Drawing.Color.White;
-            this.button2.Location = new System.Drawing.Point(1162, 17);
+            this.button2.Location = new System.Drawing.Point(1115, 20);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(39, 23);
             this.button2.TabIndex = 17;
             this.button2.Text = "F6";
             this.button2.UseVisualStyleBackColor = false;
             // 
-            // CmboBranch
-            // 
-            this.CmboBranch.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
-            this.CmboBranch.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
-            this.CmboBranch.BackColor = System.Drawing.SystemColors.Window;
-            this.CmboBranch.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.CmboBranch.ForeColor = System.Drawing.Color.Black;
-            this.CmboBranch.FormattingEnabled = true;
-            this.CmboBranch.Location = new System.Drawing.Point(13, 35);
-            this.CmboBranch.Name = "CmboBranch";
-            this.CmboBranch.Size = new System.Drawing.Size(215, 24);
-            this.CmboBranch.TabIndex = 1;
-            this.CmboBranch.Visible = false;
-            // 
             // textBox1
             // 
+            this.textBox1.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.textBox1.BackColor = System.Drawing.Color.White;
             this.textBox1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.textBox1.Font = new System.Drawing.Font("Microsoft Tai Le", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -694,20 +737,9 @@ namespace PosBranch_Win.Transaction
             this.textBox1.Size = new System.Drawing.Size(186, 24);
             this.textBox1.TabIndex = 18;
             // 
-            // lblBranch
-            // 
-            this.lblBranch.AutoSize = true;
-            this.lblBranch.Font = new System.Drawing.Font("Microsoft YaHei", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblBranch.Location = new System.Drawing.Point(13, 17);
-            this.lblBranch.Name = "lblBranch";
-            this.lblBranch.Size = new System.Drawing.Size(58, 20);
-            this.lblBranch.TabIndex = 0;
-            this.lblBranch.Text = "Branch";
-            this.lblBranch.Visible = false;
-            this.lblBranch.Click += new System.EventHandler(this.lblBranch_Click);
-            // 
             // label7
             // 
+            this.label7.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label7.Location = new System.Drawing.Point(4, 4);
@@ -745,6 +777,29 @@ namespace PosBranch_Win.Transaction
             this.ultraPanel7.Name = "ultraPanel7";
             this.ultraPanel7.Size = new System.Drawing.Size(213, 488);
             this.ultraPanel7.TabIndex = 8;
+            // 
+            // comboBox1
+            // 
+            this.comboBox1.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this.comboBox1.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            this.comboBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.comboBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.comboBox1.FormattingEnabled = true;
+            this.comboBox1.Location = new System.Drawing.Point(75, 233);
+            this.comboBox1.Name = "comboBox1";
+            this.comboBox1.Size = new System.Drawing.Size(122, 23);
+            this.comboBox1.TabIndex = 20;
+            // 
+            // label17
+            // 
+            this.label17.AutoSize = true;
+            this.label17.BackColor = System.Drawing.Color.Transparent;
+            this.label17.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label17.Location = new System.Drawing.Point(13, 235);
+            this.label17.Name = "label17";
+            this.label17.Size = new System.Drawing.Size(63, 17);
+            this.label17.TabIndex = 126;
+            this.label17.Text = "TaxType";
             // 
             // lblVoucherId
             // 
@@ -1013,8 +1068,34 @@ namespace PosBranch_Win.Transaction
             this.ultraGrid1.Size = new System.Drawing.Size(982, 411);
             this.ultraGrid1.TabIndex = 4;
             // 
+            // ultraPanel3
+            // 
+            this.ultraPanel3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            appearance34.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.ultraPanel3.Appearance = appearance34;
+            this.ultraPanel3.BorderStyle = Infragistics.Win.UIElementBorderStyle.InsetSoft;
+            // 
+            // ultraPanel3.ClientArea
+            // 
+            this.ultraPanel3.ClientArea.Controls.Add(this.ultraPanel6);
+            this.ultraPanel3.ClientArea.Controls.Add(this.txtInvoiceNo);
+            this.ultraPanel3.ClientArea.Controls.Add(this.dtpPurchaseDate);
+            this.ultraPanel3.ClientArea.Controls.Add(this.btnFInd);
+            this.ultraPanel3.ClientArea.Controls.Add(this.lblnvoice);
+            this.ultraPanel3.ClientArea.Controls.Add(this.ultraPictureBox5);
+            this.ultraPanel3.ClientArea.Controls.Add(this.label5);
+            this.ultraPanel3.ClientArea.Controls.Add(this.ultraPictureBox6);
+            this.ultraPanel3.ClientArea.Controls.Add(this.txtBarcode);
+            this.ultraPanel3.ClientArea.Controls.Add(this.lblBarcode);
+            this.ultraPanel3.Location = new System.Drawing.Point(6, 72);
+            this.ultraPanel3.Name = "ultraPanel3";
+            this.ultraPanel3.Size = new System.Drawing.Size(994, 62);
+            this.ultraPanel3.TabIndex = 1;
+            // 
             // ultraPanel6
             // 
+            this.ultraPanel6.Anchor = System.Windows.Forms.AnchorStyles.Left;
             appearance35.BackColor = System.Drawing.Color.YellowGreen;
             appearance35.BackColor2 = System.Drawing.Color.Green;
             appearance35.BackGradientStyle = Infragistics.Win.GradientStyle.GlassBottom50;
@@ -1027,7 +1108,7 @@ namespace PosBranch_Win.Transaction
             this.ultraPanel6.ClientArea.Controls.Add(this.label1);
             this.ultraPanel6.ClientArea.Controls.Add(this.ultraPictureBox8);
             this.ultraPanel6.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.ultraPanel6.Location = new System.Drawing.Point(807, 9);
+            this.ultraPanel6.Location = new System.Drawing.Point(690, 9);
             this.ultraPanel6.Name = "ultraPanel6";
             this.ultraPanel6.Size = new System.Drawing.Size(137, 41);
             this.ultraPanel6.TabIndex = 127;
@@ -1060,20 +1141,9 @@ namespace PosBranch_Win.Transaction
             this.ultraPictureBox8.Size = new System.Drawing.Size(21, 26);
             this.ultraPictureBox8.TabIndex = 42;
             // 
-            // comboBox1
-            // 
-            this.comboBox1.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
-            this.comboBox1.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
-            this.comboBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.comboBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(75, 180);
-            this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(122, 23);
-            this.comboBox1.TabIndex = 20;
-            // 
             // ultraPictureBox5
             // 
+            this.ultraPictureBox5.Anchor = System.Windows.Forms.AnchorStyles.Left;
             appearance37.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(127)))), ((int)(((byte)(219)))), ((int)(((byte)(255)))));
             appearance37.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(116)))), ((int)(((byte)(217)))));
             appearance37.BackGradientStyle = Infragistics.Win.GradientStyle.Rectangular;
@@ -1087,13 +1157,25 @@ namespace PosBranch_Win.Transaction
             this.ultraPictureBox5.BorderStyle = Infragistics.Win.UIElementBorderStyle.Rounded1Etched;
             this.ultraPictureBox5.Cursor = System.Windows.Forms.Cursors.Hand;
             this.ultraPictureBox5.Image = ((object)(resources.GetObject("ultraPictureBox5.Image")));
-            this.ultraPictureBox5.Location = new System.Drawing.Point(702, 18);
+            this.ultraPictureBox5.Location = new System.Drawing.Point(598, 18);
             this.ultraPictureBox5.Name = "ultraPictureBox5";
             this.ultraPictureBox5.Size = new System.Drawing.Size(34, 30);
             this.ultraPictureBox5.TabIndex = 38;
             // 
+            // label5
+            // 
+            this.label5.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.label5.AutoSize = true;
+            this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label5.Location = new System.Drawing.Point(183, 6);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(102, 18);
+            this.label5.TabIndex = 18;
+            this.label5.Text = "PurchaseDate";
+            // 
             // ultraPictureBox6
             // 
+            this.ultraPictureBox6.Anchor = System.Windows.Forms.AnchorStyles.Left;
             appearance38.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(127)))), ((int)(((byte)(219)))), ((int)(((byte)(255)))));
             appearance38.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(116)))), ((int)(((byte)(217)))));
             appearance38.BackGradientStyle = Infragistics.Win.GradientStyle.Rectangular;
@@ -1107,69 +1189,10 @@ namespace PosBranch_Win.Transaction
             this.ultraPictureBox6.BorderStyle = Infragistics.Win.UIElementBorderStyle.Rounded1Etched;
             this.ultraPictureBox6.Cursor = System.Windows.Forms.Cursors.Hand;
             this.ultraPictureBox6.Image = ((object)(resources.GetObject("ultraPictureBox6.Image")));
-            this.ultraPictureBox6.Location = new System.Drawing.Point(743, 18);
+            this.ultraPictureBox6.Location = new System.Drawing.Point(639, 18);
             this.ultraPictureBox6.Name = "ultraPictureBox6";
             this.ultraPictureBox6.Size = new System.Drawing.Size(34, 30);
             this.ultraPictureBox6.TabIndex = 39;
-            // 
-            // label17
-            // 
-            this.label17.AutoSize = true;
-            this.label17.BackColor = System.Drawing.Color.Transparent;
-            this.label17.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label17.Location = new System.Drawing.Point(13, 182);
-            this.label17.Name = "label17";
-            this.label17.Size = new System.Drawing.Size(63, 17);
-            this.label17.TabIndex = 126;
-            this.label17.Text = "TaxType";
-            // 
-            // ultraPanel3
-            // 
-            this.ultraPanel3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            appearance34.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.ultraPanel3.Appearance = appearance34;
-            this.ultraPanel3.BorderStyle = Infragistics.Win.UIElementBorderStyle.InsetSoft;
-            // 
-            // ultraPanel3.ClientArea
-            // 
-            this.ultraPanel3.ClientArea.Controls.Add(this.ultraPanel6);
-            this.ultraPanel3.ClientArea.Controls.Add(this.txtInvoiceNo);
-            this.ultraPanel3.ClientArea.Controls.Add(this.dtpPurchaseDate);
-            this.ultraPanel3.ClientArea.Controls.Add(this.btnFInd);
-            this.ultraPanel3.ClientArea.Controls.Add(this.lblnvoice);
-            this.ultraPanel3.ClientArea.Controls.Add(this.ultraPictureBox5);
-            this.ultraPanel3.ClientArea.Controls.Add(this.label5);
-            this.ultraPanel3.ClientArea.Controls.Add(this.ultraPictureBox6);
-            this.ultraPanel3.ClientArea.Controls.Add(this.txtBarcode);
-            this.ultraPanel3.ClientArea.Controls.Add(this.lblBarcode);
-            this.ultraPanel3.Location = new System.Drawing.Point(6, 72);
-            this.ultraPanel3.Name = "ultraPanel3";
-            this.ultraPanel3.Size = new System.Drawing.Size(994, 62);
-            this.ultraPanel3.TabIndex = 1;
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label5.Location = new System.Drawing.Point(201, 6);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(102, 18);
-            this.label5.TabIndex = 18;
-            this.label5.Text = "PurchaseDate";
-            // 
-            // ultraCheckEditorApplyRounding
-            // 
-            this.ultraCheckEditorApplyRounding.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            appearance3.FontData.BoldAsString = "True";
-            this.ultraCheckEditorApplyRounding.Appearance = appearance3;
-            this.ultraCheckEditorApplyRounding.BackColor = System.Drawing.Color.Transparent;
-            this.ultraCheckEditorApplyRounding.BackColorInternal = System.Drawing.Color.Transparent;
-            this.ultraCheckEditorApplyRounding.Location = new System.Drawing.Point(568, 37);
-            this.ultraCheckEditorApplyRounding.Name = "ultraCheckEditorApplyRounding";
-            this.ultraCheckEditorApplyRounding.Size = new System.Drawing.Size(74, 20);
-            this.ultraCheckEditorApplyRounding.TabIndex = 82;
-            this.ultraCheckEditorApplyRounding.Text = "Rounding";
             // 
             // FrmPurchase
             // 
@@ -1189,6 +1212,7 @@ namespace PosBranch_Win.Transaction
             this.ultraPanel5.ClientArea.ResumeLayout(false);
             this.ultraPanel5.ClientArea.PerformLayout();
             this.ultraPanel5.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.ultraCheckEditorApplyRounding)).EndInit();
             this.ultraPanel11.ClientArea.ResumeLayout(false);
             this.ultraPanel11.ResumeLayout(false);
             this.ultraPanel10.ClientArea.ResumeLayout(false);
@@ -1208,13 +1232,12 @@ namespace PosBranch_Win.Transaction
             this.ultraPanel4.ClientArea.ResumeLayout(false);
             this.ultraPanel4.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.ultraGrid1)).EndInit();
-            this.ultraPanel6.ClientArea.ResumeLayout(false);
-            this.ultraPanel6.ClientArea.PerformLayout();
-            this.ultraPanel6.ResumeLayout(false);
             this.ultraPanel3.ClientArea.ResumeLayout(false);
             this.ultraPanel3.ClientArea.PerformLayout();
             this.ultraPanel3.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.ultraCheckEditorApplyRounding)).EndInit();
+            this.ultraPanel6.ClientArea.ResumeLayout(false);
+            this.ultraPanel6.ClientArea.PerformLayout();
+            this.ultraPanel6.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
