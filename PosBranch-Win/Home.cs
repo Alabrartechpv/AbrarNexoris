@@ -738,11 +738,26 @@ namespace PosBranch_Win
                     screenGroup.Settings.AppearancesSmall.HeaderHotTrackAppearance.BackColor = Color.FromArgb(0, 190, 235);
                     screenGroup.Settings.AppearancesSmall.HeaderHotTrackAppearance.ForeColor = Color.White;
 
-                    // Add icon to the group header (shows in minimized view)
                     try
                     {
-                        string colorPath = System.IO.Path.Combine(System.Windows.Forms.Application.StartupPath, @"..\..\Resources\color-selection.png");
-                        if (System.IO.File.Exists(colorPath))
+                        string colorPath = null;
+                        string[] possibleColorPaths = new string[]
+                        {
+                            System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "Resources", "color-selection.png"),
+                            System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "..", "..", "Resources", "color-selection.png"),
+                            System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "..", "Resources", "color-selection.png")
+                        };
+
+                        foreach (string path in possibleColorPaths)
+                        {
+                            if (System.IO.File.Exists(path))
+                            {
+                                colorPath = path;
+                                break;
+                            }
+                        }
+
+                        if (colorPath != null)
                             screenGroup.Settings.AppearancesSmall.HeaderAppearance.Image = System.Drawing.Image.FromFile(colorPath);
                     }
                     catch { }
@@ -761,11 +776,26 @@ namespace PosBranch_Win
                     langGroup.Settings.AppearancesSmall.HeaderHotTrackAppearance.BackColor = Color.FromArgb(0, 190, 235);
                     langGroup.Settings.AppearancesSmall.HeaderHotTrackAppearance.ForeColor = Color.White;
 
-                    // Add icon to the group header (shows in minimized view)
                     try
                     {
-                        string langPath = System.IO.Path.Combine(System.Windows.Forms.Application.StartupPath, @"..\..\Resources\languages (2).png");
-                        if (System.IO.File.Exists(langPath))
+                        string langPath = null;
+                        string[] possibleLangPaths = new string[]
+                        {
+                            System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "Resources", "languages (2).png"),
+                            System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "..", "..", "Resources", "languages (2).png"),
+                            System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "..", "Resources", "languages (2).png")
+                        };
+
+                        foreach (string path in possibleLangPaths)
+                        {
+                            if (System.IO.File.Exists(path))
+                            {
+                                langPath = path;
+                                break;
+                            }
+                        }
+
+                        if (langPath != null)
                             langGroup.Settings.AppearancesSmall.HeaderAppearance.Image = System.Drawing.Image.FromFile(langPath);
                     }
                     catch { }
