@@ -1,4 +1,4 @@
-using Infragistics.Win.UltraWinGrid;
+﻿using Infragistics.Win.UltraWinGrid;
 using ModelClass;
 using ModelClass.Master;
 using ModelClass.TransactionModels;
@@ -97,6 +97,22 @@ namespace PosBranch_Win.Transaction
         private string currentSummaryType = "None";
         private readonly string[] summaryTypes = new[] { "Sum", "Min", "Max", "Average", "Count", "None" };
         private Dictionary<string, string> columnAggregations = new Dictionary<string, string>(); // columnKey -> summaryType
+
+        // --- Barcode Scan Buffer Queue ---
+        // Allows rapid-fire scanning without missing items
+        private Queue<string> barcodeQueue = new Queue<string>();
+        private System.Windows.Forms.Timer barcodeProcessTimer = new System.Windows.Forms.Timer();
+        private bool isProcessingBarcode = false;
+        private const int BARCODE_PROCESS_INTERVAL_MS = 100; // Process one barcode every 100ms
+
+        // --- Row Flash Visual Feedback ---
+        // Provides visual confirmation when a row is modified via barcode commands (*10, .50, /5, etc.)
+        private System.Windows.Forms.Timer rowFlashTimer = new System.Windows.Forms.Timer();
+        private int flashRowIndex = -1;
+        private int flashCount = 0;
+        private const int FLASH_DURATION_MS = 150; // Flash duration
+        private const int FLASH_TIMES = 4; // Number of times to flash (2 on, 2 off = 2 complete flashes)
+        private Color flashColor = Color.LightGreen; // Highlight color for flash
 
         // Call this in your constructor or after InitializeComponent()
         private void InitializeSummaryFooterPanel()
@@ -358,6 +374,14 @@ namespace PosBranch_Win.Transaction
 
             // Ensure cleanup when the form is closed to avoid leaks when tabs close
             this.FormClosed += frmSalesInvoice_FormClosed;
+
+            // --- Initialize Barcode Buffer Queue Timer ---
+            barcodeProcessTimer.Interval = BARCODE_PROCESS_INTERVAL_MS;
+            barcodeProcessTimer.Tick += BarcodeProcessTimer_Tick;
+
+            // --- Initialize Row Flash Timer ---
+            rowFlashTimer.Interval = FLASH_DURATION_MS;
+            rowFlashTimer.Tick += RowFlashTimer_Tick;
         }
 
         private void frmSalesInvoice_FormClosed(object sender, FormClosedEventArgs e)
@@ -376,6 +400,22 @@ namespace PosBranch_Win.Transaction
                     dialogTimer.Stop();
                     dialogTimer.Tick -= (s, ev) => { };
                     dialogTimer.Dispose();
+                }
+
+                // Dispose barcode queue timer
+                if (barcodeProcessTimer != null)
+                {
+                    barcodeProcessTimer.Stop();
+                    barcodeProcessTimer.Tick -= BarcodeProcessTimer_Tick;
+                    barcodeProcessTimer.Dispose();
+                }
+
+                // Dispose row flash timer
+                if (rowFlashTimer != null)
+                {
+                    rowFlashTimer.Stop();
+                    rowFlashTimer.Tick -= RowFlashTimer_Tick;
+                    rowFlashTimer.Dispose();
                 }
 
                 // Unsubscribe grid events
@@ -427,6 +467,20 @@ namespace PosBranch_Win.Transaction
                 {
                     ultraGrid1.DisplayLayout.LoadFromXml(GridLayoutPath);
                     gridLayoutLoaded = true;
+
+                    // Enforce essential columns to be visible regardless of saved layout
+                    if (ultraGrid1.DisplayLayout.Bands.Count > 0)
+                    {
+                        var band = ultraGrid1.DisplayLayout.Bands[0];
+                        string[] essentialColumns = { "SlNO", "BarCode", "ItemName", "Unit", "Qty", "UnitPrice", "TotalAmount", "Amount" };
+                        foreach (string colKey in essentialColumns)
+                        {
+                            if (band.Columns.Exists(colKey))
+                            {
+                                band.Columns[colKey].Hidden = false;
+                            }
+                        }
+                    }
 
                     // Reapply appearance settings after loading layout (layout file overrides colors)
                     ApplyGridAppearance();
@@ -677,6 +731,12 @@ namespace PosBranch_Win.Transaction
             }
             if (e.KeyCode == Keys.Space)
             {
+                // Block spacebar when editing a bill from Sales List (not a held bill)
+                if (updtbtn.Visible && !isEditingHoldBill)
+                {
+                    MessageBox.Show("Please use the Update button to save changes.", "Update Mode", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
                 ShowPaymentPanel();
             }
             else if (e.Control && e.KeyCode == Keys.F10)
@@ -749,6 +809,12 @@ namespace PosBranch_Win.Transaction
             }
             else if (e.KeyCode == Keys.F8)
             {
+                // Block F8 when editing a bill from Sales List (not a held bill)
+                if (updtbtn.Visible && !isEditingHoldBill)
+                {
+                    MessageBox.Show("Please use the Update button to save changes.", "Update Mode", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
                 // Call the same functionality as ultraPictureBox4 (Save button)
                 ShowPaymentPanel();
             }
@@ -1389,6 +1455,12 @@ namespace PosBranch_Win.Transaction
                 // Change quantity only (e.g., *5 = change qty to 5)
                 ChangeQuantity(input);
             }
+            else if (input.StartsWith("..") && input.Length > 2 && ultraGrid1.Rows.Count > 0)
+            {
+                // IRS POS: Override net total directly (e.g., ..20 = set net total to 20)
+                // Grid amounts remain unchanged, discount = gridTotal - overrideValue
+                NetTotalOverride(input);
+            }
             else if (input.StartsWith(".") && input.Length > 1 && ultraGrid1.Rows.Count > 0 && ultraGrid1.ActiveRow != null)
             {
                 // Change selling price directly (e.g., .10 = change price to 10)
@@ -1573,6 +1645,9 @@ namespace PosBranch_Win.Transaction
                     UpdateTotalAmountFromQtyAndSellingPrice(ultraGrid1.Rows[activeRowIndex]);
                     CalculateTotal();
                     txtBarcode.Clear();
+
+                    // Visual feedback: Flash the row to show it was modified
+                    FlashRow(activeRowIndex);
                 }
             }
         }
@@ -1601,11 +1676,79 @@ namespace PosBranch_Win.Transaction
                     UpdateTotalAmountFromQtyAndSellingPrice(ultraGrid1.Rows[activeRowIndex]);
                     CalculateTotal();
                     txtBarcode.Clear();
+
+                    // Visual feedback: Flash the row to show it was modified
+                    FlashRow(activeRowIndex);
                 }
             }
             else
             {
                 MessageBox.Show("Invalid price format. Please enter a valid number after the dot (e.g., .10)", "Invalid Input", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtBarcode.Clear();
+            }
+        }
+
+        /// <summary>
+        /// IRS POS Net Total Override: Sets the net total directly from barcode input.
+        /// Format: ..{amount} (e.g., ..20 = set net total to 20)
+        /// Discount is calculated as: gridTotal - overrideAmount (can be negative)
+        /// Grid item amounts remain unchanged.
+        /// </summary>
+        private void NetTotalOverride(string input)
+        {
+            try
+            {
+                // Extract the override amount from input (e.g., "..20" -> "20")
+                string amountStr = input.Substring(2);
+                if (float.TryParse(amountStr, out float overrideNetTotal) && overrideNetTotal >= 0)
+                {
+                    // Get the current grid total (sum of all TotalAmount in grid)
+                    double gridTotal = CalculateNetTotalFromGrid();
+
+                    // Calculate discount: gridTotal - overrideNetTotal
+                    // Positive = normal discount, Negative = price increase/surcharge
+                    double discountAmount = gridTotal - overrideNetTotal;
+                    discountAmount = Math.Round(discountAmount, 2);
+
+                    // Set the discount textbox (can be negative for surcharge)
+                    txtDisc.TextChanged -= txtDisc_TextChanged; // Temporarily unhook to avoid re-triggering
+                    txtDisc.Text = discountAmount.ToString("0.00");
+                    txtDisc.TextChanged += txtDisc_TextChanged;
+
+                    // Store discount values in sales object
+                    sales.DiscountAmt = (float)discountAmount;
+                    if (gridTotal > 0)
+                    {
+                        sales.DiscountPer = (float)Math.Round((discountAmount / gridTotal) * 100, 2);
+                    }
+                    else
+                    {
+                        sales.DiscountPer = 0;
+                    }
+
+                    // Set the net total directly (grid amounts remain unchanged)
+                    SetNetTotal(overrideNetTotal);
+
+                    // Apply rounding if enabled
+                    if (ultraCheckEditorApplyRounding.Checked)
+                    {
+                        ApplyRounding();
+                    }
+
+                    txtBarcode.Clear();
+
+                    System.Diagnostics.Debug.WriteLine($"NetTotalOverride: Grid Total={gridTotal}, Override={overrideNetTotal}, Discount={discountAmount}");
+                }
+                else
+                {
+                    MessageBox.Show("Invalid amount. Please enter a valid number after '..' (e.g., ..20)",
+                        "Invalid Input", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtBarcode.Clear();
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowError("Error applying net total override: " + ex.Message, "Error");
                 txtBarcode.Clear();
             }
         }
@@ -1623,6 +1766,9 @@ namespace PosBranch_Win.Transaction
                     UpdateGridRowTotals(ultraGrid1.Rows[activeRowIndex]);
                     CalculateTotal();
                     txtBarcode.Clear();
+
+                    // Visual feedback: Flash the row to show it was modified
+                    FlashRow(activeRowIndex);
                 }
             }
             else
@@ -1969,9 +2115,9 @@ namespace PosBranch_Win.Transaction
                 // Use the repository method to add the item to the grid
                 operations.AddItemToGrid(dt, item, qty, cmpPrice.Text);
 
-                // Find the row that was just added or updated
+                // Find the row that was just added or updated (search backwards to find the most recently added)
                 int rowIndex = -1;
-                for (int i = 0; i < dt.Rows.Count; i++)
+                for (int i = dt.Rows.Count - 1; i >= 0; i--)
                 {
                     // Use both ItemId and BarCode for comparison to handle items without barcodes
                     string existingItemId = dt.Rows[i]["ItemId"].ToString();
@@ -2437,19 +2583,6 @@ namespace PosBranch_Win.Transaction
             }
         }
 
-        // This method is correctly discovered by Home.cs universal save button
-        public void SaveData()
-        {
-            if (updtbtn.Visible)
-            {
-                updtbtn_Click(this, EventArgs.Empty);
-            }
-            else
-            {
-                ultraPictureBox4_Click(this, EventArgs.Empty);
-            }
-        }
-
         public void SaveMaster(string My)
         {
             try
@@ -2698,20 +2831,20 @@ namespace PosBranch_Win.Transaction
                 }
 
                 // Display warning if any items have zero stock
-                if (zeroStockItems.Count > 0)
-                {
-                    StringBuilder message = new StringBuilder();
-                    message.AppendLine("The following items have no stock available:");
-                    message.AppendLine();
+                //if (zeroStockItems.Count > 0)
+                //{
+                //    StringBuilder message = new StringBuilder();
+                //    message.AppendLine("The following items have no stock available:");
+                //    message.AppendLine();
 
-                    foreach (string itemName in zeroStockItems)
-                    {
-                        message.AppendLine($"• {itemName}");
-                    }
+                //    foreach (string itemName in zeroStockItems)
+                //    {
+                //        message.AppendLine($"• {itemName}");
+                //    }
 
-                    MessageBox.Show(message.ToString(), "Stock Warning",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
+                //    MessageBox.Show(message.ToString(), "Stock Warning",
+                //        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                //}
             }
             catch (Exception ex)
             {
@@ -3711,7 +3844,7 @@ namespace PosBranch_Win.Transaction
         }
 
         // Update AddItemToGrid method for UltraGrid
-        public void AddItemToGrid(string itemId, string itemName, string barcode, string unit, decimal unitPrice, int qty, decimal amount)
+        public void AddItemToGrid(string itemId, string itemName, string barcode, string unit, decimal unitPrice, int qty, decimal amount, float packing = 1f)
         {
             try
             {
@@ -3822,6 +3955,7 @@ namespace PosBranch_Win.Transaction
                     newRow["UnitPrice"] = unitPrice;
                     newRow["Cost"] = cost; // Use actual cost from database
                     newRow["Qty"] = qty;
+                    newRow["Packing"] = packing; // Packing from item master
                     newRow["Amount"] = amount;
                     newRow["DiscPer"] = 0;
                     newRow["DiscAmt"] = 0;
@@ -4153,6 +4287,7 @@ namespace PosBranch_Win.Transaction
                     newRow["DiscPer"] = details[i].DiscountPer;
                     newRow["DiscAmt"] = details[i].DiscountAmount;
                     newRow["Qty"] = details[i].Qty;
+                    newRow["Packing"] = (float)details[i].Packing; // Restore packing from saved bill
 
                     // FIX: Amount field in DB stores line total (Qty × Unit Selling Price)
                     // but grid's "Amount" column expects unit selling price
@@ -5106,6 +5241,32 @@ namespace PosBranch_Win.Transaction
                     System.Diagnostics.Debug.WriteLine($"SalesList_OnSalesSelected: Loading {sale.ListSDetails.Count()} bill items");
                     SalesDetails[] details = sale.ListSDetails.ToArray();
                     LoadBillItems(details);
+
+                    // RESTORE DISCOUNT AND NET TOTAL AFTER LOADING ITEMS
+                    // This is critical because LoadBillItems might trigger calculations that reset the totals
+                    // We need to ensure the saved discount (especially override values) are preserved
+
+                    // Restore discount values to sales object
+                    sales.DiscountAmt = sm.DiscountAmt;
+                    sales.DiscountPer = sm.DiscountPer;
+
+                    // Restore discount text (temporarily unhook event to prevent double calculation)
+                    if (sm.DiscountAmt != 0)
+                    {
+                        txtDisc.TextChanged -= txtDisc_TextChanged;
+                        txtDisc.Text = sm.DiscountAmt.ToString("0.00");
+                        txtDisc.TextChanged += txtDisc_TextChanged;
+                    }
+                    else
+                    {
+                        txtDisc.Clear();
+                    }
+
+                    // Force set the Net Total to the saved value
+                    // This ensures that any "Net Total Override" (..300) is preserved
+                    SetNetTotal((float)sm.NetAmount);
+
+                    System.Diagnostics.Debug.WriteLine($"Restored Bill Values: NetTotal={sm.NetAmount}, Discount={sm.DiscountAmt}");
                 }
                 else
                 {
@@ -6082,6 +6243,14 @@ namespace PosBranch_Win.Transaction
         {
             if (column != null && !column.Hidden)
             {
+                // Prevent hiding essential columns
+                string[] essentialColumns = { "SlNO", "BarCode", "ItemName", "Unit", "Qty", "UnitPrice", "TotalAmount", "Amount" };
+                if (essentialColumns.Contains(column.Key))
+                {
+                    MessageBox.Show($"The '{column.Header.Caption}' column is essential and cannot be hidden.", "Cannot Hide Column", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
                 savedColumnWidths[column.Key] = column.Width;
                 ultraGrid1.SuspendLayout();
                 column.Hidden = true;
@@ -6181,6 +6350,143 @@ namespace PosBranch_Win.Transaction
             }
         }
 
+        // --- Barcode Buffer Queue Processing ---
+        // Processes barcodes one at a time from the queue to prevent missed scans during rapid scanning
+        private void BarcodeProcessTimer_Tick(object sender, EventArgs e)
+        {
+            if (barcodeQueue.Count == 0)
+            {
+                barcodeProcessTimer.Stop();
+                isProcessingBarcode = false;
+                return;
+            }
+
+            if (isProcessingBarcode)
+                return; // Already processing, wait for next tick
+
+            isProcessingBarcode = true;
+
+            try
+            {
+                string barcode = barcodeQueue.Dequeue();
+
+                // Process the barcode using the regular lookup
+                if (!string.IsNullOrEmpty(barcode))
+                {
+                    RegularBarcodeLookup(barcode);
+                }
+
+                // Update any visual indicator if needed (e.g., show remaining count)
+                System.Diagnostics.Debug.WriteLine($"[BarcodeQueue] Processed: {barcode}, Remaining: {barcodeQueue.Count}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[BarcodeQueue] Error processing barcode: {ex.Message}");
+            }
+            finally
+            {
+                isProcessingBarcode = false;
+
+                // Stop timer if queue is empty
+                if (barcodeQueue.Count == 0)
+                {
+                    barcodeProcessTimer.Stop();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Enqueues a barcode for processing. This allows rapid-fire scanning without blocking.
+        /// </summary>
+        /// <param name="barcode">The barcode to queue</param>
+        private void EnqueueBarcode(string barcode)
+        {
+            if (string.IsNullOrEmpty(barcode))
+                return;
+
+            barcodeQueue.Enqueue(barcode);
+            System.Diagnostics.Debug.WriteLine($"[BarcodeQueue] Enqueued: {barcode}, Queue size: {barcodeQueue.Count}");
+
+            // Start the processing timer if not already running
+            if (!barcodeProcessTimer.Enabled)
+            {
+                barcodeProcessTimer.Start();
+            }
+        }
+
+        // --- Row Flash Visual Feedback ---
+        // Provides a brief flash animation to indicate which row was modified
+        private void RowFlashTimer_Tick(object sender, EventArgs e)
+        {
+            try
+            {
+                if (flashRowIndex < 0 || flashRowIndex >= ultraGrid1.Rows.Count)
+                {
+                    StopFlash();
+                    return;
+                }
+
+                var row = ultraGrid1.Rows[flashRowIndex];
+                flashCount++;
+
+                if (flashCount >= FLASH_TIMES)
+                {
+                    // Restore original appearance
+                    row.Appearance.BackColor = Color.Empty;
+                    StopFlash();
+                    return;
+                }
+
+                // Toggle flash color
+                if (flashCount % 2 == 1)
+                {
+                    row.Appearance.BackColor = flashColor;
+                }
+                else
+                {
+                    row.Appearance.BackColor = Color.Empty;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[RowFlash] Error: {ex.Message}");
+                StopFlash();
+            }
+        }
+
+        /// <summary>
+        /// Starts a flash animation on the specified row to provide visual feedback
+        /// </summary>
+        /// <param name="rowIndex">Index of the row to flash</param>
+        private void FlashRow(int rowIndex)
+        {
+            if (rowIndex < 0 || rowIndex >= ultraGrid1.Rows.Count)
+                return;
+
+            // Stop any existing flash
+            StopFlash();
+
+            flashRowIndex = rowIndex;
+            flashCount = 0;
+
+            // Activate and scroll to the row so it's visible
+            ultraGrid1.ActiveRow = ultraGrid1.Rows[rowIndex];
+            ultraGrid1.ActiveRowScrollRegion.ScrollRowIntoView(ultraGrid1.ActiveRow);
+
+            // Start flashing
+            rowFlashTimer.Start();
+        }
+
+        /// <summary>
+        /// Stops the flash animation and resets state
+        /// </summary>
+        private void StopFlash()
+        {
+            rowFlashTimer.Stop();
+            flashRowIndex = -1;
+            flashCount = 0;
+        }
+
         // Cost display functionality methods
 
         private void ShowItemCost()
@@ -6196,12 +6502,18 @@ namespace PosBranch_Win.Transaction
                 float cost = ParseFloat(ultraGrid1.ActiveRow.Cells["Cost"].Value, 0);
                 string itemName = ultraGrid1.ActiveRow.Cells["ItemName"].Value?.ToString() ?? "Unknown Item";
                 float unitPrice = ParseFloat(ultraGrid1.ActiveRow.Cells["UnitPrice"].Value, 0);
-                float margin = unitPrice > 0 ? ((unitPrice - cost) / unitPrice) * 100 : 0;
+                float qty = ParseFloat(ultraGrid1.ActiveRow.Cells["Qty"].Value, 0);
+                float marginAmt = (unitPrice - cost) * qty;
+
+                // Get current stock quantity from database
+                int itemId = ParseInt(ultraGrid1.ActiveRow.Cells["ItemId"].Value, 0);
+                float stock = itemId > 0 ? GetItemStockQuantity(itemId) : 0;
 
                 string costInfo = $"Item: {itemName}\n" +
                                 $"Cost: {cost:C2}\n" +
                                 $"Unit Price: {unitPrice:C2}\n" +
-                                $"Margin: {margin:F1}%";
+                                $"Margin Amt: {marginAmt:C2}\n" +
+                                $"Stock: {stock:F2}";
 
                 // Show tooltip at the active row position
                 costToolTip.Show(costInfo, ultraGrid1, new Point(10, 10), 5000);
