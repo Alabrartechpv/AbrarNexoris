@@ -41,6 +41,7 @@ namespace PosBranch_Win.Accounts
             Infragistics.Win.Appearance appearance1 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance2 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance3 = new Infragistics.Win.Appearance();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmCustomer));
             Infragistics.Win.Appearance appearance4 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance5 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance6 = new Infragistics.Win.Appearance();
@@ -58,10 +59,10 @@ namespace PosBranch_Win.Accounts
             Infragistics.Win.Appearance appearance18 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance19 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance20 = new Infragistics.Win.Appearance();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmCustomer));
             this.ultraPanel1 = new Infragistics.Win.Misc.UltraPanel();
             this.ultraLabelTitle = new Infragistics.Win.Misc.UltraLabel();
             this.ultraGroupBoxBasicInfo = new Infragistics.Win.Misc.UltraGroupBox();
+            this.button4 = new System.Windows.Forms.Button();
             this.ultraComboBranch = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
             this.ultraLabelBranch = new Infragistics.Win.Misc.UltraLabel();
             this.ultraTextCustomer = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
@@ -98,7 +99,6 @@ namespace PosBranch_Win.Accounts
             this.btnUpdate = new Infragistics.Win.Misc.UltraButton();
             this.btnClear = new Infragistics.Win.Misc.UltraButton();
             this.btnDelete = new Infragistics.Win.Misc.UltraButton();
-            this.button4 = new System.Windows.Forms.Button();
             this.ultraPanel1.ClientArea.SuspendLayout();
             this.ultraPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.ultraGroupBoxBasicInfo)).BeginInit();
@@ -185,6 +185,18 @@ namespace PosBranch_Win.Accounts
             this.ultraGroupBoxBasicInfo.Size = new System.Drawing.Size(440, 180);
             this.ultraGroupBoxBasicInfo.TabIndex = 1;
             this.ultraGroupBoxBasicInfo.Text = "Basic Information";
+            // 
+            // button4
+            // 
+            this.button4.BackColor = System.Drawing.Color.Transparent;
+            this.button4.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("button4.BackgroundImage")));
+            this.button4.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.button4.Location = new System.Drawing.Point(396, 67);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(22, 22);
+            this.button4.TabIndex = 12;
+            this.button4.UseVisualStyleBackColor = false;
+            this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
             // ultraComboBranch
             // 
@@ -663,18 +675,6 @@ namespace PosBranch_Win.Accounts
             this.btnDelete.Text = "🗑️ Delete";
             this.btnDelete.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             this.btnDelete.Click += new System.EventHandler(this.btnDelete_Click);
-            // 
-            // button4
-            // 
-            this.button4.BackColor = System.Drawing.Color.Transparent;
-            this.button4.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("button4.BackgroundImage")));
-            this.button4.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.button4.Location = new System.Drawing.Point(396, 67);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(22, 22);
-            this.button4.TabIndex = 12;
-            this.button4.UseVisualStyleBackColor = false;
-            this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
             // FrmCustomer
             // 

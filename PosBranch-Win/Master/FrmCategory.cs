@@ -34,16 +34,23 @@ namespace PosBranch_Win.Master
 
         private void btn_uploadfile_Click(object sender, EventArgs e)
         {
-            if(openFileDialog1.ShowDialog() == DialogResult.OK)
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
                 picbx_uploadfile.Load(openFileDialog1.FileName);
             }
         }
 
-        private void btn_save_Click(object sender, EventArgs e)
+        private void btnSave_Click(object sender, EventArgs e)
         {
-            saveMaster();
-            RefreshCategory();
+            if (btn_save.Visible)
+            {
+                saveMaster();
+                RefreshCategory();
+            }
+            else if (btn_update.Visible)
+            {
+                btn_update_Click(sender, e);
+            }
         }
 
         private void btn_clear_Click(object sender, EventArgs e)
@@ -51,10 +58,10 @@ namespace PosBranch_Win.Master
             ultraTextCategoryName.Text = "";
             ultraComboGroupName.Value = null;
             picbx_uploadfile.Image = null;
-            
+
             // Reset to new entry mode
             SetButtonMode(false);
-            
+
             // Reset Id for new entry
             Id = 0;
         }
@@ -125,7 +132,7 @@ namespace PosBranch_Win.Master
                 ultraGrid1.DisplayLayout.InterBandSpacing = 10;
                 ultraGrid1.DisplayLayout.Override.ExpansionIndicator = Infragistics.Win.UltraWinGrid.ShowExpansionIndicator.Never;
                 ultraGrid1.DisplayLayout.Override.RowSpacingBefore = 0;
-                
+
                 // Set row sizing to fixed height for compact appearance
                 ultraGrid1.DisplayLayout.Override.RowSizing = Infragistics.Win.UltraWinGrid.RowSizing.Fixed;
                 ultraGrid1.DisplayLayout.Override.DefaultRowHeight = 25;
@@ -133,7 +140,7 @@ namespace PosBranch_Win.Master
 
                 // Configure columns after data is loaded
                 ConfigureGridColumns();
-                
+
                 // Connect grid events
                 ConnectGridEvents();
             }
@@ -150,7 +157,7 @@ namespace PosBranch_Win.Master
                 if (ultraGrid1.DisplayLayout.Bands.Count > 0)
                 {
                     var band = ultraGrid1.DisplayLayout.Bands[0];
-                    
+
                     // Id column
                     if (band.Columns.Exists("Id"))
                     {
@@ -160,7 +167,7 @@ namespace PosBranch_Win.Master
                         band.Columns["Id"].CellActivation = Infragistics.Win.UltraWinGrid.Activation.NoEdit;
                         band.Columns["Id"].MinWidth = 60;
                     }
-                    
+
                     // CategoryName column
                     if (band.Columns.Exists("CategoryName"))
                     {
@@ -184,7 +191,7 @@ namespace PosBranch_Win.Master
             {
                 // Add keyboard event handler for navigation
                 ultraGrid1.KeyDown += UltraGrid1_KeyDown;
-                
+
                 // Add row selection event
                 ultraGrid1.AfterRowActivate += UltraGrid1_AfterRowActivate;
             }
@@ -246,9 +253,9 @@ namespace PosBranch_Win.Master
         {
             try
             {
-            CategoryDDlGrid catgrid = dd.getCategoryDDl("");
+                CategoryDDlGrid catgrid = dd.getCategoryDDl("");
                 ultraGrid1.DataSource = catgrid.List;
-                
+
                 // Configure columns after data is loaded
                 ConfigureGridColumns();
             }
@@ -264,16 +271,16 @@ namespace PosBranch_Win.Master
             {
                 categ.CategoryName = ultraTextCategoryName.Text;
                 categ.GroupId = Convert.ToInt32(ultraComboGroupName.Value);
-                
+
                 if (!string.IsNullOrEmpty(openFileDialog1.FileName) && File.Exists(openFileDialog1.FileName))
                 {
-            byte[] bytes = File.ReadAllBytes(openFileDialog1.FileName);
-            categ.Photo = bytes;
+                    byte[] bytes = File.ReadAllBytes(openFileDialog1.FileName);
+                    categ.Photo = bytes;
                 }
-                
-            categ._Operation = "CREATE";
-            string message = clientop.SaveCategory(categ);
-                
+
+                categ._Operation = "CREATE";
+                string message = clientop.SaveCategory(categ);
+
                 // Show success dialog like other forms
                 frmSuccesMsg msg = new frmSuccesMsg();
                 msg.ShowDialog();
@@ -288,7 +295,7 @@ namespace PosBranch_Win.Master
         {
             try
             {
-            GroupDDlGrid grid = dd.GroupDDl();
+                GroupDDlGrid grid = dd.GroupDDl();
                 ultraComboGroupName.DataSource = grid.List;
                 ultraComboGroupName.DisplayMember = "GroupName";
                 ultraComboGroupName.ValueMember = "Id";
@@ -315,13 +322,14 @@ namespace PosBranch_Win.Master
                         ultraComboGroupName.Value = categ.GroupId;
                         Byte[] objpic = new byte[0];
                         objpic = categ.Photo;
-                        if(categ.Photo != null) {
+                        if (categ.Photo != null)
+                        {
                             if (categ.Photo.Length > 0)
                             {
                                 picbx_uploadfile.Image = Image.FromStream(new MemoryStream(objpic));
                             }
                         }
-                        
+
                         // Switch to edit mode
                         SetButtonMode(true);
                     }
@@ -337,20 +345,20 @@ namespace PosBranch_Win.Master
         private void btn_update_Click(object sender, EventArgs e)
         {
             try
-        {
-            categ.Id = Id;
+            {
+                categ.Id = Id;
                 categ.CategoryName = ultraTextCategoryName.Text;
                 categ.GroupId = Convert.ToInt32(ultraComboGroupName.Value);
-                
+
                 if (!string.IsNullOrEmpty(openFileDialog1.FileName) && File.Exists(openFileDialog1.FileName))
                 {
-            byte[] bytes = File.ReadAllBytes(openFileDialog1.FileName);
-            categ.Photo = bytes;
+                    byte[] bytes = File.ReadAllBytes(openFileDialog1.FileName);
+                    categ.Photo = bytes;
                 }
-                
-            categ._Operation = "UPDATE";
-            Category message = clientop.UpdateCategory(categ);
-            this.RefreshCategory();
+
+                categ._Operation = "UPDATE";
+                Category message = clientop.UpdateCategory(categ);
+                this.RefreshCategory();
                 ultraTextCategoryName.Text = "";
             }
             catch (Exception ex)
@@ -370,9 +378,9 @@ namespace PosBranch_Win.Master
                 }
 
                 // Confirm deletion
-                DialogResult result = MessageBox.Show("Are you sure you want to delete this category?", "Confirm Delete", 
+                DialogResult result = MessageBox.Show("Are you sure you want to delete this category?", "Confirm Delete",
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                
+
                 if (result == DialogResult.Yes)
                 {
                     // Call the repository to delete the category
@@ -381,7 +389,7 @@ namespace PosBranch_Win.Master
                     if (deletedCategory != null)
                     {
                         MessageBox.Show("Category deleted successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        
+
                         // Clear the form after successful deletion
                         btn_clear_Click(null, null);
                         btn_save.Visible = true;
@@ -391,7 +399,7 @@ namespace PosBranch_Win.Master
                     {
                         MessageBox.Show("Error deleting category.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
-                    
+
                     this.RefreshCategory();
                 }
             }
@@ -426,7 +434,7 @@ namespace PosBranch_Win.Master
             {
                 CategoryDDlGrid catgrid = dd.getCategoryDDl(ultraTextSearch.Text);
                 ultraGrid1.DataSource = catgrid.List;
-                
+
                 // Configure columns after search results are loaded
                 ConfigureGridColumns();
             }
