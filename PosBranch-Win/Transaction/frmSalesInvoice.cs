@@ -2460,13 +2460,16 @@ namespace PosBranch_Win.Transaction
 
                 PrepareSalesObject(isUpdate, existingBillNo, My.StartsWith(PAYMENT_PANEL_PREFIX));
 
-                DataGridView tempGrid = PrepareGridData();
+                // Wrap in using to dispose the temporary DataGridView after save,
+                // preventing GDI/User object handle leaks on repeated invoice saves
+                using (DataGridView tempGrid = PrepareGridData())
+                {
+                    string message = SaveOrUpdateSales(isUpdate, tempGrid);
 
-                string message = SaveOrUpdateSales(isUpdate, tempGrid);
-
-                // Determine if we should show success message based on operation type
-                bool showMessage = !My.StartsWith(PAYMENT_PANEL_PREFIX);
-                HandleSaveResult(isUpdate, message, showMessage);
+                    // Determine if we should show success message based on operation type
+                    bool showMessage = !My.StartsWith(PAYMENT_PANEL_PREFIX);
+                    HandleSaveResult(isUpdate, message, showMessage);
+                }
             }
             catch (Exception ex)
             {
@@ -2865,23 +2868,20 @@ namespace PosBranch_Win.Transaction
             {
                 System.Diagnostics.Debug.WriteLine("Setting focus to barcode textbox");
 
-                // Clear the text first
+                // Clear the text and set focus synchronously
                 txtBarcode.Clear();
-
-                // Set focus to the barcode textbox
                 this.ActiveControl = txtBarcode;
                 txtBarcode.Focus();
 
-                // Use BeginInvoke to ensure this happens after any pending UI updates
+                // Call focus again asynchronously to ensure the grid doesn't steal
+                // focus if it's currently entering edit mode.
+                // We DO NOT call Clear() here, to avoid wiping out mid-scan barcodes.
                 txtBarcode.BeginInvoke(new Action(() =>
                 {
-                    // Ensure the text is empty and the control has focus
-                    txtBarcode.Clear();
-                    txtBarcode.Focus();
-
-                    // Move cursor to the end and select any text if present
-                    txtBarcode.SelectionStart = txtBarcode.Text.Length;
-                    txtBarcode.SelectAll();
+                    if (txtBarcode.CanFocus && !txtBarcode.Focused)
+                    {
+                        txtBarcode.Focus();
+                    }
                 }));
             }
             catch (Exception ex)
@@ -4298,7 +4298,11 @@ namespace PosBranch_Win.Transaction
 
                     // For both new and held bills, save using the unified logic in SaveOrUpdateSales
                     // This ensures that stock reduction and other repository logic is correctly applied
-                    string billNoResult = SaveOrUpdateSales(isCompletingHeldBill, PrepareGridData());
+                    string billNoResult;
+                    using (DataGridView tempGrid = PrepareGridData())
+                    {
+                        billNoResult = SaveOrUpdateSales(isCompletingHeldBill, tempGrid);
+                    }
 
                     // Check if save was successful
                     if (!string.IsNullOrEmpty(billNoResult) && billNoResult != "0" && !billNoResult.StartsWith("Error"))
@@ -6173,11 +6177,13 @@ namespace PosBranch_Win.Transaction
                     return;
             }
 
-            // Otherwise, refocus barcode
-            if (!txtBarcode.Focused && this.Visible && txtBarcode.Enabled && txtBarcode.CanFocus)
+            // Only refocus if barcode field is empty — never steal focus or select text
+            // while there is content being typed/scanned, as SelectAll() mid-scan
+            // causes the scanner's next characters to overwrite the first half of the barcode
+            if (!txtBarcode.Focused && this.Visible && txtBarcode.Enabled && txtBarcode.CanFocus
+                && string.IsNullOrEmpty(txtBarcode.Text))
             {
                 txtBarcode.Focus();
-                txtBarcode.SelectAll();
             }
         }
 
