@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -58,8 +58,10 @@ namespace Repository
         public static string _VendorPaymentMaster = "_VendorPaymentMaster";
         public static string _VendorPaymentDetails = "_VendorPaymentDetails";
         public static string _CompanyInfo = "_CompanyInfo";
+        public static string _POS_CashBankBook = "POS_CashBankBook";
         public static string _CompanyDetails = "_CompanyDetails";
         public static string _POS_GetWeighingItems = "_POS_GetWeighingItems";
+        public const string _POS_DayBook = "POS_DayBook";
         public static string POS_ShiftClosing = "POS_ShiftClosing";
         public static string POS_ShiftClosingDenominations = "POS_ShiftClosingDenominations";
         public static string _POS_Opening_Stock = "_POS_Opening_Stock";
@@ -85,6 +87,8 @@ namespace Repository
         public static string _POS_StockReportAdvanced = "_Test16";
         public static string POS_RolePermission = "POS_RolePermission";
         public static string _SalesProfitReport = "SalesProfitReport";
+        public static string _POS_TradingPLAccount = "POS_TradingPLAccount";
+        public static string _POS_BalanceSheet = "POS_BalanceSheet";
 
         #endregion
 

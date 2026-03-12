@@ -1420,6 +1420,26 @@ namespace PosBranch_Win
                 Accounts.FrmReceipt receipt = new FrmReceipt();
                 OpenFormInTab(receipt, "Receipt");
             }
+            if (e.Tool.Key == "TradingPLAccount")
+            {
+                PosBranch_Win.Reports.FinancialReports.FrmTradingPLAccount plAccount = new PosBranch_Win.Reports.FinancialReports.FrmTradingPLAccount();
+                OpenFormInTab(plAccount, "Trading & P/L Account");
+            }
+            if (e.Tool.Key == "BalanceSheet")
+            {
+                PosBranch_Win.Reports.FinancialReports.FrmBalanceSheet bsReport = new PosBranch_Win.Reports.FinancialReports.FrmBalanceSheet();
+                OpenFormInTab(bsReport, "Balance Sheet");
+            }
+            if (e.Tool.Key == "CashBankBook")
+            {
+                PosBranch_Win.Reports.FinancialReports.FrmCashBankBook cbBook = new PosBranch_Win.Reports.FinancialReports.FrmCashBankBook();
+                OpenFormInTab(cbBook, "Cash & Bank Book");
+            }
+            if (e.Tool.Key == "DayBook")
+            {
+                PosBranch_Win.Reports.FinancialReports.FrmDayBook dbBook = new PosBranch_Win.Reports.FinancialReports.FrmDayBook();
+                OpenFormInTab(dbBook, "Day Book");
+            }
             if (e.Tool.Key == "Payment")
             {
                 Accounts.FrmPayment payment = new FrmPayment();
