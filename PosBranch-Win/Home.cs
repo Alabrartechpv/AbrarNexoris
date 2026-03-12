@@ -794,26 +794,11 @@ namespace PosBranch_Win
                     screenGroup.Settings.AppearancesSmall.HeaderHotTrackAppearance.BackColor = Color.FromArgb(0, 190, 235);
                     screenGroup.Settings.AppearancesSmall.HeaderHotTrackAppearance.ForeColor = Color.White;
 
+                    // Add icon to the group header (shows in minimized view)
                     try
                     {
-                        string colorPath = null;
-                        string[] possibleColorPaths = new string[]
-                        {
-                            System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "Resources", "color-selection.png"),
-                            System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "..", "..", "Resources", "color-selection.png"),
-                            System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "..", "Resources", "color-selection.png")
-                        };
-
-                        foreach (string path in possibleColorPaths)
-                        {
-                            if (System.IO.File.Exists(path))
-                            {
-                                colorPath = path;
-                                break;
-                            }
-                        }
-
-                        if (colorPath != null)
+                        string colorPath = System.IO.Path.Combine(System.Windows.Forms.Application.StartupPath, @"..\..\Resources\color-selection.png");
+                        if (System.IO.File.Exists(colorPath))
                             screenGroup.Settings.AppearancesSmall.HeaderAppearance.Image = System.Drawing.Image.FromFile(colorPath);
                     }
                     catch { }
@@ -832,26 +817,11 @@ namespace PosBranch_Win
                     langGroup.Settings.AppearancesSmall.HeaderHotTrackAppearance.BackColor = Color.FromArgb(0, 190, 235);
                     langGroup.Settings.AppearancesSmall.HeaderHotTrackAppearance.ForeColor = Color.White;
 
+                    // Add icon to the group header (shows in minimized view)
                     try
                     {
-                        string langPath = null;
-                        string[] possibleLangPaths = new string[]
-                        {
-                            System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "Resources", "languages (2).png"),
-                            System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "..", "..", "Resources", "languages (2).png"),
-                            System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "..", "Resources", "languages (2).png")
-                        };
-
-                        foreach (string path in possibleLangPaths)
-                        {
-                            if (System.IO.File.Exists(path))
-                            {
-                                langPath = path;
-                                break;
-                            }
-                        }
-
-                        if (langPath != null)
+                        string langPath = System.IO.Path.Combine(System.Windows.Forms.Application.StartupPath, @"..\..\Resources\languages (2).png");
+                        if (System.IO.File.Exists(langPath))
                             langGroup.Settings.AppearancesSmall.HeaderAppearance.Image = System.Drawing.Image.FromFile(langPath);
                     }
                     catch { }
@@ -1219,6 +1189,38 @@ namespace PosBranch_Win
             System.Diagnostics.Debug.WriteLine($"Tool Clicked: {e.Tool.Key}");
             _lastActivatedToolKey = e.Tool.Key; // Store for favorites tracking
 
+            // Handle LogOff immediately before permission checks
+            if (e.Tool.Key == "LogIn" || e.Tool.Key == "LogOff")
+            {
+                // Confirm logoff
+                var result = MessageBox.Show("Are you sure you want to log off?", "Confirm Log Off",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                if (result == DialogResult.Yes)
+                {
+                    // Close all tabs to free resources
+                    CloseAllTabs();
+
+                    // Optional: clear session data if SessionContext has a clear method
+                    // SessionContext.Clear();
+
+                    // Show the Login form
+                    this.Hide();
+                    Login loginForm = new Login();
+                    loginForm.Show();
+
+                    // Close this form completely once login is shown
+                    // but we can't just this.Close() if Home is the main Application Context form.
+                    // Assuming Program.cs opens Login first, or Home is the main form but Login will take over.
+                    // Usually in these systems, we just Dispose the Home form or Application.Restart()
+                    // If Login is shown via Show(), we shouldn't Application.Exit(). 
+                    // Let's hide this form, show login, and attach a closed handler to login to exit app.
+                    loginForm.FormClosed += (s, args) => Application.Exit();
+                    return;
+                }
+                return;
+            }
+
             // Map aliases to permission keys
             string permissionKey = e.Tool.Key;
             if (e.Tool.Key == "Roles") permissionKey = "RolePermissions";
@@ -1243,55 +1245,25 @@ namespace PosBranch_Win
 
                     bool saved = false;
 
-                    // 1. FrmPurchase — has a dedicated public SavePurchase() method
+                    // 1. FrmPurchase — has dedicated public SavePurchase() / UpdatePurchase() methods
+                    //    pbxSave visible = save mode, ultraPictureBox4 visible = update mode
                     if (activeForm is Transaction.FrmPurchase purchaseForm)
                     {
-                        purchaseForm.SavePurchase();
+                        var pbxSaveControls = activeForm.Controls.Find("pbxSave", true);
+                        var updateControls = activeForm.Controls.Find("ultraPictureBox4", true);
+                        if (updateControls.Length > 0 && updateControls[0].Visible)
+                        {
+                            purchaseForm.UpdatePurchase();
+                        }
+                        else
+                        {
+                            purchaseForm.SavePurchase();
+                        }
                         saved = true;
                     }
 
-                    // 2. Try btnSave_Click (used by most Master, Accounts, Utilities, Settings forms)
-                    //    e.g. FrmBranch, FrmBrand, FrmCategory, FrmGroup, frmItemMasterNew, frmLine,
-                    //    frmCompany, frmRack, FrmRow, FrmState, FrmCountry, FrmUsers, FrmUnitMaster,
-                    //    FrmCustomer, FrmVendor, FrmLedgers, FrmAccountGroup, FrmReceipt, FrmPayment,
-                    //    FrmContra, FrmJournal, FrmDebitNote, FrmCreditNote, FrmStockAdjustment,
-                    //    frmOpeningStock, frmPOSSettings, FrmRolePermissions, frmClosing, frmBarcode
-                    if (!saved)
-                    {
-                        var btnSaveMethod = activeForm.GetType().GetMethod("btnSave_Click",
-                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                        if (btnSaveMethod != null)
-                        {
-                            btnSaveMethod.Invoke(activeForm, new object[] { this, EventArgs.Empty });
-                            saved = true;
-                        }
-                    }
-
-                    // 3. Try pbxSave_Click (used by frmSalesReturn, frmPurchaseReturn)
-                    if (!saved)
-                    {
-                        var pbxSaveMethod = activeForm.GetType().GetMethod("pbxSave_Click",
-                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                        if (pbxSaveMethod != null)
-                        {
-                            pbxSaveMethod.Invoke(activeForm, new object[] { this, EventArgs.Empty });
-                            saved = true;
-                        }
-                    }
-
-                    // 4. Try btnUpdate_Click (for forms using update instead of save)
-                    if (!saved)
-                    {
-                        var btnUpdateMethod = activeForm.GetType().GetMethod("btnUpdate_Click",
-                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                        if (btnUpdateMethod != null)
-                        {
-                            btnUpdateMethod.Invoke(activeForm, new object[] { this, EventArgs.Empty });
-                            saved = true;
-                        }
-                    }
-
-                    // 5. Generic fallback: try public Save() or SaveData() methods
+                    // 2. Generic fallback: try public Save() or SaveData() methods FIRST
+                    //    This allows forms to explicitly implement save logic and avoid button name collisions
                     if (!saved)
                     {
                         var saveMethod = activeForm.GetType().GetMethod("Save",
@@ -1304,6 +1276,35 @@ namespace PosBranch_Win
                         {
                             saveMethod.Invoke(activeForm, null);
                             saved = true;
+                        }
+                    }
+
+                    // 3. Generic handler for all other forms — searches for click handlers by name
+                    //    and checks if the associated control is visible to pick save vs update.
+                    //    Covers: frmItemMasterNew (button3/btnUpdate), frmSalesInvoice (ultraPictureBox4/updtbtn),
+                    //    frmSalesReturn/frmPurchaseReturn (pbxSave), and all Master/Accounts/Settings forms (btnSave)
+                    if (!saved)
+                    {
+                        string[] candidateMethods = { "btnSave_Click", "button3_Click", "ultraPictureBox4_Click",
+                            "pbxSave_Click", "btnUpdate_Click", "updtbtn_Click" };
+                        foreach (var methodName in candidateMethods)
+                        {
+                            var method = activeForm.GetType().GetMethod(methodName,
+                                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                            if (method != null)
+                            {
+                                // Derive control name by stripping "_Click" (e.g. "button3_Click" → "button3")
+                                string controlName = methodName.Replace("_Click", "");
+                                var controls = activeForm.Controls.Find(controlName, true);
+                                // If the control exists, only invoke when it's visible (respects save/update mode)
+                                // If no matching control found, invoke anyway (safe fallback)
+                                if (controls.Length == 0 || controls[0].Visible)
+                                {
+                                    method.Invoke(activeForm, new object[] { this, EventArgs.Empty });
+                                    saved = true;
+                                    break;
+                                }
+                            }
                         }
                     }
 

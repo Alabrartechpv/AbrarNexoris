@@ -351,12 +351,22 @@ namespace PosBranch_Win.Accounts
                 RaiseVendorSaved();
 
                 ClearForm();
+                RefreshVendorGrid();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error updating vendor: {ex.Message}", "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        public void Save()
+        {
+            // Delegate to the actual visible/enabled button — no hardcoded handler names
+            if (btnSave.Visible && btnSave.Enabled)
+                btnSave.PerformClick();
+            else if (btnUpdate.Visible && btnUpdate.Enabled)
+                btnUpdate.PerformClick();
         }
 
         private void btnSave_Click_1(object sender, EventArgs e)
@@ -379,6 +389,7 @@ namespace PosBranch_Win.Accounts
                 RaiseVendorSaved();
 
                 ClearForm();
+                RefreshVendorGrid();
             }
             catch (Exception ex)
             {
@@ -507,6 +518,25 @@ namespace PosBranch_Win.Accounts
                 CompanyMSICCode = ultraTextCompanyMSIC.Text.Trim(),
                 CompanyEmail = ultraTextCompanyEmail.Text.Trim()
             };
+        }
+
+        private void RefreshVendorGrid()
+        {
+            try
+            {
+                // Reload data in any currently open vendor dialogs
+                foreach (Form form in Application.OpenForms)
+                {
+                    if (form is PosBranch_Win.DialogBox.frmVendorDig dlg)
+                    {
+                        dlg.RefreshData();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error refreshing vendor grid: {ex.Message}");
+            }
         }
 
         private void ClearForm()

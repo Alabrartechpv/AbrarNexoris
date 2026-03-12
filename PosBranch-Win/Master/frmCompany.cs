@@ -454,7 +454,7 @@ namespace PosBranch_Win.Master
             }
         }
 
-        private void BtnSave_Click(object sender, EventArgs e)
+        private void btnSave_Click(object sender, EventArgs e)
         {
             try
             {
@@ -522,7 +522,7 @@ namespace PosBranch_Win.Master
                     {
                         // Validate and prepare the image to prevent GDI+ errors
                         Image safeImage = ValidateAndPrepareImage(picLogo.Image);
-                        
+
                         if (safeImage != null)
                         {
                             using (MemoryStream ms = new MemoryStream())
@@ -540,7 +540,7 @@ namespace PosBranch_Win.Master
                                 }
                                 _currentCompany.Logo = ms.ToArray();
                             }
-                            
+
                             // Dispose the safe copy
                             safeImage.Dispose();
                         }
@@ -554,7 +554,7 @@ namespace PosBranch_Win.Master
                         // Log the logo error but continue with saving other company data
                         Console.WriteLine($"Warning: Could not save logo image: {logoEx.Message}");
                         _currentCompany.Logo = null; // Set logo to null if it fails
-                        
+
                         // Show a warning to the user
                         DialogResult logoResult = MessageBox.Show(
                             "Warning: Could not save the company logo due to image format issues. " +
@@ -562,7 +562,7 @@ namespace PosBranch_Win.Master
                             "Logo Save Warning",
                             MessageBoxButtons.YesNo,
                             MessageBoxIcon.Warning);
-                            
+
                         if (logoResult == DialogResult.No)
                         {
                             return; // User chose not to continue
@@ -818,7 +818,7 @@ namespace PosBranch_Win.Master
             {
                 // Show it as a modal dialog
                 DialogResult result = stateDialog.ShowDialog(this);
-                
+
                 if (result == DialogResult.OK)
                 {
                     // If dialog result is OK, get the selected state information
@@ -839,7 +839,7 @@ namespace PosBranch_Win.Master
             using (StateDialog stateDialog = new StateDialog())
             {
                 DialogResult result = stateDialog.ShowDialog(this);
-                
+
                 if (result == DialogResult.OK)
                 {
                     // If dialog result is OK, get the selected state information
@@ -860,7 +860,7 @@ namespace PosBranch_Win.Master
             using (CountryDialog countryDialog = new CountryDialog())
             {
                 DialogResult result = countryDialog.ShowDialog(this);
-                
+
                 if (result == DialogResult.OK)
                 {
                     // If dialog result is OK, get the selected country information
@@ -881,7 +881,7 @@ namespace PosBranch_Win.Master
             using (TaxDialog taxDialog = new TaxDialog())
             {
                 DialogResult result = taxDialog.ShowDialog(this);
-                
+
                 if (result == DialogResult.OK)
                 {
                     // If dialog result is OK, get the selected tax information
@@ -902,7 +902,7 @@ namespace PosBranch_Win.Master
             using (CurrencyDialog currencyDialog = new CurrencyDialog())
             {
                 DialogResult result = currencyDialog.ShowDialog(this);
-                
+
                 if (result == DialogResult.OK)
                 {
                     // If dialog result is OK, get the selected currency information
@@ -927,7 +927,7 @@ namespace PosBranch_Win.Master
                 {
                     // Show it as a modal dialog
                     DialogResult result = companyListDialog.ShowDialog(this);
-                    
+
                     if (result == DialogResult.OK)
                     {
                         // If dialog result is OK, get the selected company ID
@@ -1003,18 +1003,18 @@ namespace PosBranch_Win.Master
                 {
                     // Create a new bitmap with the same dimensions
                     Bitmap safeBitmap = new Bitmap(originalBitmap.Width, originalBitmap.Height);
-                    
+
                     using (Graphics g = Graphics.FromImage(safeBitmap))
                     {
                         // Set high quality settings
                         g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
                         g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
                         g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-                        
+
                         // Draw the original image onto the new bitmap
                         g.DrawImage(originalBitmap, 0, 0, originalBitmap.Width, originalBitmap.Height);
                     }
-                    
+
                     return safeBitmap;
                 }
             }

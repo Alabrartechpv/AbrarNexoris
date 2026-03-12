@@ -32,7 +32,7 @@ namespace PosBranch_Win.DialogBox
                         string description = dgv_Item.Rows[currentRowIndex].Cells["Description"].Value.ToString();
                         string unit = dgv_Item.Rows[currentRowIndex].Cells["Unit"].Value.ToString();
                         string stock = dgv_Item.Rows[currentRowIndex].Cells["Stock"].Value.ToString();
-                        
+
                         // Add the item to the grid
                         frmStock.AddItemToGrid(
                             itemId,       // Item ID
@@ -42,7 +42,9 @@ namespace PosBranch_Win.DialogBox
                             stock,        // Qty On Hand
                             1             // Default Adj Qty to 1
                         );
-                        
+
+                        frmStock.SetUpdateMode();
+
                         // Close the dialog after adding the item
                         this.Close();
                     }

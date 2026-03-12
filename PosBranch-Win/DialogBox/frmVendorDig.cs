@@ -648,6 +648,9 @@ namespace PosBranch_Win.DialogBox
             }
         }
 
+        /// <summary>Reloads vendor data — called after a vendor is saved or updated.</summary>
+        public void RefreshData() => LoadVendorGrid();
+
         private void ConfigureGridLayout()
         {
             if (ultraGrid1.DisplayLayout.Bands.Count > 0)

@@ -63,14 +63,11 @@ namespace Repository
                 };
 
                 List<ClsVendors> ListVendor = DataConnection.Query<ClsVendors>(STOREDPROCEDURE.POS_Vendor, vendorForCreate, trans, commandType: CommandType.StoredProcedure).ToList<ClsVendors>();
-                
+
                 objVendorAddr._Operation = "CREATE";
-                List<VendorAddress> ListVendorAddress = DataConnection.Query<VendorAddress>(STOREDPROCEDURE.POS_Vendor_ContactDetails, objVendorAddr, trans, commandType: CommandType.StoredProcedure).ToList<VendorAddress>();
-                
-                if (ListVendorAddress.Count > 0)
-                {
-                    trans.Commit();
-                }
+                DataConnection.Query<VendorAddress>(STOREDPROCEDURE.POS_Vendor_ContactDetails, objVendorAddr, trans, commandType: CommandType.StoredProcedure).ToList<VendorAddress>();
+                // Always commit — INSERTs don't return rows, so there's no count to check
+                trans.Commit();
             }
             catch (Exception)
             {
@@ -97,7 +94,7 @@ namespace Repository
                     cmd.Parameters.AddWithValue("@CompanyId", SessionContext.CompanyId);
                     cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
                     cmd.Parameters.AddWithValue("@_Operation", "GETALL");
-                    
+
                     using (SqlDataAdapter adapt = new SqlDataAdapter(cmd))
                     {
                         DataSet ds = new DataSet();
@@ -220,7 +217,7 @@ namespace Repository
                     cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
                     cmd.Parameters.AddWithValue("@LedgerName", searchText);
                     cmd.Parameters.AddWithValue("@_Operation", "Search");
-                    
+
                     using (SqlDataAdapter adapt = new SqlDataAdapter(cmd))
                     {
                         DataSet ds = new DataSet();
@@ -263,7 +260,7 @@ namespace Repository
                     FROM LedgerMaster l 
                     LEFT JOIN ContactDetails cd ON l.LedgerID = cd.LedgerID
                     WHERE l.LedgerID = @VendorId AND l.GroupID = 17";
-                
+
                 var vendor = DataConnection.Query<ClsVendors>(query, new { VendorId = vendorId }).FirstOrDefault();
                 return vendor;
             }

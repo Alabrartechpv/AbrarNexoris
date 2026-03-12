@@ -355,9 +355,21 @@ namespace PosBranch_Win.Master
             btnUpdate.Visible = false;
         }
 
+        public void Save()
+        {
+            btnSave_Click(this, EventArgs.Empty);
+        }
+
         private void btnSave_Click(object sender, EventArgs e)
         {
-            this.SaveMaster();
+            if (btnSave.Visible)
+            {
+                this.SaveMaster();
+            }
+            else if (btnUpdate.Visible)
+            {
+                button1_Click(sender, e);
+            }
         }
         private void SaveMaster()
         {

@@ -190,7 +190,7 @@ namespace PosBranch_Win.Master
         {
             // Button events
             btnNew.Click += BtnNew_Click;
-            btnSave.Click += BtnSave_Click;
+            btnSave.Click += btnSave_Click;
             btnUpdate.Click += BtnUpdate_Click;
             btnDelete.Click += BtnDelete_Click;
             btnClear.Click += BtnClear_Click;
@@ -357,7 +357,7 @@ namespace PosBranch_Win.Master
             }
         }
 
-        private void BtnSave_Click(object sender, EventArgs e)
+        private void btnSave_Click(object sender, EventArgs e)
         {
             try
             {

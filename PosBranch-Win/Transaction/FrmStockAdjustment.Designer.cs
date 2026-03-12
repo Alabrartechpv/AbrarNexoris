@@ -117,7 +117,7 @@ namespace PosBranch_Win.Transaction
             this.ultraPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ultraPanel1.Location = new System.Drawing.Point(0, 0);
             this.ultraPanel1.Name = "ultraPanel1";
-            this.ultraPanel1.Size = new System.Drawing.Size(1366, 730);
+            this.ultraPanel1.Size = new System.Drawing.Size(1364, 730);
             this.ultraPanel1.TabIndex = 0;
             // 
             // ultraPanel4
@@ -130,7 +130,7 @@ namespace PosBranch_Win.Transaction
             this.ultraPanel4.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ultraPanel4.Location = new System.Drawing.Point(0, 210);
             this.ultraPanel4.Name = "ultraPanel4";
-            this.ultraPanel4.Size = new System.Drawing.Size(1186, 520);
+            this.ultraPanel4.Size = new System.Drawing.Size(1184, 520);
             this.ultraPanel4.TabIndex = 4;
             // 
             // ultraGrid1
@@ -192,7 +192,7 @@ namespace PosBranch_Win.Transaction
             this.ultraGrid1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ultraGrid1.Location = new System.Drawing.Point(0, 0);
             this.ultraGrid1.Name = "ultraGrid1";
-            this.ultraGrid1.Size = new System.Drawing.Size(1184, 518);
+            this.ultraGrid1.Size = new System.Drawing.Size(1182, 518);
             this.ultraGrid1.TabIndex = 1;
             this.ultraGrid1.Text = "ultraGrid1";
             // 
@@ -210,7 +210,7 @@ namespace PosBranch_Win.Transaction
             this.ultraPanel6.ClientArea.Controls.Add(this.ultraPictureBox7);
             this.ultraPanel6.ClientArea.Controls.Add(this.pbxExit);
             this.ultraPanel6.Dock = System.Windows.Forms.DockStyle.Right;
-            this.ultraPanel6.Location = new System.Drawing.Point(1186, 210);
+            this.ultraPanel6.Location = new System.Drawing.Point(1184, 210);
             this.ultraPanel6.Name = "ultraPanel6";
             this.ultraPanel6.Size = new System.Drawing.Size(180, 520);
             this.ultraPanel6.TabIndex = 2;
@@ -278,7 +278,7 @@ namespace PosBranch_Win.Transaction
             this.btnSave.BorderStyle = Infragistics.Win.UIElementBorderStyle.Rounded1Etched;
             this.btnSave.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnSave.Image = ((object)(resources.GetObject("btnSave.Image")));
-            this.btnSave.Location = new System.Drawing.Point(13, 55);
+            this.btnSave.Location = new System.Drawing.Point(14, 54);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(53, 56);
             this.btnSave.TabIndex = 36;
@@ -312,7 +312,7 @@ namespace PosBranch_Win.Transaction
             this.ultraPictureBox7.BorderStyle = Infragistics.Win.UIElementBorderStyle.Rounded1Etched;
             this.ultraPictureBox7.Cursor = System.Windows.Forms.Cursors.Hand;
             this.ultraPictureBox7.Image = ((object)(resources.GetObject("ultraPictureBox7.Image")));
-            this.ultraPictureBox7.Location = new System.Drawing.Point(14, 55);
+            this.ultraPictureBox7.Location = new System.Drawing.Point(15, 54);
             this.ultraPictureBox7.Name = "ultraPictureBox7";
             this.ultraPictureBox7.Size = new System.Drawing.Size(53, 56);
             this.ultraPictureBox7.TabIndex = 40;
@@ -367,7 +367,7 @@ namespace PosBranch_Win.Transaction
             this.ultraPanel2.Dock = System.Windows.Forms.DockStyle.Top;
             this.ultraPanel2.Location = new System.Drawing.Point(0, 0);
             this.ultraPanel2.Name = "ultraPanel2";
-            this.ultraPanel2.Size = new System.Drawing.Size(1366, 210);
+            this.ultraPanel2.Size = new System.Drawing.Size(1364, 210);
             this.ultraPanel2.TabIndex = 0;
             // 
             // txtb_barcode
@@ -418,7 +418,7 @@ namespace PosBranch_Win.Transaction
             this.docBtn.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("docBtn.BackgroundImage")));
             this.docBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.docBtn.ForeColor = System.Drawing.Color.Transparent;
-            this.docBtn.Location = new System.Drawing.Point(1285, 8);
+            this.docBtn.Location = new System.Drawing.Point(1283, 8);
             this.docBtn.Name = "docBtn";
             this.docBtn.Size = new System.Drawing.Size(27, 27);
             this.docBtn.TabIndex = 32;
@@ -438,7 +438,7 @@ namespace PosBranch_Win.Transaction
             // dateTimePicker1
             // 
             this.dateTimePicker1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.dateTimePicker1.Location = new System.Drawing.Point(1183, 50);
+            this.dateTimePicker1.Location = new System.Drawing.Point(1181, 50);
             this.dateTimePicker1.Name = "dateTimePicker1";
             this.dateTimePicker1.Size = new System.Drawing.Size(130, 20);
             this.dateTimePicker1.TabIndex = 30;
@@ -449,7 +449,7 @@ namespace PosBranch_Win.Transaction
             this.txt_Adjno.BackColor = System.Drawing.SystemColors.Info;
             this.txt_Adjno.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txt_Adjno.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txt_Adjno.Location = new System.Drawing.Point(1184, 6);
+            this.txt_Adjno.Location = new System.Drawing.Point(1182, 6);
             this.txt_Adjno.Name = "txt_Adjno";
             this.txt_Adjno.Size = new System.Drawing.Size(130, 30);
             this.txt_Adjno.TabIndex = 27;
@@ -461,7 +461,7 @@ namespace PosBranch_Win.Transaction
             appearance22.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
             this.ultr_date.Appearance = appearance22;
             this.ultr_date.Font = new System.Drawing.Font("Arial", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ultr_date.Location = new System.Drawing.Point(1135, 51);
+            this.ultr_date.Location = new System.Drawing.Point(1133, 51);
             this.ultr_date.Name = "ultr_date";
             this.ultr_date.Size = new System.Drawing.Size(42, 23);
             this.ultr_date.TabIndex = 26;
@@ -474,7 +474,7 @@ namespace PosBranch_Win.Transaction
             appearance23.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
             this.ultr_adjno.Appearance = appearance23;
             this.ultr_adjno.Font = new System.Drawing.Font("Arial", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ultr_adjno.Location = new System.Drawing.Point(1121, 9);
+            this.ultr_adjno.Location = new System.Drawing.Point(1119, 9);
             this.ultr_adjno.Name = "ultr_adjno";
             this.ultr_adjno.Size = new System.Drawing.Size(57, 23);
             this.ultr_adjno.TabIndex = 25;
@@ -553,7 +553,7 @@ namespace PosBranch_Win.Transaction
             this.ultraGroupBox1.Controls.Add(this.ultraRadioButton2);
             this.ultraGroupBox1.Controls.Add(this.ultraRadioButton1);
             this.ultraGroupBox1.Font = new System.Drawing.Font("Arial", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ultraGroupBox1.Location = new System.Drawing.Point(527, 72);
+            this.ultraGroupBox1.Location = new System.Drawing.Point(525, 72);
             this.ultraGroupBox1.Name = "ultraGroupBox1";
             this.ultraGroupBox1.Size = new System.Drawing.Size(786, 95);
             this.ultraGroupBox1.TabIndex = 8;
@@ -618,7 +618,7 @@ namespace PosBranch_Win.Transaction
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1366, 730);
+            this.ClientSize = new System.Drawing.Size(1364, 730);
             this.Controls.Add(this.ultraPanel1);
             this.Name = "FrmStockAdjustment";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

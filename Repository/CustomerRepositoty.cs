@@ -72,11 +72,9 @@ namespace Repository
 
                 }
                 ObjCustAddr._Operation = "CREATE";
-                List<CustomerAddress> ListCustAddress = DataConnection.Query<CustomerAddress>(STOREDPROCEDURE.POS_Customer_ContactDetails, ObjCustAddr, trans, commandType: CommandType.StoredProcedure).ToList<CustomerAddress>();
-                if (ListCustAddress.Count > 0)
-                {
-                    trans.Commit();
-                }
+                DataConnection.Query<CustomerAddress>(STOREDPROCEDURE.POS_Customer_ContactDetails, ObjCustAddr, trans, commandType: CommandType.StoredProcedure).ToList<CustomerAddress>();
+                // Always commit — INSERTs don't return rows, so there's no count to check
+                trans.Commit();
             }
             catch (Exception)
             {
@@ -101,17 +99,17 @@ namespace Repository
             DataConnection.Open();
             try
             {
-               using(SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_Customer,(SqlConnection) DataConnection))
+                using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_Customer, (SqlConnection)DataConnection))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@CompanyId", SessionContext.CompanyId);
                     cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
                     cmd.Parameters.AddWithValue("@_Operation", "GETALL");
-                    using(SqlDataAdapter adapt = new SqlDataAdapter(cmd))
+                    using (SqlDataAdapter adapt = new SqlDataAdapter(cmd))
                     {
                         DataSet ds = new DataSet();
                         adapt.Fill(ds);
-                        if((ds!=null)&&(ds.Tables.Count>0)&&(ds.Tables[0]!=null)&&(ds.Tables[0].Rows.Count>0))
+                        if ((ds != null) && (ds.Tables.Count > 0) && (ds.Tables[0] != null) && (ds.Tables[0].Rows.Count > 0))
                         {
                             ObjCustomerDDLGrid.List = ds.Tables[0].ToListOfObject<CustomerGridList>();
                         }
@@ -119,7 +117,7 @@ namespace Repository
 
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw ex;
             }
@@ -139,7 +137,7 @@ namespace Repository
             DataConnection.Open();
             try
             {
-                using(SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_Customer,(SqlConnection) DataConnection))
+                using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_Customer, (SqlConnection)DataConnection))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@CompanyId", SessionContext.CompanyId);
@@ -147,11 +145,11 @@ namespace Repository
                     cmd.Parameters.AddWithValue("@LedgerId", LedgerId);
                     cmd.Parameters.AddWithValue("@_Operation", "GetById");
 
-                    using(SqlDataAdapter adapt = new SqlDataAdapter(cmd))
+                    using (SqlDataAdapter adapt = new SqlDataAdapter(cmd))
                     {
                         DataSet ds = new DataSet();
                         adapt.Fill(ds);
-                        if((ds!=null)&&(ds.Tables.Count>0)&&(ds.Tables[0]!=null)&&(ds.Tables[0].Rows.Count>0))
+                        if ((ds != null) && (ds.Tables.Count > 0) && (ds.Tables[0] != null) && (ds.Tables[0].Rows.Count > 0))
                         {
                             ObjCustAddrss.ListCustomer = ds.Tables[0].ToListOfObject<ClsCustomers>();
                         }
@@ -164,7 +162,7 @@ namespace Repository
                 }
 
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw ex;
             }
@@ -178,7 +176,7 @@ namespace Repository
             return ObjCustAddrss;
         }
 
-        public string UpdateCstomerAddress(ClsCustomers objCust,CustomerAddress objCustAddress)
+        public string UpdateCstomerAddress(ClsCustomers objCust, CustomerAddress objCustAddress)
         {
             DataConnection.Open();
             var trans = DataConnection.BeginTransaction();
@@ -202,14 +200,14 @@ namespace Repository
 
                 List<ClsCustomers> ListObjCust = DataConnection.Query<ClsCustomers>(STOREDPROCEDURE.POS_Customer, customerForUpdate, trans, commandType: CommandType.StoredProcedure).ToList<ClsCustomers>();
 
-                if(ListObjCust.Count>0)
+                if (ListObjCust.Count > 0)
                 {
 
                 }
                 objCustAddress._Operation = "Update";
                 List<CustomerAddress> ListObjCustAddress = DataConnection.Query<CustomerAddress>(STOREDPROCEDURE.POS_Customer_ContactDetails, objCustAddress, trans, commandType: CommandType.StoredProcedure).ToList<CustomerAddress>();
 
-                if(ListObjCustAddress.Count>0)
+                if (ListObjCustAddress.Count > 0)
                 {
 
                 }
@@ -218,10 +216,10 @@ namespace Repository
 
 
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 trans.Rollback();
-                throw ex; 
+                throw ex;
 
             }
             finally
@@ -239,26 +237,26 @@ namespace Repository
             DataConnection.Open();
             try
             {
-                using(SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_Customer,(SqlConnection) DataConnection))
+                using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_Customer, (SqlConnection)DataConnection))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@CompanyId", SessionContext.CompanyId);
                     cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
                     cmd.Parameters.AddWithValue("@LedgerName", searchText);
                     cmd.Parameters.AddWithValue("@_Operation", "Search");
-                    
-                    using(SqlDataAdapter adapt = new SqlDataAdapter(cmd))
+
+                    using (SqlDataAdapter adapt = new SqlDataAdapter(cmd))
                     {
                         DataSet ds = new DataSet();
                         adapt.Fill(ds);
-                        if((ds!=null)&&(ds.Tables.Count>0)&&(ds.Tables[0]!=null)&&(ds.Tables[0].Rows.Count>0))
+                        if ((ds != null) && (ds.Tables.Count > 0) && (ds.Tables[0] != null) && (ds.Tables[0].Rows.Count > 0))
                         {
                             ObjCustomerDDLGrid.List = ds.Tables[0].ToListOfObject<CustomerGridList>();
                         }
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw ex;
             }
@@ -278,32 +276,32 @@ namespace Repository
             DataConnection.Open();
             try
             {
-                using(SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_Customer,(SqlConnection) DataConnection))
+                using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_Customer, (SqlConnection)DataConnection))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@CompanyId", SessionContext.CompanyId);
                     cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
                     cmd.Parameters.AddWithValue("@_Operation", "GETALL");
-                    
-                    using(SqlDataAdapter adapt = new SqlDataAdapter(cmd))
+
+                    using (SqlDataAdapter adapt = new SqlDataAdapter(cmd))
                     {
                         DataSet ds = new DataSet();
                         adapt.Fill(ds);
-                        if((ds!=null)&&(ds.Tables.Count>0)&&(ds.Tables[0]!=null))
+                        if ((ds != null) && (ds.Tables.Count > 0) && (ds.Tables[0] != null))
                         {
                             resultTable = ds.Tables[0];
-                            
+
                             // Debug: Log the actual data structure
                             System.Diagnostics.Debug.WriteLine("=== STORED PROCEDURE OUTPUT DEBUG ===");
                             System.Diagnostics.Debug.WriteLine($"Table has {resultTable.Rows.Count} rows and {resultTable.Columns.Count} columns");
-                            
+
                             // Log column names
                             System.Diagnostics.Debug.WriteLine("Columns:");
                             foreach (DataColumn col in resultTable.Columns)
                             {
                                 System.Diagnostics.Debug.WriteLine($"  {col.ColumnName} ({col.DataType.Name})");
                             }
-                            
+
                             // Log first row data
                             if (resultTable.Rows.Count > 0)
                             {
@@ -320,7 +318,7 @@ namespace Repository
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in TestGetCustomerDDL: {ex.Message}");
                 throw ex;
@@ -352,7 +350,7 @@ namespace Repository
                     FROM LedgerMaster l 
                     LEFT JOIN ContactDetails cd ON l.LedgerID = cd.LedgerID
                     WHERE l.LedgerID = @CustomerId AND l.GroupID = 16";
-                
+
                 var customer = DataConnection.Query<ClsCustomers>(query, new { CustomerId = customerId }).FirstOrDefault();
                 return customer;
             }
@@ -362,6 +360,6 @@ namespace Repository
             }
         }
     }
-         
-    
+
+
 }

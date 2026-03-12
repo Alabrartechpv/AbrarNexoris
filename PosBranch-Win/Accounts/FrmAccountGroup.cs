@@ -479,6 +479,11 @@ namespace PosBranch_Win.Accounts
 
         #region Event Handlers
 
+        public void Save()
+        {
+            UltraBtnSave_Click(this, EventArgs.Empty);
+        }
+
         private void UltraBtnSave_Click(object sender, EventArgs e)
         {
             try

@@ -6867,6 +6867,9 @@ namespace PosBranch_Win.Master
                     // Clear everything after successful save
                     this.clear();
                     TryRefreshItemDialog();
+
+                    var txtBarcodeCtrl = this.Controls.Find("txt_barcode", true).FirstOrDefault() as TextBox;
+                    txtBarcodeCtrl?.Focus();
                 }
                 else
                 {
@@ -7209,6 +7212,9 @@ namespace PosBranch_Win.Master
                 // Clear everything after successful update
                 this.clear();
                 TryRefreshItemDialog();
+
+                var txtBarcodeCtrl = this.Controls.Find("txt_barcode", true).FirstOrDefault() as TextBox;
+                txtBarcodeCtrl?.Focus();
             }
             else
             {
@@ -7455,6 +7461,8 @@ namespace PosBranch_Win.Master
         private void button7_Click(object sender, EventArgs e)
         {
             this.clear();
+            var txtBarcodeCtrl = this.Controls.Find("txt_barcode", true).FirstOrDefault() as TextBox;
+            txtBarcodeCtrl?.Focus();
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -7826,7 +7834,9 @@ namespace PosBranch_Win.Master
             }
         }
 
-        private int lastF8PressTime = 0;
+        private bool isF7DialogOpen = false;
+        private DateTime lastF7PressTime = DateTime.MinValue;
+        private DateTime lastF8PressTime = DateTime.MinValue;
 
         private void frmItemMasterNew_KeyDown(object sender, KeyEventArgs e)
         {
@@ -7834,23 +7844,55 @@ namespace PosBranch_Win.Master
             {
                 // Clear everything when F1 is pressed
                 this.clear();
+                var txtBarcodeCtrl = this.Controls.Find("txt_barcode", true).FirstOrDefault() as TextBox;
+                txtBarcodeCtrl?.Focus();
             }
             else if (e.KeyCode == Keys.F7)
             {
-                string Params = "FromItemMaster";
-                frmdialForItemMaster item = new frmdialForItemMaster(Params);
-                item.ShowDialog();
-            }
-            else if (e.KeyCode == Keys.F8)
-            {
-                // Prevent auto-repeat or double-press within 1000ms from firing a second save/validation
-                if (Environment.TickCount - lastF8PressTime < 1000)
+                if (isF7DialogOpen)
                 {
                     e.Handled = true;
                     e.SuppressKeyPress = true;
                     return;
                 }
-                lastF8PressTime = Environment.TickCount;
+
+                // Prevent auto-repeat or double-press within 1000ms
+                if ((DateTime.Now - lastF7PressTime).TotalMilliseconds < 1000)
+                {
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    return;
+                }
+
+                try
+                {
+                    isF7DialogOpen = true;
+                    // Set these BEFORE opening the dialog to block queued events when it returns
+                    lastF7PressTime = DateTime.Now;
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+
+                    string Params = "FromItemMaster";
+                    frmdialForItemMaster item = new frmdialForItemMaster(Params);
+                    item.ShowDialog();
+                }
+                finally
+                {
+                    isF7DialogOpen = false;
+                    // Reset time AFTER dialog closes to prevent any queued F7 events from firing immediately
+                    lastF7PressTime = DateTime.Now;
+                }
+            }
+            else if (e.KeyCode == Keys.F8)
+            {
+                // Prevent auto-repeat or double-press within 1000ms from firing a second save/validation
+                if ((DateTime.Now - lastF8PressTime).TotalMilliseconds < 1000)
+                {
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    return;
+                }
+                lastF8PressTime = DateTime.Now;
 
                 // Save or Update based on whether item exists
                 if (!string.IsNullOrWhiteSpace(txt_ItemNo.Text) && CurrentItemId > 0)

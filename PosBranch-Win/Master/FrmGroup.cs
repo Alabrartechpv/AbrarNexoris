@@ -22,7 +22,7 @@ namespace PosBranch_Win.Master
     {
         BaseRepostitory con = new BaseRepostitory();
         Group grp = new Group();
-        GroupRepository  operations = new GroupRepository();
+        GroupRepository operations = new GroupRepository();
         Dropdowns dd = new Dropdowns();
         int Id;
 
@@ -41,9 +41,16 @@ namespace PosBranch_Win.Master
             }
         }
 
-        private void btn_save_Click(object sender, EventArgs e)
+        private void btnSave_Click(object sender, EventArgs e)
         {
-            SaveMaster();
+            if (btn_save.Visible)
+            {
+                SaveMaster();
+            }
+            else if (btn_update.Visible)
+            {
+                btn_update_Click(sender, e);
+            }
         }
 
         private void FrmGroup_Load(object sender, EventArgs e)
@@ -51,7 +58,7 @@ namespace PosBranch_Win.Master
             this.FormatGrid();
             this.RefreshGroup();
             KeyPreview = true;
-            
+
             // Ensure image control is visible for new entries
             picb_uploadfile.Visible = true;
         }
@@ -113,7 +120,7 @@ namespace PosBranch_Win.Master
                 ultraGrid1.DisplayLayout.InterBandSpacing = 10;
                 ultraGrid1.DisplayLayout.Override.ExpansionIndicator = Infragistics.Win.UltraWinGrid.ShowExpansionIndicator.Never;
                 ultraGrid1.DisplayLayout.Override.RowSpacingBefore = 0;
-                
+
                 // Set row sizing to fixed height for compact appearance
                 ultraGrid1.DisplayLayout.Override.RowSizing = Infragistics.Win.UltraWinGrid.RowSizing.Fixed;
                 ultraGrid1.DisplayLayout.Override.DefaultRowHeight = 25;
@@ -121,7 +128,7 @@ namespace PosBranch_Win.Master
 
                 // Configure columns after data is loaded
                 ConfigureGridColumns();
-                
+
                 // Connect grid events
                 ConnectGridEvents();
             }
@@ -138,7 +145,7 @@ namespace PosBranch_Win.Master
                 if (ultraGrid1.DisplayLayout.Bands.Count > 0)
                 {
                     var band = ultraGrid1.DisplayLayout.Bands[0];
-                    
+
                     // Id column
                     if (band.Columns.Exists("Id"))
                     {
@@ -148,7 +155,7 @@ namespace PosBranch_Win.Master
                         band.Columns["Id"].CellActivation = Infragistics.Win.UltraWinGrid.Activation.NoEdit;
                         band.Columns["Id"].MinWidth = 60;
                     }
-                    
+
                     // GroupName column
                     if (band.Columns.Exists("GroupName"))
                     {
@@ -172,7 +179,7 @@ namespace PosBranch_Win.Master
             {
                 // Add keyboard event handler for navigation
                 ultraGrid1.KeyDown += UltraGrid1_KeyDown;
-                
+
                 // Add row selection event
                 ultraGrid1.AfterRowActivate += UltraGrid1_AfterRowActivate;
             }
@@ -236,7 +243,7 @@ namespace PosBranch_Win.Master
             {
                 GroupDDlGrid grpgrid = dd.getGroupDDl();
                 ultraGrid1.DataSource = grpgrid.List;
-                
+
                 // Configure columns after data is loaded
                 ConfigureGridColumns();
             }
@@ -251,21 +258,21 @@ namespace PosBranch_Win.Master
             try
             {
                 grp.GroupName = ultraTextGroupName.Text;
-                
+
                 // Handle image upload if file is selected
                 if (!string.IsNullOrEmpty(openFileDialog1.FileName) && File.Exists(openFileDialog1.FileName))
                 {
                     byte[] bytes = File.ReadAllBytes(openFileDialog1.FileName);
                     grp.Photo = bytes;
                 }
-                
+
                 grp._Operation = "CREATE";
                 string message = operations.SaveGroup(grp);
-                
+
                 // Show success dialog like other forms
                 frmSuccesMsg msg = new frmSuccesMsg();
                 msg.ShowDialog();
-                
+
                 // Clear form and refresh grid
                 ClearForm();
                 this.RefreshGroup();
@@ -289,7 +296,7 @@ namespace PosBranch_Win.Master
                     {
                         Id = gr.Id;
                         ultraTextGroupName.Text = gr.GroupName;
-                        
+
                         // Load image if it exists
                         if (gr.Photo != null && gr.Photo.Length > 0)
                         {
@@ -308,7 +315,7 @@ namespace PosBranch_Win.Master
                         {
                             picb_uploadfile.Image = null;
                         }
-                        
+
                         // Switch to edit mode
                         SetButtonMode(true);
                     }
@@ -332,10 +339,10 @@ namespace PosBranch_Win.Master
             picb_uploadfile.Image = null;
             picb_uploadfile.Visible = true;
             openFileDialog1.FileName = ""; // Reset file dialog
-            
+
             // Reset to new entry mode
             SetButtonMode(false);
-            
+
             // Reset Id for new entry
             Id = 0;
         }
@@ -346,20 +353,20 @@ namespace PosBranch_Win.Master
             {
                 grp.Id = Id;
                 grp.GroupName = ultraTextGroupName.Text;
-                
+
                 // Handle image upload if new file is selected
                 if (!string.IsNullOrEmpty(openFileDialog1.FileName) && File.Exists(openFileDialog1.FileName))
                 {
                     Byte[] bytes = File.ReadAllBytes(openFileDialog1.FileName);
                     grp.Photo = bytes;
                 }
-                
+
                 grp._Operation = "UPDATE";
                 Group message = operations.UpdateGroup(grp);
-                
+
                 // Show success message
                 MessageBox.Show("Group updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                
+
                 // Clear form and refresh grid
                 ClearForm();
                 this.RefreshGroup();
@@ -418,20 +425,20 @@ namespace PosBranch_Win.Master
             {
                 // Get all records first
                 GroupDDlGrid allGroups = dd.getGroupDDl();
-                
+
                 if (allGroups?.List != null)
                 {
                     // Filter the results client-side using LINQ
-                    var filteredGroups = allGroups.List.Where(g => 
-                        g.GroupName != null && 
+                    var filteredGroups = allGroups.List.Where(g =>
+                        g.GroupName != null &&
                         g.GroupName.ToLower().Contains(searchText.ToLower())
                     ).ToList();
-                    
+
                     // Create new grid with filtered results
                     GroupDDlGrid filteredGrid = new GroupDDlGrid { List = filteredGroups };
                     ultraGrid1.DataSource = filteredGrid.List;
                     ConfigureGridColumns();
-                    
+
                     // Debug info
                     System.Diagnostics.Debug.WriteLine($"Search: '{searchText}' found {filteredGroups.Count} results");
                 }

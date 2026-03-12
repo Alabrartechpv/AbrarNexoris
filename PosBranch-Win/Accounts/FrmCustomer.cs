@@ -104,7 +104,7 @@ namespace PosBranch_Win.Accounts
 
 
 
-                // Set key navigation and selection properties
+        // Set key navigation and selection properties
 
         private void LogAvailableColumns(Infragistics.Win.UltraWinGrid.UltraGridBand band)
         {
@@ -151,7 +151,7 @@ namespace PosBranch_Win.Accounts
 
                 // Debug: Log branch data loading
                 System.Diagnostics.Debug.WriteLine($"Branch data loaded: {branchDDL.List?.Count() ?? 0} branches");
-                
+
                 // Log first few branches for debugging
                 if (branchDDL.List != null && branchDDL.List.Any())
                 {
@@ -262,49 +262,18 @@ namespace PosBranch_Win.Accounts
         {
             try
             {
-                CustomerDDLGrids GridCustomer = new CustomerDDLGrids();
-                CustomerRepositoty CustRp = new CustomerRepositoty();
-                
-                // First, test the stored procedure output directly
-                System.Diagnostics.Debug.WriteLine("=== TESTING STORED PROCEDURE OUTPUT ===");
-                var testTable = CustRp.TestGetCustomerDDL();
-                System.Diagnostics.Debug.WriteLine("=== END STORED PROCEDURE TEST ===");
-                
-                // Now get the data normally
-                GridCustomer = CustRp.GetCustomerDDL();
-                
-                // Debug: Log the data being loaded
-                System.Diagnostics.Debug.WriteLine($"=== Customer Grid Data Loading ===");
-                System.Diagnostics.Debug.WriteLine($"Total customers loaded: {GridCustomer.List?.Count() ?? 0}");
-                
-                if (GridCustomer.List != null && GridCustomer.List.Any())
+                // Reload data in any currently open customer dialogs
+                foreach (Form form in Application.OpenForms)
                 {
-                    var firstCustomer = GridCustomer.List.First();
-                    System.Diagnostics.Debug.WriteLine($"First customer data:");
-                    
-                    // Log all available properties using reflection
-                    var customerType = firstCustomer.GetType();
-                    System.Diagnostics.Debug.WriteLine($"Customer type: {customerType.Name}");
-                    
-                    foreach (var prop in customerType.GetProperties())
+                    if (form is PosBranch_Win.DialogBox.frmCustomerDialog dlg)
                     {
-                        try
-                        {
-                            var value = prop.GetValue(firstCustomer);
-                            System.Diagnostics.Debug.WriteLine($"  {prop.Name}: {value}");
-                        }
-                        catch (Exception propEx)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"  {prop.Name}: Error accessing - {propEx.Message}");
-                        }
+                        dlg.RefreshData();
                     }
                 }
-                System.Diagnostics.Debug.WriteLine($"================================");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error refreshing customer grid: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                System.Diagnostics.Debug.WriteLine($"Error refreshing customer grid: {ex.Message}");
             }
         }
 
@@ -389,12 +358,22 @@ namespace PosBranch_Win.Accounts
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 ClearForm();
+                RefreshCustomerGrid();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error updating customer: {ex.Message}", "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        public void Save()
+        {
+            // Delegate to the actual visible/enabled button — no hardcoded handler names
+            if (btnSave.Visible && btnSave.Enabled)
+                btnSave.PerformClick();
+            else if (btnUpdate.Visible && btnUpdate.Enabled)
+                btnUpdate.PerformClick();
         }
 
         private void BtnSave_Click_1(object sender, EventArgs e)
@@ -416,6 +395,7 @@ namespace PosBranch_Win.Accounts
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 ClearForm();
+                RefreshCustomerGrid();
             }
             catch (Exception ex)
             {
@@ -637,12 +617,12 @@ namespace PosBranch_Win.Accounts
                 {
                     // Set Ledgerid for update operations
                     Ledgerid = customer.LedgerId;
-                    
+
                     ultraTextCustomer.Text = customer.LedgerName ?? "";
                     ultraTextAliasName.Text = customer.AliasName ?? "";
                     ultraTextOpenDebit.Text = customer.OpenDebit.ToString("F2");
                     ultraTextOpenCredit.Text = customer.OpenCredit.ToString("F2");
-                    
+
                     // Get customer address data for email, phone, and new company fields
                     try
                     {
@@ -685,7 +665,7 @@ namespace PosBranch_Win.Accounts
                         ultraTextCompanyMSIC.Text = "";
                         ultraTextCompanyEmail.Text = "";
                     }
-                    
+
                     // Set the branch if available
                     if (customer.BranchId > 0)
                     {
@@ -702,7 +682,7 @@ namespace PosBranch_Win.Accounts
                     var customerDetails = new CustAddressDDLGrids();
                     customerDetails.ListCustomer = new List<ClsCustomers> { customer };
                     StoreOriginalValues(customerDetails);
-                    
+
                     // Set form to update mode
                     SetButtonStates(true);
                 }
@@ -725,13 +705,13 @@ namespace PosBranch_Win.Accounts
             try
             {
                 System.Diagnostics.Debug.WriteLine("=== TESTING BRANCH BINDING ===");
-                
+
                 // Test 1: Check if branch combo has data
                 if (ultraComboBranch.DataSource != null)
                 {
                     var branchDataSource = ultraComboBranch.DataSource;
                     System.Diagnostics.Debug.WriteLine($"Branch combo data source type: {branchDataSource.GetType().Name}");
-                    
+
                     if (branchDataSource is System.Collections.IList branchList)
                     {
                         System.Diagnostics.Debug.WriteLine($"Branch list count: {branchList.Count}");
@@ -739,7 +719,7 @@ namespace PosBranch_Win.Accounts
                         {
                             var firstBranch = branchList[0];
                             System.Diagnostics.Debug.WriteLine($"First branch type: {firstBranch.GetType().Name}");
-                            
+
                             // Try to get branch properties
                             var branchType = firstBranch.GetType();
                             foreach (var prop in branchType.GetProperties())
@@ -758,13 +738,13 @@ namespace PosBranch_Win.Accounts
                 {
                     System.Diagnostics.Debug.WriteLine("Branch combo has no data source!");
                 }
-                
+
                 // Test 2: Check current branch value
                 System.Diagnostics.Debug.WriteLine($"Current branch combo value: {ultraComboBranch.Value}");
                 System.Diagnostics.Debug.WriteLine($"Current branch combo text: {ultraComboBranch.Text}");
-                
 
-                
+
+
                 System.Diagnostics.Debug.WriteLine("=== END BRANCH BINDING TEST ===");
             }
             catch (Exception ex)

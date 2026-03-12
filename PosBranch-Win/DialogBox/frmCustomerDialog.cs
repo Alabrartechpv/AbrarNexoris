@@ -113,6 +113,9 @@ namespace PosBranch_Win.DialogBox
             }
         }
 
+        /// <summary>Reloads customer data — called after a customer is saved or updated.</summary>
+        public void RefreshData() => LoadCustomerData();
+
         // Helper to convert List to DataTable
         private DataTable ToDataTable<T>(IList<T> data)
         {
