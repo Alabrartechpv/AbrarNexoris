@@ -2117,51 +2117,35 @@ namespace PosBranch_Win.Master
         // Add KeyDown event handler for ultraGrid1
         private void UltraGrid1_KeyDown(object sender, KeyEventArgs e)
         {
+            UltraGrid grid = sender as UltraGrid;
+            if (grid == null)
+            {
+                return;
+            }
+
             // Handle key press events
             if (e.KeyCode == Keys.Enter)
             {
-                UltraGrid grid = sender as UltraGrid;
-                if (grid != null && grid.ActiveCell != null)
+                if (TryNavigateUltraGridCell(grid, true))
                 {
-                    // RetailPrice Enter key - values already copied via AfterCellUpdate, just move focus to MRP
-                    if (grid.ActiveCell.Column.Key == "RetailPrice")
-                    {
-                        // Move focus to MRP cell
-                        var row = grid.ActiveRow;
-                        if (row != null && row.Cells.Exists("MRP"))
-                        {
-                            grid.ActiveCell = row.Cells["MRP"];
-                            grid.PerformAction(UltraGridAction.EnterEditMode);
-                        }
-                        e.Handled = true;
-                        e.SuppressKeyPress = true;
-                        return;
-                    }
-
-                    // Standard Enter key behavior - move to next cell and enter edit mode with caret inside
-                    UltraGridCell nextCell = FindNextEditableCell(grid.ActiveRow, grid.ActiveCell);
-                    if (nextCell != null)
-                    {
-                        grid.ActiveCell = nextCell;
-                        // Enter edit mode immediately with caret inside (for second row onwards)
-                        grid.PerformAction(UltraGridAction.EnterEditMode);
-                        e.Handled = true;
-                        e.SuppressKeyPress = true;
-                    }
-                    else if (grid.Rows.Count > 0 && grid.ActiveRow.Index < grid.Rows.Count - 1)
-                    {
-                        // Move to first editable cell in next row
-                        UltraGridRow nextRow = grid.Rows[grid.ActiveRow.Index + 1];
-                        UltraGridCell firstCell = FindFirstEditableCell(nextRow);
-                        if (firstCell != null)
-                        {
-                            grid.ActiveCell = firstCell;
-                            // Enter edit mode immediately with caret inside (for second row onwards)
-                            grid.PerformAction(UltraGridAction.EnterEditMode);
-                            e.Handled = true;
-                            e.SuppressKeyPress = true;
-                        }
-                    }
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                }
+            }
+            else if (e.Modifiers == Keys.None && e.KeyCode == Keys.Right)
+            {
+                if (TryNavigateUltraGridCell(grid, true))
+                {
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                }
+            }
+            else if (e.Modifiers == Keys.None && e.KeyCode == Keys.Left)
+            {
+                if (TryNavigateUltraGridCell(grid, false))
+                {
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
                 }
             }
             else if (e.KeyCode == Keys.Delete)
@@ -2170,6 +2154,52 @@ namespace PosBranch_Win.Master
                 RemoveSelectedUnitFromGrid();
                 e.Handled = true;
             }
+        }
+
+        private bool TryNavigateUltraGridCell(UltraGrid grid, bool moveForward)
+        {
+            if (grid?.ActiveCell == null || grid.ActiveRow == null)
+            {
+                return false;
+            }
+
+            try
+            {
+                if (grid.ActiveCell.IsInEditMode)
+                {
+                    grid.PerformAction(UltraGridAction.ExitEditMode);
+                }
+            }
+            catch
+            {
+                // Continue navigation even if edit-mode exit is not available.
+            }
+
+            UltraGridCell targetCell = moveForward
+                ? FindNextEditableCell(grid.ActiveRow, grid.ActiveCell)
+                : FindPreviousEditableCell(grid.ActiveRow, grid.ActiveCell);
+
+            if (targetCell == null)
+            {
+                int adjacentRowIndex = grid.ActiveRow.Index + (moveForward ? 1 : -1);
+                if (adjacentRowIndex >= 0 && adjacentRowIndex < grid.Rows.Count)
+                {
+                    UltraGridRow adjacentRow = grid.Rows[adjacentRowIndex];
+                    targetCell = moveForward
+                        ? FindFirstEditableCell(adjacentRow)
+                        : FindLastEditableCell(adjacentRow);
+                }
+            }
+
+            if (targetCell == null)
+            {
+                return false;
+            }
+
+            grid.ActiveRow = targetCell.Row;
+            grid.ActiveCell = targetCell;
+            grid.PerformAction(UltraGridAction.EnterEditMode);
+            return true;
         }
 
         // Prevent editing the first row (base unit / 1 UNIT) in ultraGrid1, except for AliasBarcode
@@ -2245,6 +2275,57 @@ namespace PosBranch_Win.Master
                 .ToList();
 
             // Go through columns in visual order
+            foreach (var col in visibleColumns)
+            {
+                var cell = row.Cells[col.Key];
+                if (cell.Column.CellActivation == Activation.AllowEdit)
+                    return cell;
+            }
+
+            return null;
+        }
+
+        private UltraGridCell FindPreviousEditableCell(UltraGridRow row, UltraGridCell currentCell)
+        {
+            if (row == null || currentCell == null)
+                return null;
+
+            var visibleColumns = row.Band.Columns
+                .Cast<UltraGridColumn>()
+                .Where(c => !c.Hidden)
+                .OrderBy(c => c.Header.VisiblePosition)
+                .ToList();
+
+            UltraGridCell previousEditableCell = null;
+
+            foreach (var col in visibleColumns)
+            {
+                var cell = row.Cells[col.Key];
+                if (cell == currentCell)
+                {
+                    return previousEditableCell;
+                }
+
+                if (cell.Column.CellActivation == Activation.AllowEdit)
+                {
+                    previousEditableCell = cell;
+                }
+            }
+
+            return previousEditableCell;
+        }
+
+        private UltraGridCell FindLastEditableCell(UltraGridRow row)
+        {
+            if (row == null)
+                return null;
+
+            var visibleColumns = row.Band.Columns
+                .Cast<UltraGridColumn>()
+                .Where(c => !c.Hidden)
+                .OrderByDescending(c => c.Header.VisiblePosition)
+                .ToList();
+
             foreach (var col in visibleColumns)
             {
                 var cell = row.Cells[col.Key];
