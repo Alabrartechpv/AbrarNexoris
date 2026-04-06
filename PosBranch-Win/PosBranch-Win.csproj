@@ -1563,6 +1563,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Include="Resources\profit-and-loss.png" />
+    <None Include="Resources\scale.png" />
     <Content Include="Resources\splash_logo.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
