@@ -375,6 +375,7 @@ namespace PosBranch_Win.Master
         private bool isEditingMdMin = false; // track user typing in ultraTextEditor11 markdown field to avoid caret jumps
         private bool hasGeneratedItemNumberForBarcode = false; // track if item number has been auto-generated for current barcode entry
         private readonly Dictionary<int, int> purchasePidCache = new Dictionary<int, int>();
+        private string loadedItemMainBarcode = string.Empty;
 
         private static readonly string[] uomPriceColumnKeys = new[]
         {
@@ -2485,6 +2486,7 @@ namespace PosBranch_Win.Master
 
                 // Reset ItemMaster object to prevent stale data during updates
                 ItemMaster = new Item();
+                SetMainBarcodeEditability(true, string.Empty);
 
                 // Clear all text fields in the form recursively
                 ClearControlsRecursive(this);
@@ -2674,6 +2676,62 @@ namespace PosBranch_Win.Master
         {
             // Call the enhanced clear method
             ClearAllFields();
+        }
+
+        private TextBox GetMainBarcodeTextBox()
+        {
+            return this.Controls.Find("txt_barcode", true).FirstOrDefault() as TextBox;
+        }
+
+        private void SetMainBarcodeEditability(bool allowEdit, string barcode = null)
+        {
+            var txtBarcodeCtrl = GetMainBarcodeTextBox();
+            if (txtBarcodeCtrl != null)
+            {
+                if (barcode != null)
+                {
+                    txtBarcodeCtrl.Text = barcode;
+                }
+
+                txtBarcodeCtrl.ReadOnly = !allowEdit;
+                txtBarcodeCtrl.BackColor = Color.FromArgb(255, 224, 192);
+            }
+
+            loadedItemMainBarcode = allowEdit ? string.Empty : ((barcode ?? txtBarcodeCtrl?.Text) ?? string.Empty).Trim();
+
+            if (!allowEdit && !string.IsNullOrWhiteSpace(loadedItemMainBarcode))
+            {
+                ItemMaster.Barcode = loadedItemMainBarcode;
+            }
+        }
+
+        public void SetLoadedItemBarcode(string barcode)
+        {
+            SetMainBarcodeEditability(false, barcode ?? string.Empty);
+        }
+
+        private bool ValidateLoadedItemBarcodeIsUnchanged(string currentBarcode)
+        {
+            bool isExistingItem = (ItemMaster != null && ItemMaster.ItemId > 0) || CurrentItemId > 0;
+            if (!isExistingItem)
+            {
+                return true;
+            }
+
+            string originalBarcode = !string.IsNullOrWhiteSpace(loadedItemMainBarcode)
+                ? loadedItemMainBarcode.Trim()
+                : (ItemMaster?.Barcode ?? string.Empty).Trim();
+            string normalizedCurrentBarcode = (currentBarcode ?? string.Empty).Trim();
+
+            if (string.Equals(originalBarcode, normalizedCurrentBarcode, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            MessageBox.Show("Main barcode cannot be changed for an existing item.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            SetLoadedItemBarcode(originalBarcode);
+            GetMainBarcodeTextBox()?.Focus();
+            return false;
         }
 
         private void btn_unit_Click(object sender, EventArgs e)
@@ -3921,6 +3979,7 @@ namespace PosBranch_Win.Master
                             }
 
                             txtBarcodeCtrl.Text = barcode ?? string.Empty;
+                            SetLoadedItemBarcode(txtBarcodeCtrl.Text);
                             System.Diagnostics.Debug.WriteLine($"Loaded barcode into txt_barcode: {txtBarcodeCtrl.Text}");
                         }
                     }
@@ -4282,6 +4341,50 @@ namespace PosBranch_Win.Master
             EnsureUomGridColumn(dt, "StaffPrice");
             EnsureUomGridColumn(dt, "MinPrice");
             EnsureUomGridStringColumn(dt, "AliasBarcode");
+            EnsureRetailPriceMrpDataColumnOrder(dt);
+        }
+
+        private void EnsureRetailPriceMrpDataColumnOrder(DataTable dt)
+        {
+            if (dt == null || !dt.Columns.Contains("RetailPrice") || !dt.Columns.Contains("MRP"))
+            {
+                return;
+            }
+
+            int targetRetailOrdinal = Math.Min(dt.Columns["RetailPrice"].Ordinal, dt.Columns["MRP"].Ordinal);
+            if (dt.Columns["RetailPrice"].Ordinal != targetRetailOrdinal)
+            {
+                dt.Columns["RetailPrice"].SetOrdinal(targetRetailOrdinal);
+            }
+
+            int targetMrpOrdinal = Math.Min(targetRetailOrdinal + 1, dt.Columns.Count - 1);
+            if (dt.Columns["MRP"].Ordinal != targetMrpOrdinal)
+            {
+                dt.Columns["MRP"].SetOrdinal(targetMrpOrdinal);
+            }
+        }
+
+        private void EnsureRetailPriceMrpDisplayOrder(UltraGridBand band)
+        {
+            if (band == null || !band.Columns.Exists("RetailPrice") || !band.Columns.Exists("MRP"))
+            {
+                return;
+            }
+
+            UltraGridColumn retailColumn = band.Columns["RetailPrice"];
+            UltraGridColumn mrpColumn = band.Columns["MRP"];
+
+            int targetRetailPosition = Math.Min(retailColumn.Header.VisiblePosition, mrpColumn.Header.VisiblePosition);
+            if (retailColumn.Header.VisiblePosition != targetRetailPosition)
+            {
+                retailColumn.Header.VisiblePosition = targetRetailPosition;
+            }
+
+            int targetMrpPosition = targetRetailPosition + 1;
+            if (mrpColumn.Header.VisiblePosition != targetMrpPosition)
+            {
+                mrpColumn.Header.VisiblePosition = targetMrpPosition;
+            }
         }
 
         private void EnsureUomGridColumn(DataTable dt, string columnName)
@@ -5072,13 +5175,14 @@ namespace PosBranch_Win.Master
                         col.CellAppearance.TextVAlign = VAlign.Middle;
                         col.CellAppearance.BorderColor = lightBlue;
 
-                        // Apply custom column captions from dictionary
-                        // This swaps WholeSalePrice -> "Retail Price" and RetailPrice -> "Walkin Price"
+                        // Apply shared captions from the UOM column metadata.
                         if (uomPriceColumnCaptions.TryGetValue(col.Key, out string caption))
                         {
                             col.Header.Caption = caption;
                         }
                     }
+
+                    EnsureRetailPriceMrpDisplayOrder(e.Layout.Bands[0]);
 
                     // Make AliasBarcode column editable
                     if (e.Layout.Bands[0].Columns.Exists("AliasBarcode"))
@@ -7072,7 +7176,12 @@ namespace PosBranch_Win.Master
                 }
             }
 
-            if (!ValidateMainAndAlternativeBarcodeUniqueness(barcode, currentItemId))
+            if (!ValidateLoadedItemBarcodeIsUnchanged(barcode))
+            {
+                return;
+            }
+
+            if (!ValidateMainAndAlternativeBarcodeUniqueness(barcode, currentItemId, false))
             {
                 return;
             }
@@ -8015,18 +8124,26 @@ namespace PosBranch_Win.Master
         {
             if (ultraGrid1 != null)
             {
-                ultraGrid1.DataSource = dataSource;
                 if (dataSource is DataTable dt)
                 {
                     EnsureUomGridPriceColumns(dt);
+                    ultraGrid1.DataSource = dataSource;
                     foreach (DataRow row in dt.Rows)
                     {
                         SyncUomRowWithPriceGrid(row);
+                    }
+                    if (ultraGrid1.DisplayLayout.Bands.Count > 0)
+                    {
+                        EnsureRetailPriceMrpDisplayOrder(ultraGrid1.DisplayLayout.Bands[0]);
                     }
                     ultraGrid1.Refresh();
 
                     // Hide specified columns after setting data source
                     HideUltraGrid1Columns();
+                }
+                else
+                {
+                    ultraGrid1.DataSource = dataSource;
                 }
             }
         }
@@ -8054,6 +8171,8 @@ namespace PosBranch_Win.Master
                 {
                     ultraGrid1.DisplayLayout.Bands[0].Columns["Cost"].CellActivation = Infragistics.Win.UltraWinGrid.Activation.NoEdit;
                 }
+
+                EnsureRetailPriceMrpDisplayOrder(ultraGrid1.DisplayLayout.Bands[0]);
             }
         }
 
@@ -11378,13 +11497,13 @@ namespace PosBranch_Win.Master
             grid.Focus();
         }
 
-        private bool ValidateMainAndAlternativeBarcodeUniqueness(string mainBarcode, int excludeItemId)
+        private bool ValidateMainAndAlternativeBarcodeUniqueness(string mainBarcode, int excludeItemId, bool validateMainBarcodeConflicts = true)
         {
             try
             {
                 string normalizedMainBarcode = (mainBarcode ?? string.Empty).Trim();
 
-                if (!string.IsNullOrWhiteSpace(normalizedMainBarcode))
+                if (validateMainBarcodeConflicts && !string.IsNullOrWhiteSpace(normalizedMainBarcode))
                 {
                     if (ItemRepository.CheckBarcodeExists(normalizedMainBarcode, excludeItemId))
                     {
