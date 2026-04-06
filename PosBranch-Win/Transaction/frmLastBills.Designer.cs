@@ -30,7 +30,6 @@ namespace PosBranch_Win.Transaction
         private void InitializeComponent()
         {
             Infragistics.Win.Appearance appearance1 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance10 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance2 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance3 = new Infragistics.Win.Appearance();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmLastBills));
@@ -40,6 +39,7 @@ namespace PosBranch_Win.Transaction
             Infragistics.Win.Appearance appearance7 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance8 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance9 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance10 = new Infragistics.Win.Appearance();
             this.panel1 = new System.Windows.Forms.Panel();
             this.itemsGrid = new Infragistics.Win.UltraWinGrid.UltraGrid();
             this.summaryStrip = new Infragistics.Win.Misc.UltraPanel();
@@ -60,37 +60,7 @@ namespace PosBranch_Win.Transaction
             this.labelSubTotalCaption = new System.Windows.Forms.Label();
             this.txtRemark = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.labelRemark = new System.Windows.Forms.Label();
-            this.ultraPanel1 = new Infragistics.Win.Misc.UltraPanel();
-            this.labelDocNo = new System.Windows.Forms.Label();
-            this.labelAccount = new System.Windows.Forms.Label();
-            this.labelBranch = new System.Windows.Forms.Label();
-            this.labelDate = new System.Windows.Forms.Label();
-            this.labelPaymentMode = new System.Windows.Forms.Label();
-            this.labelReference = new System.Windows.Forms.Label();
-            this.labelSalesperson = new System.Windows.Forms.Label();
-            this.labelPaymentTerm = new System.Windows.Forms.Label();
-            this.labelUser = new System.Windows.Forms.Label();
-            this.labelOutstanding = new System.Windows.Forms.Label();
-            this.labelPoints = new System.Windows.Forms.Label();
-            this.txtDocNoDisplay = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
-            this.txtAccountCode = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
-            this.txtAccountName = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
-            this.txtBranch = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
-            this.txtBillDate = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
-            this.txtPaymentMode = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
-            this.txtReference = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
-            this.txtSalesPerson = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
-            this.txtPaymentTerm = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
-            this.txtUser = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
-            this.txtOutstanding = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
-            this.txtPoints = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
-            this.innerBrowseButton = new System.Windows.Forms.Button();
-            this.rdoCash = new System.Windows.Forms.RadioButton();
-            this.rdoCredit = new System.Windows.Forms.RadioButton();
-            this.chkReceiptPrinter = new System.Windows.Forms.CheckBox();
-            this.btnPrint = new System.Windows.Forms.Button();
             this.detailsPanel = new Infragistics.Win.Misc.UltraPanel();
-            this.ultraTabSharedControlsPage1 = new Infragistics.Win.UltraWinTabControl.UltraTabSharedControlsPage();
             this.ultraPanel9 = new Infragistics.Win.Misc.UltraPanel();
             this.ultraPictureBox4 = new Infragistics.Win.UltraWinEditors.UltraPictureBox();
             this.ultraPanel10 = new Infragistics.Win.Misc.UltraPanel();
@@ -99,26 +69,42 @@ namespace PosBranch_Win.Transaction
             this.ultraPictureBox6 = new Infragistics.Win.UltraWinEditors.UltraPictureBox();
             this.ultraPanel3 = new Infragistics.Win.Misc.UltraPanel();
             this.ultraPictureBox2 = new Infragistics.Win.UltraWinEditors.UltraPictureBox();
+            this.btnPrint = new System.Windows.Forms.Button();
+            this.chkReceiptPrinter = new System.Windows.Forms.CheckBox();
+            this.rdoCredit = new System.Windows.Forms.RadioButton();
+            this.rdoCash = new System.Windows.Forms.RadioButton();
+            this.innerBrowseButton = new System.Windows.Forms.Button();
+            this.txtPoints = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.txtOutstanding = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.txtUser = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.txtPaymentTerm = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.txtSalesPerson = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.txtReference = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.txtPaymentMode = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.txtBillDate = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.txtBranch = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.txtAccountName = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.txtAccountCode = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.txtDocNoDisplay = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.labelPoints = new System.Windows.Forms.Label();
+            this.labelOutstanding = new System.Windows.Forms.Label();
+            this.labelUser = new System.Windows.Forms.Label();
+            this.labelPaymentTerm = new System.Windows.Forms.Label();
+            this.labelSalesperson = new System.Windows.Forms.Label();
+            this.labelReference = new System.Windows.Forms.Label();
+            this.labelPaymentMode = new System.Windows.Forms.Label();
+            this.labelDate = new System.Windows.Forms.Label();
+            this.labelBranch = new System.Windows.Forms.Label();
+            this.labelAccount = new System.Windows.Forms.Label();
+            this.labelDocNo = new System.Windows.Forms.Label();
+            this.ultraPanel1 = new Infragistics.Win.Misc.UltraPanel();
+            this.ultraTabSharedControlsPage1 = new Infragistics.Win.UltraWinTabControl.UltraTabSharedControlsPage();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.itemsGrid)).BeginInit();
             this.summaryStrip.ClientArea.SuspendLayout();
             this.summaryStrip.SuspendLayout();
             this.totalsPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.txtRemark)).BeginInit();
-            this.ultraPanel1.ClientArea.SuspendLayout();
-            this.ultraPanel1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.txtDocNoDisplay)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtAccountCode)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtAccountName)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtBranch)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtBillDate)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtPaymentMode)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtReference)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtSalesPerson)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtPaymentTerm)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtUser)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtOutstanding)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtPoints)).BeginInit();
             this.detailsPanel.ClientArea.SuspendLayout();
             this.detailsPanel.SuspendLayout();
             this.ultraPanel9.ClientArea.SuspendLayout();
@@ -129,6 +115,20 @@ namespace PosBranch_Win.Transaction
             this.ultraPanel8.SuspendLayout();
             this.ultraPanel3.ClientArea.SuspendLayout();
             this.ultraPanel3.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.txtPoints)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtOutstanding)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtUser)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtPaymentTerm)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtSalesPerson)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtReference)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtPaymentMode)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtBillDate)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtBranch)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtAccountName)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtAccountCode)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtDocNoDisplay)).BeginInit();
+            this.ultraPanel1.ClientArea.SuspendLayout();
+            this.ultraPanel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // panel1
@@ -372,277 +372,6 @@ namespace PosBranch_Win.Transaction
             this.labelRemark.TabIndex = 0;
             this.labelRemark.Text = "Remark";
             // 
-            // ultraPanel1
-            // 
-            appearance10.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(197)))), ((int)(((byte)(250)))), ((int)(((byte)(247)))));
-            appearance10.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(224)))), ((int)(((byte)(229)))));
-            appearance10.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
-            this.ultraPanel1.Appearance = appearance10;
-            // 
-            // ultraPanel1.ClientArea
-            // 
-            this.ultraPanel1.ClientArea.Controls.Add(this.panel1);
-            this.ultraPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ultraPanel1.Location = new System.Drawing.Point(0, 0);
-            this.ultraPanel1.Name = "ultraPanel1";
-            this.ultraPanel1.Size = new System.Drawing.Size(1260, 680);
-            this.ultraPanel1.TabIndex = 0;
-            // 
-            // labelDocNo
-            // 
-            this.labelDocNo.AutoSize = true;
-            this.labelDocNo.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.labelDocNo.Location = new System.Drawing.Point(50, 15);
-            this.labelDocNo.Name = "labelDocNo";
-            this.labelDocNo.Size = new System.Drawing.Size(58, 19);
-            this.labelDocNo.TabIndex = 0;
-            this.labelDocNo.Text = "Doc No.";
-            // 
-            // labelAccount
-            // 
-            this.labelAccount.AutoSize = true;
-            this.labelAccount.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.labelAccount.Location = new System.Drawing.Point(51, 48);
-            this.labelAccount.Name = "labelAccount";
-            this.labelAccount.Size = new System.Drawing.Size(59, 19);
-            this.labelAccount.TabIndex = 1;
-            this.labelAccount.Text = "Account";
-            // 
-            // labelBranch
-            // 
-            this.labelBranch.AutoSize = true;
-            this.labelBranch.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.labelBranch.Location = new System.Drawing.Point(57, 81);
-            this.labelBranch.Name = "labelBranch";
-            this.labelBranch.Size = new System.Drawing.Size(51, 19);
-            this.labelBranch.TabIndex = 2;
-            this.labelBranch.Text = "Branch";
-            // 
-            // labelDate
-            // 
-            this.labelDate.AutoSize = true;
-            this.labelDate.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.labelDate.Location = new System.Drawing.Point(390, 81);
-            this.labelDate.Name = "labelDate";
-            this.labelDate.Size = new System.Drawing.Size(38, 19);
-            this.labelDate.TabIndex = 3;
-            this.labelDate.Text = "Date";
-            // 
-            // labelPaymentMode
-            // 
-            this.labelPaymentMode.AutoSize = true;
-            this.labelPaymentMode.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.labelPaymentMode.Location = new System.Drawing.Point(602, 56);
-            this.labelPaymentMode.Name = "labelPaymentMode";
-            this.labelPaymentMode.Size = new System.Drawing.Size(103, 19);
-            this.labelPaymentMode.TabIndex = 4;
-            this.labelPaymentMode.Text = "Payment Mode";
-            // 
-            // labelReference
-            // 
-            this.labelReference.AutoSize = true;
-            this.labelReference.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.labelReference.Location = new System.Drawing.Point(743, 56);
-            this.labelReference.Name = "labelReference";
-            this.labelReference.Size = new System.Drawing.Size(68, 19);
-            this.labelReference.TabIndex = 5;
-            this.labelReference.Text = "Reference";
-            // 
-            // labelSalesperson
-            // 
-            this.labelSalesperson.AutoSize = true;
-            this.labelSalesperson.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.labelSalesperson.Location = new System.Drawing.Point(25, 114);
-            this.labelSalesperson.Name = "labelSalesperson";
-            this.labelSalesperson.Size = new System.Drawing.Size(81, 19);
-            this.labelSalesperson.TabIndex = 6;
-            this.labelSalesperson.Text = "Salesperson";
-            // 
-            // labelPaymentTerm
-            // 
-            this.labelPaymentTerm.AutoSize = true;
-            this.labelPaymentTerm.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.labelPaymentTerm.Location = new System.Drawing.Point(328, 114);
-            this.labelPaymentTerm.Name = "labelPaymentTerm";
-            this.labelPaymentTerm.Size = new System.Drawing.Size(97, 19);
-            this.labelPaymentTerm.TabIndex = 7;
-            this.labelPaymentTerm.Text = "Payment Term";
-            // 
-            // labelUser
-            // 
-            this.labelUser.AutoSize = true;
-            this.labelUser.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.labelUser.Location = new System.Drawing.Point(73, 147);
-            this.labelUser.Name = "labelUser";
-            this.labelUser.Size = new System.Drawing.Size(37, 19);
-            this.labelUser.TabIndex = 8;
-            this.labelUser.Text = "User";
-            // 
-            // labelOutstanding
-            // 
-            this.labelOutstanding.AutoSize = true;
-            this.labelOutstanding.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.labelOutstanding.Location = new System.Drawing.Point(344, 147);
-            this.labelOutstanding.Name = "labelOutstanding";
-            this.labelOutstanding.Size = new System.Drawing.Size(86, 19);
-            this.labelOutstanding.TabIndex = 9;
-            this.labelOutstanding.Text = "Outstanding";
-            // 
-            // labelPoints
-            // 
-            this.labelPoints.AutoSize = true;
-            this.labelPoints.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.labelPoints.Location = new System.Drawing.Point(618, 147);
-            this.labelPoints.Name = "labelPoints";
-            this.labelPoints.Size = new System.Drawing.Size(46, 19);
-            this.labelPoints.TabIndex = 10;
-            this.labelPoints.Text = "Points";
-            // 
-            // txtDocNoDisplay
-            // 
-            this.txtDocNoDisplay.Location = new System.Drawing.Point(111, 13);
-            this.txtDocNoDisplay.Name = "txtDocNoDisplay";
-            this.txtDocNoDisplay.Size = new System.Drawing.Size(146, 21);
-            this.txtDocNoDisplay.TabIndex = 11;
-            // 
-            // txtAccountCode
-            // 
-            this.txtAccountCode.Location = new System.Drawing.Point(111, 46);
-            this.txtAccountCode.Name = "txtAccountCode";
-            this.txtAccountCode.Size = new System.Drawing.Size(165, 21);
-            this.txtAccountCode.TabIndex = 12;
-            // 
-            // txtAccountName
-            // 
-            this.txtAccountName.Location = new System.Drawing.Point(286, 46);
-            this.txtAccountName.Name = "txtAccountName";
-            this.txtAccountName.Size = new System.Drawing.Size(306, 21);
-            this.txtAccountName.TabIndex = 13;
-            // 
-            // txtBranch
-            // 
-            this.txtBranch.Location = new System.Drawing.Point(111, 79);
-            this.txtBranch.Name = "txtBranch";
-            this.txtBranch.Size = new System.Drawing.Size(170, 21);
-            this.txtBranch.TabIndex = 14;
-            // 
-            // txtBillDate
-            // 
-            this.txtBillDate.Location = new System.Drawing.Point(432, 79);
-            this.txtBillDate.Name = "txtBillDate";
-            this.txtBillDate.Size = new System.Drawing.Size(160, 21);
-            this.txtBillDate.TabIndex = 15;
-            // 
-            // txtPaymentMode
-            // 
-            this.txtPaymentMode.Location = new System.Drawing.Point(602, 78);
-            this.txtPaymentMode.Name = "txtPaymentMode";
-            this.txtPaymentMode.Size = new System.Drawing.Size(130, 21);
-            this.txtPaymentMode.TabIndex = 16;
-            // 
-            // txtReference
-            // 
-            this.txtReference.Location = new System.Drawing.Point(743, 78);
-            this.txtReference.Name = "txtReference";
-            this.txtReference.Size = new System.Drawing.Size(140, 21);
-            this.txtReference.TabIndex = 17;
-            // 
-            // txtSalesPerson
-            // 
-            this.txtSalesPerson.Location = new System.Drawing.Point(111, 112);
-            this.txtSalesPerson.Name = "txtSalesPerson";
-            this.txtSalesPerson.Size = new System.Drawing.Size(170, 21);
-            this.txtSalesPerson.TabIndex = 18;
-            // 
-            // txtPaymentTerm
-            // 
-            this.txtPaymentTerm.Location = new System.Drawing.Point(432, 112);
-            this.txtPaymentTerm.Name = "txtPaymentTerm";
-            this.txtPaymentTerm.Size = new System.Drawing.Size(170, 21);
-            this.txtPaymentTerm.TabIndex = 19;
-            // 
-            // txtUser
-            // 
-            this.txtUser.Location = new System.Drawing.Point(111, 145);
-            this.txtUser.Name = "txtUser";
-            this.txtUser.Size = new System.Drawing.Size(170, 21);
-            this.txtUser.TabIndex = 20;
-            // 
-            // txtOutstanding
-            // 
-            this.txtOutstanding.Location = new System.Drawing.Point(432, 145);
-            this.txtOutstanding.Name = "txtOutstanding";
-            this.txtOutstanding.Size = new System.Drawing.Size(170, 21);
-            this.txtOutstanding.TabIndex = 21;
-            // 
-            // txtPoints
-            // 
-            this.txtPoints.Location = new System.Drawing.Point(669, 145);
-            this.txtPoints.Name = "txtPoints";
-            this.txtPoints.Size = new System.Drawing.Size(80, 21);
-            this.txtPoints.TabIndex = 22;
-            // 
-            // innerBrowseButton
-            // 
-            this.innerBrowseButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.innerBrowseButton.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.innerBrowseButton.ForeColor = System.Drawing.Color.White;
-            this.innerBrowseButton.Location = new System.Drawing.Point(267, 10);
-            this.innerBrowseButton.Name = "innerBrowseButton";
-            this.innerBrowseButton.Size = new System.Drawing.Size(39, 28);
-            this.innerBrowseButton.TabIndex = 23;
-            this.innerBrowseButton.Text = "F11";
-            this.innerBrowseButton.UseVisualStyleBackColor = true;
-            // 
-            // rdoCash
-            // 
-            this.rdoCash.AutoSize = true;
-            this.rdoCash.Font = new System.Drawing.Font("Segoe UI", 10.5F);
-            this.rdoCash.Location = new System.Drawing.Point(500, 15);
-            this.rdoCash.Name = "rdoCash";
-            this.rdoCash.Size = new System.Drawing.Size(91, 23);
-            this.rdoCash.TabIndex = 24;
-            this.rdoCash.TabStop = true;
-            this.rdoCash.Text = "Cash Sales";
-            this.rdoCash.UseVisualStyleBackColor = true;
-            // 
-            // rdoCredit
-            // 
-            this.rdoCredit.AutoSize = true;
-            this.rdoCredit.Font = new System.Drawing.Font("Segoe UI", 10.5F);
-            this.rdoCredit.Location = new System.Drawing.Point(602, 15);
-            this.rdoCredit.Name = "rdoCredit";
-            this.rdoCredit.Size = new System.Drawing.Size(98, 23);
-            this.rdoCredit.TabIndex = 25;
-            this.rdoCredit.TabStop = true;
-            this.rdoCredit.Text = "Credit Sales";
-            this.rdoCredit.UseVisualStyleBackColor = true;
-            // 
-            // chkReceiptPrinter
-            // 
-            this.chkReceiptPrinter.AutoSize = true;
-            this.chkReceiptPrinter.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.chkReceiptPrinter.Location = new System.Drawing.Point(712, 15);
-            this.chkReceiptPrinter.Name = "chkReceiptPrinter";
-            this.chkReceiptPrinter.Size = new System.Drawing.Size(169, 23);
-            this.chkReceiptPrinter.TabIndex = 26;
-            this.chkReceiptPrinter.Text = "Send To Receipt Printer";
-            this.chkReceiptPrinter.UseVisualStyleBackColor = true;
-            // 
-            // btnPrint
-            // 
-            this.btnPrint.BackColor = System.Drawing.Color.SeaGreen;
-            this.btnPrint.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnPrint.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Bold);
-            this.btnPrint.ForeColor = System.Drawing.Color.White;
-            this.btnPrint.Location = new System.Drawing.Point(1130, 15);
-            this.btnPrint.Name = "btnPrint";
-            this.btnPrint.Size = new System.Drawing.Size(92, 33);
-            this.btnPrint.TabIndex = 3;
-            this.btnPrint.Text = "Print";
-            this.btnPrint.UseVisualStyleBackColor = true;
-            this.btnPrint.Click += new System.EventHandler(this.btnPrint_Click);
-            // 
             // detailsPanel
             // 
             this.detailsPanel.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
@@ -686,12 +415,6 @@ namespace PosBranch_Win.Transaction
             this.detailsPanel.Name = "detailsPanel";
             this.detailsPanel.Size = new System.Drawing.Size(1260, 184);
             this.detailsPanel.TabIndex = 0;
-            // 
-            // ultraTabSharedControlsPage1
-            // 
-            this.ultraTabSharedControlsPage1.Location = new System.Drawing.Point(-10000, -10000);
-            this.ultraTabSharedControlsPage1.Name = "ultraTabSharedControlsPage1";
-            this.ultraTabSharedControlsPage1.Size = new System.Drawing.Size(1025, 0);
             // 
             // ultraPanel9
             // 
@@ -825,6 +548,283 @@ namespace PosBranch_Win.Transaction
             this.ultraPictureBox2.Size = new System.Drawing.Size(14, 17);
             this.ultraPictureBox2.TabIndex = 193;
             // 
+            // btnPrint
+            // 
+            this.btnPrint.BackColor = System.Drawing.Color.SeaGreen;
+            this.btnPrint.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnPrint.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Bold);
+            this.btnPrint.ForeColor = System.Drawing.Color.White;
+            this.btnPrint.Location = new System.Drawing.Point(1130, 15);
+            this.btnPrint.Name = "btnPrint";
+            this.btnPrint.Size = new System.Drawing.Size(92, 33);
+            this.btnPrint.TabIndex = 3;
+            this.btnPrint.Text = "Print";
+            this.btnPrint.UseVisualStyleBackColor = true;
+            this.btnPrint.Click += new System.EventHandler(this.btnPrint_Click);
+            // 
+            // chkReceiptPrinter
+            // 
+            this.chkReceiptPrinter.AutoSize = true;
+            this.chkReceiptPrinter.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.chkReceiptPrinter.Location = new System.Drawing.Point(712, 15);
+            this.chkReceiptPrinter.Name = "chkReceiptPrinter";
+            this.chkReceiptPrinter.Size = new System.Drawing.Size(169, 23);
+            this.chkReceiptPrinter.TabIndex = 26;
+            this.chkReceiptPrinter.Text = "Send To Receipt Printer";
+            this.chkReceiptPrinter.UseVisualStyleBackColor = true;
+            // 
+            // rdoCredit
+            // 
+            this.rdoCredit.AutoSize = true;
+            this.rdoCredit.Font = new System.Drawing.Font("Segoe UI", 10.5F);
+            this.rdoCredit.Location = new System.Drawing.Point(602, 15);
+            this.rdoCredit.Name = "rdoCredit";
+            this.rdoCredit.Size = new System.Drawing.Size(98, 23);
+            this.rdoCredit.TabIndex = 25;
+            this.rdoCredit.TabStop = true;
+            this.rdoCredit.Text = "Credit Sales";
+            this.rdoCredit.UseVisualStyleBackColor = true;
+            // 
+            // rdoCash
+            // 
+            this.rdoCash.AutoSize = true;
+            this.rdoCash.Font = new System.Drawing.Font("Segoe UI", 10.5F);
+            this.rdoCash.Location = new System.Drawing.Point(500, 15);
+            this.rdoCash.Name = "rdoCash";
+            this.rdoCash.Size = new System.Drawing.Size(91, 23);
+            this.rdoCash.TabIndex = 24;
+            this.rdoCash.TabStop = true;
+            this.rdoCash.Text = "Cash Sales";
+            this.rdoCash.UseVisualStyleBackColor = true;
+            // 
+            // innerBrowseButton
+            // 
+            this.innerBrowseButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.innerBrowseButton.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.innerBrowseButton.ForeColor = System.Drawing.Color.White;
+            this.innerBrowseButton.Location = new System.Drawing.Point(267, 10);
+            this.innerBrowseButton.Name = "innerBrowseButton";
+            this.innerBrowseButton.Size = new System.Drawing.Size(39, 28);
+            this.innerBrowseButton.TabIndex = 23;
+            this.innerBrowseButton.Text = "F11";
+            this.innerBrowseButton.UseVisualStyleBackColor = true;
+            // 
+            // txtPoints
+            // 
+            this.txtPoints.Location = new System.Drawing.Point(669, 145);
+            this.txtPoints.Name = "txtPoints";
+            this.txtPoints.Size = new System.Drawing.Size(80, 21);
+            this.txtPoints.TabIndex = 22;
+            // 
+            // txtOutstanding
+            // 
+            this.txtOutstanding.Location = new System.Drawing.Point(432, 145);
+            this.txtOutstanding.Name = "txtOutstanding";
+            this.txtOutstanding.Size = new System.Drawing.Size(170, 21);
+            this.txtOutstanding.TabIndex = 21;
+            // 
+            // txtUser
+            // 
+            this.txtUser.Location = new System.Drawing.Point(111, 145);
+            this.txtUser.Name = "txtUser";
+            this.txtUser.Size = new System.Drawing.Size(170, 21);
+            this.txtUser.TabIndex = 20;
+            // 
+            // txtPaymentTerm
+            // 
+            this.txtPaymentTerm.Location = new System.Drawing.Point(432, 112);
+            this.txtPaymentTerm.Name = "txtPaymentTerm";
+            this.txtPaymentTerm.Size = new System.Drawing.Size(170, 21);
+            this.txtPaymentTerm.TabIndex = 19;
+            // 
+            // txtSalesPerson
+            // 
+            this.txtSalesPerson.Location = new System.Drawing.Point(111, 112);
+            this.txtSalesPerson.Name = "txtSalesPerson";
+            this.txtSalesPerson.Size = new System.Drawing.Size(170, 21);
+            this.txtSalesPerson.TabIndex = 18;
+            // 
+            // txtReference
+            // 
+            this.txtReference.Location = new System.Drawing.Point(743, 78);
+            this.txtReference.Name = "txtReference";
+            this.txtReference.Size = new System.Drawing.Size(140, 21);
+            this.txtReference.TabIndex = 17;
+            // 
+            // txtPaymentMode
+            // 
+            this.txtPaymentMode.Location = new System.Drawing.Point(602, 78);
+            this.txtPaymentMode.Name = "txtPaymentMode";
+            this.txtPaymentMode.Size = new System.Drawing.Size(130, 21);
+            this.txtPaymentMode.TabIndex = 16;
+            // 
+            // txtBillDate
+            // 
+            this.txtBillDate.Location = new System.Drawing.Point(432, 79);
+            this.txtBillDate.Name = "txtBillDate";
+            this.txtBillDate.Size = new System.Drawing.Size(160, 21);
+            this.txtBillDate.TabIndex = 15;
+            // 
+            // txtBranch
+            // 
+            this.txtBranch.Location = new System.Drawing.Point(111, 79);
+            this.txtBranch.Name = "txtBranch";
+            this.txtBranch.Size = new System.Drawing.Size(170, 21);
+            this.txtBranch.TabIndex = 14;
+            // 
+            // txtAccountName
+            // 
+            this.txtAccountName.Location = new System.Drawing.Point(286, 46);
+            this.txtAccountName.Name = "txtAccountName";
+            this.txtAccountName.Size = new System.Drawing.Size(306, 21);
+            this.txtAccountName.TabIndex = 13;
+            // 
+            // txtAccountCode
+            // 
+            this.txtAccountCode.Location = new System.Drawing.Point(111, 46);
+            this.txtAccountCode.Name = "txtAccountCode";
+            this.txtAccountCode.Size = new System.Drawing.Size(165, 21);
+            this.txtAccountCode.TabIndex = 12;
+            // 
+            // txtDocNoDisplay
+            // 
+            this.txtDocNoDisplay.Location = new System.Drawing.Point(111, 13);
+            this.txtDocNoDisplay.Name = "txtDocNoDisplay";
+            this.txtDocNoDisplay.Size = new System.Drawing.Size(146, 21);
+            this.txtDocNoDisplay.TabIndex = 11;
+            // 
+            // labelPoints
+            // 
+            this.labelPoints.AutoSize = true;
+            this.labelPoints.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.labelPoints.Location = new System.Drawing.Point(618, 147);
+            this.labelPoints.Name = "labelPoints";
+            this.labelPoints.Size = new System.Drawing.Size(46, 19);
+            this.labelPoints.TabIndex = 10;
+            this.labelPoints.Text = "Points";
+            // 
+            // labelOutstanding
+            // 
+            this.labelOutstanding.AutoSize = true;
+            this.labelOutstanding.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.labelOutstanding.Location = new System.Drawing.Point(344, 147);
+            this.labelOutstanding.Name = "labelOutstanding";
+            this.labelOutstanding.Size = new System.Drawing.Size(86, 19);
+            this.labelOutstanding.TabIndex = 9;
+            this.labelOutstanding.Text = "Outstanding";
+            // 
+            // labelUser
+            // 
+            this.labelUser.AutoSize = true;
+            this.labelUser.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.labelUser.Location = new System.Drawing.Point(73, 147);
+            this.labelUser.Name = "labelUser";
+            this.labelUser.Size = new System.Drawing.Size(37, 19);
+            this.labelUser.TabIndex = 8;
+            this.labelUser.Text = "User";
+            // 
+            // labelPaymentTerm
+            // 
+            this.labelPaymentTerm.AutoSize = true;
+            this.labelPaymentTerm.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.labelPaymentTerm.Location = new System.Drawing.Point(328, 114);
+            this.labelPaymentTerm.Name = "labelPaymentTerm";
+            this.labelPaymentTerm.Size = new System.Drawing.Size(97, 19);
+            this.labelPaymentTerm.TabIndex = 7;
+            this.labelPaymentTerm.Text = "Payment Term";
+            // 
+            // labelSalesperson
+            // 
+            this.labelSalesperson.AutoSize = true;
+            this.labelSalesperson.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.labelSalesperson.Location = new System.Drawing.Point(25, 114);
+            this.labelSalesperson.Name = "labelSalesperson";
+            this.labelSalesperson.Size = new System.Drawing.Size(81, 19);
+            this.labelSalesperson.TabIndex = 6;
+            this.labelSalesperson.Text = "Salesperson";
+            // 
+            // labelReference
+            // 
+            this.labelReference.AutoSize = true;
+            this.labelReference.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.labelReference.Location = new System.Drawing.Point(743, 56);
+            this.labelReference.Name = "labelReference";
+            this.labelReference.Size = new System.Drawing.Size(68, 19);
+            this.labelReference.TabIndex = 5;
+            this.labelReference.Text = "Reference";
+            // 
+            // labelPaymentMode
+            // 
+            this.labelPaymentMode.AutoSize = true;
+            this.labelPaymentMode.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.labelPaymentMode.Location = new System.Drawing.Point(602, 56);
+            this.labelPaymentMode.Name = "labelPaymentMode";
+            this.labelPaymentMode.Size = new System.Drawing.Size(103, 19);
+            this.labelPaymentMode.TabIndex = 4;
+            this.labelPaymentMode.Text = "Payment Mode";
+            // 
+            // labelDate
+            // 
+            this.labelDate.AutoSize = true;
+            this.labelDate.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.labelDate.Location = new System.Drawing.Point(390, 81);
+            this.labelDate.Name = "labelDate";
+            this.labelDate.Size = new System.Drawing.Size(38, 19);
+            this.labelDate.TabIndex = 3;
+            this.labelDate.Text = "Date";
+            // 
+            // labelBranch
+            // 
+            this.labelBranch.AutoSize = true;
+            this.labelBranch.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.labelBranch.Location = new System.Drawing.Point(57, 81);
+            this.labelBranch.Name = "labelBranch";
+            this.labelBranch.Size = new System.Drawing.Size(51, 19);
+            this.labelBranch.TabIndex = 2;
+            this.labelBranch.Text = "Branch";
+            // 
+            // labelAccount
+            // 
+            this.labelAccount.AutoSize = true;
+            this.labelAccount.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.labelAccount.Location = new System.Drawing.Point(51, 48);
+            this.labelAccount.Name = "labelAccount";
+            this.labelAccount.Size = new System.Drawing.Size(59, 19);
+            this.labelAccount.TabIndex = 1;
+            this.labelAccount.Text = "Account";
+            // 
+            // labelDocNo
+            // 
+            this.labelDocNo.AutoSize = true;
+            this.labelDocNo.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.labelDocNo.Location = new System.Drawing.Point(50, 15);
+            this.labelDocNo.Name = "labelDocNo";
+            this.labelDocNo.Size = new System.Drawing.Size(58, 19);
+            this.labelDocNo.TabIndex = 0;
+            this.labelDocNo.Text = "Doc No.";
+            // 
+            // ultraPanel1
+            // 
+            appearance10.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(197)))), ((int)(((byte)(250)))), ((int)(((byte)(247)))));
+            appearance10.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(224)))), ((int)(((byte)(229)))));
+            appearance10.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
+            this.ultraPanel1.Appearance = appearance10;
+            // 
+            // ultraPanel1.ClientArea
+            // 
+            this.ultraPanel1.ClientArea.Controls.Add(this.panel1);
+            this.ultraPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ultraPanel1.Location = new System.Drawing.Point(0, 0);
+            this.ultraPanel1.Name = "ultraPanel1";
+            this.ultraPanel1.Size = new System.Drawing.Size(1260, 680);
+            this.ultraPanel1.TabIndex = 0;
+            // 
+            // ultraTabSharedControlsPage1
+            // 
+            this.ultraTabSharedControlsPage1.Location = new System.Drawing.Point(-10000, -10000);
+            this.ultraTabSharedControlsPage1.Name = "ultraTabSharedControlsPage1";
+            this.ultraTabSharedControlsPage1.Size = new System.Drawing.Size(1025, 0);
+            // 
             // frmLastBills
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -844,20 +844,6 @@ namespace PosBranch_Win.Transaction
             this.totalsPanel.ResumeLayout(false);
             this.totalsPanel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.txtRemark)).EndInit();
-            this.ultraPanel1.ClientArea.ResumeLayout(false);
-            this.ultraPanel1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.txtDocNoDisplay)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtAccountCode)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtAccountName)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtBranch)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtBillDate)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtPaymentMode)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtReference)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtSalesPerson)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtPaymentTerm)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtUser)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtOutstanding)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtPoints)).EndInit();
             this.detailsPanel.ClientArea.ResumeLayout(false);
             this.detailsPanel.ClientArea.PerformLayout();
             this.detailsPanel.ResumeLayout(false);
@@ -869,6 +855,20 @@ namespace PosBranch_Win.Transaction
             this.ultraPanel8.ResumeLayout(false);
             this.ultraPanel3.ClientArea.ResumeLayout(false);
             this.ultraPanel3.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.txtPoints)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtOutstanding)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtUser)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtPaymentTerm)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtSalesPerson)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtReference)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtPaymentMode)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtBillDate)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtBranch)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtAccountName)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtAccountCode)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtDocNoDisplay)).EndInit();
+            this.ultraPanel1.ClientArea.ResumeLayout(false);
+            this.ultraPanel1.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }

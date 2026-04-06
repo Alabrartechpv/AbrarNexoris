@@ -1,4 +1,3 @@
-using CrystalDecisions.CrystalReports.Engine;
 using Infragistics.Win;
 using Infragistics.Win.Misc;
 using Infragistics.Win.UltraWinEditors;
@@ -15,14 +14,13 @@ using System.Data.SqlClient;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace PosBranch_Win.Transaction
 {
     public partial class frmLastBills : Form
     {
-        private readonly ReportDocument rpt = new ReportDocument();
-        private readonly ReportViewer rp = new ReportViewer();
         private readonly BaseRepostitory cn = new BaseRepostitory();
         private readonly SalesRepository salesRepository = new SalesRepository();
         private string paymentModeFilter;
@@ -34,7 +32,6 @@ namespace PosBranch_Win.Transaction
         private readonly System.Windows.Forms.ToolTip toolTip = new System.Windows.Forms.ToolTip();
 
         private long currentBillNo;
-        private long preparedBillNo;
         private bool suppressPaymentModeChange;
         private bool gridLayoutLoaded;
         private bool isDraggingColumn;
@@ -1320,7 +1317,6 @@ namespace PosBranch_Win.Transaction
             }
 
             currentBillNo = billNo;
-            preparedBillNo = 0;
             txtDocNoDisplay.Text = billNo.ToString();
             txtAccountCode.Text = GetAccountCode(master);
             txtAccountName.Text = GetAccountName(master);
@@ -1614,7 +1610,6 @@ ORDER BY sm.BillNo DESC";
         private void ClearViewer(bool preserveModeSelection = true)
         {
             currentBillNo = 0;
-            preparedBillNo = 0;
             txtDocNoDisplay.Text = string.Empty;
             txtAccountCode.Text = string.Empty;
             txtAccountName.Text = string.Empty;
@@ -1699,75 +1694,6 @@ ORDER BY sm.BillNo DESC";
             return userId > 0 ? $"USER-{userId}" : (SessionContext.UserName ?? string.Empty);
         }
 
-        private bool PreparePrintDocument(long billNo)
-        {
-            try
-            {
-                DataTable dt = new DataTable();
-                string reportFileName = "SalesInvoicePrint.rpt";
-                List<string> possiblePaths = new List<string>
-                {
-                    Path.Combine(Application.StartupPath, "Reports", reportFileName),
-                    Path.Combine(Application.StartupPath, reportFileName),
-                    Path.Combine(Application.StartupPath, "..", "Reportrpt", reportFileName),
-                    Path.Combine(Application.StartupPath, "..", "..", "Reportrpt", reportFileName)
-                };
-
-                string reportPath = possiblePaths.FirstOrDefault(File.Exists);
-                if (reportPath == null)
-                {
-                    return false;
-                }
-
-                try
-                {
-                    rpt.Close();
-                }
-                catch
-                {
-                }
-
-                rpt.Load(reportPath);
-
-                using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE._POS_GetBill, (SqlConnection)cn.DataConnection))
-                {
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Parameters.AddWithValue("@BillNo", billNo);
-                    cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
-                    cmd.Parameters.AddWithValue("@_Operations", "GETBILL");
-
-                    using (SqlDataAdapter adapt = new SqlDataAdapter(cmd))
-                    {
-                        adapt.Fill(dt);
-                        if (dt.Rows.Count == 0)
-                        {
-                            return false;
-                        }
-                        rpt.SetDataSource(dt);
-                    }
-                }
-
-                rp.setReportConnection(rpt);
-                rpt.SetParameterValue("@BillNo", billNo);
-                rpt.SetParameterValue("@BranchId", SessionContext.BranchId);
-                rpt.SetParameterValue("@_Operations", "GETBILL");
-                rp.HandleSubreportParameters(rpt, billNo);
-                preparedBillNo = billNo;
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-            finally
-            {
-                if (cn.DataConnection.State == ConnectionState.Open)
-                {
-                    cn.DataConnection.Close();
-                }
-            }
-        }
-
         private void btnPrint_Click(object sender, EventArgs e)
         {
             if (currentBillNo <= 0)
@@ -1778,16 +1704,20 @@ ORDER BY sm.BillNo DESC";
 
             try
             {
-                using (ReportViewer preview = new ReportViewer())
+                long billNoToPrint = currentBillNo;
+                Task.Run(() =>
                 {
-                    if (!preview.PreviewBill(currentBillNo))
+                    try
                     {
-                        MessageBox.Show("Unable to prepare the selected bill for printing.", "Print Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
+                        ReportViewer printer = new ReportViewer();
+                        printer.PrintBill(billNoToPrint);
                     }
-
-                    preview.ShowDialog(this);
-                }
+                    catch (Exception ex)
+                    {
+                        BeginInvoke((Action)(() =>
+                            MessageBox.Show("Printing failed: " + ex.Message, "Print Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)));
+                    }
+                });
             }
             catch (Exception ex)
             {
