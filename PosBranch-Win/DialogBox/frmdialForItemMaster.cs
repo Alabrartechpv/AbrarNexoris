@@ -3146,8 +3146,8 @@ namespace PosBranch_Win.DialogBox
                 dtUom.Columns.Add("MarginPer", typeof(float));
                 dtUom.Columns.Add("TaxPer", typeof(float));
                 dtUom.Columns.Add("TaxAmt", typeof(float));
-                dtUom.Columns.Add("MRP", typeof(float));
                 dtUom.Columns.Add("RetailPrice", typeof(float));
+                dtUom.Columns.Add("MRP", typeof(float));
                 dtUom.Columns.Add("WholeSalePrice", typeof(float));
                 dtUom.Columns.Add("CreditPrice", typeof(float));
                 dtUom.Columns.Add("CardPrice", typeof(float));
@@ -3246,30 +3246,41 @@ namespace PosBranch_Win.DialogBox
                     System.Diagnostics.Debug.WriteLine($"Error loading alternative barcodes into ultraGrid3: {ex.Message}");
                 }
 
-                // Set the barcode value to the txt_barcode field using reflection
-                // This works regardless of whether the field is public or private
-                // Set the barcode value to the txt_barcode field directly from the source data
-                if (getItem.List != null && getItem.List.Length > 0)
+                // Keep dialog-based item loading aligned with frmItemMasterNew.LoadItemById
+                // so the loaded main barcode stays locked for update mode.
+                string loadedBarcode = getItem.Barcode;
+                if (string.IsNullOrWhiteSpace(loadedBarcode) && getItem.List != null && getItem.List.Length > 0)
                 {
-                    string barcode = getItem.List[0].BarCode;
+                    loadedBarcode = getItem.List[0].BarCode;
+                }
 
-                    // Use reflection to find and set the txt_barcode TextBox
+                if (!string.IsNullOrWhiteSpace(loadedBarcode))
+                {
                     try
                     {
-                        // Find the control named "txt_barcode" anywhere in the form's control hierarchy
-                        TextBox barcodeTextBox = FindControlRecursive(ItemMaster, "txt_barcode") as TextBox;
-                        if (barcodeTextBox != null)
-                        {
-                            barcodeTextBox.Text = barcode;
-                        }
-                        else
-                        {
-                            System.Diagnostics.Debug.WriteLine("txt_barcode control not found");
-                        }
+                        ItemMaster.SetLoadedItemBarcode(loadedBarcode);
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Error setting barcode: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine($"Error locking loaded barcode via helper: {ex.Message}");
+
+                        try
+                        {
+                            TextBox barcodeTextBox = FindControlRecursive(ItemMaster, "txt_barcode") as TextBox;
+                            if (barcodeTextBox != null)
+                            {
+                                barcodeTextBox.Text = loadedBarcode;
+                                barcodeTextBox.ReadOnly = true;
+                            }
+                            else
+                            {
+                                System.Diagnostics.Debug.WriteLine("txt_barcode control not found");
+                            }
+                        }
+                        catch (Exception fallbackEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Error setting barcode: {fallbackEx.Message}");
+                        }
                     }
                 }
 
