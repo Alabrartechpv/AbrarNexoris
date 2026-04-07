@@ -62,6 +62,8 @@ namespace Repository.TransactionRepository
                     throw new Exception("Cannot save invoice. Financial Year is unexpectedly 0 after hardcoding.");
                 }
 
+                NormalizePaymentModeForPersistence(sales);
+
                 //here for getting the last bill no and assing the bill no to the model property
                 sales._Operation = OPERATION_GENERATE_NUMBER;
 
@@ -527,6 +529,8 @@ namespace Repository.TransactionRepository
                 {
                     throw new Exception("Cannot update invoice. Financial Year is unexpectedly 0 after hardcoding.");
                 }
+
+                NormalizePaymentModeForPersistence(sales);
                 try
                 {
                     using (SqlCommand statusCmd = new SqlCommand(STOREDPROCEDURE._POS_Sales_Win, (SqlConnection)DataConnection, (SqlTransaction)trans))
@@ -1114,6 +1118,8 @@ namespace Repository.TransactionRepository
                     sales.DueDate = sales.BillDate;
                 }
 
+                NormalizePaymentModeForPersistence(sales);
+
                 Netamount = sales.NetAmount;
                 //here for getting the last bill no and assing the bill no to the model property
                 sales._Operation = OPERATION_GENERATE_NUMBER;
@@ -1582,21 +1588,28 @@ namespace Repository.TransactionRepository
 
                 // Ensure FinYearId is set from session context
                 sales.FinYearId = SessionContext.FinYearId;
+                NormalizePaymentModeForPersistence(sales);
 
                 // Open connection
                 DataConnection.Open();
 
-                // Use COMPLETE operation to update just the status of the existing record
+                // Use COMPLETE operation to update the held bill with the final payment state.
                 using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE._POS_Sales_Win, (SqlConnection)DataConnection))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
 
-                    // Only add essential parameters needed for the COMPLETE operation
                     cmd.Parameters.AddWithValue("@CompanyId", sales.CompanyId);
                     cmd.Parameters.AddWithValue("@BranchId", sales.BranchId);
                     cmd.Parameters.AddWithValue("@FinYearId", sales.FinYearId);
                     cmd.Parameters.AddWithValue("@BillNo", sales.BillNo);
                     cmd.Parameters.AddWithValue("@VoucherID", sales.VoucherID);
+                    cmd.Parameters.AddWithValue("@PaymodeId", sales.PaymodeId);
+                    cmd.Parameters.AddWithValue("@PaymodeName", string.IsNullOrEmpty(sales.PaymodeName) ? DBNull.Value : (object)sales.PaymodeName);
+                    cmd.Parameters.AddWithValue("@PaymodeLedgerId", sales.PaymodeLedgerId);
+                    cmd.Parameters.AddWithValue("@CreditDays", IsCreditPaymentMode(sales.PaymodeId) ? sales.CreditDays : 0);
+                    cmd.Parameters.AddWithValue("@DueDate", sales.DueDate);
+                    cmd.Parameters.AddWithValue("@PaymentReference", string.IsNullOrEmpty(sales.PaymentReference) ? DBNull.Value : (object)sales.PaymentReference);
+                    cmd.Parameters.AddWithValue("@Status", string.IsNullOrEmpty(sales.Status) ? DBNull.Value : (object)sales.Status);
 
                     // Set payment fields based on payment mode (POS Logic)
                     if (IsCreditPaymentMode(sales.PaymodeId))
@@ -2226,6 +2239,110 @@ namespace Repository.TransactionRepository
             return SessionContext.FinYearId;
         }
 
+        private bool TryParseCreditDaysFromPaymodeLabel(string paymodeName, out int creditDays)
+        {
+            creditDays = 0;
+            if (string.IsNullOrWhiteSpace(paymodeName))
+            {
+                return false;
+            }
+
+            string normalized = paymodeName.Trim().ToUpperInvariant();
+            if (!normalized.Contains("DAY"))
+            {
+                return false;
+            }
+
+            string digits = new string(normalized.Where(char.IsDigit).ToArray());
+            return !string.IsNullOrWhiteSpace(digits) && int.TryParse(digits, out creditDays);
+        }
+
+        private void NormalizePaymentModeForPersistence(SalesMaster sales)
+        {
+            if (sales == null)
+            {
+                return;
+            }
+
+            int parsedCreditDays = 0;
+            bool looksLikeCreditDays = TryParseCreditDaysFromPaymodeLabel(sales.PaymodeName, out parsedCreditDays);
+
+            List<PaymodeDDl> paymodes = null;
+            int creditPaymodeId = 0;
+            int cashPaymodeId = 2;
+
+            try
+            {
+                Dropdowns dp = new Dropdowns();
+                var grid = dp.PaymodeDDl();
+                paymodes = grid?.List?.ToList();
+                creditPaymodeId = paymodes?.FirstOrDefault(p =>
+                    p.PayModeName.Equals("Credit", StringComparison.OrdinalIgnoreCase))?.PayModeID ?? 0;
+                cashPaymodeId = paymodes?.FirstOrDefault(p =>
+                    p.PayModeName.Equals("Cash", StringComparison.OrdinalIgnoreCase))?.PayModeID ?? cashPaymodeId;
+            }
+            catch
+            {
+                // Fallbacks are already initialized.
+            }
+
+            bool isCreditByName = string.Equals(sales.PaymodeName, "Credit", StringComparison.OrdinalIgnoreCase);
+            bool isCreditById = creditPaymodeId > 0 && sales.PaymodeId == creditPaymodeId;
+
+            if (looksLikeCreditDays || isCreditByName || isCreditById)
+            {
+                if (creditPaymodeId > 0)
+                {
+                    sales.PaymodeId = creditPaymodeId;
+                }
+
+                sales.PaymodeName = "Credit";
+
+                if (sales.CreditDays <= 0)
+                {
+                    sales.CreditDays = parsedCreditDays > 0 ? parsedCreditDays : 30;
+                }
+
+                if (sales.DueDate <= sales.BillDate)
+                {
+                    sales.DueDate = sales.BillDate.AddDays(sales.CreditDays);
+                }
+
+                return;
+            }
+
+            bool paymodeIdExists = paymodes != null && paymodes.Any(p => p.PayModeID == sales.PaymodeId);
+            if (paymodes != null && !paymodeIdExists)
+            {
+                sales.PaymodeId = cashPaymodeId;
+                paymodeIdExists = true;
+            }
+
+            if (paymodeIdExists && paymodes != null)
+            {
+                var mode = paymodes.FirstOrDefault(p => p.PayModeID == sales.PaymodeId);
+                if (mode != null && !string.IsNullOrWhiteSpace(mode.PayModeName))
+                {
+                    sales.PaymodeName = mode.PayModeName;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(sales.PaymodeName))
+            {
+                sales.PaymodeName = "Cash";
+                if (sales.PaymodeId <= 0)
+                {
+                    sales.PaymodeId = cashPaymodeId;
+                }
+            }
+
+            sales.CreditDays = 0;
+            if (sales.DueDate < sales.BillDate)
+            {
+                sales.DueDate = sales.BillDate;
+            }
+        }
+
         /// <summary>
         /// Checks if the given payment mode ID is a Credit payment mode
         /// </summary>
@@ -2294,8 +2411,10 @@ namespace Repository.TransactionRepository
             voucher.VoucherDate = voucherDate;
             voucher.VoucherType = VOUCHER_TYPE_SALES;
             voucher.Narration = $"SALES: #{sales.BillNo}| SALES WORTH:{sales.NetAmount}| REMARKS: ";
-            voucher.Mode = "";
-            voucher.ModeID = 0;
+            // Store the bill-level payment mode on each voucher entry.
+            // Detailed split-payment methods continue to live in SPaymentDetails.
+            voucher.Mode = sales.PaymodeName ?? string.Empty;
+            voucher.ModeID = sales.PaymodeId;
             voucher.UserDate = voucherDate;
             voucher.UserName = SessionContext.UserName;
             voucher.UserID = SessionContext.UserId;

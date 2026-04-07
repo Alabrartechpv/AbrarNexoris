@@ -1564,6 +1564,7 @@
     </Content>
     <None Include="Resources\profit-and-loss.png" />
     <None Include="Resources\scale.png" />
+    <None Include="Resources\report1.png" />
     <Content Include="Resources\splash_logo.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

@@ -30,6 +30,10 @@ namespace PosBranch_Win
         private string _lastActivatedToolKey = null; // Track which toolbar key opened the current form
         private bool _openingFromFavourite = false; // When true, allow duplicate form instances
 
+        // Report Navigator fields
+        private Infragistics.Win.UltraWinExplorerBar.UltraExplorerBar ultraExplorerBarReportNavigator;
+        private Panel panelReportNavigatorWrapper;
+        private bool _isReportNavigatorVisible = false;
 
         public Home()
         {
@@ -414,6 +418,8 @@ namespace PosBranch_Win
         {
             try
             {
+                // Auto-close Report Navigator when any form is opened (IRS POS behavior)
+                if (_isReportNavigatorVisible) HideReportNavigator();
                 // Check if tab already exists (skip when opening from favourites to allow multiple instances)
                 if (!_openingFromFavourite)
                 {
@@ -597,6 +603,8 @@ namespace PosBranch_Win
         {
             try
             {
+                // Auto-close Report Navigator when any form is opened (IRS POS behavior)
+                if (_isReportNavigatorVisible) HideReportNavigator();
                 // Check if tab already exists (skip when opening from favourites to allow multiple instances)
                 if (!_openingFromFavourite)
                 {
@@ -734,6 +742,9 @@ namespace PosBranch_Win
             toolStripStatusLabel1.Text = DataBase.Branch;
             toolStripStatusUserValLabel3.Text = DataBase.UserName;
             ultraRadialMenu1.Show(this, new Point(Bounds.Right, Bounds.Top));
+
+            // Initialize Report Navigator sidebar
+            InitializeReportNavigator();
 
             // Set ExplorerBar Style to Outlook Navigation Pane
             ultraExplorerBarSideMenu.Style = Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarStyle.OutlookNavigationPane;
@@ -1906,11 +1917,19 @@ namespace PosBranch_Win
             }
 
             // Role Permissions (Admin only)
-            // Role Permissions (Admin only)
             if (e.Tool.Key == "RolePermissions" || e.Tool.Key == "Roles")
             {
                 FrmRolePermissions rolePerms = new FrmRolePermissions();
                 OpenFormInTab(rolePerms, "Role Permissions");
+            }
+
+            // Report Navigator Toggle
+            if (e.Tool.Key == "Report")
+            {
+                if (_isReportNavigatorVisible)
+                    HideReportNavigator();
+                else
+                    ShowReportNavigator();
             }
 
             #endregion
@@ -2056,6 +2075,14 @@ namespace PosBranch_Win
                 // Open Item Master tab
                 Master.frmItemMasterNew itemMaster = new Master.frmItemMasterNew();
                 OpenFormInTab(itemMaster, "Item Master");
+                e.Handled = true;
+            }
+            else if (e.KeyCode == Keys.F3)
+            {
+                if (_isReportNavigatorVisible)
+                    HideReportNavigator();
+                else
+                    ShowReportNavigator();
                 e.Handled = true;
             }
         }
@@ -2932,5 +2959,322 @@ namespace PosBranch_Win
                 System.Diagnostics.Debug.WriteLine($"Error styling favourite item: {ex.Message}");
             }
         }
+
+        #region Report Navigator Logic
+
+        private void InitializeReportNavigator()
+        {
+            try
+            {
+                // 1. Create Wrapper Panel to host Header and ExplorerBar seamlessly
+                panelReportNavigatorWrapper = new Panel();
+                panelReportNavigatorWrapper.Dock = DockStyle.Left;
+                panelReportNavigatorWrapper.Width = 220;
+                panelReportNavigatorWrapper.Name = "panelReportNavigatorWrapper";
+                panelReportNavigatorWrapper.Visible = false;
+                panelReportNavigatorWrapper.BackColor = Color.FromArgb(215, 236, 255); // matching Light Blue background
+                panelReportNavigatorWrapper.Padding = new Padding(1); // 1px border effect
+
+                // 2. Create standard IRS POS Report Navigator Header
+                Panel headerPanel = new Panel();
+                headerPanel.Dock = DockStyle.Top;
+                headerPanel.Height = 24;
+                headerPanel.BackColor = Color.FromArgb(191, 219, 255); // Exact IRS POS pane header background
+                headerPanel.Margin = new Padding(0);
+
+                // Add gradient paint to header to match IRS Office2007 Blue Dock Pane exactly
+                headerPanel.Paint += (s, e) => 
+                {
+                    using (LinearGradientBrush b = new LinearGradientBrush(headerPanel.ClientRectangle, Color.FromArgb(227, 239, 255), Color.FromArgb(175, 210, 255), LinearGradientMode.Vertical))
+                    {
+                        e.Graphics.FillRectangle(b, headerPanel.ClientRectangle);
+                    }
+                    e.Graphics.DrawString("Report Navigator", new Font("Tahoma", 8.25f, FontStyle.Bold), new SolidBrush(Color.FromArgb(21, 66, 139)), new PointF(5, 5));
+                };
+
+                // Add IRS POS matched Close button
+                AddPaneCaptionButton(headerPanel, 20, true, (s, e) => HideReportNavigator());
+                
+                // Add IRS POS matched Pin button (visual only/auto-hide toggle)
+                AddPaneCaptionButton(headerPanel, 40, false, null);
+
+                panelReportNavigatorWrapper.Controls.Add(headerPanel);
+
+                // 3. Initialize ExplorerBar
+                ultraExplorerBarReportNavigator = new Infragistics.Win.UltraWinExplorerBar.UltraExplorerBar();
+                ((System.ComponentModel.ISupportInitialize)(ultraExplorerBarReportNavigator)).BeginInit();
+
+                ultraExplorerBarReportNavigator.Dock = DockStyle.Fill;
+                ultraExplorerBarReportNavigator.Name = "ultraExplorerBarReportNavigator";
+                
+                // IRS POS uses standard ExplorerBar style
+                ultraExplorerBarReportNavigator.Style = Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarStyle.ExplorerBar;
+                ultraExplorerBarReportNavigator.GroupSettings.HeaderVisible = Infragistics.Win.DefaultableBoolean.True;
+                ultraExplorerBarReportNavigator.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+                ultraExplorerBarReportNavigator.Appearance.BackColor = Color.FromArgb(215, 236, 255); // Seamless match
+                ultraExplorerBarReportNavigator.BorderStyle = Infragistics.Win.UIElementBorderStyle.None;
+                
+                panelReportNavigatorWrapper.Controls.Add(ultraExplorerBarReportNavigator);
+                ultraExplorerBarReportNavigator.BringToFront();
+
+                this.Controls.Add(panelReportNavigatorWrapper);
+                
+                // CRITICAL FIX: Z-Order must match ultraExplorerBarSideMenu so Docking works without overlapping the main panel or ribbon
+                int sideMenuIndex = this.Controls.GetChildIndex(ultraExplorerBarSideMenu);
+                this.Controls.SetChildIndex(panelReportNavigatorWrapper, sideMenuIndex);
+
+                // Define categories
+                string[] categories = new[] { "Item", "Sales", "Discount", "Customer", "Vendor", "Analysis", "Staff", "Tax", "Others" };
+                
+                foreach (string category in categories)
+                {
+                    var group = new Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarGroup();
+                    group.Key = $"Grp_{category}";
+                    group.Text = category;
+                    group.Settings.ShowExpansionIndicator = Infragistics.Win.DefaultableBoolean.True;
+                    group.Expanded = (category == "Item") ? true : false; // Only expand first item by default like IRS
+                    ultraExplorerBarReportNavigator.Groups.Add(group);
+                }
+
+                // Map "Item" reports
+                AddReportItem("Item", "Stock Listing", "StockReportAdv");
+                AddReportItem("Item", "Item Report", "ItemReport");
+                AddReportItem("Item", "Stock Report Advanced", "StockReport");
+
+                // Map "Sales" reports
+                AddReportItem("Sales", "Sales Details", "Sales Details");
+                AddReportItem("Sales", "Sales Return Report", "SalesReturn");
+                AddReportItem("Sales", "Sales Profit", "SalesProfit");
+                AddReportItem("Sales", "Daily Sales", "DSales");
+
+                // Map "Customer" reports
+                AddReportItem("Customer", "Customer Outstanding Listing", "CustomerOutstandingReport");
+
+                // Map "Vendor" reports
+                AddReportItem("Vendor", "Vendor Outstanding Listing", "VendorOutstandingReport");
+
+                // Map "Analysis" reports
+                AddReportItem("Analysis", "Trading & P/L Account", "TradingPLAccount");
+                AddReportItem("Analysis", "Balance Sheet", "BalanceSheet");
+                AddReportItem("Analysis", "Cash & Bank Book", "CashBankBook");
+                AddReportItem("Analysis", "Day Book", "DayBook");
+
+                // Map "Others" reports
+                AddReportItem("Others", "Manual Party Balance Report", "ManualPartyBalanceReport");
+                AddReportItem("Others", "Purchase Details", "Purchase Details");
+                AddReportItem("Others", "Purchase Return Report", "PurchaseReturn");
+
+                StyleReportNavigator();
+
+                ultraExplorerBarReportNavigator.ItemClick += ReportNavigator_ItemClick;
+                
+                ((System.ComponentModel.ISupportInitialize)(ultraExplorerBarReportNavigator)).EndInit();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error initializing Report Navigator: {ex.Message}");
+            }
+        }
+
+        private void AddPaneCaptionButton(Panel headerPanel, int rightOffset, bool isClose, EventHandler clickHandler)
+        {
+            Panel btn = new Panel();
+            btn.Size = new Size(16, 15);
+            btn.Location = new Point(headerPanel.Width - rightOffset, 4);
+            btn.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btn.BackColor = Color.Transparent;
+            btn.Cursor = Cursors.Hand;
+            
+            bool isHovered = false;
+            btn.MouseEnter += (s, e) => { isHovered = true; btn.Invalidate(); };
+            btn.MouseLeave += (s, e) => { isHovered = false; btn.Invalidate(); };
+            if (clickHandler != null) btn.Click += clickHandler;
+
+            btn.Paint += (s, e) =>
+            {
+                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.None; // Crisp lines matching IRS
+                
+                if (isHovered)
+                {
+                    // Soft orange/yellow hover effect typical of Office 2007 dock buttons
+                    using (SolidBrush b = new SolidBrush(Color.FromArgb(255, 240, 201)))
+                    using (Pen p = new Pen(Color.FromArgb(255, 183, 104)))
+                    {
+                        e.Graphics.FillRectangle(b, 0, 0, 15, 14);
+                        e.Graphics.DrawRectangle(p, 0, 0, 15, 14);
+                    }
+                }
+                else
+                {
+                    // Gradient matched to IRS button box
+                    using (LinearGradientBrush b = new LinearGradientBrush(new Rectangle(0, 0, 16, 16), Color.FromArgb(226, 238, 255), Color.FromArgb(189, 215, 251), LinearGradientMode.Vertical))
+                    using (Pen p = new Pen(Color.FromArgb(120, 160, 210))) 
+                    {
+                        e.Graphics.FillRectangle(b, 0, 0, 15, 14);
+                        e.Graphics.DrawRectangle(p, 0, 0, 15, 14);
+                    }
+                }
+
+                // White drop shadow for icons
+                using (Pen shadowPen = new Pen(Color.FromArgb(150, 255, 255, 255), 1.5f))
+                using (Pen iconPen = new Pen(Color.FromArgb(21, 66, 139), 1.5f))
+                {
+                    if (isClose)
+                    {
+                        // Shadow
+                        e.Graphics.DrawLine(shadowPen, 4, 5, 11, 12);
+                        e.Graphics.DrawLine(shadowPen, 4, 12, 11, 5);
+                        // Main X
+                        e.Graphics.DrawLine(iconPen, 4, 4, 11, 11);
+                        e.Graphics.DrawLine(iconPen, 4, 11, 11, 4);
+                    }
+                    else
+                    {
+                        // Pin icon
+                        e.Graphics.DrawLine(iconPen, 8, 10, 8, 13); // Needle
+                        e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(21, 66, 139)), 5, 6, 7, 4); // Body
+                        e.Graphics.DrawLine(iconPen, 4, 5, 12, 5); // Head
+                    }
+                }
+            };
+            
+            headerPanel.Controls.Add(btn);
+        }
+
+        private void AddReportItem(string category, string text, string key)
+        {
+            var group = ultraExplorerBarReportNavigator.Groups[$"Grp_{category}"];
+            if (group != null)
+            {
+                var item = new Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarItem();
+                item.Key = key;
+                item.Text = text;
+                group.Items.Add(item);
+            }
+        }
+
+        private void StyleReportNavigator()
+        {
+            try
+            {
+                // Setup overall background to match IRS perfectly 
+                ultraExplorerBarReportNavigator.Appearance.BackColor = Color.FromArgb(215, 236, 255);
+                
+                // Group spacing to 0 - tight like IRS POS
+                ultraExplorerBarReportNavigator.Margins.Top = 0;
+                ultraExplorerBarReportNavigator.Margins.Bottom = 0;
+                ultraExplorerBarReportNavigator.Margins.Left = 0;
+                ultraExplorerBarReportNavigator.Margins.Right = 0;
+                ultraExplorerBarReportNavigator.GroupSpacing = 0;
+                
+                foreach (var group in ultraExplorerBarReportNavigator.Groups)
+                {
+                    // Exact Office 2007 Blue gradients for group headers
+                    group.Settings.AppearancesSmall.HeaderAppearance.BackColor = Color.FromArgb(227, 239, 255);
+                    group.Settings.AppearancesSmall.HeaderAppearance.BackColor2 = Color.FromArgb(175, 210, 255);
+                    group.Settings.AppearancesSmall.HeaderAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
+                    group.Settings.AppearancesSmall.HeaderAppearance.ForeColor = Color.FromArgb(21, 66, 139);
+                    group.Settings.AppearancesSmall.HeaderAppearance.FontData.Name = "Tahoma";
+                    group.Settings.AppearancesSmall.HeaderAppearance.FontData.SizeInPoints = 8.25f;
+                    group.Settings.AppearancesSmall.HeaderAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
+                    group.Settings.AppearancesSmall.HeaderAppearance.BorderColor = Color.FromArgb(101, 147, 207);
+
+                    group.Settings.AppearancesSmall.HeaderHotTrackAppearance.BackColor = Color.White;
+                    group.Settings.AppearancesSmall.HeaderHotTrackAppearance.BackColor2 = Color.FromArgb(225, 240, 255);
+                    group.Settings.AppearancesSmall.HeaderHotTrackAppearance.ForeColor = Color.FromArgb(21, 66, 139);
+
+                    // Item area styling - seamless light blue like IRS POS
+                    group.Settings.AppearancesSmall.ItemAreaAppearance.BackColor = Color.FromArgb(215, 236, 255);
+                    group.Settings.AppearancesSmall.ItemAreaAppearance.BorderColor = Color.FromArgb(158, 190, 230);
+                    group.Settings.ItemAreaInnerMargins.Left = 8;
+                    group.Settings.ItemAreaInnerMargins.Top = 4;
+                    group.Settings.ItemAreaInnerMargins.Bottom = 4;
+                    
+                    // Set Group Header Icons to match IRS categories
+                    try
+                    {
+                        if (group.Key == "Grp_Item") group.Settings.AppearancesSmall.HeaderAppearance.Image = PosBranch_Win.Properties.Resources.list_items;
+                        else if (group.Key == "Grp_Sales") group.Settings.AppearancesSmall.HeaderAppearance.Image = PosBranch_Win.Properties.Resources.transaction1;
+                        else if (group.Key == "Grp_Discount") group.Settings.AppearancesSmall.HeaderAppearance.Image = PosBranch_Win.Properties.Resources.rate_of_return;
+                        else if (group.Key == "Grp_Customer") group.Settings.AppearancesSmall.HeaderAppearance.Image = PosBranch_Win.Properties.Resources.icons8_roles_96;
+                        else if (group.Key == "Grp_Vendor") group.Settings.AppearancesSmall.HeaderAppearance.Image = PosBranch_Win.Properties.Resources.transaction;
+                        else if (group.Key == "Grp_Analysis") group.Settings.AppearancesSmall.HeaderAppearance.Image = PosBranch_Win.Properties.Resources.profit_and_loss;
+                    } catch { }
+
+                    foreach (Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarItem item in group.Items)
+                    {
+                        // IRS POS uses plain text links with NO icons on individual items
+                        item.Settings.Style = Infragistics.Win.UltraWinExplorerBar.ItemStyle.Label;
+                        item.Settings.AppearancesSmall.Appearance.ForeColor = Color.FromArgb(21, 66, 139);
+                        item.Settings.AppearancesSmall.Appearance.FontData.SizeInPoints = 8.25f;
+                        item.Settings.AppearancesSmall.Appearance.FontData.Name = "Tahoma";
+                        item.Settings.AppearancesSmall.Appearance.Cursor = Cursors.Hand;
+                        item.Settings.AppearancesSmall.Appearance.Image = null;
+                        item.Settings.AppearancesSmall.ActiveAppearance.Image = null;
+                        
+                        // Hover: subtle highlight, no background color change
+                        item.Settings.AppearancesSmall.HotTrackAppearance.ForeColor = Color.FromArgb(0, 50, 150);
+                        item.Settings.AppearancesSmall.HotTrackAppearance.FontData.Underline = Infragistics.Win.DefaultableBoolean.True;
+                        item.Settings.AppearancesSmall.HotTrackAppearance.BackColor = Color.Transparent;
+                        item.Settings.AppearancesSmall.HotTrackAppearance.Image = null;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error styling Report Navigator: {ex.Message}");
+            }
+        }
+
+        private void ShowReportNavigator()
+        {
+            if (ultraExplorerBarSideMenu != null)
+                ultraExplorerBarSideMenu.Visible = false;
+
+            if (panelReportNavigatorWrapper != null)
+                panelReportNavigatorWrapper.Visible = true;
+
+            _isReportNavigatorVisible = true;
+        }
+
+        private void HideReportNavigator()
+        {
+            if (panelReportNavigatorWrapper != null)
+                panelReportNavigatorWrapper.Visible = false;
+
+            if (ultraExplorerBarSideMenu != null)
+                ultraExplorerBarSideMenu.Visible = true;
+
+            _isReportNavigatorVisible = false;
+        }
+
+        private void ReportNavigator_ItemClick(object sender, Infragistics.Win.UltraWinExplorerBar.ItemEventArgs e)
+        {
+            try
+            {
+                // Standard report items use ToolClick handler mechanisms already built
+                string keyToExecute = e.Item.Key;
+                
+                if (ultraToolbarsManager1.Tools.Exists(keyToExecute))
+                {
+                    var tool = ultraToolbarsManager1.Tools[keyToExecute];
+                    var eventArgs = new Infragistics.Win.UltraWinToolbars.ToolClickEventArgs(tool, null);
+                    ultraToolbarsManager1_ToolClick_1(this, eventArgs);
+                    
+                    // User Request: Auto-close behavior
+                    HideReportNavigator();
+                }
+                else
+                {
+                    MessageBox.Show($"Report form for '{e.Item.Text}' is currently unavailable or a placeholder.", "Not Implemented", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error opening report: {ex.Message}");
+            }
+        }
+
+        #endregion
     }
 }
