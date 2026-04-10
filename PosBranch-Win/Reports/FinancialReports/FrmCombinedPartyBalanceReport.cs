@@ -54,7 +54,7 @@ namespace PosBranch_Win.Reports.FinancialReports
         private Point _dragStartPoint;
         private UltraGridColumn _columnToMove;
         private bool _isDraggingColumn;
-        private readonly ToolTip _toolTip = new ToolTip();
+        private readonly System.Windows.Forms.ToolTip _toolTip = new System.Windows.Forms.ToolTip();
         private string GridLayoutPath => Path.Combine(Application.StartupPath, GRID_LAYOUT_FILE);
 
         public FrmCombinedPartyBalanceReport()
