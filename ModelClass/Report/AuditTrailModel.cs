@@ -5,6 +5,7 @@ namespace ModelClass.Report
 {
     public class AuditTrailItem
     {
+        public int SlNo { get; set; }
         public DateTime DocDate { get; set; }
         public DateTime ReportDate { get; set; }
         public string TableName { get; set; }

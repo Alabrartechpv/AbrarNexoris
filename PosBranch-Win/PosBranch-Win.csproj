@@ -338,6 +338,12 @@
     <Compile Include="Reports\FinancialReports\frmCustomerOutstandingReport.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Reports\FinancialReports\FrmCombinedPartyBalanceReport.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reports\FinancialReports\FrmCombinedPartyBalanceDetailDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Reports\FinancialReports\frmCustomerOutstandingReport.Designer.cs">
       <DependentUpon>frmCustomerOutstandingReport.cs</DependentUpon>
     </Compile>
@@ -1568,6 +1574,7 @@
     <None Include="Resources\hold %281%29.png" />
     <None Include="Resources\debit.png" />
     <None Include="Resources\exit.png" />
+    <None Include="Resources\icons8-report-50.png" />
     <Content Include="Resources\languages %282%29.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

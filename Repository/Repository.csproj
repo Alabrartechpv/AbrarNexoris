@@ -88,6 +88,7 @@
     <Compile Include="ReportRepository\TradingPLRepository.cs" />
     <Compile Include="ReportRepository\BalanceSheetRepository.cs" />
     <Compile Include="ReportRepository\CashBankBookRepository.cs" />
+    <Compile Include="ReportRepository\CombinedPartyBalanceReportRepository.cs" />
     <Compile Include="ReportRepository\CustomerOutstandingReportRepository.cs" />
     <Compile Include="ReportRepository\DayBookRepository.cs" />
     <Compile Include="ReportRepository\StockReportAdvanceRepo.cs" />

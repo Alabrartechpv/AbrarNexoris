@@ -452,6 +452,11 @@ namespace PosBranch_Win.Reports.AuditReport
                 List<AuditTrailItem> loaded = _repository.GetAuditTrail(filter);
                 if (loaded != null)
                 {
+                    for (int i = 0; i < loaded.Count; i++)
+                    {
+                        loaded[i].SlNo = i + 1;
+                    }
+
                     _items.AddRange(loaded);
                 }
 
@@ -482,6 +487,7 @@ namespace PosBranch_Win.Reports.AuditReport
             HideColumn(band, "ModelId");
             HideColumn(band, "TableName");
 
+            SetCaption(band, "SlNo", "Sl.No");
             SetCaption(band, "DocDate", "Doc. Date");
             SetCaption(band, "ReportDate", "Report Date");
             SetCaption(band, "ItemNo", "Item No.");
@@ -499,22 +505,23 @@ namespace PosBranch_Win.Reports.AuditReport
             SetCaption(band, "BalanceCF", "Balance C/F");
             SetCaption(band, "UserName", "User");
 
-            SetVisiblePosition(band, "DocDate", 0);
-            SetVisiblePosition(band, "ReportDate", 1);
-            SetVisiblePosition(band, "ItemNo", 2);
-            SetVisiblePosition(band, "Description", 3);
-            SetVisiblePosition(band, "CategoryName", 4);
-            SetVisiblePosition(band, "GroupName", 5);
-            SetVisiblePosition(band, "DocNo", 6);
-            SetVisiblePosition(band, "Account", 7);
-            SetVisiblePosition(band, "Reference", 8);
-            SetVisiblePosition(band, "Price", 9);
-            SetVisiblePosition(band, "Cost", 10);
-            SetVisiblePosition(band, "BalanceBF", 11);
-            SetVisiblePosition(band, "Action", 12);
-            SetVisiblePosition(band, "Quantity", 13);
-            SetVisiblePosition(band, "BalanceCF", 14);
-            SetVisiblePosition(band, "UserName", 15);
+            SetVisiblePosition(band, "SlNo", 0);
+            SetVisiblePosition(band, "DocDate", 1);
+            SetVisiblePosition(band, "ReportDate", 2);
+            SetVisiblePosition(band, "ItemNo", 3);
+            SetVisiblePosition(band, "Description", 4);
+            SetVisiblePosition(band, "CategoryName", 5);
+            SetVisiblePosition(band, "GroupName", 6);
+            SetVisiblePosition(band, "DocNo", 7);
+            SetVisiblePosition(band, "Account", 8);
+            SetVisiblePosition(band, "Reference", 9);
+            SetVisiblePosition(band, "Price", 10);
+            SetVisiblePosition(band, "Cost", 11);
+            SetVisiblePosition(band, "BalanceBF", 12);
+            SetVisiblePosition(band, "Action", 13);
+            SetVisiblePosition(band, "Quantity", 14);
+            SetVisiblePosition(band, "BalanceCF", 15);
+            SetVisiblePosition(band, "UserName", 16);
 
             foreach (UltraGridColumn column in band.Columns)
             {
@@ -526,6 +533,7 @@ namespace PosBranch_Win.Reports.AuditReport
                 band.Columns["Action"].AllowRowFiltering = DefaultableBoolean.True;
             }
 
+            SetWidth(band, "SlNo", 55);
             SetWidth(band, "DocDate", 120);
             SetWidth(band, "ReportDate", 120);
             SetWidth(band, "ItemNo", 95);
@@ -545,6 +553,7 @@ namespace PosBranch_Win.Reports.AuditReport
 
             FormatDateColumn(band, "DocDate");
             FormatDateColumn(band, "ReportDate");
+            FormatIntegerColumn(band, "SlNo");
             FormatDecimalColumn(band, "Price");
             FormatDecimalColumn(band, "Cost");
             FormatDecimalColumn(band, "BalanceBF");
@@ -599,6 +608,15 @@ namespace PosBranch_Win.Reports.AuditReport
             {
                 band.Columns[columnName].Format = "n2";
                 band.Columns[columnName].CellAppearance.TextHAlign = HAlign.Right;
+            }
+        }
+
+        private void FormatIntegerColumn(UltraGridBand band, string columnName)
+        {
+            if (band.Columns.Exists(columnName))
+            {
+                band.Columns[columnName].Format = "0";
+                band.Columns[columnName].CellAppearance.TextHAlign = HAlign.Center;
             }
         }
 

@@ -1768,6 +1768,11 @@ namespace PosBranch_Win
                 PosBranch_Win.Reports.FinancialReports.FrmManualPartyBalanceReport manualPartyBalanceReport = new PosBranch_Win.Reports.FinancialReports.FrmManualPartyBalanceReport();
                 OpenFormInTab(manualPartyBalanceReport, "Manual Party Balance Report");
             }
+            if (e.Tool.Key == "CombinedPartyBalanceReport")
+            {
+                PosBranch_Win.Reports.FinancialReports.FrmCombinedPartyBalanceReport combinedPartyBalanceReport = new PosBranch_Win.Reports.FinancialReports.FrmCombinedPartyBalanceReport();
+                OpenFormInTab(combinedPartyBalanceReport, "Combined Party Balance Report");
+            }
             if (e.Tool.Key == "Users")
             {
                 FrmUsers users = new FrmUsers();
@@ -3067,6 +3072,7 @@ namespace PosBranch_Win
 
                 // Map "Others" reports
                 AddReportItem("Others", "Manual Party Balance Report", "ManualPartyBalanceReport");
+                AddReportItem("Others", "Combined Party Balance Report", "CombinedPartyBalanceReport");
                 AddReportItem("Others", "Purchase Details", "Purchase Details");
                 AddReportItem("Others", "Purchase Return Report", "PurchaseReturn");
 
