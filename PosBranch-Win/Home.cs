@@ -1862,6 +1862,11 @@ namespace PosBranch_Win
                 Reports.PurchaseReports.PurchaseReturnReport frmPurchaseReturnReport = new Reports.PurchaseReports.PurchaseReturnReport();
                 OpenFormInTab(frmPurchaseReturnReport, "PurchaseReturn");
             }
+            if (e.Tool.Key == "AuditTrail")
+            {
+                Reports.AuditReport.frmAuditReport frmAuditTrail = new Reports.AuditReport.frmAuditReport();
+                OpenFormInTab(frmAuditTrail, "Inventory Audit Trail");
+            }
             if (e.Tool.Key == "ItemReport")
             {
                 Reports.InventoryReport.frmItemReport frmitemRpt = new Reports.InventoryReport.frmItemReport();
@@ -3040,6 +3045,7 @@ namespace PosBranch_Win
                 AddReportItem("Item", "Stock Listing", "StockReportAdv");
                 AddReportItem("Item", "Item Report", "ItemReport");
                 AddReportItem("Item", "Stock Report Advanced", "StockReport");
+                AddReportItem("Item", "Inventory Audit Trail", "AuditTrail");
 
                 // Map "Sales" reports
                 AddReportItem("Sales", "Sales Details", "Sales Details");
@@ -3255,12 +3261,24 @@ namespace PosBranch_Win
                 // Standard report items use ToolClick handler mechanisms already built
                 string keyToExecute = e.Item.Key;
                 
-                if (ultraToolbarsManager1.Tools.Exists(keyToExecute))
+                if (ultraToolbarsManager1.Tools.Exists(keyToExecute) || keyToExecute == "AuditTrail")
                 {
-                    var tool = ultraToolbarsManager1.Tools[keyToExecute];
-                    var eventArgs = new Infragistics.Win.UltraWinToolbars.ToolClickEventArgs(tool, null);
+                    Infragistics.Win.UltraWinToolbars.ToolBase toolToExecute;
+
+                    if (ultraToolbarsManager1.Tools.Exists(keyToExecute))
+                    {
+                        toolToExecute = ultraToolbarsManager1.Tools[keyToExecute];
+                    }
+                    else
+                    {
+                        // Inventory Audit Trail is launched through the shared ToolClick
+                        // path even though it does not have its own ribbon button.
+                        toolToExecute = new Infragistics.Win.UltraWinToolbars.ButtonTool(keyToExecute);
+                    }
+
+                    var eventArgs = new Infragistics.Win.UltraWinToolbars.ToolClickEventArgs(toolToExecute, null);
                     ultraToolbarsManager1_ToolClick_1(this, eventArgs);
-                    
+
                     // User Request: Auto-close behavior
                     HideReportNavigator();
                 }
