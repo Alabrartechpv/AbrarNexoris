@@ -251,6 +251,11 @@ namespace Repository.ReportRepository
                     continue;
                 }
 
+                if (!string.IsNullOrWhiteSpace(filter.ItemNo) && !string.Equals(item.ItemNo, filter.ItemNo, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
                 if (!string.IsNullOrWhiteSpace(filter.ActivityKey) &&
                     !string.Equals(filter.ActivityKey, "ALL", StringComparison.OrdinalIgnoreCase) &&
                     !string.Equals(item.TableName, filter.ActivityKey, StringComparison.OrdinalIgnoreCase))

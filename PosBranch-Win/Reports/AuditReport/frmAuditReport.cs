@@ -65,6 +65,15 @@ namespace PosBranch_Win.Reports.AuditReport
             LoadData();
         }
 
+        private void CmbItemNo_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                LoadData();
+                e.Handled = true;
+            }
+        }
+
         private void BtnPreviewGrid_Click(object sender, EventArgs e)
         {
             LoadData();
@@ -179,32 +188,9 @@ namespace PosBranch_Win.Reports.AuditReport
             _itemOptions.Clear();
             _itemOptions.Add(new ComboItem { Text = "ALL", Value = "ALL" });
 
-            try
-            {
-                ItemDialogDDLGrid grid = _itemRepository.getItemGetAll(string.Empty);
-                if (grid != null && grid.List != null)
-                {
-                    foreach (ItemDialogDDL item in grid.List)
-                    {
-                        string barcodeValue = !string.IsNullOrWhiteSpace(item.Barcode)
-                            ? item.Barcode
-                            : item.BarCode;
-                        string barcode = string.IsNullOrWhiteSpace(barcodeValue)
-                            ? item.ItemId.ToString()
-                            : barcodeValue.Trim();
-
-                        _itemOptions.Add(new ComboItem
-                        {
-                            Text = barcode + " - " + (item.Description ?? string.Empty),
-                            Value = item.ItemId.ToString()
-                        });
-                    }
-                }
-            }
-            catch
-            {
-                // Keep the combo usable even if item lookup is unavailable.
-            }
+            // Removed getItemGetAll preloading. 
+            // In POS, preloading all items into a barcode filter dropdown causes performance issues.
+            // The proper way is a clean, empty input where the user scans the barcode directly.
 
             BindCombo(cmbItemNo, _itemOptions, "ALL", true);
         }
@@ -367,6 +353,11 @@ namespace PosBranch_Win.Reports.AuditReport
             }
         }
 
+        public void Clear()
+        {
+            ResetFilters(true);
+        }
+
         private void ResetFilters(bool reloadData = true)
         {
             dtFromDate.Value = DateTime.Today.AddDays(-7);
@@ -447,8 +438,12 @@ namespace PosBranch_Win.Reports.AuditReport
                 filter.ToDate = Convert.ToDateTime(dtToDate.Value);
                 filter.ActivityKey = null;
                 filter.Action = GetSelectedValue(cmbAction);
-                filter.ItemId = ToNullableInt(cmbItemNo.Value);
-                filter.SearchText = filter.ItemId.HasValue ? null : NormalizeSearchText(cmbItemNo.Text);
+                
+                string selectedItemNo = GetSelectedValue(cmbItemNo);
+                filter.ItemNo = string.Equals(selectedItemNo, "ALL", StringComparison.OrdinalIgnoreCase) ? null : selectedItemNo;
+                filter.ItemId = null;
+                filter.SearchText = filter.ItemNo != null ? null : NormalizeSearchText(cmbItemNo.Text);
+                
                 filter.GroupId = ToNullableInt(cmbGroup.Value);
                 filter.CategoryId = ToNullableInt(cmbCategory.Value);
                 filter.BrandId = ToNullableInt(cmbBrand.Value);
