@@ -1,9 +1,12 @@
 using ModelClass.Accounts;
+using ModelClass;
 using PosBranch_Win.Reports.FinancialReports;
 using Repository.Accounts;
+using Repository;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace PosBranch_Win.Accounts
@@ -11,6 +14,10 @@ namespace PosBranch_Win.Accounts
     public partial class FrmManualPartyBalance : Form
     {
         private readonly ManualPartyBalanceRepository _repository;
+        private readonly Dictionary<string, string> _customerNameMap;
+        private readonly Dictionary<string, string> _vendorNameMap;
+        private readonly List<string> _customerMasterNames;
+        private readonly List<string> _vendorMasterNames;
 
         private static readonly Color ClrPrimaryHover = Color.FromArgb(29, 78, 216);
         private static readonly Color ClrSuccess = Color.FromArgb(16, 185, 129);
@@ -47,6 +54,10 @@ namespace PosBranch_Win.Accounts
         public FrmManualPartyBalance()
         {
             _repository = new ManualPartyBalanceRepository();
+            _customerNameMap = BuildNameMap(new CustomerRepositoty().GetCustomerDDL().List?.Select(x => x.LedgerName) ?? Enumerable.Empty<string>());
+            _vendorNameMap = BuildNameMap(new VendorRepository().GetVendorDDL().List?.Select(x => x.LedgerName) ?? Enumerable.Empty<string>());
+            _customerMasterNames = _customerNameMap.Values.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            _vendorMasterNames = _vendorNameMap.Values.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             InitializeComponent();
             ApplyStyles();
 
@@ -64,6 +75,7 @@ namespace PosBranch_Win.Accounts
             cmbFilterPartyType.ValueChanged += (s, e) => LoadEntries();
             cmbFilterBalanceType.ValueChanged += (s, e) => LoadEntries();
             chkOpenOnly.CheckedChanged += (s, e) => LoadEntries();
+            txtPartyName.Leave += (s, e) => ApplyResolvedPartyName();
 
             _searchDebounce = new Timer { Interval = 400 };
             _searchDebounce.Tick += (s, e) => { _searchDebounce.Stop(); LoadEntries(); };
@@ -461,11 +473,14 @@ namespace PosBranch_Win.Accounts
 
             try
             {
+                string resolvedPartyName = ResolvePartyName(cmbPartyType.Text, txtPartyName.Text.Trim(), true);
+                txtPartyName.Text = resolvedPartyName;
+
                 var entry = new ManualPartyBalanceEntry
                 {
                     Id = _currentEntryId,
                     PartyType = cmbPartyType.Text,
-                    PartyName = txtPartyName.Text.Trim(),
+                    PartyName = resolvedPartyName,
                     BalanceType = cmbBalanceType.Text,
                     Amount = amount,
                     EntryDate = Convert.ToDateTime(dtEntryDate.Value).Date,
@@ -568,16 +583,19 @@ namespace PosBranch_Win.Accounts
 
         private void OpenReport()
         {
-            var reportForm = new FrmManualPartyBalanceReport();
-            if (Application.OpenForms["Home"] is Home homeForm)
+            var reportForm = new FrmCombinedPartyBalanceReport();
+            reportForm.MdiParent = this.MdiParent;
+            reportForm.Show();
+        }
+
+        private void ApplyResolvedPartyName()
+        {
+            if (_loadingEntry || string.IsNullOrWhiteSpace(txtPartyName.Text))
             {
-              
+                return;
             }
-            else
-            {
-                reportForm.MdiParent = this.MdiParent;
-                reportForm.Show();
-            }
+
+            txtPartyName.Text = ResolvePartyName(cmbPartyType.Text, txtPartyName.Text.Trim(), true);
         }
 
         private static string NormalizeFilter(Infragistics.Win.UltraWinEditors.UltraComboEditor comboBox)
@@ -601,6 +619,155 @@ namespace PosBranch_Win.Accounts
                     return;
                 }
             }
+        }
+
+        private string ResolvePartyName(string partyType, string rawName, bool allowApproximate)
+        {
+            string normalizedName = NormalizePartyName(rawName);
+            if (string.IsNullOrWhiteSpace(normalizedName))
+            {
+                return string.Empty;
+            }
+
+            Dictionary<string, string> nameMap = GetNameMap(partyType);
+            if (nameMap == null || nameMap.Count == 0)
+            {
+                return normalizedName;
+            }
+
+            string exactKey = BuildLookupKey(normalizedName);
+            string resolvedName;
+            if (nameMap.TryGetValue(exactKey, out resolvedName))
+            {
+                return resolvedName;
+            }
+
+            if (!allowApproximate)
+            {
+                return normalizedName;
+            }
+
+            List<string> candidates = GetMasterNames(partyType)
+                .Where(x => IsCloseMatch(normalizedName, x))
+                .ToList();
+
+            return candidates.Count == 1 ? candidates[0] : normalizedName;
+        }
+
+        private Dictionary<string, string> GetNameMap(string partyType)
+        {
+            if (string.Equals(partyType, "Customer", StringComparison.OrdinalIgnoreCase))
+            {
+                return _customerNameMap;
+            }
+
+            if (string.Equals(partyType, "Vendor", StringComparison.OrdinalIgnoreCase))
+            {
+                return _vendorNameMap;
+            }
+
+            return null;
+        }
+
+        private List<string> GetMasterNames(string partyType)
+        {
+            if (string.Equals(partyType, "Customer", StringComparison.OrdinalIgnoreCase))
+            {
+                return _customerMasterNames;
+            }
+
+            if (string.Equals(partyType, "Vendor", StringComparison.OrdinalIgnoreCase))
+            {
+                return _vendorMasterNames;
+            }
+
+            return new List<string>();
+        }
+
+        private static Dictionary<string, string> BuildNameMap(IEnumerable<string> names)
+        {
+            Dictionary<string, string> map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (string name in names.Where(x => !string.IsNullOrWhiteSpace(x)))
+            {
+                string normalizedName = NormalizePartyName(name);
+                string key = BuildLookupKey(normalizedName);
+                if (!map.ContainsKey(key))
+                {
+                    map.Add(key, normalizedName);
+                }
+            }
+
+            return map;
+        }
+
+        private static string NormalizePartyName(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return null;
+            }
+
+            return string.Join(" ", value.Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
+        }
+
+        private static string BuildLookupKey(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            return new string(value
+                .ToUpperInvariant()
+                .Where(char.IsLetterOrDigit)
+                .ToArray());
+        }
+
+        private static bool IsCloseMatch(string source, string target)
+        {
+            string sourceKey = BuildLookupKey(source);
+            string targetKey = BuildLookupKey(target);
+
+            if (string.IsNullOrWhiteSpace(sourceKey) || string.IsNullOrWhiteSpace(targetKey))
+            {
+                return false;
+            }
+
+            if (sourceKey[0] != targetKey[0] || Math.Abs(sourceKey.Length - targetKey.Length) > 2)
+            {
+                return false;
+            }
+
+            return ComputeLevenshteinDistance(sourceKey, targetKey) <= 2;
+        }
+
+        private static int ComputeLevenshteinDistance(string source, string target)
+        {
+            int[,] distance = new int[source.Length + 1, target.Length + 1];
+
+            for (int i = 0; i <= source.Length; i++)
+            {
+                distance[i, 0] = i;
+            }
+
+            for (int j = 0; j <= target.Length; j++)
+            {
+                distance[0, j] = j;
+            }
+
+            for (int i = 1; i <= source.Length; i++)
+            {
+                for (int j = 1; j <= target.Length; j++)
+                {
+                    int cost = source[i - 1] == target[j - 1] ? 0 : 1;
+                    distance[i, j] = Math.Min(
+                        Math.Min(distance[i - 1, j] + 1, distance[i, j - 1] + 1),
+                        distance[i - 1, j - 1] + cost);
+                }
+            }
+
+            return distance[source.Length, target.Length];
         }
     }
 }
