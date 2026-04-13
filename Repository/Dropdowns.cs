@@ -13,6 +13,376 @@ namespace Repository
 {
     public class Dropdowns : BaseRepostitory
     {
+        private const string ItemStatusActive = "Active";
+        private const string ItemStatusInactive = "Inactive";
+        private const string ItemStatusBlockedForSale = "Blocked for Sale";
+        private const string ItemStatusBlockedForPurchase = "Blocked for Purchase";
+        private const string ItemStatusDiscontinued = "Discontinued";
+        private const string ItemStatusTableName = "POS_ItemMasterStatusRules";
+
+        private static readonly string[] knownItemStatuses = new[]
+        {
+            ItemStatusActive,
+            ItemStatusInactive,
+            ItemStatusBlockedForSale,
+            ItemStatusBlockedForPurchase,
+            ItemStatusDiscontinued
+        };
+
+        private static bool itemStatusStorageEnsured;
+
+        public static string NormalizeItemStatusName(string statusName)
+        {
+            if (!string.IsNullOrWhiteSpace(statusName))
+            {
+                string normalized = knownItemStatuses
+                    .FirstOrDefault(status => string.Equals(status, statusName.Trim(), StringComparison.OrdinalIgnoreCase));
+                if (!string.IsNullOrWhiteSpace(normalized))
+                {
+                    return normalized;
+                }
+            }
+
+            return ItemStatusActive;
+        }
+
+        public static bool DoesStatusBlockSale(string statusName)
+        {
+            switch (NormalizeItemStatusName(statusName))
+            {
+                case ItemStatusInactive:
+                case ItemStatusBlockedForSale:
+                case ItemStatusDiscontinued:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        public static bool DoesStatusBlockPurchase(string statusName)
+        {
+            switch (NormalizeItemStatusName(statusName))
+            {
+                case ItemStatusInactive:
+                case ItemStatusBlockedForPurchase:
+                case ItemStatusDiscontinued:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private static ItemStatusRuleInfo CreateDefaultItemStatus(int itemId = 0)
+        {
+            return new ItemStatusRuleInfo
+            {
+                ItemId = itemId,
+                StatusName = ItemStatusActive,
+                StatusReason = string.Empty,
+                StatusDate = DateTime.Today,
+                BlockSale = false,
+                BlockPurchase = false
+            };
+        }
+
+        private static void EnsureStatusColumns(DataTable table)
+        {
+            if (table == null)
+            {
+                return;
+            }
+
+            if (!table.Columns.Contains("ItemStatus"))
+            {
+                table.Columns.Add("ItemStatus", typeof(string));
+            }
+
+            if (!table.Columns.Contains("StatusReason"))
+            {
+                table.Columns.Add("StatusReason", typeof(string));
+            }
+
+            if (!table.Columns.Contains("StatusDate"))
+            {
+                table.Columns.Add("StatusDate", typeof(DateTime));
+            }
+
+            if (!table.Columns.Contains("BlockSale"))
+            {
+                table.Columns.Add("BlockSale", typeof(bool));
+            }
+
+            if (!table.Columns.Contains("BlockPurchase"))
+            {
+                table.Columns.Add("BlockPurchase", typeof(bool));
+            }
+        }
+
+        private static void ApplyItemStatus(ItemDDl item, ItemStatusRuleInfo status)
+        {
+            if (item == null)
+            {
+                return;
+            }
+
+            ItemStatusRuleInfo effectiveStatus = status ?? CreateDefaultItemStatus(item.ItemId);
+            item.ItemStatus = NormalizeItemStatusName(effectiveStatus.StatusName);
+            item.StatusReason = effectiveStatus.StatusReason ?? string.Empty;
+            item.StatusDate = effectiveStatus.StatusDate;
+            item.BlockSale = effectiveStatus.BlockSale;
+            item.BlockPurchase = effectiveStatus.BlockPurchase;
+        }
+
+        public bool EnsureItemStatusStorage()
+        {
+            if (itemStatusStorageEnsured)
+            {
+                return true;
+            }
+
+            SqlConnection connection = DataConnection as SqlConnection;
+            if (connection == null)
+            {
+                return false;
+            }
+
+            bool openedHere = false;
+            try
+            {
+                if (connection.State != ConnectionState.Open)
+                {
+                    connection.Open();
+                    openedHere = true;
+                }
+
+                string sql = $@"
+IF OBJECT_ID(N'dbo.{ItemStatusTableName}', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.{ItemStatusTableName}
+    (
+        ItemId INT NOT NULL PRIMARY KEY,
+        CompanyId INT NULL,
+        BranchId INT NULL,
+        StatusName NVARCHAR(50) NOT NULL,
+        StatusReason NVARCHAR(500) NULL,
+        StatusDate DATETIME NULL,
+        BlockSale BIT NOT NULL CONSTRAINT DF_{ItemStatusTableName}_BlockSale DEFAULT(0),
+        BlockPurchase BIT NOT NULL CONSTRAINT DF_{ItemStatusTableName}_BlockPurchase DEFAULT(0),
+        CreatedOn DATETIME NOT NULL CONSTRAINT DF_{ItemStatusTableName}_CreatedOn DEFAULT(GETDATE()),
+        ModifiedOn DATETIME NOT NULL CONSTRAINT DF_{ItemStatusTableName}_ModifiedOn DEFAULT(GETDATE())
+    );
+END;
+
+IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'CompanyId') IS NULL
+    ALTER TABLE dbo.{ItemStatusTableName} ADD CompanyId INT NULL;
+
+IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'BranchId') IS NULL
+    ALTER TABLE dbo.{ItemStatusTableName} ADD BranchId INT NULL;
+
+IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'StatusName') IS NULL
+    ALTER TABLE dbo.{ItemStatusTableName} ADD StatusName NVARCHAR(50) NOT NULL CONSTRAINT DF_{ItemStatusTableName}_StatusName DEFAULT(N'{ItemStatusActive}') WITH VALUES;
+
+IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'StatusReason') IS NULL
+    ALTER TABLE dbo.{ItemStatusTableName} ADD StatusReason NVARCHAR(500) NULL;
+
+IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'StatusDate') IS NULL
+    ALTER TABLE dbo.{ItemStatusTableName} ADD StatusDate DATETIME NULL;
+
+IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'BlockSale') IS NULL
+    ALTER TABLE dbo.{ItemStatusTableName} ADD BlockSale BIT NOT NULL CONSTRAINT DF_{ItemStatusTableName}_BlockSale_Alt DEFAULT(0) WITH VALUES;
+
+IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'BlockPurchase') IS NULL
+    ALTER TABLE dbo.{ItemStatusTableName} ADD BlockPurchase BIT NOT NULL CONSTRAINT DF_{ItemStatusTableName}_BlockPurchase_Alt DEFAULT(0) WITH VALUES;
+
+IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'CreatedOn') IS NULL
+    ALTER TABLE dbo.{ItemStatusTableName} ADD CreatedOn DATETIME NOT NULL CONSTRAINT DF_{ItemStatusTableName}_CreatedOn_Alt DEFAULT(GETDATE()) WITH VALUES;
+
+IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'ModifiedOn') IS NULL
+    ALTER TABLE dbo.{ItemStatusTableName} ADD ModifiedOn DATETIME NOT NULL CONSTRAINT DF_{ItemStatusTableName}_ModifiedOn_Alt DEFAULT(GETDATE()) WITH VALUES;";
+
+                using (SqlCommand cmd = new SqlCommand(sql, connection))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+
+                itemStatusStorageEnsured = true;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                if (openedHere && connection.State == ConnectionState.Open)
+                {
+                    connection.Close();
+                }
+            }
+        }
+
+        public ItemStatusRuleInfo GetItemStatus(int itemId)
+        {
+            if (itemId <= 0)
+            {
+                return CreateDefaultItemStatus(itemId);
+            }
+
+            Dictionary<int, ItemStatusRuleInfo> statuses = GetItemStatuses(new[] { itemId });
+            if (statuses.TryGetValue(itemId, out ItemStatusRuleInfo status))
+            {
+                return status;
+            }
+
+            return CreateDefaultItemStatus(itemId);
+        }
+
+        public Dictionary<int, ItemStatusRuleInfo> GetItemStatuses(IEnumerable<int> itemIds)
+        {
+            Dictionary<int, ItemStatusRuleInfo> statusMap = new Dictionary<int, ItemStatusRuleInfo>();
+            List<int> ids = itemIds?
+                .Where(itemId => itemId > 0)
+                .Distinct()
+                .ToList() ?? new List<int>();
+
+            foreach (int itemId in ids)
+            {
+                statusMap[itemId] = CreateDefaultItemStatus(itemId);
+            }
+
+            if (ids.Count == 0 || !EnsureItemStatusStorage())
+            {
+                return statusMap;
+            }
+
+            SqlConnection connection = DataConnection as SqlConnection;
+            if (connection == null)
+            {
+                return statusMap;
+            }
+
+            bool openedHere = false;
+            try
+            {
+                if (connection.State != ConnectionState.Open)
+                {
+                    connection.Open();
+                    openedHere = true;
+                }
+
+                List<string> parameterNames = new List<string>();
+                using (SqlCommand cmd = new SqlCommand())
+                {
+                    cmd.Connection = connection;
+
+                    for (int i = 0; i < ids.Count; i++)
+                    {
+                        string parameterName = "@ItemId" + i;
+                        parameterNames.Add(parameterName);
+                        cmd.Parameters.AddWithValue(parameterName, ids[i]);
+                    }
+
+                    cmd.CommandText = $@"
+SELECT ItemId, StatusName, StatusReason, StatusDate, BlockSale, BlockPurchase
+FROM dbo.{ItemStatusTableName}
+WHERE ItemId IN ({string.Join(", ", parameterNames)})";
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            int itemId = reader["ItemId"] != DBNull.Value ? Convert.ToInt32(reader["ItemId"]) : 0;
+                            if (itemId <= 0)
+                            {
+                                continue;
+                            }
+
+                            statusMap[itemId] = new ItemStatusRuleInfo
+                            {
+                                ItemId = itemId,
+                                StatusName = NormalizeItemStatusName(reader["StatusName"]?.ToString()),
+                                StatusReason = reader["StatusReason"] == DBNull.Value ? string.Empty : reader["StatusReason"].ToString(),
+                                StatusDate = reader["StatusDate"] == DBNull.Value ? (DateTime?)DateTime.Today : Convert.ToDateTime(reader["StatusDate"]),
+                                BlockSale = reader["BlockSale"] != DBNull.Value && Convert.ToBoolean(reader["BlockSale"]),
+                                BlockPurchase = reader["BlockPurchase"] != DBNull.Value && Convert.ToBoolean(reader["BlockPurchase"])
+                            };
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Default status map is already prepared for fallback behavior.
+            }
+            finally
+            {
+                if (openedHere && connection.State == ConnectionState.Open)
+                {
+                    connection.Close();
+                }
+            }
+
+            return statusMap;
+        }
+
+        public void ApplyItemStatuses(IEnumerable<ItemDDl> items)
+        {
+            List<ItemDDl> itemList = items?.Where(item => item != null).ToList() ?? new List<ItemDDl>();
+            if (itemList.Count == 0)
+            {
+                return;
+            }
+
+            Dictionary<int, ItemStatusRuleInfo> statuses = GetItemStatuses(itemList.Select(item => item.ItemId));
+            foreach (ItemDDl item in itemList)
+            {
+                statuses.TryGetValue(item.ItemId, out ItemStatusRuleInfo status);
+                ApplyItemStatus(item, status);
+            }
+        }
+
+        public void ApplyItemStatuses(DataTable table, string itemIdColumn = "ItemId")
+        {
+            if (table == null || string.IsNullOrWhiteSpace(itemIdColumn) || !table.Columns.Contains(itemIdColumn))
+            {
+                return;
+            }
+
+            EnsureStatusColumns(table);
+            List<int> itemIds = new List<int>();
+            foreach (DataRow row in table.Rows)
+            {
+                if (row == null)
+                {
+                    continue;
+                }
+
+                int itemId;
+                if (int.TryParse(row[itemIdColumn]?.ToString(), out itemId) && itemId > 0)
+                {
+                    itemIds.Add(itemId);
+                }
+            }
+
+            Dictionary<int, ItemStatusRuleInfo> statuses = GetItemStatuses(itemIds);
+            foreach (DataRow row in table.Rows)
+            {
+                int itemId;
+                int.TryParse(row[itemIdColumn]?.ToString(), out itemId);
+                ItemStatusRuleInfo status;
+                if (!statuses.TryGetValue(itemId, out status))
+                {
+                    status = CreateDefaultItemStatus(itemId);
+                }
+
+                row["ItemStatus"] = NormalizeItemStatusName(status.StatusName);
+                row["StatusReason"] = status.StatusReason ?? string.Empty;
+                row["StatusDate"] = status.StatusDate.HasValue ? (object)status.StatusDate.Value.Date : DBNull.Value;
+                row["BlockSale"] = status.BlockSale;
+                row["BlockPurchase"] = status.BlockPurchase;
+            }
+        }
+
         //here geting all branch deteails from database
         public BranchDDlGrid getBanchDDl()
         {
@@ -270,7 +640,9 @@ namespace Repository
                         adapt.Fill(ds);
                         if ((ds != null) && (ds.Tables.Count > 0) && (ds.Tables[0] != null) && (ds.Tables[0].Rows.Count > 0))
                         {
-                            grid.List = ds.Tables[0].ToListOfObject<ItemDDl>();
+                            List<ItemDDl> items = ds.Tables[0].ToListOfObject<ItemDDl>()?.ToList() ?? new List<ItemDDl>();
+                            ApplyItemStatuses(items);
+                            grid.List = items;
                         }
                     }
                 }
@@ -316,7 +688,9 @@ namespace Repository
                         adapt.Fill(ds);
                         if ((ds != null) && (ds.Tables.Count > 0) && (ds.Tables[0] != null) && (ds.Tables[0].Rows.Count > 0))
                         {
-                            grid.List = ds.Tables[0].ToListOfObject<ItemDDl>();
+                            List<ItemDDl> items = ds.Tables[0].ToListOfObject<ItemDDl>()?.ToList() ?? new List<ItemDDl>();
+                            ApplyItemStatuses(items);
+                            grid.List = items;
                         }
                     }
                 }
@@ -735,7 +1109,9 @@ namespace Repository
                         adapt.Fill(ds);
                         if ((ds != null) && (ds.Tables.Count > 0) && (ds.Tables[0] != null) && (ds.Tables[0].Rows.Count > 0))
                         {
-                            igrid.List = ds.Tables[0].ToListOfObject<ItemDDl>();
+                            List<ItemDDl> items = ds.Tables[0].ToListOfObject<ItemDDl>()?.ToList() ?? new List<ItemDDl>();
+                            ApplyItemStatuses(items);
+                            igrid.List = items;
                         }
                     }
                 }

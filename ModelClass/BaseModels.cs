@@ -82,10 +82,24 @@ namespace ModelClass
         public double Stock { get; set; }
         public string IsBaseUnit { get; set; }        // 'Y' or 'N' from PriceSettings
         public double OrderedStock { get; set; }      // OrderedStock from PriceSettings
+        public string ItemStatus { get; set; } = "Active";
+        public string StatusReason { get; set; }
+        public DateTime? StatusDate { get; set; }
+        public bool BlockSale { get; set; }
+        public bool BlockPurchase { get; set; }
     }
     public class ItemDDlGrid
     {
         public IEnumerable<ItemDDl> List { get; set; }
+    }
+    public class ItemStatusRuleInfo
+    {
+        public int ItemId { get; set; }
+        public string StatusName { get; set; } = "Active";
+        public string StatusReason { get; set; }
+        public DateTime? StatusDate { get; set; }
+        public bool BlockSale { get; set; }
+        public bool BlockPurchase { get; set; }
     }
     public class SalesPersonDDl
     {

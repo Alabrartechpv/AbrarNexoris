@@ -34,6 +34,7 @@ namespace PosBranch_Win.Accounts
         public FrmReceipt()
         {
             InitializeComponent();
+            dtpPurchaseDate.Value = DateTime.Now;
 
             // Initialize branch ID from application context
             currentBranchId = SessionContext.BranchId;
@@ -471,6 +472,7 @@ namespace PosBranch_Win.Accounts
             selectionOrderCounter = 0; // Reset selection counter
             lblOutStanding.Text = "Outstanding";
             ultraTextEditor1.Text = "0.00";
+            dtpPurchaseDate.Value = DateTime.Now;
             // Repository is already initialized in constructor - no need to recreate
         }
         private void RadioButton_CheckedChanged(object sender, EventArgs e)

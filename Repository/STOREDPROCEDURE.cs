@@ -83,6 +83,7 @@ namespace Repository
         public static string _POS_SalesReturn_Details_for_Report = "_POS_SalesReturn_Details_for_Report";
         public static string _POS_PurchaseReturn_Master_for_Report = "_POS_PurchaseReturn_Master_for_Report";
         public static string _POS_PurchaseReturn_Details_for_Report = "_POS_PurchaseReturn_Details_for_Report";
+        public static string POS_ItemAuditReport = "POS_ItemAuditReport";
         public static string _POS_ItemReport = "_Test9";
         public static string _POS_StockReportAdvanced = "_Test16";
         public static string POS_RolePermission = "POS_RolePermission";
