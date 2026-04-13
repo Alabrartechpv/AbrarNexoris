@@ -186,9 +186,16 @@ namespace PosBranch_Win.Reports.AuditReport
                 {
                     foreach (ItemDialogDDL item in grid.List)
                     {
+                        string barcodeValue = !string.IsNullOrWhiteSpace(item.Barcode)
+                            ? item.Barcode
+                            : item.BarCode;
+                        string barcode = string.IsNullOrWhiteSpace(barcodeValue)
+                            ? item.ItemId.ToString()
+                            : barcodeValue.Trim();
+
                         _itemOptions.Add(new ComboItem
                         {
-                            Text = item.ItemId + " - " + (item.Description ?? string.Empty),
+                            Text = barcode + " - " + (item.Description ?? string.Empty),
                             Value = item.ItemId.ToString()
                         });
                     }
@@ -490,7 +497,7 @@ namespace PosBranch_Win.Reports.AuditReport
             SetCaption(band, "SlNo", "Sl.No");
             SetCaption(band, "DocDate", "Doc. Date");
             SetCaption(band, "ReportDate", "Report Date");
-            SetCaption(band, "ItemNo", "Item No.");
+            SetCaption(band, "ItemNo", "Barcode");
             SetCaption(band, "Description", "Description");
             SetCaption(band, "CategoryName", "Category");
             SetCaption(band, "GroupName", "Group");
