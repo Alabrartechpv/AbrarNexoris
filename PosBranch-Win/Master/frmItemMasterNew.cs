@@ -376,6 +376,34 @@ namespace PosBranch_Win.Master
         private bool hasGeneratedItemNumberForBarcode = false; // track if item number has been auto-generated for current barcode entry
         private readonly Dictionary<int, int> purchasePidCache = new Dictionary<int, int>();
         private string loadedItemMainBarcode = string.Empty;
+        private bool isInitializingItemStatusControls;
+        private bool itemStatusTableEnsured;
+        private bool itemStatusHandlersWired;
+
+        private const string ItemStatusActive = "Active";
+        private const string ItemStatusInactive = "Inactive";
+        private const string ItemStatusBlockedForSale = "Blocked for Sale";
+        private const string ItemStatusBlockedForPurchase = "Blocked for Purchase";
+        private const string ItemStatusDiscontinued = "Discontinued";
+        private const string ItemStatusTableName = "POS_ItemMasterStatusRules";
+
+        private static readonly string[] availableItemStatuses = new[]
+        {
+            ItemStatusActive,
+            ItemStatusInactive,
+            ItemStatusBlockedForSale,
+            ItemStatusBlockedForPurchase,
+            ItemStatusDiscontinued
+        };
+
+        private sealed class ItemStatusRuleSnapshot
+        {
+            public string StatusName { get; set; }
+            public string Reason { get; set; }
+            public DateTime StatusDate { get; set; }
+            public bool BlockSale { get; set; }
+            public bool BlockPurchase { get; set; }
+        }
 
         private static readonly string[] uomPriceColumnKeys = new[]
         {
@@ -443,6 +471,510 @@ namespace PosBranch_Win.Master
         {
             this.StartPosition = FormStartPosition.CenterScreen;
             InitializeComponent();
+        }
+
+        private void EnsureItemStatusControlsCreated()
+        {
+            if (ultraPanel1 == null || itemStatusPanel == null || cmbItemStatus == null ||
+                txtItemStatusReason == null || dtpItemStatusDate == null ||
+                lblItemStatusReason == null || lblItemStatusSaleRule == null || lblItemStatusPurchaseRule == null)
+            {
+                return;
+            }
+
+            if (cmbItemStatus.Items.Count == 0)
+            {
+                cmbItemStatus.Items.AddRange(availableItemStatuses);
+            }
+
+            if (!itemStatusHandlersWired)
+            {
+                cmbItemStatus.SelectedIndexChanged -= ItemStatusEditor_ValueChanged;
+                txtItemStatusReason.TextChanged -= ItemStatusEditor_ValueChanged;
+                dtpItemStatusDate.ValueChanged -= ItemStatusEditor_ValueChanged;
+
+                cmbItemStatus.SelectedIndexChanged += ItemStatusEditor_ValueChanged;
+                txtItemStatusReason.TextChanged += ItemStatusEditor_ValueChanged;
+                dtpItemStatusDate.ValueChanged += ItemStatusEditor_ValueChanged;
+                itemStatusHandlersWired = true;
+            }
+
+            if (cmbItemStatus.SelectedIndex < 0 && cmbItemStatus.Items.Count > 0)
+            {
+                cmbItemStatus.SelectedItem = ItemStatusActive;
+            }
+
+            if (btnItemStatus != null)
+            {
+                btnItemStatus.Click -= BtnItemStatus_Click;
+                btnItemStatus.Click += BtnItemStatus_Click;
+            }
+            UpdateItemStatusButtonState();
+        }
+
+        private void BtnItemStatus_Click(object sender, EventArgs e)
+        {
+            OpenItemStatusDialog();
+        }
+
+        private void UpdateItemStatusButtonState()
+        {
+            if (btnItemStatus == null)
+            {
+                return;
+            }
+
+            string statusName = ItemStatusActive;
+            if (cmbItemStatus != null)
+            {
+                statusName = NormalizeItemStatusName(cmbItemStatus.SelectedItem?.ToString() ?? cmbItemStatus.Text);
+            }
+
+            bool blocked = DoesStatusBlockSale(statusName) || DoesStatusBlockPurchase(statusName);
+            btnItemStatus.Text = $"Status: {statusName}";
+            btnItemStatus.BackColor = blocked ? Color.FromArgb(255, 224, 224) : Color.FromArgb(232, 240, 255);
+            btnItemStatus.ForeColor = blocked ? Color.Firebrick : Color.MidnightBlue;
+        }
+
+        private void OpenItemStatusDialog()
+        {
+            EnsureItemStatusControlsCreated();
+            ItemStatusRuleSnapshot snapshot = GetCurrentItemStatusRuleSnapshot();
+
+            using (frmItemStatusPopup popup = new frmItemStatusPopup())
+            {
+                popup.SetStatusOptions(availableItemStatuses);
+                popup.SetStatusValues(snapshot.StatusName, snapshot.Reason, snapshot.StatusDate);
+
+                if (btnItemStatus != null)
+                {
+                    Point screenPoint = btnItemStatus.PointToScreen(new Point(0, btnItemStatus.Height + 2));
+                    popup.StartPosition = FormStartPosition.Manual;
+                    popup.Location = screenPoint;
+                }
+
+                if (popup.ShowDialog(this) != DialogResult.OK)
+                {
+                    return;
+                }
+
+                ApplyItemStatusSnapshot(new ItemStatusRuleSnapshot
+                {
+                    StatusName = popup.SelectedStatus,
+                    Reason = popup.StatusReason,
+                    StatusDate = popup.StatusDate,
+                    BlockSale = DoesStatusBlockSale(popup.SelectedStatus),
+                    BlockPurchase = DoesStatusBlockPurchase(popup.SelectedStatus)
+                });
+            }
+        }
+
+        private void ItemStatusEditor_ValueChanged(object sender, EventArgs e)
+        {
+            if (isInitializingItemStatusControls)
+            {
+                return;
+            }
+
+            ApplyItemStatusUiState();
+        }
+
+        private void ResetItemStatusEditor()
+        {
+            ApplyItemStatusSnapshot(CreateDefaultItemStatusRule());
+        }
+
+        private ItemStatusRuleSnapshot CreateDefaultItemStatusRule()
+        {
+            return new ItemStatusRuleSnapshot
+            {
+                StatusName = ItemStatusActive,
+                Reason = string.Empty,
+                StatusDate = DateTime.Today,
+                BlockSale = false,
+                BlockPurchase = false
+            };
+        }
+
+        private string NormalizeItemStatusName(string statusName)
+        {
+            if (!string.IsNullOrWhiteSpace(statusName))
+            {
+                string normalized = availableItemStatuses
+                    .FirstOrDefault(status => string.Equals(status, statusName.Trim(), StringComparison.OrdinalIgnoreCase));
+                if (!string.IsNullOrWhiteSpace(normalized))
+                {
+                    return normalized;
+                }
+            }
+
+            return ItemStatusActive;
+        }
+
+        private string GetSelectedItemStatus()
+        {
+            EnsureItemStatusControlsCreated();
+
+            if (cmbItemStatus == null)
+            {
+                return ItemStatusActive;
+            }
+
+            return NormalizeItemStatusName(cmbItemStatus.SelectedItem?.ToString() ?? cmbItemStatus.Text);
+        }
+
+        private bool DoesStatusBlockSale(string statusName)
+        {
+            switch (NormalizeItemStatusName(statusName))
+            {
+                case ItemStatusInactive:
+                case ItemStatusBlockedForSale:
+                case ItemStatusDiscontinued:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private bool DoesStatusBlockPurchase(string statusName)
+        {
+            switch (NormalizeItemStatusName(statusName))
+            {
+                case ItemStatusInactive:
+                case ItemStatusBlockedForPurchase:
+                case ItemStatusDiscontinued:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private bool IsItemStatusReasonRequired(string statusName)
+        {
+            return !string.Equals(NormalizeItemStatusName(statusName), ItemStatusActive, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void ApplyItemStatusUiState()
+        {
+            EnsureItemStatusControlsCreated();
+
+            if (cmbItemStatus == null || txtItemStatusReason == null || lblItemStatusReason == null ||
+                lblItemStatusSaleRule == null || lblItemStatusPurchaseRule == null)
+            {
+                return;
+            }
+
+            string statusName = GetSelectedItemStatus();
+            bool blockSale = DoesStatusBlockSale(statusName);
+            bool blockPurchase = DoesStatusBlockPurchase(statusName);
+            bool reasonRequired = IsItemStatusReasonRequired(statusName);
+
+            lblItemStatusReason.Text = reasonRequired ? "Reason *" : "Reason";
+            txtItemStatusReason.BackColor = reasonRequired ? Color.FromArgb(255, 224, 192) : Color.White;
+
+            lblItemStatusSaleRule.Text = $"Sale: {(blockSale ? "Blocked" : "Allowed")}";
+            lblItemStatusSaleRule.ForeColor = blockSale ? Color.Firebrick : Color.ForestGreen;
+
+            lblItemStatusPurchaseRule.Text = $"Purchase: {(blockPurchase ? "Blocked" : "Allowed")}";
+            lblItemStatusPurchaseRule.ForeColor = blockPurchase ? Color.Firebrick : Color.ForestGreen;
+            UpdateItemStatusButtonState();
+        }
+
+        private void ApplyItemStatusSnapshot(ItemStatusRuleSnapshot snapshot)
+        {
+            EnsureItemStatusControlsCreated();
+
+            if (cmbItemStatus == null || txtItemStatusReason == null || dtpItemStatusDate == null)
+            {
+                return;
+            }
+
+            isInitializingItemStatusControls = true;
+            try
+            {
+                string statusName = NormalizeItemStatusName(snapshot?.StatusName);
+                cmbItemStatus.SelectedItem = statusName;
+                txtItemStatusReason.Text = snapshot?.Reason ?? string.Empty;
+
+                DateTime statusDate = snapshot != null && snapshot.StatusDate > DateTime.MinValue
+                    ? snapshot.StatusDate.Date
+                    : DateTime.Today;
+                dtpItemStatusDate.Value = statusDate;
+            }
+            finally
+            {
+                isInitializingItemStatusControls = false;
+            }
+
+            ApplyItemStatusUiState();
+        }
+
+        private ItemStatusRuleSnapshot GetCurrentItemStatusRuleSnapshot()
+        {
+            string statusName = GetSelectedItemStatus();
+            return new ItemStatusRuleSnapshot
+            {
+                StatusName = statusName,
+                Reason = txtItemStatusReason?.Text?.Trim() ?? string.Empty,
+                StatusDate = dtpItemStatusDate != null ? dtpItemStatusDate.Value.Date : DateTime.Today,
+                BlockSale = DoesStatusBlockSale(statusName),
+                BlockPurchase = DoesStatusBlockPurchase(statusName)
+            };
+        }
+
+        private bool ValidateItemStatusInputs()
+        {
+            ItemStatusRuleSnapshot snapshot = GetCurrentItemStatusRuleSnapshot();
+            if (IsItemStatusReasonRequired(snapshot.StatusName) && string.IsNullOrWhiteSpace(snapshot.Reason))
+            {
+                MessageBox.Show($"Please enter a reason for '{snapshot.StatusName}'.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                OpenItemStatusDialog();
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool EnsureItemStatusStorage()
+        {
+            if (itemStatusTableEnsured)
+            {
+                return true;
+            }
+
+            try
+            {
+                using (BaseRepostitory repo = new BaseRepostitory())
+                {
+                    SqlConnection connection = repo.DataConnection as SqlConnection;
+                    if (connection == null)
+                    {
+                        return false;
+                    }
+
+                    if (connection.State != ConnectionState.Open)
+                    {
+                        connection.Open();
+                    }
+
+                    string sql = $@"
+IF OBJECT_ID(N'dbo.{ItemStatusTableName}', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.{ItemStatusTableName}
+    (
+        ItemId INT NOT NULL PRIMARY KEY,
+        CompanyId INT NULL,
+        BranchId INT NULL,
+        StatusName NVARCHAR(50) NOT NULL,
+        StatusReason NVARCHAR(500) NULL,
+        StatusDate DATETIME NULL,
+        BlockSale BIT NOT NULL CONSTRAINT DF_{ItemStatusTableName}_BlockSale DEFAULT(0),
+        BlockPurchase BIT NOT NULL CONSTRAINT DF_{ItemStatusTableName}_BlockPurchase DEFAULT(0),
+        CreatedOn DATETIME NOT NULL CONSTRAINT DF_{ItemStatusTableName}_CreatedOn DEFAULT(GETDATE()),
+        ModifiedOn DATETIME NOT NULL CONSTRAINT DF_{ItemStatusTableName}_ModifiedOn DEFAULT(GETDATE())
+    );
+END;
+
+IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'CompanyId') IS NULL
+    ALTER TABLE dbo.{ItemStatusTableName} ADD CompanyId INT NULL;
+
+IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'BranchId') IS NULL
+    ALTER TABLE dbo.{ItemStatusTableName} ADD BranchId INT NULL;
+
+IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'StatusName') IS NULL
+    ALTER TABLE dbo.{ItemStatusTableName} ADD StatusName NVARCHAR(50) NOT NULL CONSTRAINT DF_{ItemStatusTableName}_StatusName DEFAULT(N'{ItemStatusActive}') WITH VALUES;
+
+IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'StatusReason') IS NULL
+    ALTER TABLE dbo.{ItemStatusTableName} ADD StatusReason NVARCHAR(500) NULL;
+
+IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'StatusDate') IS NULL
+    ALTER TABLE dbo.{ItemStatusTableName} ADD StatusDate DATETIME NULL;
+
+IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'BlockSale') IS NULL
+    ALTER TABLE dbo.{ItemStatusTableName} ADD BlockSale BIT NOT NULL CONSTRAINT DF_{ItemStatusTableName}_BlockSale_Alt DEFAULT(0) WITH VALUES;
+
+IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'BlockPurchase') IS NULL
+    ALTER TABLE dbo.{ItemStatusTableName} ADD BlockPurchase BIT NOT NULL CONSTRAINT DF_{ItemStatusTableName}_BlockPurchase_Alt DEFAULT(0) WITH VALUES;
+
+IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'CreatedOn') IS NULL
+    ALTER TABLE dbo.{ItemStatusTableName} ADD CreatedOn DATETIME NOT NULL CONSTRAINT DF_{ItemStatusTableName}_CreatedOn_Alt DEFAULT(GETDATE()) WITH VALUES;
+
+IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'ModifiedOn') IS NULL
+    ALTER TABLE dbo.{ItemStatusTableName} ADD ModifiedOn DATETIME NOT NULL CONSTRAINT DF_{ItemStatusTableName}_ModifiedOn_Alt DEFAULT(GETDATE()) WITH VALUES;";
+
+                    using (SqlCommand cmd = new SqlCommand(sql, connection))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+
+                itemStatusTableEnsured = true;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error ensuring item status storage: {ex.Message}");
+                return false;
+            }
+        }
+
+        private void LoadItemStatusForItemId(int itemId)
+        {
+            EnsureItemStatusControlsCreated();
+
+            if (itemId <= 0)
+            {
+                ResetItemStatusEditor();
+                return;
+            }
+
+            if (!EnsureItemStatusStorage())
+            {
+                ResetItemStatusEditor();
+                return;
+            }
+
+            try
+            {
+                using (BaseRepostitory repo = new BaseRepostitory())
+                {
+                    SqlConnection connection = repo.DataConnection as SqlConnection;
+                    if (connection == null)
+                    {
+                        ResetItemStatusEditor();
+                        return;
+                    }
+
+                    if (connection.State != ConnectionState.Open)
+                    {
+                        connection.Open();
+                    }
+
+                    string sql = $@"SELECT TOP 1 StatusName, StatusReason, StatusDate, BlockSale, BlockPurchase
+                                    FROM dbo.{ItemStatusTableName}
+                                    WHERE ItemId = @ItemId";
+
+                    using (SqlCommand cmd = new SqlCommand(sql, connection))
+                    {
+                        cmd.Parameters.AddWithValue("@ItemId", itemId);
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                ItemStatusRuleSnapshot snapshot = new ItemStatusRuleSnapshot
+                                {
+                                    StatusName = reader["StatusName"]?.ToString(),
+                                    Reason = reader["StatusReason"] == DBNull.Value ? string.Empty : reader["StatusReason"].ToString(),
+                                    StatusDate = reader["StatusDate"] == DBNull.Value
+                                        ? DateTime.Today
+                                        : Convert.ToDateTime(reader["StatusDate"]),
+                                    BlockSale = reader["BlockSale"] != DBNull.Value && Convert.ToBoolean(reader["BlockSale"]),
+                                    BlockPurchase = reader["BlockPurchase"] != DBNull.Value && Convert.ToBoolean(reader["BlockPurchase"])
+                                };
+
+                                ApplyItemStatusSnapshot(snapshot);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading item status for ItemId {itemId}: {ex.Message}");
+            }
+
+            ResetItemStatusEditor();
+        }
+
+        private bool SaveItemStatusForItem(int itemId, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+
+            if (itemId <= 0)
+            {
+                return true;
+            }
+
+            if (!EnsureItemStatusStorage())
+            {
+                errorMessage = "Unable to access item status storage.";
+                return false;
+            }
+
+            try
+            {
+                ItemStatusRuleSnapshot snapshot = GetCurrentItemStatusRuleSnapshot();
+                using (BaseRepostitory repo = new BaseRepostitory())
+                {
+                    SqlConnection connection = repo.DataConnection as SqlConnection;
+                    if (connection == null)
+                    {
+                        errorMessage = "Unable to open item status storage connection.";
+                        return false;
+                    }
+
+                    if (connection.State != ConnectionState.Open)
+                    {
+                        connection.Open();
+                    }
+
+                    string sql = $@"
+MERGE dbo.{ItemStatusTableName} AS target
+USING (SELECT @ItemId AS ItemId) AS source
+    ON target.ItemId = source.ItemId
+WHEN MATCHED THEN
+    UPDATE SET
+        CompanyId = @CompanyId,
+        BranchId = @BranchId,
+        StatusName = @StatusName,
+        StatusReason = @StatusReason,
+        StatusDate = @StatusDate,
+        BlockSale = @BlockSale,
+        BlockPurchase = @BlockPurchase,
+        ModifiedOn = GETDATE()
+WHEN NOT MATCHED THEN
+    INSERT (ItemId, CompanyId, BranchId, StatusName, StatusReason, StatusDate, BlockSale, BlockPurchase, CreatedOn, ModifiedOn)
+    VALUES (@ItemId, @CompanyId, @BranchId, @StatusName, @StatusReason, @StatusDate, @BlockSale, @BlockPurchase, GETDATE(), GETDATE());";
+
+                    using (SqlCommand cmd = new SqlCommand(sql, connection))
+                    {
+                        cmd.Parameters.AddWithValue("@ItemId", itemId);
+                        cmd.Parameters.AddWithValue("@CompanyId", Convert.ToInt32(ModelClass.DataBase.CompanyId));
+                        cmd.Parameters.AddWithValue("@BranchId", Convert.ToInt32(ModelClass.DataBase.BranchId));
+                        cmd.Parameters.AddWithValue("@StatusName", snapshot.StatusName);
+                        cmd.Parameters.AddWithValue("@StatusReason", string.IsNullOrWhiteSpace(snapshot.Reason) ? (object)DBNull.Value : snapshot.Reason);
+                        cmd.Parameters.AddWithValue("@StatusDate", snapshot.StatusDate);
+                        cmd.Parameters.AddWithValue("@BlockSale", snapshot.BlockSale);
+                        cmd.Parameters.AddWithValue("@BlockPurchase", snapshot.BlockPurchase);
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                errorMessage = ex.Message;
+                System.Diagnostics.Debug.WriteLine($"Error saving item status for ItemId {itemId}: {ex.Message}");
+                return false;
+            }
+        }
+
+        private bool TryPersistItemStatusForCurrentItem(bool showWarning)
+        {
+            int itemId = ItemMaster != null && ItemMaster.ItemId > 0 ? ItemMaster.ItemId : CurrentItemId;
+            if (SaveItemStatusForItem(itemId, out string errorMessage))
+            {
+                return true;
+            }
+
+            if (showWarning)
+            {
+                MessageBox.Show($"Item saved, but status rules could not be saved.\n\n{errorMessage}", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+
+            return false;
         }
 
         private void button9_Click(object sender, EventArgs e)
@@ -533,6 +1065,8 @@ namespace PosBranch_Win.Master
             this.GetPriceDesing();
             // this.GetTaxDesing();
             this.GetImagesDesing();
+            this.EnsureItemStatusControlsCreated();
+            this.EnsureItemStatusStorage();
 
             // Setup vendor details grid
             this.SetupVendorGrid();
@@ -2445,25 +2979,7 @@ namespace PosBranch_Win.Master
                 ClearAllFields();
 
 
-                // Create database connection to get the latest item number
-                BaseRepostitory con = new BaseRepostitory();
-                int newItemNumber = 1; // Default if no items exist
-
-                using (SqlCommand cmd = new SqlCommand("SELECT ISNULL(MAX(CAST(ItemNo AS INT)), 0) + 1 AS NextItemNo FROM ItemMaster", (SqlConnection)con.DataConnection))
-                {
-                    con.DataConnection.Open();
-                    object result = cmd.ExecuteScalar();
-
-                    if (result != null && result != DBNull.Value)
-                    {
-                        newItemNumber = Convert.ToInt32(result);
-                    }
-
-                    con.DataConnection.Close();
-                }
-
-                // Set the new item number in the text field
-                txt_ItemNo.Text = newItemNumber.ToString();
+                GenerateNextItemNumberOnly();
 
                 // Load default unit (Unit 1)
                 LoadDefaultUnit();
@@ -2481,6 +2997,40 @@ namespace PosBranch_Win.Master
             catch (Exception ex)
             {
                 MessageBox.Show("Error generating new item number: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private int GetNextItemNumber()
+        {
+            BaseRepostitory con = new BaseRepostitory();
+            int newItemNumber = 1;
+
+            using (SqlCommand cmd = new SqlCommand("SELECT ISNULL(MAX(CAST(ItemNo AS INT)), 0) + 1 AS NextItemNo FROM ItemMaster", (SqlConnection)con.DataConnection))
+            {
+                con.DataConnection.Open();
+                object result = cmd.ExecuteScalar();
+
+                if (result != null && result != DBNull.Value)
+                {
+                    newItemNumber = Convert.ToInt32(result);
+                }
+
+                con.DataConnection.Close();
+            }
+
+            return newItemNumber;
+        }
+
+        private void GenerateNextItemNumberOnly()
+        {
+            try
+            {
+                txt_ItemNo.Text = GetNextItemNumber().ToString();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error generating next item number: {ex.Message}");
+                throw;
             }
         }
 
@@ -2568,6 +3118,7 @@ namespace PosBranch_Win.Master
                 // Reset ItemMaster object to prevent stale data during updates
                 ItemMaster = new Item();
                 SetMainBarcodeEditability(true, string.Empty);
+                ResetItemStatusEditor();
 
                 // Clear all text fields in the form recursively
                 ClearControlsRecursive(this);
@@ -2702,6 +3253,7 @@ namespace PosBranch_Win.Master
                 // After clearing, default to Save mode (new item)
                 if (button3 != null) button3.Visible = true;
                 if (btnUpdate != null) btnUpdate.Visible = false;
+                ResetItemStatusEditor();
             }
             catch (Exception ex)
             {
@@ -3375,7 +3927,7 @@ namespace PosBranch_Win.Master
                     OpenStockAdjustmentInTab();
                     break;
                 case "ultraPanel11":
-                    // Handle ultraPanel11 click
+                    CloneCurrentItemAsVariant();
                     break;
                 case "ultraPanel13":
                     // Open the Barcode form in UltraTabControl
@@ -3982,7 +4534,7 @@ namespace PosBranch_Win.Master
                 isLoadingItem = true;
 
                 // Set current item ID for hold details
-                CurrentItemId = itemId;
+                SetCurrentItemId(itemId);
 
                 // Get the item data from the repository
                 ItemMasterRepository itemRepo = new ItemMasterRepository();
@@ -4392,13 +4944,21 @@ namespace PosBranch_Win.Master
                 var dlg = Application.OpenForms["frmdialForItemMaster"] as PosBranch_Win.DialogBox.frmdialForItemMaster;
                 if (dlg != null)
                 {
-                    // Re-run its filter with current search text to force reload; if empty, it will load all
-                    var tb = dlg.Controls.Find("textBox1", true).FirstOrDefault() as TextBox;
-                    string search = tb != null ? (tb.Text ?? string.Empty) : string.Empty;
-                    var applyFilterMethod = dlg.GetType().GetMethod("ApplyFilter", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                    if (applyFilterMethod != null)
+                    // Reload from DB if method exists; fallback to re-applying current filter.
+                    var reloadMethod = dlg.GetType().GetMethod("LoadAllDataAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (reloadMethod != null)
                     {
-                        applyFilterMethod.Invoke(dlg, new object[] { search });
+                        reloadMethod.Invoke(dlg, null);
+                    }
+                    else
+                    {
+                        var tb = dlg.Controls.Find("textBox1", true).FirstOrDefault() as TextBox;
+                        string search = tb != null ? (tb.Text ?? string.Empty) : string.Empty;
+                        var applyFilterMethod = dlg.GetType().GetMethod("ApplyFilter", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                        if (applyFilterMethod != null)
+                        {
+                            applyFilterMethod.Invoke(dlg, new object[] { search });
+                        }
                     }
                 }
             }
@@ -6377,6 +6937,11 @@ namespace PosBranch_Win.Master
                     return false;
                 }
 
+                if (!ValidateItemStatusInputs())
+                {
+                    return false;
+                }
+
                 // Check if ItemType is WEIGHT ITEM
                 bool isWeightItem = !string.IsNullOrWhiteSpace(itemType) &&
                     string.Equals(itemType, "WEIGHT ITEM", StringComparison.OrdinalIgnoreCase);
@@ -6413,6 +6978,11 @@ namespace PosBranch_Win.Master
                     ItemMaster.CompanyId = Convert.ToInt32(ModelClass.DataBase.CompanyId);
                     ItemMaster.BranchId = Convert.ToInt32(ModelClass.DataBase.BranchId);
                     ItemMaster.FinYearId = SessionContext.FinYearId;
+                    int parsedItemNo;
+                    if (int.TryParse(txt_ItemNo?.Text, out parsedItemNo))
+                    {
+                        ItemMaster.ItemNo = parsedItemNo;
+                    }
                     ItemMaster.Description = desc;
                     ItemMaster.Barcode = barcode;
                     ItemMaster.NameInLocalLanguage = txt_LocalLanguage?.Text ?? string.Empty;
@@ -6567,6 +7137,8 @@ namespace PosBranch_Win.Master
                 }
                 catch { }
 
+                EnsureUomUnitIdsBeforeSave();
+
                 // Use the UomDataGridView property which handles the conversion from ultraGrid1
                 // Get Ult_Price data and convert to DataGridView for backward compatibility
                 DataGridView tempPriceGrid = ConvertUltPriceToDataGridView();
@@ -6575,6 +7147,8 @@ namespace PosBranch_Win.Master
 
                 if (!string.IsNullOrEmpty(Message) && Message.StartsWith("Success"))
                 {
+                    TryPersistItemStatusForCurrentItem(true);
+
                     // Raise event to notify other forms that item was updated
                     if (ItemMaster.ItemId > 0)
                     {
@@ -6865,6 +7439,11 @@ namespace PosBranch_Win.Master
                     return;
                 }
 
+                if (!ValidateItemStatusInputs())
+                {
+                    return;
+                }
+
                 // Check if ItemType is WEIGHT ITEM (itemType already retrieved in validation above)
                 bool isWeightItem = !string.IsNullOrWhiteSpace(itemType) &&
                     string.Equals(itemType, "WEIGHT ITEM", StringComparison.OrdinalIgnoreCase);
@@ -6935,6 +7514,11 @@ namespace PosBranch_Win.Master
                     ItemMaster.CompanyId = Convert.ToInt32(ModelClass.DataBase.CompanyId);
                     ItemMaster.BranchId = Convert.ToInt32(ModelClass.DataBase.BranchId);
                     ItemMaster.FinYearId = SessionContext.FinYearId;
+                    int parsedItemNo;
+                    if (int.TryParse(txt_ItemNo?.Text, out parsedItemNo))
+                    {
+                        ItemMaster.ItemNo = parsedItemNo;
+                    }
                     ItemMaster.Description = desc;
                     ItemMaster.Barcode = barcode;
                     ItemMaster.NameInLocalLanguage = txt_LocalLanguage?.Text ?? string.Empty;
@@ -7088,6 +7672,8 @@ namespace PosBranch_Win.Master
                 }
                 catch { }
 
+                EnsureUomUnitIdsBeforeSave();
+
                 // Use the UomDataGridView property which handles the conversion from ultraGrid1
                 // Get Ult_Price data and convert to DataGridView for backward compatibility
                 DataGridView tempPriceGrid = ConvertUltPriceToDataGridView();
@@ -7107,6 +7693,8 @@ namespace PosBranch_Win.Master
 
                 if (!string.IsNullOrEmpty(Message) && Message.StartsWith("Success"))
                 {
+                    TryPersistItemStatusForCurrentItem(true);
+
                     // Raise event to notify other forms that item was updated
                     if (ItemMaster.ItemId > 0)
                     {
@@ -7232,6 +7820,11 @@ namespace PosBranch_Win.Master
                 return;
             }
 
+            if (!ValidateItemStatusInputs())
+            {
+                return;
+            }
+
             // Check if ItemType is WEIGHT ITEM
             bool isWeightItem = !string.IsNullOrWhiteSpace(itemType) &&
                 string.Equals(itemType, "WEIGHT ITEM", StringComparison.OrdinalIgnoreCase);
@@ -7307,6 +7900,11 @@ namespace PosBranch_Win.Master
                 ItemMaster.CompanyId = Convert.ToInt32(ModelClass.DataBase.CompanyId);
                 ItemMaster.BranchId = Convert.ToInt32(ModelClass.DataBase.BranchId);
                 ItemMaster.FinYearId = SessionContext.FinYearId;
+                int parsedItemNo;
+                if (int.TryParse(txt_ItemNo?.Text, out parsedItemNo))
+                {
+                    ItemMaster.ItemNo = parsedItemNo;
+                }
                 // Ensure ItemId is set for update
                 if (ItemMaster.ItemId <= 0 && this.CurrentItemId > 0)
                     ItemMaster.ItemId = this.CurrentItemId;
@@ -7463,11 +8061,15 @@ namespace PosBranch_Win.Master
             // Retail markdown is always 0 since retail is the base price
             ItemPriceSettings.MDRetailPrice = 0;
 
+            EnsureUomUnitIdsBeforeSave();
+
             // Get Ult_Price data and convert to DataGridView for backward compatibility
             DataGridView tempPriceGrid = ConvertUltPriceToDataGridView();
             string Message = ItemRepository.UpdateItemMaster(ItemMaster, ItemPriceSettings, UomDataGridView, tempPriceGrid, GetAlternativeBarcodesDataGridView());
             if (!string.IsNullOrEmpty(Message) && Message.StartsWith("Success"))
             {
+                TryPersistItemStatusForCurrentItem(true);
+
                 // Raise event to notify other forms that item was updated
                 if (ItemMaster.ItemId > 0)
                 {
@@ -7730,6 +8332,173 @@ namespace PosBranch_Win.Master
             this.clear();
             var txtBarcodeCtrl = this.Controls.Find("txt_barcode", true).FirstOrDefault() as TextBox;
             txtBarcodeCtrl?.Focus();
+        }
+
+        private void CloneCurrentItemAsVariant()
+        {
+            try
+            {
+                int sourceItemId = 0;
+                if (ItemMaster != null && ItemMaster.ItemId > 0)
+                {
+                    sourceItemId = ItemMaster.ItemId;
+                }
+                else if (CurrentItemId > 0)
+                {
+                    sourceItemId = CurrentItemId;
+                }
+
+                if (sourceItemId <= 0)
+                {
+                    MessageBox.Show("Please load an existing item first, then use Copy to create a variant.", "Clone Item", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                DataTable uomTable = CloneDataTable(ultraGrid1.DataSource as DataTable);
+                DataTable priceTable = CloneDataTable(Ult_Price.DataSource as DataTable);
+                DataTable altBarcodeTable = CloneDataTable(GetAlternativeBarcodeGrid()?.DataSource as DataTable);
+                byte[] imageBytes = currentImageBytes != null ? (byte[])currentImageBytes.Clone() : null;
+                string sourceDescription = txt_description?.Text?.Trim() ?? string.Empty;
+                Item sourceMaster = ItemMaster;
+
+                ClearClonedBarcodeIdentityValues(uomTable, "AliasBarcode");
+                ClearClonedBarcodeIdentityValues(altBarcodeTable, "Barcode");
+
+                if (uomTable != null && uomTable.Columns.Contains(colOpenStock))
+                {
+                    foreach (DataRow row in uomTable.Rows)
+                    {
+                        row[colOpenStock] = "0";
+                    }
+                }
+
+                CurrentItemId = 0;
+                ItemMaster = new Item();
+                ItemPriceSettings = new ItemMasterPriceSettings();
+                loadedItemMainBarcode = string.Empty;
+                hasGeneratedItemNumberForBarcode = true;
+
+                if (sourceMaster != null)
+                {
+                    // Keep master FKs from the loaded item so cloned saves remain discoverable in dialog joins.
+                    ItemMaster.ItemTypeId = sourceMaster.ItemTypeId;
+                    ItemMaster.VendorId = sourceMaster.VendorId;
+                    ItemMaster.BrandId = sourceMaster.BrandId;
+                    ItemMaster.GroupId = sourceMaster.GroupId;
+                    ItemMaster.CategoryId = sourceMaster.CategoryId;
+                    ItemMaster.BaseUnitId = sourceMaster.BaseUnitId;
+                    ItemMaster.ForCustomerType = sourceMaster.ForCustomerType;
+                    ItemMaster.HSNCode = sourceMaster.HSNCode;
+                }
+
+                GenerateNextItemNumberOnly();
+                ResetItemStatusEditor();
+
+                if (txt_barcode != null)
+                {
+                    txt_barcode.Clear();
+                }
+
+                SetMainBarcodeEditability(true, string.Empty);
+
+                if (txt_qty != null) txt_qty.Text = "0";
+                if (txt_available != null) txt_available.Text = "0";
+                if (txt_hold != null) txt_hold.Text = "0.00";
+
+                if (uomTable != null)
+                {
+                    EnsureUomGridPriceColumns(uomTable);
+                    ultraGrid1.DataSource = uomTable;
+                    if (ultraGrid1.DisplayLayout != null && ultraGrid1.DisplayLayout.Bands.Count > 0)
+                    {
+                        EnsureRetailPriceMrpDisplayOrder(ultraGrid1.DisplayLayout.Bands[0]);
+                    }
+                }
+
+                if (priceTable != null)
+                {
+                    Ult_Price.DataSource = priceTable;
+                }
+
+                if (altBarcodeTable != null && GetAlternativeBarcodeGrid() != null)
+                {
+                    GetAlternativeBarcodeGrid().DataSource = altBarcodeTable;
+                    ApplyUltraGrid1ThemeToAlternativeBarcodeGrid(GetAlternativeBarcodeGrid());
+                }
+
+                SetCurrentImage(imageBytes);
+                ApplyItemStatusUiState();
+
+                if (button3 != null) button3.Visible = true;
+                if (btnUpdate != null) btnUpdate.Visible = false;
+
+                string clonedDescription = BuildCloneDefaultDescription(sourceDescription);
+                if (!string.IsNullOrWhiteSpace(clonedDescription) && txt_description != null)
+                {
+                    txt_description.Text = clonedDescription;
+                }
+
+                txt_barcode?.Focus();
+                txt_barcode?.SelectAll();
+
+                MessageBox.Show("Item copied into new-item mode. Enter a new barcode identity and save the variant.", "Clone Item", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error while cloning item: " + ex.Message, "Clone Item", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private static void ClearClonedBarcodeIdentityValues(DataTable table, string columnName)
+        {
+            if (table == null || string.IsNullOrWhiteSpace(columnName) || !table.Columns.Contains(columnName))
+            {
+                return;
+            }
+
+            foreach (DataRow row in table.Rows)
+            {
+                if (row == null || row.RowState == DataRowState.Deleted)
+                {
+                    continue;
+                }
+
+                row[columnName] = string.Empty;
+            }
+        }
+
+        private static DataTable CloneDataTable(DataTable source)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+
+            return source.Copy();
+        }
+
+        private string BuildCloneDefaultDescription(string sourceDescription)
+        {
+            string baseDescription = (sourceDescription ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(baseDescription))
+            {
+                baseDescription = "Item";
+            }
+
+            string cloneSuffix = $" - V{(txt_ItemNo?.Text ?? string.Empty).Trim()}";
+            if (string.IsNullOrWhiteSpace(cloneSuffix.Replace("-", string.Empty).Replace("V", string.Empty)))
+            {
+                cloneSuffix = " - VAR";
+            }
+
+            const int maxDescriptionLength = 50;
+            int allowedBaseLength = Math.Max(1, maxDescriptionLength - cloneSuffix.Length);
+            if (baseDescription.Length > allowedBaseLength)
+            {
+                baseDescription = baseDescription.Substring(0, allowedBaseLength).TrimEnd();
+            }
+
+            return (baseDescription + cloneSuffix).Trim();
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -8277,6 +9046,7 @@ namespace PosBranch_Win.Master
         public void SetCurrentItemId(int itemId)
         {
             CurrentItemId = itemId;
+            LoadItemStatusForItemId(itemId);
         }
 
         // Method to set the loading flag to prevent synchronization during loading
@@ -11095,25 +11865,7 @@ namespace PosBranch_Win.Master
         {
             try
             {
-                // Create database connection to get the latest item number
-                BaseRepostitory con = new BaseRepostitory();
-                int newItemNumber = 1; // Default if no items exist
-
-                using (SqlCommand cmd = new SqlCommand("SELECT ISNULL(MAX(CAST(ItemNo AS INT)), 0) + 1 AS NextItemNo FROM ItemMaster", (SqlConnection)con.DataConnection))
-                {
-                    con.DataConnection.Open();
-                    object result = cmd.ExecuteScalar();
-
-                    if (result != null && result != DBNull.Value)
-                    {
-                        newItemNumber = Convert.ToInt32(result);
-                    }
-
-                    con.DataConnection.Close();
-                }
-
-                // Set the new item number in the text field
-                txt_ItemNo.Text = newItemNumber.ToString();
+                GenerateNextItemNumberOnly();
 
                 // Load default unit (Unit 1)
                 LoadDefaultUnit();
@@ -11128,7 +11880,7 @@ namespace PosBranch_Win.Master
                 // DO NOT change focus - user is typing in txt_barcode
                 // DO NOT clear fields - preserve what user is typing
 
-                System.Diagnostics.Debug.WriteLine($"Auto-generated new item number: {newItemNumber}");
+                System.Diagnostics.Debug.WriteLine($"Auto-generated new item number: {txt_ItemNo?.Text}");
             }
             catch (Exception ex)
             {
@@ -11672,6 +12424,56 @@ namespace PosBranch_Win.Master
             }
 
             return true;
+        }
+
+        private void EnsureUomUnitIdsBeforeSave()
+        {
+            try
+            {
+                var uomTable = ultraGrid1?.DataSource as DataTable;
+                if (uomTable == null || !uomTable.Columns.Contains(colUnit) || !uomTable.Columns.Contains(colUnitId))
+                {
+                    return;
+                }
+
+                Dropdowns drop = new Dropdowns();
+                var units = drop.getUnitDDl()?.List?.ToList();
+                if (units == null || units.Count == 0)
+                {
+                    return;
+                }
+
+                foreach (DataRow row in uomTable.Rows)
+                {
+                    if (row == null || row.RowState == DataRowState.Deleted)
+                    {
+                        continue;
+                    }
+
+                    string unitName = row[colUnit]?.ToString()?.Trim() ?? string.Empty;
+                    if (string.IsNullOrWhiteSpace(unitName))
+                    {
+                        continue;
+                    }
+
+                    int parsedUnitId = 0;
+                    int.TryParse(row[colUnitId]?.ToString(), out parsedUnitId);
+                    if (parsedUnitId > 0)
+                    {
+                        continue;
+                    }
+
+                    var unitMatch = units.FirstOrDefault(u => string.Equals(u.UnitName, unitName, StringComparison.OrdinalIgnoreCase));
+                    if (unitMatch != null)
+                    {
+                        row[colUnitId] = unitMatch.UnitID.ToString();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"EnsureUomUnitIdsBeforeSave error: {ex.Message}");
+            }
         }
 
         // Helper to get DataGridView from ultraGrid3 for saving

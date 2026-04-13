@@ -96,6 +96,9 @@
             Infragistics.Win.Appearance appearance65 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance66 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance67 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance68 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance69 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance70 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance71 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance72 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance73 = new Infragistics.Win.Appearance();
@@ -118,9 +121,6 @@
             Infragistics.Win.Appearance appearance90 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance91 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance92 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance69 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance70 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance68 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance93 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance94 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance95 = new Infragistics.Win.Appearance();
@@ -149,7 +149,6 @@
             this.txt_hold = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.textBox13 = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.txt_qty = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
-            this.txt_CEP = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.txt_Mrp = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.txt_CardP = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.txt_SF = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
@@ -193,6 +192,7 @@
             this.txt_walkin = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.txt_Retail = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.label20 = new System.Windows.Forms.Label();
+            this.txt_CEP = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.ultraPanel7 = new Infragistics.Win.Misc.UltraPanel();
             this.ultraPanel13 = new Infragistics.Win.Misc.UltraPanel();
             this.label44 = new System.Windows.Forms.Label();
@@ -219,7 +219,14 @@
             this.ultraTabPageControl2 = new Infragistics.Win.UltraWinTabControl.UltraTabPageControl();
             this.button11 = new System.Windows.Forms.Button();
             this.ultraGrid3 = new Infragistics.Win.UltraWinGrid.UltraGrid();
+            this.ultraLabel2 = new Infragistics.Win.Misc.UltraLabel();
             this.button12 = new System.Windows.Forms.Button();
+            this.btnUpdate = new System.Windows.Forms.Button();
+            this.button3 = new System.Windows.Forms.Button();
+            this.button4 = new System.Windows.Forms.Button();
+            this.button7 = new System.Windows.Forms.Button();
+            this.ultraLabel5 = new Infragistics.Win.Misc.UltraLabel();
+            this.ultraLabel1 = new Infragistics.Win.Misc.UltraLabel();
             this.ultraTabSharedControlsPage2 = new Infragistics.Win.UltraWinTabControl.UltraTabSharedControlsPage();
             this.ultraPanel2 = new Infragistics.Win.Misc.UltraPanel();
             this.label43 = new System.Windows.Forms.Label();
@@ -273,15 +280,18 @@
             this.txt_description = new System.Windows.Forms.TextBox();
             this.ultraTabSharedControlsPage1 = new Infragistics.Win.UltraWinTabControl.UltraTabSharedControlsPage();
             this.txt_CustomerType = new System.Windows.Forms.TextBox();
+            this.btnItemStatus = new System.Windows.Forms.Button();
+            this.itemStatusPanel = new System.Windows.Forms.Panel();
+            this.lblItemStatusPurchaseRule = new System.Windows.Forms.Label();
+            this.lblItemStatusSaleRule = new System.Windows.Forms.Label();
+            this.dtpItemStatusDate = new System.Windows.Forms.DateTimePicker();
+            this.label47 = new System.Windows.Forms.Label();
+            this.txtItemStatusReason = new System.Windows.Forms.TextBox();
+            this.lblItemStatusReason = new System.Windows.Forms.Label();
+            this.cmbItemStatus = new System.Windows.Forms.ComboBox();
+            this.label48 = new System.Windows.Forms.Label();
             this.ultraPanel1 = new Infragistics.Win.Misc.UltraPanel();
-            this.button7 = new System.Windows.Forms.Button();
-            this.ultraLabel5 = new Infragistics.Win.Misc.UltraLabel();
-            this.ultraLabel1 = new Infragistics.Win.Misc.UltraLabel();
-            this.ultraLabel2 = new Infragistics.Win.Misc.UltraLabel();
-            this.btnUpdate = new System.Windows.Forms.Button();
-            this.button4 = new System.Windows.Forms.Button();
             this.btnIemLoad_ById = new System.Windows.Forms.Button();
-            this.button3 = new System.Windows.Forms.Button();
             this.label28 = new System.Windows.Forms.Label();
             this.textBox4 = new System.Windows.Forms.TextBox();
             this.txt_barcode = new System.Windows.Forms.TextBox();
@@ -304,7 +314,6 @@
             ((System.ComponentModel.ISupportInitialize)(this.txt_hold)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.textBox13)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txt_qty)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txt_CEP)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txt_Mrp)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txt_CardP)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txt_SF)).BeginInit();
@@ -325,6 +334,7 @@
             this.ultraPanel6.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.txt_walkin)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txt_Retail)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txt_CEP)).BeginInit();
             this.ultraPanel7.ClientArea.SuspendLayout();
             this.ultraPanel7.SuspendLayout();
             this.ultraPanel13.ClientArea.SuspendLayout();
@@ -353,6 +363,7 @@
             this.ultraPanel9.SuspendLayout();
             this.ultraPanel11.ClientArea.SuspendLayout();
             this.ultraPanel11.SuspendLayout();
+            this.itemStatusPanel.SuspendLayout();
             this.ultraPanel1.ClientArea.SuspendLayout();
             this.ultraPanel1.SuspendLayout();
             this.ultraPanel3.ClientArea.SuspendLayout();
@@ -373,7 +384,6 @@
             this.TabControll.Controls.Add(this.txt_hold);
             this.TabControll.Controls.Add(this.textBox13);
             this.TabControll.Controls.Add(this.txt_qty);
-            this.TabControll.Controls.Add(this.txt_CEP);
             this.TabControll.Controls.Add(this.txt_Mrp);
             this.TabControll.Controls.Add(this.txt_CardP);
             this.TabControll.Controls.Add(this.txt_SF);
@@ -412,9 +422,9 @@
             this.TabControll.Controls.Add(this.textBox1);
             this.TabControll.Controls.Add(this.label7);
             this.TabControll.ImeMode = System.Windows.Forms.ImeMode.Off;
-            this.TabControll.Location = new System.Drawing.Point(-10000, -10000);
+            this.TabControll.Location = new System.Drawing.Point(2, 25);
             this.TabControll.Name = "TabControll";
-            this.TabControll.Size = new System.Drawing.Size(1237, 329);
+            this.TabControll.Size = new System.Drawing.Size(1237, 389);
             // 
             // button1
             // 
@@ -581,30 +591,13 @@
             this.txt_qty.UseFlatMode = Infragistics.Win.DefaultableBoolean.True;
             this.txt_qty.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             // 
-            // txt_CEP
-            // 
-            this.txt_CEP.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left)));
-            appearance8.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
-            appearance8.BorderColor = System.Drawing.Color.Black;
-            this.txt_CEP.Appearance = appearance8;
-            this.txt_CEP.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
-            this.txt_CEP.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txt_CEP.Location = new System.Drawing.Point(139, 147);
-            this.txt_CEP.Name = "txt_CEP";
-            this.txt_CEP.Size = new System.Drawing.Size(81, 26);
-            this.txt_CEP.TabIndex = 183;
-            this.txt_CEP.Text = "0.000";
-            this.txt_CEP.UseFlatMode = Infragistics.Win.DefaultableBoolean.True;
-            this.txt_CEP.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
-            // 
             // txt_Mrp
             // 
             this.txt_Mrp.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            appearance9.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
-            appearance9.BorderColor = System.Drawing.Color.Black;
-            this.txt_Mrp.Appearance = appearance9;
+            appearance8.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
+            appearance8.BorderColor = System.Drawing.Color.Black;
+            this.txt_Mrp.Appearance = appearance8;
             this.txt_Mrp.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
             this.txt_Mrp.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txt_Mrp.Location = new System.Drawing.Point(139, 179);
@@ -619,9 +612,9 @@
             // 
             this.txt_CardP.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            appearance10.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
-            appearance10.BorderColor = System.Drawing.Color.Black;
-            this.txt_CardP.Appearance = appearance10;
+            appearance9.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
+            appearance9.BorderColor = System.Drawing.Color.Black;
+            this.txt_CardP.Appearance = appearance9;
             this.txt_CardP.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
             this.txt_CardP.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txt_CardP.Location = new System.Drawing.Point(139, 212);
@@ -636,9 +629,9 @@
             // 
             this.txt_SF.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            appearance11.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
-            appearance11.BorderColor = System.Drawing.Color.Black;
-            this.txt_SF.Appearance = appearance11;
+            appearance10.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
+            appearance10.BorderColor = System.Drawing.Color.Black;
+            this.txt_SF.Appearance = appearance10;
             this.txt_SF.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
             this.txt_SF.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txt_SF.Location = new System.Drawing.Point(139, 244);
@@ -653,8 +646,8 @@
             // 
             this.ultraTextEditor16.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            appearance12.BorderColor = System.Drawing.Color.Black;
-            this.ultraTextEditor16.Appearance = appearance12;
+            appearance11.BorderColor = System.Drawing.Color.Black;
+            this.ultraTextEditor16.Appearance = appearance11;
             this.ultraTextEditor16.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ultraTextEditor16.Location = new System.Drawing.Point(226, 116);
             this.ultraTextEditor16.Name = "ultraTextEditor16";
@@ -668,8 +661,8 @@
             // 
             this.ultraTextEditor15.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            appearance13.BorderColor = System.Drawing.Color.Black;
-            this.ultraTextEditor15.Appearance = appearance13;
+            appearance12.BorderColor = System.Drawing.Color.Black;
+            this.ultraTextEditor15.Appearance = appearance12;
             this.ultraTextEditor15.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ultraTextEditor15.Location = new System.Drawing.Point(226, 148);
             this.ultraTextEditor15.Name = "ultraTextEditor15";
@@ -683,8 +676,8 @@
             // 
             this.ultraTextEditor14.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            appearance14.BorderColor = System.Drawing.Color.Black;
-            this.ultraTextEditor14.Appearance = appearance14;
+            appearance13.BorderColor = System.Drawing.Color.Black;
+            this.ultraTextEditor14.Appearance = appearance13;
             this.ultraTextEditor14.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ultraTextEditor14.Location = new System.Drawing.Point(226, 179);
             this.ultraTextEditor14.Name = "ultraTextEditor14";
@@ -698,8 +691,8 @@
             // 
             this.ultraTextEditor13.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            appearance15.BorderColor = System.Drawing.Color.Black;
-            this.ultraTextEditor13.Appearance = appearance15;
+            appearance14.BorderColor = System.Drawing.Color.Black;
+            this.ultraTextEditor13.Appearance = appearance14;
             this.ultraTextEditor13.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ultraTextEditor13.Location = new System.Drawing.Point(226, 212);
             this.ultraTextEditor13.Name = "ultraTextEditor13";
@@ -713,8 +706,8 @@
             // 
             this.ultraTextEditor12.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            appearance16.BorderColor = System.Drawing.Color.Black;
-            this.ultraTextEditor12.Appearance = appearance16;
+            appearance15.BorderColor = System.Drawing.Color.Black;
+            this.ultraTextEditor12.Appearance = appearance15;
             this.ultraTextEditor12.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ultraTextEditor12.Location = new System.Drawing.Point(226, 244);
             this.ultraTextEditor12.Name = "ultraTextEditor12";
@@ -728,8 +721,8 @@
             // 
             this.ultraTextEditor11.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            appearance17.BorderColor = System.Drawing.Color.Black;
-            this.ultraTextEditor11.Appearance = appearance17;
+            appearance16.BorderColor = System.Drawing.Color.Black;
+            this.ultraTextEditor11.Appearance = appearance16;
             this.ultraTextEditor11.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ultraTextEditor11.Location = new System.Drawing.Point(226, 276);
             this.ultraTextEditor11.Name = "ultraTextEditor11";
@@ -743,8 +736,8 @@
             // 
             this.ultraTextEditor10.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            appearance18.BorderColor = System.Drawing.Color.Black;
-            this.ultraTextEditor10.Appearance = appearance18;
+            appearance17.BorderColor = System.Drawing.Color.Black;
+            this.ultraTextEditor10.Appearance = appearance17;
             this.ultraTextEditor10.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ultraTextEditor10.Location = new System.Drawing.Point(312, 116);
             this.ultraTextEditor10.Name = "ultraTextEditor10";
@@ -758,8 +751,8 @@
             // 
             this.ultraTextEditor9.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            appearance19.BorderColor = System.Drawing.Color.Black;
-            this.ultraTextEditor9.Appearance = appearance19;
+            appearance18.BorderColor = System.Drawing.Color.Black;
+            this.ultraTextEditor9.Appearance = appearance18;
             this.ultraTextEditor9.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ultraTextEditor9.Location = new System.Drawing.Point(312, 148);
             this.ultraTextEditor9.Name = "ultraTextEditor9";
@@ -773,8 +766,8 @@
             // 
             this.ultraTextEditor8.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            appearance20.BorderColor = System.Drawing.Color.Black;
-            this.ultraTextEditor8.Appearance = appearance20;
+            appearance19.BorderColor = System.Drawing.Color.Black;
+            this.ultraTextEditor8.Appearance = appearance19;
             this.ultraTextEditor8.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ultraTextEditor8.Location = new System.Drawing.Point(312, 179);
             this.ultraTextEditor8.Name = "ultraTextEditor8";
@@ -788,8 +781,8 @@
             // 
             this.ultraTextEditor7.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            appearance21.BorderColor = System.Drawing.Color.Black;
-            this.ultraTextEditor7.Appearance = appearance21;
+            appearance20.BorderColor = System.Drawing.Color.Black;
+            this.ultraTextEditor7.Appearance = appearance20;
             this.ultraTextEditor7.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ultraTextEditor7.Location = new System.Drawing.Point(312, 211);
             this.ultraTextEditor7.Name = "ultraTextEditor7";
@@ -803,8 +796,8 @@
             // 
             this.ultraTextEditor6.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            appearance22.BorderColor = System.Drawing.Color.Black;
-            this.ultraTextEditor6.Appearance = appearance22;
+            appearance21.BorderColor = System.Drawing.Color.Black;
+            this.ultraTextEditor6.Appearance = appearance21;
             this.ultraTextEditor6.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ultraTextEditor6.Location = new System.Drawing.Point(312, 244);
             this.ultraTextEditor6.Name = "ultraTextEditor6";
@@ -818,8 +811,8 @@
             // 
             this.ultraTextEditor5.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            appearance23.BorderColor = System.Drawing.Color.Black;
-            this.ultraTextEditor5.Appearance = appearance23;
+            appearance22.BorderColor = System.Drawing.Color.Black;
+            this.ultraTextEditor5.Appearance = appearance22;
             this.ultraTextEditor5.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ultraTextEditor5.Location = new System.Drawing.Point(312, 276);
             this.ultraTextEditor5.Name = "ultraTextEditor5";
@@ -833,8 +826,8 @@
             // 
             this.ultraTextEditor4.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            appearance24.BorderColor = System.Drawing.Color.Black;
-            this.ultraTextEditor4.Appearance = appearance24;
+            appearance23.BorderColor = System.Drawing.Color.Black;
+            this.ultraTextEditor4.Appearance = appearance23;
             this.ultraTextEditor4.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ultraTextEditor4.Location = new System.Drawing.Point(313, 82);
             this.ultraTextEditor4.Name = "ultraTextEditor4";
@@ -1067,8 +1060,8 @@
             // 
             this.ultraPanel6.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            appearance25.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(174)))), ((int)(((byte)(239)))));
-            this.ultraPanel6.Appearance = appearance25;
+            appearance24.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(174)))), ((int)(((byte)(239)))));
+            this.ultraPanel6.Appearance = appearance24;
             this.ultraPanel6.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
             // 
             // ultraPanel6.ClientArea
@@ -1082,10 +1075,11 @@
             this.ultraPanel6.ClientArea.Controls.Add(this.txt_walkin);
             this.ultraPanel6.ClientArea.Controls.Add(this.txt_Retail);
             this.ultraPanel6.ClientArea.Controls.Add(this.label20);
+            this.ultraPanel6.ClientArea.Controls.Add(this.txt_CEP);
             this.ultraPanel6.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ultraPanel6.Location = new System.Drawing.Point(1, 49);
+            this.ultraPanel6.Location = new System.Drawing.Point(6, 49);
             this.ultraPanel6.Name = "ultraPanel6";
-            this.ultraPanel6.Size = new System.Drawing.Size(559, 277);
+            this.ultraPanel6.Size = new System.Drawing.Size(559, 334);
             this.ultraPanel6.TabIndex = 193;
             this.ultraPanel6.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             // 
@@ -1096,7 +1090,7 @@
             this.label37.AutoSize = true;
             this.label37.BackColor = System.Drawing.Color.Transparent;
             this.label37.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label37.Location = new System.Drawing.Point(222, 39);
+            this.label37.Location = new System.Drawing.Point(217, 39);
             this.label37.Name = "label37";
             this.label37.Size = new System.Drawing.Size(90, 16);
             this.label37.TabIndex = 210;
@@ -1109,7 +1103,7 @@
             this.label23.AutoSize = true;
             this.label23.BackColor = System.Drawing.Color.Transparent;
             this.label23.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label23.Location = new System.Drawing.Point(35, 102);
+            this.label23.Location = new System.Drawing.Point(30, 102);
             this.label23.Name = "label23";
             this.label23.Size = new System.Drawing.Size(102, 17);
             this.label23.TabIndex = 147;
@@ -1133,7 +1127,7 @@
             this.label27.AutoSize = true;
             this.label27.BackColor = System.Drawing.Color.Transparent;
             this.label27.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label27.Location = new System.Drawing.Point(363, 2);
+            this.label27.Location = new System.Drawing.Point(363, 5);
             this.label27.Name = "label27";
             this.label27.Size = new System.Drawing.Size(158, 18);
             this.label27.TabIndex = 152;
@@ -1159,7 +1153,7 @@
             this.label24.AutoSize = true;
             this.label24.BackColor = System.Drawing.Color.Transparent;
             this.label24.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label24.Location = new System.Drawing.Point(60, 39);
+            this.label24.Location = new System.Drawing.Point(56, 39);
             this.label24.Name = "label24";
             this.label24.Size = new System.Drawing.Size(75, 17);
             this.label24.TabIndex = 148;
@@ -1169,12 +1163,12 @@
             // 
             this.txt_walkin.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            appearance26.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
-            appearance26.BorderColor = System.Drawing.Color.Black;
-            this.txt_walkin.Appearance = appearance26;
+            appearance25.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
+            appearance25.BorderColor = System.Drawing.Color.Black;
+            this.txt_walkin.Appearance = appearance25;
             this.txt_walkin.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
             this.txt_walkin.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txt_walkin.Location = new System.Drawing.Point(136, 66);
+            this.txt_walkin.Location = new System.Drawing.Point(132, 66);
             this.txt_walkin.Name = "txt_walkin";
             this.txt_walkin.Size = new System.Drawing.Size(81, 26);
             this.txt_walkin.TabIndex = 120;
@@ -1186,12 +1180,12 @@
             // 
             this.txt_Retail.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            appearance27.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
-            appearance27.BorderColor = System.Drawing.Color.Black;
-            this.txt_Retail.Appearance = appearance27;
+            appearance26.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
+            appearance26.BorderColor = System.Drawing.Color.Black;
+            this.txt_Retail.Appearance = appearance26;
             this.txt_Retail.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
             this.txt_Retail.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txt_Retail.Location = new System.Drawing.Point(136, 33);
+            this.txt_Retail.Location = new System.Drawing.Point(132, 33);
             this.txt_Retail.Name = "txt_Retail";
             this.txt_Retail.Size = new System.Drawing.Size(81, 26);
             this.txt_Retail.TabIndex = 165;
@@ -1205,11 +1199,28 @@
             this.label20.AutoSize = true;
             this.label20.BackColor = System.Drawing.Color.Transparent;
             this.label20.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label20.Location = new System.Drawing.Point(213, 2);
+            this.label20.Location = new System.Drawing.Point(213, 5);
             this.label20.Name = "label20";
             this.label20.Size = new System.Drawing.Size(105, 18);
             this.label20.TabIndex = 151;
             this.label20.Text = "Profit Margin%";
+            // 
+            // txt_CEP
+            // 
+            this.txt_CEP.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            appearance27.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
+            appearance27.BorderColor = System.Drawing.Color.Black;
+            this.txt_CEP.Appearance = appearance27;
+            this.txt_CEP.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
+            this.txt_CEP.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txt_CEP.Location = new System.Drawing.Point(132, 96);
+            this.txt_CEP.Name = "txt_CEP";
+            this.txt_CEP.Size = new System.Drawing.Size(81, 26);
+            this.txt_CEP.TabIndex = 183;
+            this.txt_CEP.Text = "0.000";
+            this.txt_CEP.UseFlatMode = Infragistics.Win.DefaultableBoolean.True;
+            this.txt_CEP.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             // 
             // ultraPanel7
             // 
@@ -1224,9 +1235,9 @@
             // 
             this.ultraPanel7.ClientArea.Controls.Add(this.ultraPanel13);
             this.ultraPanel7.ClientArea.Controls.Add(this.ultraPanel4);
-            this.ultraPanel7.Location = new System.Drawing.Point(572, 49);
+            this.ultraPanel7.Location = new System.Drawing.Point(571, 49);
             this.ultraPanel7.Name = "ultraPanel7";
-            this.ultraPanel7.Size = new System.Drawing.Size(644, 277);
+            this.ultraPanel7.Size = new System.Drawing.Size(644, 334);
             this.ultraPanel7.TabIndex = 194;
             this.ultraPanel7.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             // 
@@ -1345,7 +1356,7 @@
             this.ultraTabPageControl6.Controls.Add(this.btn_Remov_Item);
             this.ultraTabPageControl6.Location = new System.Drawing.Point(-10000, -10000);
             this.ultraTabPageControl6.Name = "ultraTabPageControl6";
-            this.ultraTabPageControl6.Size = new System.Drawing.Size(1237, 329);
+            this.ultraTabPageControl6.Size = new System.Drawing.Size(1237, 389);
             // 
             // label46
             // 
@@ -1531,7 +1542,7 @@
             this.ultraGrid1.DisplayLayout.ViewStyleBand = Infragistics.Win.UltraWinGrid.ViewStyleBand.OutlookGroupBy;
             this.ultraGrid1.Location = new System.Drawing.Point(6, 55);
             this.ultraGrid1.Name = "ultraGrid1";
-            this.ultraGrid1.Size = new System.Drawing.Size(1228, 271);
+            this.ultraGrid1.Size = new System.Drawing.Size(1228, 331);
             this.ultraGrid1.TabIndex = 6;
             this.ultraGrid1.Text = "ultraGrid1";
             // 
@@ -1550,7 +1561,7 @@
             this.ultraTabPageControl8.Controls.Add(this.Ult_Price);
             this.ultraTabPageControl8.Location = new System.Drawing.Point(-10000, -10000);
             this.ultraTabPageControl8.Name = "ultraTabPageControl8";
-            this.ultraTabPageControl8.Size = new System.Drawing.Size(1237, 329);
+            this.ultraTabPageControl8.Size = new System.Drawing.Size(1237, 389);
             // 
             // Ult_Price
             // 
@@ -1613,7 +1624,7 @@
             this.Ult_Price.DisplayLayout.ViewStyleBand = Infragistics.Win.UltraWinGrid.ViewStyleBand.OutlookGroupBy;
             this.Ult_Price.Location = new System.Drawing.Point(6, 17);
             this.Ult_Price.Name = "Ult_Price";
-            this.Ult_Price.Size = new System.Drawing.Size(1228, 298);
+            this.Ult_Price.Size = new System.Drawing.Size(1228, 365);
             this.Ult_Price.TabIndex = 3;
             this.Ult_Price.Text = "ultraGrid3";
             // 
@@ -1629,9 +1640,9 @@
             this.ultraTabPageControl2.Controls.Add(this.button7);
             this.ultraTabPageControl2.Controls.Add(this.ultraLabel5);
             this.ultraTabPageControl2.Controls.Add(this.ultraLabel1);
-            this.ultraTabPageControl2.Location = new System.Drawing.Point(2, 25);
+            this.ultraTabPageControl2.Location = new System.Drawing.Point(-10000, -10000);
             this.ultraTabPageControl2.Name = "ultraTabPageControl2";
-            this.ultraTabPageControl2.Size = new System.Drawing.Size(1237, 329);
+            this.ultraTabPageControl2.Size = new System.Drawing.Size(1237, 389);
             // 
             // button11
             // 
@@ -1703,9 +1714,25 @@
             this.ultraGrid3.DisplayLayout.ViewStyleBand = Infragistics.Win.UltraWinGrid.ViewStyleBand.OutlookGroupBy;
             this.ultraGrid3.Location = new System.Drawing.Point(5, 47);
             this.ultraGrid3.Name = "ultraGrid3";
-            this.ultraGrid3.Size = new System.Drawing.Size(1224, 262);
+            this.ultraGrid3.Size = new System.Drawing.Size(1224, 335);
             this.ultraGrid3.TabIndex = 9;
             this.ultraGrid3.Text = "ultraGrid3";
+            // 
+            // ultraLabel2
+            // 
+            appearance68.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            appearance68.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            appearance68.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(255)))));
+            appearance68.TextHAlignAsString = "Center";
+            this.ultraLabel2.Appearance = appearance68;
+            this.ultraLabel2.BorderStyleInner = Infragistics.Win.UIElementBorderStyle.WindowsVista;
+            this.ultraLabel2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ultraLabel2.Location = new System.Drawing.Point(1125, 166);
+            this.ultraLabel2.Name = "ultraLabel2";
+            this.ultraLabel2.Size = new System.Drawing.Size(45, 10);
+            this.ultraLabel2.TabIndex = 212;
+            this.ultraLabel2.Text = "F12";
+            this.ultraLabel2.Visible = false;
             // 
             // button12
             // 
@@ -1717,13 +1744,88 @@
             this.button12.TabIndex = 8;
             this.button12.UseVisualStyleBackColor = true;
             // 
+            // btnUpdate
+            // 
+            this.btnUpdate.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("btnUpdate.BackgroundImage")));
+            this.btnUpdate.Location = new System.Drawing.Point(1061, 135);
+            this.btnUpdate.Name = "btnUpdate";
+            this.btnUpdate.Size = new System.Drawing.Size(53, 10);
+            this.btnUpdate.TabIndex = 195;
+            this.btnUpdate.UseVisualStyleBackColor = true;
+            this.btnUpdate.Visible = false;
+            // 
+            // button3
+            // 
+            this.button3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(160)))), ((int)(((byte)(210)))), ((int)(((byte)(255)))));
+            this.button3.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("button3.BackgroundImage")));
+            this.button3.Location = new System.Drawing.Point(1003, 134);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(53, 10);
+            this.button3.TabIndex = 196;
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Visible = false;
+            // 
+            // button4
+            // 
+            this.button4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.button4.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("button4.BackgroundImage")));
+            this.button4.Location = new System.Drawing.Point(1117, 135);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(53, 10);
+            this.button4.TabIndex = 193;
+            this.button4.UseVisualStyleBackColor = true;
+            this.button4.Visible = false;
+            // 
+            // button7
+            // 
+            this.button7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.button7.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("button7.BackgroundImage")));
+            this.button7.Location = new System.Drawing.Point(944, 135);
+            this.button7.Name = "button7";
+            this.button7.Size = new System.Drawing.Size(53, 10);
+            this.button7.TabIndex = 194;
+            this.button7.UseVisualStyleBackColor = true;
+            this.button7.Visible = false;
+            // 
+            // ultraLabel5
+            // 
+            appearance69.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            appearance69.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            appearance69.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(255)))));
+            appearance69.TextHAlignAsString = "Center";
+            this.ultraLabel5.Appearance = appearance69;
+            this.ultraLabel5.BorderStyleInner = Infragistics.Win.UIElementBorderStyle.WindowsVista;
+            this.ultraLabel5.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ultraLabel5.Location = new System.Drawing.Point(995, 156);
+            this.ultraLabel5.Name = "ultraLabel5";
+            this.ultraLabel5.Size = new System.Drawing.Size(45, 10);
+            this.ultraLabel5.TabIndex = 211;
+            this.ultraLabel5.Text = "F1";
+            this.ultraLabel5.Visible = false;
+            // 
+            // ultraLabel1
+            // 
+            appearance70.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            appearance70.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            appearance70.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(255)))));
+            appearance70.TextHAlignAsString = "Center";
+            this.ultraLabel1.Appearance = appearance70;
+            this.ultraLabel1.BorderStyleInner = Infragistics.Win.UIElementBorderStyle.WindowsVista;
+            this.ultraLabel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ultraLabel1.Location = new System.Drawing.Point(1069, 153);
+            this.ultraLabel1.Name = "ultraLabel1";
+            this.ultraLabel1.Size = new System.Drawing.Size(45, 13);
+            this.ultraLabel1.TabIndex = 210;
+            this.ultraLabel1.Text = "F8";
+            this.ultraLabel1.Visible = false;
+            // 
             // ultraTabSharedControlsPage2
             // 
             this.ultraTabSharedControlsPage2.Controls.Add(this.ultraPanel2);
             this.ultraTabSharedControlsPage2.Controls.Add(this.ultraGrid2);
             this.ultraTabSharedControlsPage2.Location = new System.Drawing.Point(-10000, -10000);
             this.ultraTabSharedControlsPage2.Name = "ultraTabSharedControlsPage2";
-            this.ultraTabSharedControlsPage2.Size = new System.Drawing.Size(1237, 329);
+            this.ultraTabSharedControlsPage2.Size = new System.Drawing.Size(1237, 389);
             // 
             // ultraPanel2
             // 
@@ -1816,7 +1918,7 @@
             this.ultraGrid2.DisplayLayout.ViewStyleBand = Infragistics.Win.UltraWinGrid.ViewStyleBand.OutlookGroupBy;
             this.ultraGrid2.Location = new System.Drawing.Point(1, 40);
             this.ultraGrid2.Name = "ultraGrid2";
-            this.ultraGrid2.Size = new System.Drawing.Size(1233, 263);
+            this.ultraGrid2.Size = new System.Drawing.Size(1233, 346);
             this.ultraGrid2.TabIndex = 7;
             this.ultraGrid2.Text = "ultraGrid2";
             // 
@@ -1831,7 +1933,7 @@
             this.ultraTabPageControl1.Controls.Add(this.label36);
             this.ultraTabPageControl1.Location = new System.Drawing.Point(-10000, -10000);
             this.ultraTabPageControl1.Name = "ultraTabPageControl1";
-            this.ultraTabPageControl1.Size = new System.Drawing.Size(1237, 329);
+            this.ultraTabPageControl1.Size = new System.Drawing.Size(1237, 389);
             // 
             // pictureBoxItem
             // 
@@ -1931,7 +2033,7 @@
             this.ultraTabPageControl7.Controls.Add(this.panel1);
             this.ultraTabPageControl7.Location = new System.Drawing.Point(-10000, -10000);
             this.ultraTabPageControl7.Name = "ultraTabPageControl7";
-            this.ultraTabPageControl7.Size = new System.Drawing.Size(1237, 329);
+            this.ultraTabPageControl7.Size = new System.Drawing.Size(1237, 389);
             // 
             // label42
             // 
@@ -2333,7 +2435,7 @@
             this.ultraPanel11.ClientArea.Controls.Add(this.label29);
             this.ultraPanel11.ClientArea.Controls.Add(this.ultraPictureBox1);
             this.ultraPanel11.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.ultraPanel11.Location = new System.Drawing.Point(875, 8);
+            this.ultraPanel11.Location = new System.Drawing.Point(1061, 8);
             this.ultraPanel11.Name = "ultraPanel11";
             this.ultraPanel11.Size = new System.Drawing.Size(68, 29);
             this.ultraPanel11.TabIndex = 48;
@@ -2404,7 +2506,7 @@
             // 
             this.ultraTabSharedControlsPage1.Location = new System.Drawing.Point(-10000, -10000);
             this.ultraTabSharedControlsPage1.Name = "ultraTabSharedControlsPage1";
-            this.ultraTabSharedControlsPage1.Size = new System.Drawing.Size(1237, 329);
+            this.ultraTabSharedControlsPage1.Size = new System.Drawing.Size(1237, 389);
             // 
             // txt_CustomerType
             // 
@@ -2415,6 +2517,119 @@
             this.txt_CustomerType.Name = "txt_CustomerType";
             this.txt_CustomerType.Size = new System.Drawing.Size(202, 28);
             this.txt_CustomerType.TabIndex = 190;
+            // 
+            // btnItemStatus
+            // 
+            this.btnItemStatus.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(174)))), ((int)(((byte)(239)))));
+            this.btnItemStatus.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.btnItemStatus.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnItemStatus.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnItemStatus.ForeColor = System.Drawing.Color.White;
+            this.btnItemStatus.Location = new System.Drawing.Point(859, 10);
+            this.btnItemStatus.Name = "btnItemStatus";
+            this.btnItemStatus.Size = new System.Drawing.Size(161, 25);
+            this.btnItemStatus.TabIndex = 51;
+            this.btnItemStatus.Text = "Status: Active";
+            this.btnItemStatus.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnItemStatus.UseVisualStyleBackColor = false;
+            // 
+            // itemStatusPanel
+            // 
+            this.itemStatusPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(248)))), ((int)(((byte)(248)))));
+            this.itemStatusPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.itemStatusPanel.Controls.Add(this.lblItemStatusPurchaseRule);
+            this.itemStatusPanel.Controls.Add(this.lblItemStatusSaleRule);
+            this.itemStatusPanel.Controls.Add(this.dtpItemStatusDate);
+            this.itemStatusPanel.Controls.Add(this.label47);
+            this.itemStatusPanel.Controls.Add(this.txtItemStatusReason);
+            this.itemStatusPanel.Controls.Add(this.lblItemStatusReason);
+            this.itemStatusPanel.Controls.Add(this.cmbItemStatus);
+            this.itemStatusPanel.Controls.Add(this.label48);
+            this.itemStatusPanel.Location = new System.Drawing.Point(0, 0);
+            this.itemStatusPanel.Name = "itemStatusPanel";
+            this.itemStatusPanel.Size = new System.Drawing.Size(1015, 34);
+            this.itemStatusPanel.TabIndex = 52;
+            this.itemStatusPanel.Visible = false;
+            // 
+            // lblItemStatusPurchaseRule
+            // 
+            this.lblItemStatusPurchaseRule.AutoSize = true;
+            this.lblItemStatusPurchaseRule.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblItemStatusPurchaseRule.Location = new System.Drawing.Point(797, 8);
+            this.lblItemStatusPurchaseRule.Name = "lblItemStatusPurchaseRule";
+            this.lblItemStatusPurchaseRule.Size = new System.Drawing.Size(136, 16);
+            this.lblItemStatusPurchaseRule.TabIndex = 7;
+            this.lblItemStatusPurchaseRule.Text = "Purchase: Allowed";
+            // 
+            // lblItemStatusSaleRule
+            // 
+            this.lblItemStatusSaleRule.AutoSize = true;
+            this.lblItemStatusSaleRule.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblItemStatusSaleRule.Location = new System.Drawing.Point(660, 8);
+            this.lblItemStatusSaleRule.Name = "lblItemStatusSaleRule";
+            this.lblItemStatusSaleRule.Size = new System.Drawing.Size(103, 16);
+            this.lblItemStatusSaleRule.TabIndex = 6;
+            this.lblItemStatusSaleRule.Text = "Sale: Allowed";
+            // 
+            // dtpItemStatusDate
+            // 
+            this.dtpItemStatusDate.CustomFormat = "dd/MM/yyyy";
+            this.dtpItemStatusDate.Font = new System.Drawing.Font("Microsoft PhagsPa", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.dtpItemStatusDate.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.dtpItemStatusDate.Location = new System.Drawing.Point(519, 2);
+            this.dtpItemStatusDate.Name = "dtpItemStatusDate";
+            this.dtpItemStatusDate.Size = new System.Drawing.Size(122, 25);
+            this.dtpItemStatusDate.TabIndex = 5;
+            // 
+            // label47
+            // 
+            this.label47.AutoSize = true;
+            this.label47.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label47.Location = new System.Drawing.Point(480, 8);
+            this.label47.Name = "label47";
+            this.label47.Size = new System.Drawing.Size(37, 16);
+            this.label47.TabIndex = 4;
+            this.label47.Text = "Date";
+            // 
+            // txtItemStatusReason
+            // 
+            this.txtItemStatusReason.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.txtItemStatusReason.Font = new System.Drawing.Font("Microsoft PhagsPa", 10.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtItemStatusReason.Location = new System.Drawing.Point(202, 2);
+            this.txtItemStatusReason.MaxLength = 500;
+            this.txtItemStatusReason.Name = "txtItemStatusReason";
+            this.txtItemStatusReason.Size = new System.Drawing.Size(330, 25);
+            this.txtItemStatusReason.TabIndex = 3;
+            // 
+            // lblItemStatusReason
+            // 
+            this.lblItemStatusReason.AutoSize = true;
+            this.lblItemStatusReason.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblItemStatusReason.Location = new System.Drawing.Point(141, 8);
+            this.lblItemStatusReason.Name = "lblItemStatusReason";
+            this.lblItemStatusReason.Size = new System.Drawing.Size(56, 16);
+            this.lblItemStatusReason.TabIndex = 2;
+            this.lblItemStatusReason.Text = "Reason";
+            // 
+            // cmbItemStatus
+            // 
+            this.cmbItemStatus.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbItemStatus.Font = new System.Drawing.Font("Microsoft PhagsPa", 10.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cmbItemStatus.FormattingEnabled = true;
+            this.cmbItemStatus.Location = new System.Drawing.Point(57, 2);
+            this.cmbItemStatus.Name = "cmbItemStatus";
+            this.cmbItemStatus.Size = new System.Drawing.Size(75, 26);
+            this.cmbItemStatus.TabIndex = 1;
+            // 
+            // label48
+            // 
+            this.label48.AutoSize = true;
+            this.label48.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label48.Location = new System.Drawing.Point(8, 8);
+            this.label48.Name = "label48";
+            this.label48.Size = new System.Drawing.Size(51, 16);
+            this.label48.TabIndex = 0;
+            this.label48.Text = "Status";
             // 
             // ultraPanel1
             // 
@@ -2460,92 +2675,13 @@
             this.ultraPanel1.ClientArea.Controls.Add(this.txt_CustomerType);
             this.ultraPanel1.ClientArea.Controls.Add(this.label8);
             this.ultraPanel1.ClientArea.Controls.Add(this.label34);
+            this.ultraPanel1.ClientArea.Controls.Add(this.btnItemStatus);
             this.ultraPanel1.ClientArea.Controls.Add(this.ultraTabControl1);
             this.ultraPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ultraPanel1.Location = new System.Drawing.Point(0, 0);
             this.ultraPanel1.Name = "ultraPanel1";
-            this.ultraPanel1.Size = new System.Drawing.Size(1253, 539);
+            this.ultraPanel1.Size = new System.Drawing.Size(1253, 590);
             this.ultraPanel1.TabIndex = 0;
-            // 
-            // button7
-            // 
-            this.button7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.button7.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("button7.BackgroundImage")));
-            this.button7.Location = new System.Drawing.Point(944, 135);
-            this.button7.Name = "button7";
-            this.button7.Size = new System.Drawing.Size(53, 10);
-            this.button7.TabIndex = 194;
-            this.button7.UseVisualStyleBackColor = true;
-            this.button7.Visible = false;
-            // 
-            // ultraLabel5
-            // 
-            appearance69.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            appearance69.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            appearance69.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(255)))));
-            appearance69.TextHAlignAsString = "Center";
-            this.ultraLabel5.Appearance = appearance69;
-            this.ultraLabel5.BorderStyleInner = Infragistics.Win.UIElementBorderStyle.WindowsVista;
-            this.ultraLabel5.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ultraLabel5.Location = new System.Drawing.Point(995, 156);
-            this.ultraLabel5.Name = "ultraLabel5";
-            this.ultraLabel5.Size = new System.Drawing.Size(45, 10);
-            this.ultraLabel5.TabIndex = 211;
-            this.ultraLabel5.Text = "F1";
-            this.ultraLabel5.Visible = false;
-            // 
-            // ultraLabel1
-            // 
-            appearance70.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            appearance70.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            appearance70.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(255)))));
-            appearance70.TextHAlignAsString = "Center";
-            this.ultraLabel1.Appearance = appearance70;
-            this.ultraLabel1.BorderStyleInner = Infragistics.Win.UIElementBorderStyle.WindowsVista;
-            this.ultraLabel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ultraLabel1.Location = new System.Drawing.Point(1069, 153);
-            this.ultraLabel1.Name = "ultraLabel1";
-            this.ultraLabel1.Size = new System.Drawing.Size(45, 13);
-            this.ultraLabel1.TabIndex = 210;
-            this.ultraLabel1.Text = "F8";
-            this.ultraLabel1.Visible = false;
-            // 
-            // ultraLabel2
-            // 
-            appearance68.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            appearance68.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            appearance68.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(255)))));
-            appearance68.TextHAlignAsString = "Center";
-            this.ultraLabel2.Appearance = appearance68;
-            this.ultraLabel2.BorderStyleInner = Infragistics.Win.UIElementBorderStyle.WindowsVista;
-            this.ultraLabel2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ultraLabel2.Location = new System.Drawing.Point(1125, 166);
-            this.ultraLabel2.Name = "ultraLabel2";
-            this.ultraLabel2.Size = new System.Drawing.Size(45, 10);
-            this.ultraLabel2.TabIndex = 212;
-            this.ultraLabel2.Text = "F12";
-            this.ultraLabel2.Visible = false;
-            // 
-            // btnUpdate
-            // 
-            this.btnUpdate.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("btnUpdate.BackgroundImage")));
-            this.btnUpdate.Location = new System.Drawing.Point(1061, 135);
-            this.btnUpdate.Name = "btnUpdate";
-            this.btnUpdate.Size = new System.Drawing.Size(53, 10);
-            this.btnUpdate.TabIndex = 195;
-            this.btnUpdate.UseVisualStyleBackColor = true;
-            this.btnUpdate.Visible = false;
-            // 
-            // button4
-            // 
-            this.button4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.button4.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("button4.BackgroundImage")));
-            this.button4.Location = new System.Drawing.Point(1117, 135);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(53, 10);
-            this.button4.TabIndex = 193;
-            this.button4.UseVisualStyleBackColor = true;
-            this.button4.Visible = false;
             // 
             // btnIemLoad_ById
             // 
@@ -2564,17 +2700,6 @@
             this.btnIemLoad_ById.TabIndex = 199;
             this.btnIemLoad_ById.Text = " ";
             this.btnIemLoad_ById.UseVisualStyleBackColor = false;
-            // 
-            // button3
-            // 
-            this.button3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(160)))), ((int)(((byte)(210)))), ((int)(((byte)(255)))));
-            this.button3.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("button3.BackgroundImage")));
-            this.button3.Location = new System.Drawing.Point(1003, 134);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(53, 10);
-            this.button3.TabIndex = 196;
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Visible = false;
             // 
             // label28
             // 
@@ -2798,7 +2923,7 @@
             this.ultraTabControl1.Location = new System.Drawing.Point(9, 171);
             this.ultraTabControl1.Name = "ultraTabControl1";
             this.ultraTabControl1.SharedControlsPage = this.ultraTabSharedControlsPage1;
-            this.ultraTabControl1.Size = new System.Drawing.Size(1241, 356);
+            this.ultraTabControl1.Size = new System.Drawing.Size(1241, 416);
             this.ultraTabControl1.TabIndex = 50;
             appearance97.FontData.BoldAsString = "True";
             ultraTab5.ActiveAppearance = appearance97;
@@ -2839,7 +2964,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1253, 539);
+            this.ClientSize = new System.Drawing.Size(1253, 590);
             this.Controls.Add(this.ultraPanel1);
             this.KeyPreview = true;
             this.Name = "frmItemMasterNew";
@@ -2858,7 +2983,6 @@
             ((System.ComponentModel.ISupportInitialize)(this.txt_hold)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.textBox13)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.txt_qty)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txt_CEP)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.txt_Mrp)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.txt_CardP)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.txt_SF)).EndInit();
@@ -2880,6 +3004,7 @@
             this.ultraPanel6.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.txt_walkin)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.txt_Retail)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txt_CEP)).EndInit();
             this.ultraPanel7.ClientArea.ResumeLayout(false);
             this.ultraPanel7.ResumeLayout(false);
             this.ultraPanel13.ClientArea.ResumeLayout(false);
@@ -2916,6 +3041,8 @@
             this.ultraPanel11.ClientArea.ResumeLayout(false);
             this.ultraPanel11.ClientArea.PerformLayout();
             this.ultraPanel11.ResumeLayout(false);
+            this.itemStatusPanel.ResumeLayout(false);
+            this.itemStatusPanel.PerformLayout();
             this.ultraPanel1.ClientArea.ResumeLayout(false);
             this.ultraPanel1.ClientArea.PerformLayout();
             this.ultraPanel1.ResumeLayout(false);
@@ -3089,6 +3216,16 @@
         private System.Windows.Forms.Button button11;
         private Infragistics.Win.UltraWinGrid.UltraGrid ultraGrid3;
         private System.Windows.Forms.Button button12;
+        private System.Windows.Forms.Button btnItemStatus;
+        private System.Windows.Forms.Panel itemStatusPanel;
+        private System.Windows.Forms.Label lblItemStatusPurchaseRule;
+        private System.Windows.Forms.Label lblItemStatusSaleRule;
+        private System.Windows.Forms.DateTimePicker dtpItemStatusDate;
+        private System.Windows.Forms.Label label47;
+        private System.Windows.Forms.TextBox txtItemStatusReason;
+        private System.Windows.Forms.Label lblItemStatusReason;
+        private System.Windows.Forms.ComboBox cmbItemStatus;
+        private System.Windows.Forms.Label label48;
     }
 }
 

@@ -393,6 +393,10 @@ namespace Repository.MasterRepositry
 
                 // Get the newly created item ID
                 int newItemId = savedItems[0].ItemId;
+                if (newItemId <= 0)
+                {
+                    throw new Exception("Failed to create item master. Description may already exist; please use a unique item name for cloned items.");
+                }
                 item.ItemId = newItemId; // FIX: Update the item object with the new ID so the UI can use it
 
                 // Save price settings for each unit
