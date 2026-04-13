@@ -83,6 +83,7 @@ namespace PosBranch_Win.Transaction
 
         // Guard flag to allow internal Unit updates while keeping the cell locked for manual edits
         private bool _isApplyingUnitSelection = false;
+        private bool _purchaseStatusRowHandlerAdded = false;
 
         // Flag to track if the user manually changed label4 (Net Total) via ".." shortcut in txtBarcode
         private bool _isNetTotalManuallySet = false;
@@ -1117,6 +1118,11 @@ namespace PosBranch_Win.Transaction
                 dt.Columns.Add("WholeSalePrice", typeof(float));
                 dt.Columns.Add("CreditPrice", typeof(float));
                 dt.Columns.Add("CardPrice", typeof(float));
+                dt.Columns.Add("ItemStatus", typeof(string));
+                dt.Columns.Add("StatusReason", typeof(string));
+                dt.Columns.Add("StatusDate", typeof(DateTime));
+                dt.Columns.Add("BlockSale", typeof(bool));
+                dt.Columns.Add("BlockPurchase", typeof(bool));
 
                 // Set the DataTable as the grid's data source
                 ultraGrid1.DataSource = dt;
@@ -1268,6 +1274,11 @@ namespace PosBranch_Win.Transaction
                     SetupColumn(band.Columns["WholeSalePrice"], "WholeSalePrice", 0, HAlign.Right, false, true, true);
                     SetupColumn(band.Columns["CreditPrice"], "CreditPrice", 0, HAlign.Right, false, true, true);
                     SetupColumn(band.Columns["CardPrice"], "CardPrice", 0, HAlign.Right, false, true, true);
+                    SetupColumn(band.Columns["ItemStatus"], "ItemStatus", 0, HAlign.Left, true, false, true);
+                    SetupColumn(band.Columns["StatusReason"], "StatusReason", 0, HAlign.Left, true, false, true);
+                    SetupColumn(band.Columns["StatusDate"], "StatusDate", 0, HAlign.Center, true, false, true);
+                    SetupColumn(band.Columns["BlockSale"], "BlockSale", 0, HAlign.Center, true, false, true);
+                    SetupColumn(band.Columns["BlockPurchase"], "BlockPurchase", 0, HAlign.Center, true, false, true);
 
                     // Ensure Gross and Net Amount are visually positioned at the very end of the grid
                     band.Columns["Gross"].Header.VisiblePosition = band.Columns.Count - 2;
@@ -1276,6 +1287,11 @@ namespace PosBranch_Win.Transaction
 
                 // Subscribe to InitializeLayout event for consistent styling
                 ultraGrid1.InitializeLayout += UltraGrid1_InitializeLayout;
+                if (!_purchaseStatusRowHandlerAdded)
+                {
+                    ultraGrid1.InitializeRow += UltraGrid1_InitializeRow;
+                    _purchaseStatusRowHandlerAdded = true;
+                }
             }
             catch (Exception ex)
             {
@@ -1301,6 +1317,243 @@ namespace PosBranch_Win.Transaction
             {
                 column.Format = format ?? "N2"; // Use provided format or default to "N2"
             }
+        }
+
+        private ItemStatusRuleInfo CreateDefaultPurchaseItemStatus(int itemId = 0)
+        {
+            return new ItemStatusRuleInfo
+            {
+                ItemId = itemId,
+                StatusName = "Active",
+                StatusReason = string.Empty,
+                StatusDate = DateTime.Today,
+                BlockSale = false,
+                BlockPurchase = false
+            };
+        }
+
+        private ItemStatusRuleInfo CreatePurchaseItemStatus(ItemDDl item)
+        {
+            if (item == null)
+            {
+                return CreateDefaultPurchaseItemStatus();
+            }
+
+            string statusName = Dropdowns.NormalizeItemStatusName(item.ItemStatus);
+            return new ItemStatusRuleInfo
+            {
+                ItemId = item.ItemId,
+                StatusName = statusName,
+                StatusReason = item.StatusReason ?? string.Empty,
+                StatusDate = item.StatusDate,
+                BlockSale = item.BlockSale || Dropdowns.DoesStatusBlockSale(statusName),
+                BlockPurchase = item.BlockPurchase || Dropdowns.DoesStatusBlockPurchase(statusName)
+            };
+        }
+
+        private ItemStatusRuleInfo GetPurchaseItemStatus(int itemId)
+        {
+            if (itemId <= 0)
+            {
+                return CreateDefaultPurchaseItemStatus(itemId);
+            }
+
+            Dropdowns statusDropdown = new Dropdowns();
+            return statusDropdown.GetItemStatus(itemId) ?? CreateDefaultPurchaseItemStatus(itemId);
+        }
+
+        private string GetPurchaseBlockedMessage(string itemName, ItemStatusRuleInfo status)
+        {
+            ItemStatusRuleInfo effectiveStatus = status ?? CreateDefaultPurchaseItemStatus();
+            string displayName = string.IsNullOrWhiteSpace(itemName) ? "This item" : itemName;
+            string message = $"{displayName} is marked as '{Dropdowns.NormalizeItemStatusName(effectiveStatus.StatusName)}' and is blocked for purchase.";
+
+            if (!string.IsNullOrWhiteSpace(effectiveStatus.StatusReason))
+            {
+                message += $"\n\nReason: {effectiveStatus.StatusReason}";
+            }
+
+            return message;
+        }
+
+        private bool EnsureItemAllowedForPurchase(ItemDDl item)
+        {
+            ItemStatusRuleInfo status = CreatePurchaseItemStatus(item);
+            if (!status.BlockPurchase)
+            {
+                return true;
+            }
+
+            MessageBox.Show(GetPurchaseBlockedMessage(item?.Description, status), "Blocked Item", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return false;
+        }
+
+        private bool EnsureItemAllowedForPurchase(int itemId, string itemName, out ItemStatusRuleInfo status)
+        {
+            status = GetPurchaseItemStatus(itemId);
+            if (!status.BlockPurchase)
+            {
+                return true;
+            }
+
+            MessageBox.Show(GetPurchaseBlockedMessage(itemName, status), "Blocked Item", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return false;
+        }
+
+        private ItemStatusRuleInfo GetPurchaseRowStatus(UltraGridRow row)
+        {
+            if (row == null)
+            {
+                return CreateDefaultPurchaseItemStatus();
+            }
+
+            int itemId = 0;
+            if (row.Cells.Exists("ItemId") && row.Cells["ItemId"].Value != null)
+            {
+                int.TryParse(row.Cells["ItemId"].Value.ToString(), out itemId);
+            }
+
+            string statusName = row.Cells.Exists("ItemStatus")
+                ? Dropdowns.NormalizeItemStatusName(row.Cells["ItemStatus"].Value?.ToString())
+                : "Active";
+            string reason = row.Cells.Exists("StatusReason") ? row.Cells["StatusReason"].Value?.ToString() ?? string.Empty : string.Empty;
+            DateTime? statusDate = null;
+            if (row.Cells.Exists("StatusDate") &&
+                row.Cells["StatusDate"].Value != null &&
+                row.Cells["StatusDate"].Value != DBNull.Value)
+            {
+                statusDate = Convert.ToDateTime(row.Cells["StatusDate"].Value);
+            }
+
+            bool blockSale = row.Cells.Exists("BlockSale") &&
+                             row.Cells["BlockSale"].Value != null &&
+                             row.Cells["BlockSale"].Value != DBNull.Value &&
+                             Convert.ToBoolean(row.Cells["BlockSale"].Value);
+            bool blockPurchase = row.Cells.Exists("BlockPurchase") &&
+                                 row.Cells["BlockPurchase"].Value != null &&
+                                 row.Cells["BlockPurchase"].Value != DBNull.Value &&
+                                 Convert.ToBoolean(row.Cells["BlockPurchase"].Value);
+
+            return new ItemStatusRuleInfo
+            {
+                ItemId = itemId,
+                StatusName = statusName,
+                StatusReason = reason,
+                StatusDate = statusDate,
+                BlockSale = blockSale,
+                BlockPurchase = blockPurchase || Dropdowns.DoesStatusBlockPurchase(statusName)
+            };
+        }
+
+        private void ApplyItemStatusToPurchaseRow(DataRow row, ItemStatusRuleInfo status)
+        {
+            if (row == null || row.Table == null)
+            {
+                return;
+            }
+
+            ItemStatusRuleInfo effectiveStatus = status ?? CreateDefaultPurchaseItemStatus();
+            if (row.Table.Columns.Contains("ItemStatus"))
+            {
+                row["ItemStatus"] = Dropdowns.NormalizeItemStatusName(effectiveStatus.StatusName);
+            }
+
+            if (row.Table.Columns.Contains("StatusReason"))
+            {
+                row["StatusReason"] = effectiveStatus.StatusReason ?? string.Empty;
+            }
+
+            if (row.Table.Columns.Contains("StatusDate"))
+            {
+                row["StatusDate"] = effectiveStatus.StatusDate.HasValue ? (object)effectiveStatus.StatusDate.Value.Date : DBNull.Value;
+            }
+
+            if (row.Table.Columns.Contains("BlockSale"))
+            {
+                row["BlockSale"] = effectiveStatus.BlockSale;
+            }
+
+            if (row.Table.Columns.Contains("BlockPurchase"))
+            {
+                row["BlockPurchase"] = effectiveStatus.BlockPurchase;
+            }
+        }
+
+        private void ApplyItemStatusesToPurchaseGrid()
+        {
+            DataTable dt = ultraGrid1.DataSource as DataTable;
+            if (dt == null)
+            {
+                return;
+            }
+
+            Dropdowns statusDropdown = new Dropdowns();
+            statusDropdown.ApplyItemStatuses(dt);
+
+            if (ultraGrid1.Rows.Count > 0)
+            {
+                ultraGrid1.Rows.Refresh(RefreshRow.FireInitializeRow);
+            }
+        }
+
+        private void ApplyPurchaseRowVisualState(UltraGridRow row)
+        {
+            if (row == null)
+            {
+                return;
+            }
+
+            ItemStatusRuleInfo status = GetPurchaseRowStatus(row);
+            bool isBlocked = status.BlockPurchase;
+            string itemName = row.Cells.Exists("Description") ? row.Cells["Description"].Value?.ToString() ?? string.Empty : string.Empty;
+            string toolTip = isBlocked ? GetPurchaseBlockedMessage(itemName, status) : string.Empty;
+
+            row.Appearance.BackColor = isBlocked ? Color.FromArgb(255, 239, 230) : Color.Empty;
+            row.Appearance.BackColor2 = Color.Empty;
+            row.Appearance.ForeColor = isBlocked ? Color.DarkOrange : Color.Empty;
+            row.Appearance.FontData.Bold = isBlocked ? DefaultableBoolean.True : DefaultableBoolean.False;
+
+            foreach (UltraGridCell cell in row.Cells)
+            {
+                cell.ToolTipText = toolTip;
+                cell.Appearance.BackColor = Color.Empty;
+                cell.Appearance.ForeColor = Color.Empty;
+                cell.Appearance.FontData.Bold = DefaultableBoolean.False;
+
+                if (isBlocked)
+                {
+                    cell.Activation = Activation.NoEdit;
+                    cell.Appearance.ForeColor = Color.DarkOrange;
+                }
+                else
+                {
+                    cell.Activation = row.Band.Columns[cell.Column.Key].CellActivation;
+                }
+            }
+        }
+
+        private bool EnsurePurchaseRowEditable(UltraGridRow row, bool showMessage)
+        {
+            ItemStatusRuleInfo status = GetPurchaseRowStatus(row);
+            if (!status.BlockPurchase)
+            {
+                return true;
+            }
+
+            if (showMessage)
+            {
+                string itemName = row != null && row.Cells.Exists("Description")
+                    ? row.Cells["Description"].Value?.ToString() ?? string.Empty
+                    : string.Empty;
+                MessageBox.Show(GetPurchaseBlockedMessage(itemName, status), "Blocked Item", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+
+            return false;
+        }
+
+        private void UltraGrid1_InitializeRow(object sender, InitializeRowEventArgs e)
+        {
+            ApplyPurchaseRowVisualState(e?.Row);
         }
 
         private bool IsLockedPurchaseGridColumn(string columnKey)
@@ -1425,6 +1678,11 @@ namespace PosBranch_Win.Transaction
             try
             {
                 if (targetRow == null)
+                {
+                    return;
+                }
+
+                if (!EnsurePurchaseRowEditable(targetRow, true))
                 {
                     return;
                 }
@@ -1993,6 +2251,14 @@ namespace PosBranch_Win.Transaction
         {
             try
             {
+                int itemIdValue = 0;
+                int.TryParse(itemId, out itemIdValue);
+                ItemStatusRuleInfo selectedStatus;
+                if (!EnsureItemAllowedForPurchase(itemIdValue, itemName, out selectedStatus))
+                {
+                    return;
+                }
+
                 // Get the DataTable from the UltraGrid
                 DataTable dt = ultraGrid1.DataSource as DataTable;
                 if (dt == null)
@@ -2040,7 +2306,6 @@ namespace PosBranch_Win.Transaction
                     newRow["SLNO"] = dt.Rows.Count + 1;
 
                     // Handle ItemId - ensure it's a valid integer
-                    int itemIdValue = 0;
                     if (!string.IsNullOrEmpty(itemId) && int.TryParse(itemId, out itemIdValue))
                     {
                         newRow["ItemId"] = itemIdValue;
@@ -2146,6 +2411,7 @@ namespace PosBranch_Win.Transaction
                     newRow["CreditPrice"] = (float)unitPrice1;
                     newRow["CardPrice"] = (float)unitPrice1;
                     newRow["NewBaseCost"] = 0f; // Will be recalculated after row is added
+                    ApplyItemStatusToPurchaseRow(newRow, selectedStatus);
 
                     // Add the row to the DataTable
                     dt.Rows.Add(newRow);
@@ -2168,6 +2434,7 @@ namespace PosBranch_Win.Transaction
 
                     // Calculate totals
                     this.CaluateTotals();
+                    ultraGrid1.Rows.Refresh(RefreshRow.FireInitializeRow);
                 }
                 else if (existingItemIndex >= 0)
                 {
@@ -2542,6 +2809,13 @@ namespace PosBranch_Win.Transaction
 
         private void UltraGrid1_BeforeCellUpdate(object sender, BeforeCellUpdateEventArgs e)
         {
+            if (e?.Cell?.Row != null && !EnsurePurchaseRowEditable(e.Cell.Row, true))
+            {
+                e.Cancel = true;
+                e.Cell.CancelUpdate();
+                return;
+            }
+
             if (IsLockedPurchaseGridColumn(e.Cell.Column.Key))
             {
                 bool allowInternalUnitUpdate = _isApplyingUnitSelection &&
@@ -3723,6 +3997,12 @@ namespace PosBranch_Win.Transaction
                     // Handle "=" key to open Edit form
                     if (input == "=")
                     {
+                        if (!EnsurePurchaseRowEditable(ultraGrid1.ActiveRow, true))
+                        {
+                            this.barcodeFocus();
+                            return;
+                        }
+
                         // Open the Edit form with the highlighted item's description
                         Edit editForm = Edit.CreateForPurchaseForm(this);
 
@@ -3750,6 +4030,12 @@ namespace PosBranch_Win.Transaction
                     // Handle "u" or "U" key to open UOMeditDig form
                     if (input == "u" || input == "U")
                     {
+                        if (!EnsurePurchaseRowEditable(ultraGrid1.ActiveRow, true))
+                        {
+                            this.barcodeFocus();
+                            return;
+                        }
+
                         OpenUnitDialogForPurchaseRow(ultraGrid1.ActiveRow, true);
                         return;
                     }
@@ -3798,6 +4084,12 @@ namespace PosBranch_Win.Transaction
                     // Handle ".number" to set cost value
                     if (input.StartsWith(".") && input.Length > 1)
                     {
+                        if (ultraGrid1.ActiveRow != null && !EnsurePurchaseRowEditable(ultraGrid1.ActiveRow, true))
+                        {
+                            this.barcodeFocus();
+                            return;
+                        }
+
                         // Extract the number after the dot
                         string numberStr = input.Substring(1);
                         float newCost;
@@ -3879,6 +4171,12 @@ namespace PosBranch_Win.Transaction
                     // Handle "*number" to change quantity
                     if (input.StartsWith("*") && input.Length > 1)
                     {
+                        if (ultraGrid1.ActiveRow != null && !EnsurePurchaseRowEditable(ultraGrid1.ActiveRow, true))
+                        {
+                            this.barcodeFocus();
+                            return;
+                        }
+
                         // Extract the number after the asterisk
                         string numberStr = input.Substring(1);
                         float newQty;
@@ -4073,6 +4371,13 @@ namespace PosBranch_Win.Transaction
                 return false;
             }
 
+            if (!EnsureItemAllowedForPurchase(matchedItem))
+            {
+                CheckExists = true;
+                existingItemIndex = int.MaxValue;
+                return true;
+            }
+
             return TryUpdateExistingItemByIdentity(matchedItem.ItemId, matchedItem.UnitId, out existingItemIndex, additionalQty);
         }
 
@@ -4148,6 +4453,11 @@ namespace PosBranch_Win.Transaction
                 var itm = itemData.List.FirstOrDefault();
                 if (itm != null)
                 {
+                    if (!EnsureItemAllowedForPurchase(itm))
+                    {
+                        return;
+                    }
+
                     newRow["SLNO"] = dt.Rows.Count + 1;
                     newRow["ItemId"] = itm.ItemId;
                     newRow["BarCode"] = itm.BarCode;
@@ -4219,6 +4529,7 @@ namespace PosBranch_Win.Transaction
                     newRow["CreditPrice"] = itm.CreditPrice;
                     newRow["CardPrice"] = itm.CardPrice;
                     newRow["NewBaseCost"] = 0f; // Will be recalculated after row is added
+                    ApplyItemStatusToPurchaseRow(newRow, CreatePurchaseItemStatus(itm));
 
                     // Calculate NetAmt and Gross based on tax type
                     double amount = costWithTax * quantity;
@@ -4256,6 +4567,7 @@ namespace PosBranch_Win.Transaction
 
                 // Calculate totals
                 this.CaluateTotals();
+                ultraGrid1.Rows.Refresh(RefreshRow.FireInitializeRow);
             }
             catch (Exception ex)
             {
@@ -5227,6 +5539,8 @@ namespace PosBranch_Win.Transaction
                             dt.Rows.Add(newRow);
                         }
 
+                        ApplyItemStatusesToPurchaseGrid();
+
                         // RecalculateNewBaseCostForAllRows() removed to prevent double-counting of loaded items
                         // Saved items should just show current Master Cost (Txt_UnitCost) as loaded above
 
@@ -5644,6 +5958,11 @@ namespace PosBranch_Win.Transaction
             {
                 try
                 {
+                    if (!EnsurePurchaseRowEditable(ultraGrid1.ActiveRow, true))
+                    {
+                        return;
+                    }
+
                     // Get the DataTable
                     DataTable dt = (DataTable)ultraGrid1.DataSource;
 
@@ -5693,6 +6012,11 @@ namespace PosBranch_Win.Transaction
             {
                 try
                 {
+                    if (!EnsurePurchaseRowEditable(ultraGrid1.ActiveRow, true))
+                    {
+                        return;
+                    }
+
                     // Get the DataTable
                     DataTable dt = (DataTable)ultraGrid1.DataSource;
 
@@ -5797,6 +6121,10 @@ namespace PosBranch_Win.Transaction
             {
                 // Store the current selected index
                 int currentIndex = ultraGrid1.ActiveRow.Index;
+                if (!EnsurePurchaseRowEditable(ultraGrid1.ActiveRow, true))
+                {
+                    return;
+                }
 
                 // Remove the selected row from the DataTable
                 dt.Rows.RemoveAt(currentIndex);
@@ -5968,6 +6296,9 @@ namespace PosBranch_Win.Transaction
             ultraGrid1.ActiveRow = targetRow;
             ultraGrid1.Selected.Rows.Clear();
             ultraGrid1.Selected.Rows.Add(targetRow);
+
+            if (!EnsurePurchaseRowEditable(targetRow, true))
+                return;
 
             try
             {

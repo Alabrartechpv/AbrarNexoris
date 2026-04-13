@@ -1438,6 +1438,9 @@ namespace PosBranch_Win.DialogBox
                     // Apply TaxType filter if specified (on background thread)
                     ApplyTaxTypeFilter(tempDataTable);
 
+                    // Apply item status columns and transaction-specific status rules
+                    ApplyItemStatusContextFilter(tempDataTable);
+
                     // Add a column to preserve the original row order
                     PreserveOriginalRowOrder(tempDataTable);
 
@@ -1630,6 +1633,109 @@ namespace PosBranch_Win.DialogBox
             return normalized;
         }
 
+        private bool IsSalesInvoiceDialog()
+        {
+            return string.Equals(FormName, "frmSalesInvoice", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool IsPurchaseDialog()
+        {
+            return string.Equals(FormName, "FromPurchase", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool IsStatusBlockedForCurrentDialog(DataRow row)
+        {
+            if (row == null)
+            {
+                return false;
+            }
+
+            bool blockSale = row.Table.Columns.Contains("BlockSale") &&
+                             row["BlockSale"] != DBNull.Value &&
+                             Convert.ToBoolean(row["BlockSale"]);
+            bool blockPurchase = row.Table.Columns.Contains("BlockPurchase") &&
+                                 row["BlockPurchase"] != DBNull.Value &&
+                                 Convert.ToBoolean(row["BlockPurchase"]);
+
+            return (IsSalesInvoiceDialog() && blockSale) || (IsPurchaseDialog() && blockPurchase);
+        }
+
+        private void ApplyItemStatusContextFilter(DataTable dataTable)
+        {
+            try
+            {
+                if (dataTable == null || dataTable.Rows.Count == 0)
+                {
+                    return;
+                }
+
+                Dropdowns statusDropdown = new Dropdowns();
+                statusDropdown.ApplyItemStatuses(dataTable);
+
+                if (!IsSalesInvoiceDialog() && !IsPurchaseDialog())
+                {
+                    return;
+                }
+
+                List<DataRow> rowsToRemove = new List<DataRow>();
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    if (IsStatusBlockedForCurrentDialog(row))
+                    {
+                        rowsToRemove.Add(row);
+                    }
+                }
+
+                foreach (DataRow row in rowsToRemove)
+                {
+                    dataTable.Rows.Remove(row);
+                }
+            }
+            catch (Exception ex)
+            {
+                UpdateStatus($"Error applying item status filter: {ex.Message}");
+            }
+        }
+
+        private bool EnsureSelectedRowAllowedForCurrentDialog(UltraGridRow row)
+        {
+            if (row == null)
+            {
+                return false;
+            }
+
+            bool blockSale = row.Cells.Exists("BlockSale") &&
+                             row.Cells["BlockSale"].Value != null &&
+                             row.Cells["BlockSale"].Value != DBNull.Value &&
+                             Convert.ToBoolean(row.Cells["BlockSale"].Value);
+            bool blockPurchase = row.Cells.Exists("BlockPurchase") &&
+                                 row.Cells["BlockPurchase"].Value != null &&
+                                 row.Cells["BlockPurchase"].Value != DBNull.Value &&
+                                 Convert.ToBoolean(row.Cells["BlockPurchase"].Value);
+
+            bool isBlocked = (IsSalesInvoiceDialog() && blockSale) || (IsPurchaseDialog() && blockPurchase);
+            if (!isBlocked)
+            {
+                return true;
+            }
+
+            string itemName = row.Cells.Exists("Description") ? row.Cells["Description"].Value?.ToString() ?? "Item" : "Item";
+            string statusName = row.Cells.Exists("ItemStatus")
+                ? Dropdowns.NormalizeItemStatusName(row.Cells["ItemStatus"].Value?.ToString())
+                : "Active";
+            string reason = row.Cells.Exists("StatusReason") ? row.Cells["StatusReason"].Value?.ToString() ?? string.Empty : string.Empty;
+            string actionName = IsSalesInvoiceDialog() ? "sale" : "purchase";
+            string message = $"{itemName} is marked as '{statusName}' and is blocked for {actionName}.";
+
+            if (!string.IsNullOrWhiteSpace(reason))
+            {
+                message += $"\n\nReason: {reason}";
+            }
+
+            MessageBox.Show(message, "Blocked Item", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return false;
+        }
+
         // Add this method to initialize saved column widths
         private void InitializeSavedColumnWidths()
         {
@@ -1693,6 +1799,9 @@ namespace PosBranch_Win.DialogBox
 
                     // Sort the data to show latest items first
                     SortDataByLatestFirst();
+
+                    // Apply item status columns and transaction-specific status rules
+                    ApplyItemStatusContextFilter(fullDataTable);
 
                     // Add a column to preserve the original row order
                     PreserveOriginalRowOrder(fullDataTable);
@@ -2606,6 +2715,11 @@ namespace PosBranch_Win.DialogBox
             {
                 if (ultraGrid1.ActiveRow != null)
                 {
+                    if (!EnsureSelectedRowAllowedForCurrentDialog(ultraGrid1.ActiveRow))
+                    {
+                        return;
+                    }
+
                     // Handle based on the form type
                     if (FormName == "frmSalesReturn")
                     {
@@ -4673,6 +4787,11 @@ namespace PosBranch_Win.DialogBox
             {
                 if (ultraGrid1.ActiveRow != null)
                 {
+                    if (!EnsureSelectedRowAllowedForCurrentDialog(ultraGrid1.ActiveRow))
+                    {
+                        return;
+                    }
+
                     // Get the parent form
                     var parentForm = this.Owner as PosBranch_Win.Transaction.FrmPurchase;
                     if (parentForm != null)

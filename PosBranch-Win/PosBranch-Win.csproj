@@ -815,6 +815,12 @@
     <Compile Include="Master\frmItemMasterNew.Designer.cs">
       <DependentUpon>frmItemMasterNew.cs</DependentUpon>
     </Compile>
+    <Compile Include="Master\frmItemStatusPopup.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Master\frmItemStatusPopup.Designer.cs">
+      <DependentUpon>frmItemStatusPopup.cs</DependentUpon>
+    </Compile>
     <Compile Include="Master\frmLine.cs">
       <SubType>Form</SubType>
     </Compile>
