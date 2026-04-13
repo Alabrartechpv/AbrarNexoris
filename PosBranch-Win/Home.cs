@@ -34,6 +34,51 @@ namespace PosBranch_Win
         private Infragistics.Win.UltraWinExplorerBar.UltraExplorerBar ultraExplorerBarReportNavigator;
         private Panel panelReportNavigatorWrapper;
         private bool _isReportNavigatorVisible = false;
+        private bool _isReportNavigatorPinned = false;
+        private Panel _reportNavigatorPinButton;
+
+        private sealed class ReportNavigatorDefinition
+        {
+            public string Category { get; private set; }
+            public string Text { get; private set; }
+            public string Key { get; private set; }
+            public string ActionKey { get; private set; }
+
+            public ReportNavigatorDefinition(string category, string text, string key, string actionKey = null)
+            {
+                Category = category;
+                Text = text;
+                Key = key;
+                ActionKey = string.IsNullOrEmpty(actionKey) ? key : actionKey;
+            }
+        }
+
+        private static readonly ReportNavigatorDefinition[] ReportNavigatorDefinitions = new[]
+        {
+            new ReportNavigatorDefinition("Item", "Stock Listing", "StockReport"),
+            new ReportNavigatorDefinition("Item", "Item Report", "ItemReport"),
+            new ReportNavigatorDefinition("Item", "Stock Report Advanced", "StockReportAdv", "StockReport"),
+            new ReportNavigatorDefinition("Item", "Inventory Audit Trail", "AuditTrail"),
+            new ReportNavigatorDefinition("Sales", "Sales Details", "Sales Details"),
+            new ReportNavigatorDefinition("Sales", "Sales Return Report", "SalesReturn"),
+            new ReportNavigatorDefinition("Sales", "Sales Profit", "SalesProfit"),
+            new ReportNavigatorDefinition("Sales", "Daily Sales", "DSales"),
+            new ReportNavigatorDefinition("Purchase", "Purchase Details", "Purchase Details"),
+            new ReportNavigatorDefinition("Purchase", "Purchase Return Report", "PurchaseReturn"),
+            new ReportNavigatorDefinition("Customer", "Customer Outstanding Listing", "CustomerOutstandingReport"),
+            new ReportNavigatorDefinition("Vendor", "Vendor Outstanding Listing", "VendorOutstandingReport"),
+            new ReportNavigatorDefinition("Analysis", "Trading & P/L Account", "TradingPLAccount"),
+            new ReportNavigatorDefinition("Analysis", "Balance Sheet", "BalanceSheet"),
+            new ReportNavigatorDefinition("Analysis", "Cash & Bank Book", "CashBankBook"),
+            new ReportNavigatorDefinition("Analysis", "Day Book", "DayBook"),
+            new ReportNavigatorDefinition("Others", "Manual Party Balance Report", "ManualPartyBalanceReport"),
+            new ReportNavigatorDefinition("Others", "Combined Party Balance Report", "CombinedPartyBalanceReport")
+        };
+
+        private static readonly Dictionary<string, string> ReportNavigatorActionAliases = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "StockReportAdv", "StockReport" }
+        };
 
         public Home()
         {
@@ -2979,34 +3024,40 @@ namespace PosBranch_Win
                 // 1. Create Wrapper Panel to host Header and ExplorerBar seamlessly
                 panelReportNavigatorWrapper = new Panel();
                 panelReportNavigatorWrapper.Dock = DockStyle.Left;
-                panelReportNavigatorWrapper.Width = 220;
+                panelReportNavigatorWrapper.Width = 240;
                 panelReportNavigatorWrapper.Name = "panelReportNavigatorWrapper";
                 panelReportNavigatorWrapper.Visible = false;
-                panelReportNavigatorWrapper.BackColor = Color.FromArgb(215, 236, 255); // matching Light Blue background
-                panelReportNavigatorWrapper.Padding = new Padding(1); // 1px border effect
+                panelReportNavigatorWrapper.BackColor = Color.FromArgb(215, 236, 255); // soft office-blue background
+                panelReportNavigatorWrapper.Padding = new Padding(2); // subtle border and breathing room
 
                 // 2. Create standard IRS POS Report Navigator Header
                 Panel headerPanel = new Panel();
                 headerPanel.Dock = DockStyle.Top;
-                headerPanel.Height = 24;
-                headerPanel.BackColor = Color.FromArgb(191, 219, 255); // Exact IRS POS pane header background
+                headerPanel.Height = 26;
+                headerPanel.BackColor = Color.FromArgb(202, 224, 247); // softer, cleaner header tone
                 headerPanel.Margin = new Padding(0);
 
                 // Add gradient paint to header to match IRS Office2007 Blue Dock Pane exactly
                 headerPanel.Paint += (s, e) => 
                 {
-                    using (LinearGradientBrush b = new LinearGradientBrush(headerPanel.ClientRectangle, Color.FromArgb(227, 239, 255), Color.FromArgb(175, 210, 255), LinearGradientMode.Vertical))
+                    using (LinearGradientBrush b = new LinearGradientBrush(headerPanel.ClientRectangle, Color.FromArgb(241, 247, 255), Color.FromArgb(191, 216, 243), LinearGradientMode.Vertical))
                     {
                         e.Graphics.FillRectangle(b, headerPanel.ClientRectangle);
                     }
-                    e.Graphics.DrawString("Report Navigator", new Font("Tahoma", 8.25f, FontStyle.Bold), new SolidBrush(Color.FromArgb(21, 66, 139)), new PointF(5, 5));
+                    using (Pen borderPen = new Pen(Color.FromArgb(142, 179, 220)))
+                    using (Font headerFont = new Font("Segoe UI", 8.5f, FontStyle.Bold))
+                    using (SolidBrush headerBrush = new SolidBrush(Color.FromArgb(18, 64, 126)))
+                    {
+                        e.Graphics.DrawString("Report Navigator", headerFont, headerBrush, new PointF(5, 5));
+                        e.Graphics.DrawLine(borderPen, 0, headerPanel.Height - 1, headerPanel.Width, headerPanel.Height - 1);
+                    }
                 };
 
                 // Add IRS POS matched Close button
                 AddPaneCaptionButton(headerPanel, 20, true, (s, e) => HideReportNavigator());
                 
-                // Add IRS POS matched Pin button (visual only/auto-hide toggle)
-                AddPaneCaptionButton(headerPanel, 40, false, null);
+                // Add IRS POS matched Pin button, now used to keep the navigator open
+                AddPaneCaptionButton(headerPanel, 40, false, (s, e) => ToggleReportNavigatorPin());
 
                 panelReportNavigatorWrapper.Controls.Add(headerPanel);
 
@@ -3021,8 +3072,14 @@ namespace PosBranch_Win
                 ultraExplorerBarReportNavigator.Style = Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarStyle.ExplorerBar;
                 ultraExplorerBarReportNavigator.GroupSettings.HeaderVisible = Infragistics.Win.DefaultableBoolean.True;
                 ultraExplorerBarReportNavigator.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+                ultraExplorerBarReportNavigator.ImageListSmall = null;
+                ultraExplorerBarReportNavigator.ImageListLarge = null;
                 ultraExplorerBarReportNavigator.Appearance.BackColor = Color.FromArgb(215, 236, 255); // Seamless match
                 ultraExplorerBarReportNavigator.BorderStyle = Infragistics.Win.UIElementBorderStyle.None;
+                ultraExplorerBarReportNavigator.ContextMenuInitializing += (s, e) =>
+                {
+                    e.Cancel = true;
+                };
                 
                 panelReportNavigatorWrapper.Controls.Add(ultraExplorerBarReportNavigator);
                 ultraExplorerBarReportNavigator.BringToFront();
@@ -3033,48 +3090,21 @@ namespace PosBranch_Win
                 int sideMenuIndex = this.Controls.GetChildIndex(ultraExplorerBarSideMenu);
                 this.Controls.SetChildIndex(panelReportNavigatorWrapper, sideMenuIndex);
 
-                // Define categories
-                string[] categories = new[] { "Item", "Sales", "Discount", "Customer", "Vendor", "Analysis", "Staff", "Tax", "Others" };
-                
-                foreach (string category in categories)
+                // Define categories from the item catalog so empty groups are not shown
+                foreach (string category in ReportNavigatorDefinitions.Select(def => def.Category).Distinct())
                 {
                     var group = new Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarGroup();
                     group.Key = $"Grp_{category}";
                     group.Text = category;
                     group.Settings.ShowExpansionIndicator = Infragistics.Win.DefaultableBoolean.True;
-                    group.Expanded = (category == "Item") ? true : false; // Only expand first item by default like IRS
+                    group.Expanded = string.Equals(category, "Item", StringComparison.OrdinalIgnoreCase); // Only expand first item by default like IRS
                     ultraExplorerBarReportNavigator.Groups.Add(group);
                 }
 
-                // Map "Item" reports
-                AddReportItem("Item", "Stock Listing", "StockReportAdv");
-                AddReportItem("Item", "Item Report", "ItemReport");
-                AddReportItem("Item", "Stock Report Advanced", "StockReport");
-                AddReportItem("Item", "Inventory Audit Trail", "AuditTrail");
-
-                // Map "Sales" reports
-                AddReportItem("Sales", "Sales Details", "Sales Details");
-                AddReportItem("Sales", "Sales Return Report", "SalesReturn");
-                AddReportItem("Sales", "Sales Profit", "SalesProfit");
-                AddReportItem("Sales", "Daily Sales", "DSales");
-
-                // Map "Customer" reports
-                AddReportItem("Customer", "Customer Outstanding Listing", "CustomerOutstandingReport");
-
-                // Map "Vendor" reports
-                AddReportItem("Vendor", "Vendor Outstanding Listing", "VendorOutstandingReport");
-
-                // Map "Analysis" reports
-                AddReportItem("Analysis", "Trading & P/L Account", "TradingPLAccount");
-                AddReportItem("Analysis", "Balance Sheet", "BalanceSheet");
-                AddReportItem("Analysis", "Cash & Bank Book", "CashBankBook");
-                AddReportItem("Analysis", "Day Book", "DayBook");
-
-                // Map "Others" reports
-                AddReportItem("Others", "Manual Party Balance Report", "ManualPartyBalanceReport");
-                AddReportItem("Others", "Combined Party Balance Report", "CombinedPartyBalanceReport");
-                AddReportItem("Others", "Purchase Details", "Purchase Details");
-                AddReportItem("Others", "Purchase Return Report", "PurchaseReturn");
+                foreach (ReportNavigatorDefinition definition in ReportNavigatorDefinitions)
+                {
+                    AddReportItem(definition);
+                }
 
                 StyleReportNavigator();
 
@@ -3096,11 +3126,24 @@ namespace PosBranch_Win
             btn.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             btn.BackColor = Color.Transparent;
             btn.Cursor = Cursors.Hand;
+            btn.TabStop = true;
+            btn.AccessibleRole = AccessibleRole.PushButton;
+            btn.AccessibleName = isClose ? "Close report navigator" : "Pin report navigator";
+            btn.AccessibleDescription = isClose ? "Closes the report navigator pane" : "Pins or unpins the report navigator pane";
             
             bool isHovered = false;
             btn.MouseEnter += (s, e) => { isHovered = true; btn.Invalidate(); };
             btn.MouseLeave += (s, e) => { isHovered = false; btn.Invalidate(); };
             if (clickHandler != null) btn.Click += clickHandler;
+            if (!isClose)
+            {
+                _reportNavigatorPinButton = btn;
+                toolTip.SetToolTip(btn, "Pin report navigator");
+            }
+            else
+            {
+                toolTip.SetToolTip(btn, "Close report navigator");
+            }
 
             btn.Paint += (s, e) =>
             {
@@ -3109,8 +3152,8 @@ namespace PosBranch_Win
                 if (isHovered)
                 {
                     // Soft orange/yellow hover effect typical of Office 2007 dock buttons
-                    using (SolidBrush b = new SolidBrush(Color.FromArgb(255, 240, 201)))
-                    using (Pen p = new Pen(Color.FromArgb(255, 183, 104)))
+                    using (SolidBrush b = new SolidBrush(Color.FromArgb(255, 244, 214)))
+                    using (Pen p = new Pen(Color.FromArgb(255, 177, 86)))
                     {
                         e.Graphics.FillRectangle(b, 0, 0, 15, 14);
                         e.Graphics.DrawRectangle(p, 0, 0, 15, 14);
@@ -3119,8 +3162,8 @@ namespace PosBranch_Win
                 else
                 {
                     // Gradient matched to IRS button box
-                    using (LinearGradientBrush b = new LinearGradientBrush(new Rectangle(0, 0, 16, 16), Color.FromArgb(226, 238, 255), Color.FromArgb(189, 215, 251), LinearGradientMode.Vertical))
-                    using (Pen p = new Pen(Color.FromArgb(120, 160, 210))) 
+                    using (LinearGradientBrush b = new LinearGradientBrush(new Rectangle(0, 0, 16, 16), Color.FromArgb(245, 250, 255), Color.FromArgb(194, 218, 244), LinearGradientMode.Vertical))
+                    using (Pen p = new Pen(Color.FromArgb(115, 151, 196))) 
                     {
                         e.Graphics.FillRectangle(b, 0, 0, 15, 14);
                         e.Graphics.DrawRectangle(p, 0, 0, 15, 14);
@@ -3143,9 +3186,21 @@ namespace PosBranch_Win
                     else
                     {
                         // Pin icon
-                        e.Graphics.DrawLine(iconPen, 8, 10, 8, 13); // Needle
-                        e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(21, 66, 139)), 5, 6, 7, 4); // Body
-                        e.Graphics.DrawLine(iconPen, 4, 5, 12, 5); // Head
+                        if (_isReportNavigatorPinned)
+                        {
+                            e.Graphics.DrawLine(iconPen, 8, 10, 8, 13); // Needle
+                            using (SolidBrush bodyBrush = new SolidBrush(Color.FromArgb(21, 66, 139)))
+                            {
+                                e.Graphics.FillRectangle(bodyBrush, 5, 6, 7, 4); // Body
+                            }
+                            e.Graphics.DrawLine(iconPen, 4, 5, 12, 5); // Head
+                        }
+                        else
+                        {
+                            e.Graphics.DrawLine(iconPen, 8, 7, 8, 13); // Needle
+                            e.Graphics.DrawLine(iconPen, 5, 6, 11, 6); // Head
+                            e.Graphics.DrawLine(iconPen, 6, 8, 10, 8); // Body
+                        }
                     }
                 }
             };
@@ -3153,14 +3208,14 @@ namespace PosBranch_Win
             headerPanel.Controls.Add(btn);
         }
 
-        private void AddReportItem(string category, string text, string key)
+        private void AddReportItem(ReportNavigatorDefinition definition)
         {
-            var group = ultraExplorerBarReportNavigator.Groups[$"Grp_{category}"];
+            var group = ultraExplorerBarReportNavigator.Groups[$"Grp_{definition.Category}"];
             if (group != null)
             {
                 var item = new Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarItem();
-                item.Key = key;
-                item.Text = text;
+                item.Key = definition.Key;
+                item.Text = definition.Text;
                 group.Items.Add(item);
             }
         }
@@ -3177,58 +3232,92 @@ namespace PosBranch_Win
                 ultraExplorerBarReportNavigator.Margins.Bottom = 0;
                 ultraExplorerBarReportNavigator.Margins.Left = 0;
                 ultraExplorerBarReportNavigator.Margins.Right = 0;
-                ultraExplorerBarReportNavigator.GroupSpacing = 0;
+                ultraExplorerBarReportNavigator.GroupSpacing = 1;
                 
                 foreach (var group in ultraExplorerBarReportNavigator.Groups)
                 {
                     // Exact Office 2007 Blue gradients for group headers
-                    group.Settings.AppearancesSmall.HeaderAppearance.BackColor = Color.FromArgb(227, 239, 255);
-                    group.Settings.AppearancesSmall.HeaderAppearance.BackColor2 = Color.FromArgb(175, 210, 255);
+                    group.Settings.AppearancesSmall.HeaderAppearance.BackColor = Color.FromArgb(240, 246, 253);
+                    group.Settings.AppearancesSmall.HeaderAppearance.BackColor2 = Color.FromArgb(183, 212, 241);
                     group.Settings.AppearancesSmall.HeaderAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
-                    group.Settings.AppearancesSmall.HeaderAppearance.ForeColor = Color.FromArgb(21, 66, 139);
-                    group.Settings.AppearancesSmall.HeaderAppearance.FontData.Name = "Tahoma";
-                    group.Settings.AppearancesSmall.HeaderAppearance.FontData.SizeInPoints = 8.25f;
+                    group.Settings.AppearancesSmall.HeaderAppearance.ForeColor = Color.FromArgb(18, 64, 126);
+                    group.Settings.AppearancesSmall.HeaderAppearance.FontData.Name = "Segoe UI";
+                    group.Settings.AppearancesSmall.HeaderAppearance.FontData.SizeInPoints = 8.5f;
                     group.Settings.AppearancesSmall.HeaderAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
-                    group.Settings.AppearancesSmall.HeaderAppearance.BorderColor = Color.FromArgb(101, 147, 207);
+                    group.Settings.AppearancesSmall.HeaderAppearance.BorderColor = Color.FromArgb(124, 170, 216);
 
-                    group.Settings.AppearancesSmall.HeaderHotTrackAppearance.BackColor = Color.White;
+                    group.Settings.AppearancesSmall.HeaderHotTrackAppearance.BackColor = Color.FromArgb(255, 255, 255);
                     group.Settings.AppearancesSmall.HeaderHotTrackAppearance.BackColor2 = Color.FromArgb(225, 240, 255);
-                    group.Settings.AppearancesSmall.HeaderHotTrackAppearance.ForeColor = Color.FromArgb(21, 66, 139);
+                    group.Settings.AppearancesSmall.HeaderHotTrackAppearance.ForeColor = Color.FromArgb(18, 64, 126);
 
                     // Item area styling - seamless light blue like IRS POS
                     group.Settings.AppearancesSmall.ItemAreaAppearance.BackColor = Color.FromArgb(215, 236, 255);
-                    group.Settings.AppearancesSmall.ItemAreaAppearance.BorderColor = Color.FromArgb(158, 190, 230);
-                    group.Settings.ItemAreaInnerMargins.Left = 8;
-                    group.Settings.ItemAreaInnerMargins.Top = 4;
-                    group.Settings.ItemAreaInnerMargins.Bottom = 4;
+                    group.Settings.AppearancesSmall.ItemAreaAppearance.BorderColor = Color.FromArgb(170, 199, 229);
+                    group.Settings.ItemAreaInnerMargins.Left = 10;
+                    group.Settings.ItemAreaInnerMargins.Top = 5;
+                    group.Settings.ItemAreaInnerMargins.Right = 8;
+                    group.Settings.ItemAreaInnerMargins.Bottom = 5;
                     
                     // Set Group Header Icons to match IRS categories
                     try
                     {
                         if (group.Key == "Grp_Item") group.Settings.AppearancesSmall.HeaderAppearance.Image = PosBranch_Win.Properties.Resources.list_items;
                         else if (group.Key == "Grp_Sales") group.Settings.AppearancesSmall.HeaderAppearance.Image = PosBranch_Win.Properties.Resources.transaction1;
+                        else if (group.Key == "Grp_Purchase") group.Settings.AppearancesSmall.HeaderAppearance.Image = PosBranch_Win.Properties.Resources.commercial__1_;
                         else if (group.Key == "Grp_Discount") group.Settings.AppearancesSmall.HeaderAppearance.Image = PosBranch_Win.Properties.Resources.rate_of_return;
                         else if (group.Key == "Grp_Customer") group.Settings.AppearancesSmall.HeaderAppearance.Image = PosBranch_Win.Properties.Resources.icons8_roles_96;
                         else if (group.Key == "Grp_Vendor") group.Settings.AppearancesSmall.HeaderAppearance.Image = PosBranch_Win.Properties.Resources.transaction;
                         else if (group.Key == "Grp_Analysis") group.Settings.AppearancesSmall.HeaderAppearance.Image = PosBranch_Win.Properties.Resources.profit_and_loss;
+                        else if (group.Key == "Grp_Others") group.Settings.AppearancesSmall.HeaderAppearance.Image = PosBranch_Win.Properties.Resources.report1;
                     } catch { }
 
                     foreach (Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarItem item in group.Items)
                     {
-                        // IRS POS uses plain text links with NO icons on individual items
-                        item.Settings.Style = Infragistics.Win.UltraWinExplorerBar.ItemStyle.Label;
-                        item.Settings.AppearancesSmall.Appearance.ForeColor = Color.FromArgb(21, 66, 139);
-                        item.Settings.AppearancesSmall.Appearance.FontData.SizeInPoints = 8.25f;
-                        item.Settings.AppearancesSmall.Appearance.FontData.Name = "Tahoma";
+                        // Match the favourite explorer bar's blue button look, but keep report entries text-only
+                        item.Settings.Style = Infragistics.Win.UltraWinExplorerBar.ItemStyle.Button;
+                        item.Settings.ReserveImageSpace = Infragistics.Win.DefaultableBoolean.False;
+                        item.Settings.Height = 28;
+                        item.Settings.MaxLines = 2;
+                        item.Settings.AppearancesSmall.Appearance.ForeColor = Color.White;
+                        item.Settings.AppearancesSmall.Appearance.FontData.SizeInPoints = 8.5f;
+                        item.Settings.AppearancesSmall.Appearance.FontData.Name = "Segoe UI";
                         item.Settings.AppearancesSmall.Appearance.Cursor = Cursors.Hand;
+                        item.Settings.AppearancesSmall.Appearance.TextHAlignAsString = "Left";
+                        item.Settings.AppearancesSmall.Appearance.TextVAlignAsString = "Middle";
+                        item.Settings.AppearancesSmall.Appearance.BackColor = Color.FromArgb(28, 151, 234);
+                        item.Settings.AppearancesSmall.Appearance.BackColor2 = Color.FromArgb(10, 120, 200);
+                        item.Settings.AppearancesSmall.Appearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
+                        item.Settings.AppearancesSmall.Appearance.BorderAlpha = Infragistics.Win.Alpha.Transparent;
                         item.Settings.AppearancesSmall.Appearance.Image = null;
+                        item.Settings.AppearancesLarge.Appearance.Image = null;
                         item.Settings.AppearancesSmall.ActiveAppearance.Image = null;
+                        item.Settings.AppearancesLarge.ActiveAppearance.Image = null;
+                        item.Settings.AppearancesSmall.Appearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
+                        item.Settings.AppearancesSmall.HotTrackAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
+                        item.Settings.AppearancesSmall.ActiveAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
+                        item.Settings.AppearancesLarge.Appearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
+                        item.Settings.AppearancesLarge.HotTrackAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
+                        item.Settings.AppearancesLarge.ActiveAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
+                        item.Settings.AppearancesSmall.ActiveAppearance.BackColor = Color.FromArgb(50, 170, 250);
+                        item.Settings.AppearancesSmall.ActiveAppearance.BackColor2 = Color.FromArgb(20, 140, 220);
+                        item.Settings.AppearancesSmall.ActiveAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
+                        item.Settings.AppearancesSmall.ActiveAppearance.ForeColor = Color.White;
+                        item.Settings.AppearancesSmall.ActiveAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
+                        item.Settings.AppearancesSmall.ActiveAppearance.TextHAlignAsString = "Left";
+                        item.Settings.AppearancesSmall.ActiveAppearance.TextVAlignAsString = "Middle";
                         
-                        // Hover: subtle highlight, no background color change
-                        item.Settings.AppearancesSmall.HotTrackAppearance.ForeColor = Color.FromArgb(0, 50, 150);
-                        item.Settings.AppearancesSmall.HotTrackAppearance.FontData.Underline = Infragistics.Win.DefaultableBoolean.True;
-                        item.Settings.AppearancesSmall.HotTrackAppearance.BackColor = Color.Transparent;
+                        // Hover: subtle highlight with a gentle fill for clarity
+                        item.Settings.AppearancesSmall.HotTrackAppearance.BackColor = Color.FromArgb(50, 170, 250);
+                        item.Settings.AppearancesSmall.HotTrackAppearance.BackColor2 = Color.FromArgb(20, 140, 220);
+                        item.Settings.AppearancesSmall.HotTrackAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
+                        item.Settings.AppearancesSmall.HotTrackAppearance.ForeColor = Color.White;
+                        item.Settings.AppearancesSmall.HotTrackAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
+                        item.Settings.AppearancesSmall.HotTrackAppearance.FontData.SizeInPoints = 8.5f;
+                        item.Settings.AppearancesSmall.HotTrackAppearance.FontData.Name = "Segoe UI";
+                        item.Settings.AppearancesSmall.HotTrackAppearance.TextHAlignAsString = "Left";
+                        item.Settings.AppearancesSmall.HotTrackAppearance.TextVAlignAsString = "Middle";
                         item.Settings.AppearancesSmall.HotTrackAppearance.Image = null;
+                        item.Settings.AppearancesLarge.HotTrackAppearance.Image = null;
                     }
                 }
             }
@@ -3257,7 +3346,39 @@ namespace PosBranch_Win
             if (ultraExplorerBarSideMenu != null)
                 ultraExplorerBarSideMenu.Visible = true;
 
+            _isReportNavigatorPinned = false;
+            UpdateReportNavigatorPinButtonState();
             _isReportNavigatorVisible = false;
+        }
+
+        private void ToggleReportNavigatorPin()
+        {
+            _isReportNavigatorPinned = !_isReportNavigatorPinned;
+            UpdateReportNavigatorPinButtonState();
+        }
+
+        private void UpdateReportNavigatorPinButtonState()
+        {
+            if (_reportNavigatorPinButton == null)
+            {
+                return;
+            }
+
+            toolTip.SetToolTip(_reportNavigatorPinButton, _isReportNavigatorPinned ? "Unpin report navigator" : "Pin report navigator");
+            _reportNavigatorPinButton.AccessibleName = _isReportNavigatorPinned ? "Unpin report navigator" : "Pin report navigator";
+            _reportNavigatorPinButton.AccessibleDescription = _isReportNavigatorPinned ? "Keeps the report navigator open after report clicks" : "Allows the report navigator to auto-hide after report clicks";
+            _reportNavigatorPinButton.Invalidate();
+        }
+
+        private string ResolveReportNavigatorActionKey(string navigatorKey)
+        {
+            string actionKey;
+            if (ReportNavigatorActionAliases.TryGetValue(navigatorKey, out actionKey))
+            {
+                return actionKey;
+            }
+
+            return navigatorKey;
         }
 
         private void ReportNavigator_ItemClick(object sender, Infragistics.Win.UltraWinExplorerBar.ItemEventArgs e)
@@ -3265,7 +3386,7 @@ namespace PosBranch_Win
             try
             {
                 // Standard report items use ToolClick handler mechanisms already built
-                string keyToExecute = e.Item.Key;
+                string keyToExecute = ResolveReportNavigatorActionKey(e.Item.Key);
                 
                 if (ultraToolbarsManager1.Tools.Exists(keyToExecute) || keyToExecute == "AuditTrail")
                 {
@@ -3285,8 +3406,11 @@ namespace PosBranch_Win
                     var eventArgs = new Infragistics.Win.UltraWinToolbars.ToolClickEventArgs(toolToExecute, null);
                     ultraToolbarsManager1_ToolClick_1(this, eventArgs);
 
-                    // User Request: Auto-close behavior
-                    HideReportNavigator();
+                    // Auto-close only when the navigator is not pinned open
+                    if (!_isReportNavigatorPinned)
+                    {
+                        HideReportNavigator();
+                    }
                 }
                 else
                 {
