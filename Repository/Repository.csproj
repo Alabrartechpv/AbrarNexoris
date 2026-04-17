@@ -100,6 +100,7 @@
     <Compile Include="TransactionRepository\PurchaseReturnRepository.cs" />
     <Compile Include="TransactionRepository\SalesRepository.cs" />
     <Compile Include="TransactionRepository\SalesReturnRepository.cs" />
+    <Compile Include="TransactionRepository\SmartReorderRepository.cs" />
     <Compile Include="TransactionRepository\StockAdjustmentRepository.cs" />
     <Compile Include="SettingsRepo\POSSettingsRepository.cs" />
     <Compile Include="VendorRepository.cs" />

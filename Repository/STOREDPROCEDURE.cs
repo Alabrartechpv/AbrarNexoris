@@ -93,6 +93,7 @@ namespace Repository
         public static string _CustomerOutstandingReport = "_CustomerOutstandingReport";
         public static string _VendorOutstandingReport = "_VendorOutstandingReport";
         public static string _VendorPaymentReport = "_VendorPaymentReport";
+        public static string _POS_GetSmartReorderSuggestions = "_POS_GetSmartReorderSuggestions";
 
         #endregion
 

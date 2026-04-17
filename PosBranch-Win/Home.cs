@@ -1929,6 +1929,11 @@ namespace PosBranch_Win
                 Reports.InventoryReport.frmStockReportAdvanced frmStkRptAdv = new Reports.InventoryReport.frmStockReportAdvanced();
                 OpenFormInTab(frmStkRptAdv, "StockReport");
             }
+            if (e.Tool.Key == "ReOrder")
+            {
+                Reports.InventoryReport.FrmSmartReorderDashboard reorderDashboard = new Reports.InventoryReport.FrmSmartReorderDashboard();
+                OpenFormInTab(reorderDashboard, "Smart Reorder Dashboard");
+            }
 
             // ADD THIS NEW CONDITION FOR UNIT MASTER
             if (e.Tool.Key == "UnitMaster")

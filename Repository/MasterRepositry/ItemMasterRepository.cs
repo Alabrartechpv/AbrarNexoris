@@ -119,17 +119,25 @@ namespace Repository.MasterRepositry
                         {
                             item = ds.Tables[0].Rows[0].ToNullableObject<ItemGet>();
 
-                            // HSNCode is not returned by the current GETITEM/GETBYID selects.
-                            // Fetch it explicitly to ensure UI can display it.
+                            // Fetch fields directly from ItemMaster so the UI keeps working
+                            // even if GETITEM does not return every column we need.
                             try
                             {
-                                using (SqlCommand hsnCmd = new SqlCommand("SELECT HSNCode FROM ItemMaster WHERE ItemId = @ItemId", (SqlConnection)DataConnection))
+                                using (SqlCommand hsnCmd = new SqlCommand(
+                                    "SELECT Barcode, HSNCode, Order_Cycle_Days, Box_Quantity, Is_Perishable FROM ItemMaster WHERE ItemId = @ItemId",
+                                    (SqlConnection)DataConnection))
                                 {
                                     hsnCmd.Parameters.AddWithValue("@ItemId", selectedId);
-                                    object hsnResult = hsnCmd.ExecuteScalar();
-                                    if (hsnResult != null && hsnResult != DBNull.Value)
+                                    using (SqlDataReader reader = hsnCmd.ExecuteReader())
                                     {
-                                        item.HSNCode = Convert.ToString(hsnResult);
+                                        if (reader.Read())
+                                        {
+                                            item.Barcode = reader["Barcode"] == DBNull.Value ? item.Barcode : Convert.ToString(reader["Barcode"]);
+                                            item.HSNCode = reader["HSNCode"] == DBNull.Value ? item.HSNCode : Convert.ToString(reader["HSNCode"]);
+                                            item.Order_Cycle_Days = reader["Order_Cycle_Days"] == DBNull.Value ? item.Order_Cycle_Days : Convert.ToInt32(reader["Order_Cycle_Days"]);
+                                            item.Box_Quantity = reader["Box_Quantity"] == DBNull.Value ? item.Box_Quantity : Convert.ToInt32(reader["Box_Quantity"]);
+                                            item.Is_Perishable = reader["Is_Perishable"] != DBNull.Value && Convert.ToBoolean(reader["Is_Perishable"]);
+                                        }
                                     }
                                 }
                             }

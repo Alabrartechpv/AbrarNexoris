@@ -916,6 +916,9 @@
     <Compile Include="Reports\InventoryReport\frmItemReport.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Reports\InventoryReport\FrmSmartReorderDashboard.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Reports\InventoryReport\frmItemReport.Designer.cs">
       <DependentUpon>frmItemReport.cs</DependentUpon>
     </Compile>

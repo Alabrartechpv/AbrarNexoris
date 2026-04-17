@@ -105,6 +105,9 @@ namespace ModelClass.Master
         public string ForCustomerType { get; set; }
         public string NameInLocalLanguage { get; set; }
         public string HSNCode { get; set; }
+        public int Order_Cycle_Days { get; set; } = 30;
+        public int Box_Quantity { get; set; } = 1;
+        public bool Is_Perishable { get; set; }
         public string _Operation { get; set; }
         //public List<ItemMasterPriceSettingsDDLGrid> itmpricesettings { get; set; }
     }
@@ -173,6 +176,9 @@ namespace ModelClass.Master
         public string CategoryName { get; set; }
         public string PriceLevel { get; set; }
         public double HoldQty { get; set; }
+        public int Order_Cycle_Days { get; set; } = 30;
+        public int Box_Quantity { get; set; } = 1;
+        public bool Is_Perishable { get; set; }
         public ItemMasterPriceSettings[] List { get; set; }
         public ItemAlternativeBarcode[] ListAlternativeBarcodes { get; set; }
         public VendorDetailsForItemmaster[] ListVendor { get; set; }
