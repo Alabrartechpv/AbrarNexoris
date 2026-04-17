@@ -347,6 +347,12 @@
     <Compile Include="Reports\FinancialReports\frmCustomerOutstandingReport.Designer.cs">
       <DependentUpon>frmCustomerOutstandingReport.cs</DependentUpon>
     </Compile>
+    <Compile Include="Reports\FinancialReports\frmVendorPaymentReport.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reports\FinancialReports\frmVendorPaymentReport.Designer.cs">
+      <DependentUpon>frmVendorPaymentReport.cs</DependentUpon>
+    </Compile>
     <Compile Include="Reports\FinancialReports\FrmManualPartyBalanceReport.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1363,6 +1369,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Reports\FinancialReports\FrmTradingPLAccount.resx">
       <DependentUpon>FrmTradingPLAccount.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Reports\FinancialReports\frmVendorPaymentReport.resx">
+      <DependentUpon>frmVendorPaymentReport.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Reports\InventoryReport\frmItemReport.resx">
       <DependentUpon>frmItemReport.cs</DependentUpon>

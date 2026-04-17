@@ -92,6 +92,7 @@
     <Compile Include="ReportRepository\CustomerOutstandingReportRepository.cs" />
     <Compile Include="ReportRepository\DayBookRepository.cs" />
     <Compile Include="ReportRepository\StockReportAdvanceRepo.cs" />
+    <Compile Include="ReportRepository\VendorPaymentReportRepository.cs" />
     <Compile Include="ReportRepository\VendorOutstandingReportRepository.cs" />
     <Compile Include="STOREDPROCEDURE.cs" />
     <Compile Include="TransactionRepository\frmSalesInvoice.cs" />

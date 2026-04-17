@@ -67,6 +67,7 @@ namespace PosBranch_Win
             new ReportNavigatorDefinition("Purchase", "Purchase Return Report", "PurchaseReturn"),
             new ReportNavigatorDefinition("Customer", "Customer Outstanding Listing", "CustomerOutstandingReport"),
             new ReportNavigatorDefinition("Vendor", "Vendor Outstanding Listing", "VendorOutstandingReport"),
+            new ReportNavigatorDefinition("Vendor", "DN/payment", "VendorDNPaymentReport"),
             new ReportNavigatorDefinition("Analysis", "Trading & P/L Account", "TradingPLAccount"),
             new ReportNavigatorDefinition("Analysis", "Balance Sheet", "BalanceSheet"),
             new ReportNavigatorDefinition("Analysis", "Cash & Bank Book", "CashBankBook"),
@@ -1956,6 +1957,11 @@ namespace PosBranch_Win
                 PosBranch_Win.Reports.FinancialReports.frmVendorOutstandingReport vendorOutstandingReport = new PosBranch_Win.Reports.FinancialReports.frmVendorOutstandingReport();
                 OpenFormInTab(vendorOutstandingReport, "Vendor Outstanding Report");
             }
+            if (e.Tool.Key == "VendorDNPaymentReport")
+            {
+                PosBranch_Win.Reports.FinancialReports.frmVendorPaymentReport vendorPaymentReport = new PosBranch_Win.Reports.FinancialReports.frmVendorPaymentReport();
+                OpenFormInTab(vendorPaymentReport, "Vendor DN/Payment Report");
+            }
 
             #region here for reports sections menu
             if (e.Tool.Key == "DSales")
@@ -3388,7 +3394,7 @@ namespace PosBranch_Win
                 // Standard report items use ToolClick handler mechanisms already built
                 string keyToExecute = ResolveReportNavigatorActionKey(e.Item.Key);
                 
-                if (ultraToolbarsManager1.Tools.Exists(keyToExecute) || keyToExecute == "AuditTrail")
+                if (ultraToolbarsManager1.Tools.Exists(keyToExecute) || keyToExecute == "AuditTrail" || keyToExecute == "VendorDNPaymentReport")
                 {
                     Infragistics.Win.UltraWinToolbars.ToolBase toolToExecute;
 
