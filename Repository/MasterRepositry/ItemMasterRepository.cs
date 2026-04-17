@@ -314,15 +314,18 @@ namespace Repository.MasterRepositry
         public ItemDialogDDLGrid getItemGetAll(string search)
         {
             ItemDialogDDLGrid ItemGrid = new ItemDialogDDLGrid();
+            int branchId = SessionContext.BranchId > 0 ? SessionContext.BranchId : ParseIntValue(DataBase.BranchId);
+            int companyId = SessionContext.CompanyId > 0 ? SessionContext.CompanyId : ParseIntValue(DataBase.CompanyId);
+            int finYearId = SessionContext.FinYearId > 0 ? SessionContext.FinYearId : ParseIntValue(DataBase.FinyearId);
             DataConnection.Open();
             try
             {
                 using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_dropdown, (SqlConnection)DataConnection))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Parameters.AddWithValue("@BranchId", 0);
-                    cmd.Parameters.AddWithValue("@CompanyId", 0);
-                    cmd.Parameters.AddWithValue("@FinyearId", 0);
+                    cmd.Parameters.AddWithValue("@BranchId", branchId);
+                    cmd.Parameters.AddWithValue("@CompanyId", companyId);
+                    cmd.Parameters.AddWithValue("@FinyearId", finYearId);
                     cmd.Parameters.AddWithValue("@Barcode", search);
                     cmd.Parameters.AddWithValue("@Operation", "GETITEM");
 
@@ -347,6 +350,12 @@ namespace Repository.MasterRepositry
                     DataConnection.Close();
             }
             return ItemGrid;
+        }
+
+        private static int ParseIntValue(string value)
+        {
+            int parsed;
+            return int.TryParse(value, out parsed) ? parsed : 0;
         }
 
 
