@@ -24,5 +24,18 @@ namespace ModelClass.Report
         public DateTime? LastSaleDate { get; set; }
         public string Alert { get; set; }
         public string Reason { get; set; }
+
+        public decimal? DaysOfStockLeft
+        {
+            get
+            {
+                if (AverageDailySales <= 0)
+                {
+                    return null;
+                }
+
+                return CurrentStock / AverageDailySales;
+            }
+        }
     }
 }
