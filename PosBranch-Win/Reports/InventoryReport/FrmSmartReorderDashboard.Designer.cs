@@ -1,16 +1,44 @@
-using Infragistics.Win;
+using System;
+using System.ComponentModel;
 using Infragistics.Win.Misc;
 using Infragistics.Win.UltraWinEditors;
 using Infragistics.Win.UltraWinGrid;
-using System.ComponentModel;
-using System.Drawing;
-using System.Windows.Forms;
 
 namespace PosBranch_Win.Reports.InventoryReport
 {
     partial class FrmSmartReorderDashboard
     {
         private IContainer components = null;
+        private UltraPanel ultraPanelSelection;
+        private UltraPanel ultraPanelActionBar;
+        private UltraPanel ultraPanelGrid;
+        private UltraPanel gridFooterPanel;
+        private UltraLabel lblItemNo;
+        private UltraLabel lblFromBarcode;
+        private UltraLabel lblToBarcode;
+        private UltraLabel lblCategory;
+        private UltraLabel lblGroup;
+        private UltraLabel lblMoreOptions;
+        private UltraLabel lblAlert;
+        private UltraComboEditor cmbItemNoMode;
+        private UltraTextEditor txtFromBarcode;
+        private UltraTextEditor txtToBarcode;
+        private UltraComboEditor cmbCategory;
+        private UltraComboEditor cmbGroup;
+        private UltraCheckEditor chkShowOnlyExceptions;
+        private UltraComboEditor cmbMoreOptions;
+        private UltraComboEditor cmbAlert;
+        private UltraButton btnViewGrid;
+        private UltraButton btnPreviewGrid;
+        private UltraButton btnPreviewReport;
+        private UltraButton btnGeneratePO;
+        private UltraButton btnGenBranchPO;
+        private UltraButton btnRefreshStats;
+        private UltraButton btnColumnChooser;
+        private UltraButton btnHideSelection;
+        private UltraGrid ultraGridMaster;
+        private UltraLabel lblCount;
+        private UltraLabel lblExceptionCount;
 
         protected override void Dispose(bool disposing)
         {
@@ -18,68 +46,69 @@ namespace PosBranch_Win.Reports.InventoryReport
             {
                 components.Dispose();
             }
+
             base.Dispose(disposing);
         }
 
-        #region Windows Form Designer generated code
-
         private void InitializeComponent()
         {
-            Infragistics.Win.Appearance appearance1 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance2 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance3 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance4 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance5 = new Infragistics.Win.Appearance();
-            this.ultraPanelSelection = new Infragistics.Win.Misc.UltraPanel();
-            this.lblItemNo = new Infragistics.Win.Misc.UltraLabel();
-            this.cmbItemNoMode = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
-            this.lblFromBarcode = new Infragistics.Win.Misc.UltraLabel();
-            this.txtFromBarcode = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
-            this.lblToBarcode = new Infragistics.Win.Misc.UltraLabel();
-            this.txtToBarcode = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
-            this.lblCategory = new Infragistics.Win.Misc.UltraLabel();
-            this.cmbCategory = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
-            this.lblGroup = new Infragistics.Win.Misc.UltraLabel();
-            this.cmbGroup = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
-            this.chkShowOnlyExceptions = new Infragistics.Win.UltraWinEditors.UltraCheckEditor();
-            this.lblMoreOptions = new Infragistics.Win.Misc.UltraLabel();
-            this.cmbMoreOptions = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
-            this.ultraPanelActionBar = new Infragistics.Win.Misc.UltraPanel();
-            this.btnViewGrid = new Infragistics.Win.Misc.UltraButton();
-            this.btnPreviewGrid = new Infragistics.Win.Misc.UltraButton();
-            this.btnPreviewReport = new Infragistics.Win.Misc.UltraButton();
-            this.btnGeneratePO = new Infragistics.Win.Misc.UltraButton();
-            this.btnGenBranchPO = new Infragistics.Win.Misc.UltraButton();
-            this.btnHideSelection = new Infragistics.Win.Misc.UltraButton();
-            this.ultraPanelGrid = new Infragistics.Win.Misc.UltraPanel();
-            this.ultraGridMaster = new Infragistics.Win.UltraWinGrid.UltraGrid();
-            this.gridFooterPanel = new Infragistics.Win.Misc.UltraPanel();
-            this.lblCount = new Infragistics.Win.Misc.UltraLabel();
-            this.lblExceptionCount = new Infragistics.Win.Misc.UltraLabel();
+            this.components = new Container();
+            this.ultraPanelSelection = new UltraPanel();
+            this.lblItemNo = new UltraLabel();
+            this.cmbItemNoMode = new UltraComboEditor();
+            this.lblFromBarcode = new UltraLabel();
+            this.txtFromBarcode = new UltraTextEditor();
+            this.lblToBarcode = new UltraLabel();
+            this.txtToBarcode = new UltraTextEditor();
+            this.lblCategory = new UltraLabel();
+            this.cmbCategory = new UltraComboEditor();
+            this.lblGroup = new UltraLabel();
+            this.cmbGroup = new UltraComboEditor();
+            this.lblAlert = new UltraLabel();
+            this.cmbAlert = new UltraComboEditor();
+            this.chkShowOnlyExceptions = new UltraCheckEditor();
+            this.lblMoreOptions = new UltraLabel();
+            this.cmbMoreOptions = new UltraComboEditor();
+            this.ultraPanelActionBar = new UltraPanel();
+            this.btnViewGrid = new UltraButton();
+            this.btnPreviewGrid = new UltraButton();
+            this.btnPreviewReport = new UltraButton();
+            this.btnGeneratePO = new UltraButton();
+            this.btnGenBranchPO = new UltraButton();
+            this.btnRefreshStats = new UltraButton();
+            this.btnColumnChooser = new UltraButton();
+            this.btnHideSelection = new UltraButton();
+            this.ultraPanelGrid = new UltraPanel();
+            this.ultraGridMaster = new UltraGrid();
+            this.gridFooterPanel = new UltraPanel();
+            this.lblCount = new UltraLabel();
+            this.lblExceptionCount = new UltraLabel();
             this.ultraPanelSelection.ClientArea.SuspendLayout();
             this.ultraPanelSelection.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.cmbItemNoMode)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtFromBarcode)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtToBarcode)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cmbCategory)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cmbGroup)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.chkShowOnlyExceptions)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cmbMoreOptions)).BeginInit();
+            ((ISupportInitialize)(this.cmbItemNoMode)).BeginInit();
+            ((ISupportInitialize)(this.txtFromBarcode)).BeginInit();
+            ((ISupportInitialize)(this.txtToBarcode)).BeginInit();
+            ((ISupportInitialize)(this.cmbCategory)).BeginInit();
+            ((ISupportInitialize)(this.cmbGroup)).BeginInit();
+            ((ISupportInitialize)(this.cmbAlert)).BeginInit();
+            ((ISupportInitialize)(this.chkShowOnlyExceptions)).BeginInit();
+            ((ISupportInitialize)(this.cmbMoreOptions)).BeginInit();
             this.ultraPanelActionBar.ClientArea.SuspendLayout();
             this.ultraPanelActionBar.SuspendLayout();
             this.ultraPanelGrid.ClientArea.SuspendLayout();
             this.ultraPanelGrid.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.ultraGridMaster)).BeginInit();
+            ((ISupportInitialize)(this.ultraGridMaster)).BeginInit();
             this.gridFooterPanel.ClientArea.SuspendLayout();
             this.gridFooterPanel.SuspendLayout();
             this.SuspendLayout();
             // 
             // ultraPanelSelection
             // 
-            appearance1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(223)))), ((int)(((byte)(235)))), ((int)(((byte)(247)))));
-            appearance1.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(167)))), ((int)(((byte)(188)))), ((int)(((byte)(214)))));
-            this.ultraPanelSelection.Appearance = appearance1;
-            this.ultraPanelSelection.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
+            this.ultraPanelSelection.Dock = System.Windows.Forms.DockStyle.Top;
+            this.ultraPanelSelection.Location = new System.Drawing.Point(0, 0);
+            this.ultraPanelSelection.Name = "ultraPanelSelection";
+            this.ultraPanelSelection.Size = new System.Drawing.Size(1280, 126);
+            this.ultraPanelSelection.TabIndex = 0;
             // 
             // ultraPanelSelection.ClientArea
             // 
@@ -93,14 +122,11 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.ultraPanelSelection.ClientArea.Controls.Add(this.cmbCategory);
             this.ultraPanelSelection.ClientArea.Controls.Add(this.lblGroup);
             this.ultraPanelSelection.ClientArea.Controls.Add(this.cmbGroup);
+            this.ultraPanelSelection.ClientArea.Controls.Add(this.lblAlert);
+            this.ultraPanelSelection.ClientArea.Controls.Add(this.cmbAlert);
             this.ultraPanelSelection.ClientArea.Controls.Add(this.chkShowOnlyExceptions);
             this.ultraPanelSelection.ClientArea.Controls.Add(this.lblMoreOptions);
             this.ultraPanelSelection.ClientArea.Controls.Add(this.cmbMoreOptions);
-            this.ultraPanelSelection.Dock = System.Windows.Forms.DockStyle.Top;
-            this.ultraPanelSelection.Location = new System.Drawing.Point(0, 0);
-            this.ultraPanelSelection.Name = "ultraPanelSelection";
-            this.ultraPanelSelection.Size = new System.Drawing.Size(1280, 126);
-            this.ultraPanelSelection.TabIndex = 0;
             // 
             // lblItemNo
             // 
@@ -117,8 +143,6 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.cmbItemNoMode.Name = "cmbItemNoMode";
             this.cmbItemNoMode.Size = new System.Drawing.Size(160, 24);
             this.cmbItemNoMode.TabIndex = 1;
-            this.cmbItemNoMode.UseAppStyling = false;
-            this.cmbItemNoMode.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             // 
             // lblFromBarcode
             // 
@@ -165,8 +189,6 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.cmbCategory.Name = "cmbCategory";
             this.cmbCategory.Size = new System.Drawing.Size(160, 24);
             this.cmbCategory.TabIndex = 7;
-            this.cmbCategory.UseAppStyling = false;
-            this.cmbCategory.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             // 
             // lblGroup
             // 
@@ -183,44 +205,57 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.cmbGroup.Name = "cmbGroup";
             this.cmbGroup.Size = new System.Drawing.Size(160, 24);
             this.cmbGroup.TabIndex = 9;
-            this.cmbGroup.UseAppStyling = false;
-            this.cmbGroup.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+            this.cmbGroup.ValueChanged += new EventHandler(this.CmbGroup_ValueChanged);
+            // 
+            // lblAlert
+            // 
+            this.lblAlert.Location = new System.Drawing.Point(671, 54);
+            this.lblAlert.Name = "lblAlert";
+            this.lblAlert.Size = new System.Drawing.Size(46, 23);
+            this.lblAlert.TabIndex = 10;
+            this.lblAlert.Text = "Alert";
+            // 
+            // cmbAlert
+            // 
+            this.cmbAlert.DropDownStyle = Infragistics.Win.DropDownStyle.DropDownList;
+            this.cmbAlert.Location = new System.Drawing.Point(720, 51);
+            this.cmbAlert.Name = "cmbAlert";
+            this.cmbAlert.Size = new System.Drawing.Size(164, 24);
+            this.cmbAlert.TabIndex = 11;
+            this.cmbAlert.ValueChanged += new EventHandler(this.CmbAlert_ValueChanged);
             // 
             // chkShowOnlyExceptions
             // 
-            this.chkShowOnlyExceptions.Location = new System.Drawing.Point(640, 53);
+            this.chkShowOnlyExceptions.Location = new System.Drawing.Point(920, 53);
             this.chkShowOnlyExceptions.Name = "chkShowOnlyExceptions";
             this.chkShowOnlyExceptions.Size = new System.Drawing.Size(170, 20);
-            this.chkShowOnlyExceptions.TabIndex = 10;
+            this.chkShowOnlyExceptions.TabIndex = 12;
             this.chkShowOnlyExceptions.Text = "Show Only Exceptions";
-            this.chkShowOnlyExceptions.CheckedChanged += new System.EventHandler(this.ChkShowOnlyExceptions_CheckedChanged);
+            this.chkShowOnlyExceptions.CheckedChanged += new EventHandler(this.ChkShowOnlyExceptions_CheckedChanged);
             // 
             // lblMoreOptions
             // 
             this.lblMoreOptions.Location = new System.Drawing.Point(30, 90);
             this.lblMoreOptions.Name = "lblMoreOptions";
             this.lblMoreOptions.Size = new System.Drawing.Size(90, 23);
-            this.lblMoreOptions.TabIndex = 11;
+            this.lblMoreOptions.TabIndex = 13;
             this.lblMoreOptions.Text = "More Options";
             // 
             // cmbMoreOptions
             // 
-            this.cmbMoreOptions.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.cmbMoreOptions.DropDownStyle = Infragistics.Win.DropDownStyle.DropDownList;
             this.cmbMoreOptions.Location = new System.Drawing.Point(130, 87);
             this.cmbMoreOptions.Name = "cmbMoreOptions";
             this.cmbMoreOptions.Size = new System.Drawing.Size(1126, 24);
-            this.cmbMoreOptions.TabIndex = 12;
-            this.cmbMoreOptions.UseAppStyling = false;
-            this.cmbMoreOptions.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+            this.cmbMoreOptions.TabIndex = 14;
             // 
             // ultraPanelActionBar
             // 
-            appearance2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(214)))), ((int)(((byte)(230)))), ((int)(((byte)(246)))));
-            appearance2.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(167)))), ((int)(((byte)(188)))), ((int)(((byte)(214)))));
-            this.ultraPanelActionBar.Appearance = appearance2;
-            this.ultraPanelActionBar.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
+            this.ultraPanelActionBar.Dock = System.Windows.Forms.DockStyle.Top;
+            this.ultraPanelActionBar.Location = new System.Drawing.Point(0, 126);
+            this.ultraPanelActionBar.Name = "ultraPanelActionBar";
+            this.ultraPanelActionBar.Size = new System.Drawing.Size(1280, 42);
+            this.ultraPanelActionBar.TabIndex = 1;
             // 
             // ultraPanelActionBar.ClientArea
             // 
@@ -229,12 +264,9 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.ultraPanelActionBar.ClientArea.Controls.Add(this.btnPreviewReport);
             this.ultraPanelActionBar.ClientArea.Controls.Add(this.btnGeneratePO);
             this.ultraPanelActionBar.ClientArea.Controls.Add(this.btnGenBranchPO);
+            this.ultraPanelActionBar.ClientArea.Controls.Add(this.btnRefreshStats);
+            this.ultraPanelActionBar.ClientArea.Controls.Add(this.btnColumnChooser);
             this.ultraPanelActionBar.ClientArea.Controls.Add(this.btnHideSelection);
-            this.ultraPanelActionBar.Dock = System.Windows.Forms.DockStyle.Top;
-            this.ultraPanelActionBar.Location = new System.Drawing.Point(0, 126);
-            this.ultraPanelActionBar.Name = "ultraPanelActionBar";
-            this.ultraPanelActionBar.Size = new System.Drawing.Size(1280, 42);
-            this.ultraPanelActionBar.TabIndex = 1;
             // 
             // btnViewGrid
             // 
@@ -243,7 +275,7 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.btnViewGrid.Size = new System.Drawing.Size(110, 28);
             this.btnViewGrid.TabIndex = 0;
             this.btnViewGrid.Text = "View Grid";
-            this.btnViewGrid.Click += new System.EventHandler(this.BtnViewGrid_Click);
+            this.btnViewGrid.Click += new EventHandler(this.BtnViewGrid_Click);
             // 
             // btnPreviewGrid
             // 
@@ -252,7 +284,7 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.btnPreviewGrid.Size = new System.Drawing.Size(120, 28);
             this.btnPreviewGrid.TabIndex = 1;
             this.btnPreviewGrid.Text = "Preview Grid";
-            this.btnPreviewGrid.Click += new System.EventHandler(this.BtnPreviewGrid_Click);
+            this.btnPreviewGrid.Click += new EventHandler(this.BtnPreviewGrid_Click);
             // 
             // btnPreviewReport
             // 
@@ -261,7 +293,7 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.btnPreviewReport.Size = new System.Drawing.Size(126, 28);
             this.btnPreviewReport.TabIndex = 2;
             this.btnPreviewReport.Text = "Preview Report";
-            this.btnPreviewReport.Click += new System.EventHandler(this.BtnPreviewReport_Click);
+            this.btnPreviewReport.Click += new EventHandler(this.BtnPreviewReport_Click);
             // 
             // btnGeneratePO
             // 
@@ -270,7 +302,7 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.btnGeneratePO.Size = new System.Drawing.Size(118, 28);
             this.btnGeneratePO.TabIndex = 3;
             this.btnGeneratePO.Text = "Generate PO";
-            this.btnGeneratePO.Click += new System.EventHandler(this.BtnGeneratePO_Click);
+            this.btnGeneratePO.Click += new EventHandler(this.BtnGeneratePO_Click);
             // 
             // btnGenBranchPO
             // 
@@ -279,7 +311,25 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.btnGenBranchPO.Size = new System.Drawing.Size(128, 28);
             this.btnGenBranchPO.TabIndex = 4;
             this.btnGenBranchPO.Text = "Gen. Branch PO";
-            this.btnGenBranchPO.Click += new System.EventHandler(this.BtnGenBranchPO_Click);
+            this.btnGenBranchPO.Click += new EventHandler(this.BtnGenBranchPO_Click);
+            // 
+            // btnRefreshStats
+            // 
+            this.btnRefreshStats.Location = new System.Drawing.Point(648, 7);
+            this.btnRefreshStats.Name = "btnRefreshStats";
+            this.btnRefreshStats.Size = new System.Drawing.Size(118, 28);
+            this.btnRefreshStats.TabIndex = 5;
+            this.btnRefreshStats.Text = "Refresh Stats";
+            this.btnRefreshStats.Click += new EventHandler(this.BtnRefreshStats_Click);
+            // 
+            // btnColumnChooser
+            // 
+            this.btnColumnChooser.Location = new System.Drawing.Point(772, 7);
+            this.btnColumnChooser.Name = "btnColumnChooser";
+            this.btnColumnChooser.Size = new System.Drawing.Size(128, 28);
+            this.btnColumnChooser.TabIndex = 6;
+            this.btnColumnChooser.Text = "Column Chooser";
+            this.btnColumnChooser.Click += new EventHandler(this.BtnColumnChooser_Click);
             // 
             // btnHideSelection
             // 
@@ -287,22 +337,22 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.btnHideSelection.Location = new System.Drawing.Point(1144, 7);
             this.btnHideSelection.Name = "btnHideSelection";
             this.btnHideSelection.Size = new System.Drawing.Size(120, 28);
-            this.btnHideSelection.TabIndex = 5;
+            this.btnHideSelection.TabIndex = 7;
             this.btnHideSelection.Text = "Hide Selection";
-            this.btnHideSelection.Click += new System.EventHandler(this.BtnHideSelection_Click);
+            this.btnHideSelection.Click += new EventHandler(this.BtnHideSelection_Click);
             // 
             // ultraPanelGrid
             // 
-            // 
-            // ultraPanelGrid.ClientArea
-            // 
-            this.ultraPanelGrid.ClientArea.Controls.Add(this.ultraGridMaster);
-            this.ultraPanelGrid.ClientArea.Controls.Add(this.gridFooterPanel);
             this.ultraPanelGrid.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ultraPanelGrid.Location = new System.Drawing.Point(0, 168);
             this.ultraPanelGrid.Name = "ultraPanelGrid";
             this.ultraPanelGrid.Size = new System.Drawing.Size(1280, 552);
             this.ultraPanelGrid.TabIndex = 2;
+            // 
+            // ultraPanelGrid.ClientArea
+            // 
+            this.ultraPanelGrid.ClientArea.Controls.Add(this.ultraGridMaster);
+            this.ultraPanelGrid.ClientArea.Controls.Add(this.gridFooterPanel);
             // 
             // ultraGridMaster
             // 
@@ -311,112 +361,68 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.ultraGridMaster.Name = "ultraGridMaster";
             this.ultraGridMaster.Size = new System.Drawing.Size(1280, 526);
             this.ultraGridMaster.TabIndex = 0;
-            this.ultraGridMaster.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
-            this.ultraGridMaster.InitializeLayout += new Infragistics.Win.UltraWinGrid.InitializeLayoutEventHandler(this.UltraGridMaster_InitializeLayout);
-            this.ultraGridMaster.InitializeRow += new Infragistics.Win.UltraWinGrid.InitializeRowEventHandler(this.UltraGridMaster_InitializeRow);
+            this.ultraGridMaster.InitializeLayout += new InitializeLayoutEventHandler(this.UltraGridMaster_InitializeLayout);
+            this.ultraGridMaster.InitializeRow += new InitializeRowEventHandler(this.UltraGridMaster_InitializeRow);
+            this.ultraGridMaster.AfterCellUpdate += new CellEventHandler(this.UltraGridMaster_AfterCellUpdate);
             // 
             // gridFooterPanel
             // 
-            appearance3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(122)))), ((int)(((byte)(204)))));
-            appearance3.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(102)))), ((int)(((byte)(184)))));
-            appearance3.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
-            this.gridFooterPanel.Appearance = appearance3;
-            // 
-            // gridFooterPanel.ClientArea
-            // 
-            this.gridFooterPanel.ClientArea.Controls.Add(this.lblCount);
-            this.gridFooterPanel.ClientArea.Controls.Add(this.lblExceptionCount);
             this.gridFooterPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.gridFooterPanel.Location = new System.Drawing.Point(0, 526);
             this.gridFooterPanel.Name = "gridFooterPanel";
             this.gridFooterPanel.Size = new System.Drawing.Size(1280, 26);
             this.gridFooterPanel.TabIndex = 1;
             // 
+            // gridFooterPanel.ClientArea
+            // 
+            this.gridFooterPanel.ClientArea.Controls.Add(this.lblCount);
+            this.gridFooterPanel.ClientArea.Controls.Add(this.lblExceptionCount);
+            // 
             // lblCount
             // 
-            appearance4.FontData.BoldAsString = "True";
-            appearance4.ForeColor = System.Drawing.Color.White;
-            this.lblCount.Appearance = appearance4;
             this.lblCount.Location = new System.Drawing.Point(12, 4);
             this.lblCount.Name = "lblCount";
-            this.lblCount.Size = new System.Drawing.Size(200, 18);
+            this.lblCount.Size = new System.Drawing.Size(120, 18);
             this.lblCount.TabIndex = 0;
-            this.lblCount.Text = "Rows: 0 / Total: 0";
+            this.lblCount.Text = "Rows: 0";
             // 
             // lblExceptionCount
             // 
-            appearance5.FontData.BoldAsString = "True";
-            appearance5.ForeColor = System.Drawing.Color.White;
-            this.lblExceptionCount.Appearance = appearance5;
-            this.lblExceptionCount.Location = new System.Drawing.Point(225, 4);
+            this.lblExceptionCount.Location = new System.Drawing.Point(160, 4);
             this.lblExceptionCount.Name = "lblExceptionCount";
-            this.lblExceptionCount.Size = new System.Drawing.Size(160, 18);
+            this.lblExceptionCount.Size = new System.Drawing.Size(150, 18);
             this.lblExceptionCount.TabIndex = 1;
             this.lblExceptionCount.Text = "Exceptions: 0";
             // 
             // FrmSmartReorderDashboard
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(249)))), ((int)(((byte)(254)))));
             this.ClientSize = new System.Drawing.Size(1280, 720);
             this.Controls.Add(this.ultraPanelGrid);
             this.Controls.Add(this.ultraPanelActionBar);
             this.Controls.Add(this.ultraPanelSelection);
-            this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.KeyPreview = true;
             this.Name = "FrmSmartReorderDashboard";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Smart Reorder Dashboard";
-            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.ultraPanelSelection.ClientArea.ResumeLayout(false);
             this.ultraPanelSelection.ClientArea.PerformLayout();
             this.ultraPanelSelection.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.cmbItemNoMode)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtFromBarcode)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtToBarcode)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cmbCategory)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cmbGroup)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.chkShowOnlyExceptions)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cmbMoreOptions)).EndInit();
+            ((ISupportInitialize)(this.cmbItemNoMode)).EndInit();
+            ((ISupportInitialize)(this.txtFromBarcode)).EndInit();
+            ((ISupportInitialize)(this.txtToBarcode)).EndInit();
+            ((ISupportInitialize)(this.cmbCategory)).EndInit();
+            ((ISupportInitialize)(this.cmbGroup)).EndInit();
+            ((ISupportInitialize)(this.cmbAlert)).EndInit();
+            ((ISupportInitialize)(this.chkShowOnlyExceptions)).EndInit();
+            ((ISupportInitialize)(this.cmbMoreOptions)).EndInit();
             this.ultraPanelActionBar.ClientArea.ResumeLayout(false);
             this.ultraPanelActionBar.ResumeLayout(false);
             this.ultraPanelGrid.ClientArea.ResumeLayout(false);
             this.ultraPanelGrid.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.ultraGridMaster)).EndInit();
+            ((ISupportInitialize)(this.ultraGridMaster)).EndInit();
             this.gridFooterPanel.ClientArea.ResumeLayout(false);
             this.gridFooterPanel.ResumeLayout(false);
             this.ResumeLayout(false);
-
         }
-
-        #endregion
-
-        private UltraPanel ultraPanelSelection;
-        private UltraLabel lblItemNo;
-        private UltraComboEditor cmbItemNoMode;
-        private UltraLabel lblFromBarcode;
-        private UltraTextEditor txtFromBarcode;
-        private UltraLabel lblToBarcode;
-        private UltraTextEditor txtToBarcode;
-        private UltraLabel lblCategory;
-        private UltraComboEditor cmbCategory;
-        private UltraLabel lblGroup;
-        private UltraComboEditor cmbGroup;
-        private UltraCheckEditor chkShowOnlyExceptions;
-        private UltraLabel lblMoreOptions;
-        private UltraComboEditor cmbMoreOptions;
-        private UltraPanel ultraPanelActionBar;
-        private UltraButton btnViewGrid;
-        private UltraButton btnPreviewGrid;
-        private UltraButton btnPreviewReport;
-        private UltraButton btnGeneratePO;
-        private UltraButton btnGenBranchPO;
-        private UltraButton btnHideSelection;
-        private UltraPanel ultraPanelGrid;
-        private UltraGrid ultraGridMaster;
-        private UltraPanel gridFooterPanel;
-        private UltraLabel lblCount;
-        private UltraLabel lblExceptionCount;
     }
 }

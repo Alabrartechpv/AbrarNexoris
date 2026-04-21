@@ -27,12 +27,12 @@ namespace Repository.TransactionRepository
                 parameters.Add("@FromBarcode", string.IsNullOrWhiteSpace(fromBarcode) ? null : fromBarcode);
                 parameters.Add("@ToBarcode", string.IsNullOrWhiteSpace(toBarcode) ? null : toBarcode);
 
-                var suggestions = DataConnection.Query<SmartReorderItemModel>(
+                List<SmartReorderItemModel> suggestions = DataConnection.Query<SmartReorderItemModel>(
                     STOREDPROCEDURE._POS_GetSmartReorderSuggestions,
                     parameters,
                     commandType: CommandType.StoredProcedure).ToList();
 
-                foreach (var item in suggestions)
+                foreach (SmartReorderItemModel item in suggestions)
                 {
                     item.FinalQuantity = item.SuggestedQuantity;
                 }
@@ -44,6 +44,16 @@ namespace Repository.TransactionRepository
                 System.Diagnostics.Debug.WriteLine(ex.Message);
                 return new List<SmartReorderItemModel>();
             }
+        }
+
+        public void RefreshReorderStats(int calculationDays)
+        {
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@CalculationDays", calculationDays);
+            DataConnection.Execute(
+                STOREDPROCEDURE._POS_CalculateReorderStats,
+                parameters,
+                commandType: CommandType.StoredProcedure);
         }
     }
 }
