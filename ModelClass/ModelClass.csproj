@@ -88,6 +88,7 @@
     <Compile Include="Report\CashBankBookModel.cs" />
     <Compile Include="Report\CombinedPartyBalanceReportModel.cs" />
     <Compile Include="Report\CustomerOutstandingReportModel.cs" />
+    <Compile Include="Report\CustomerReceiptReportModel.cs" />
     <Compile Include="Report\DayBookModel.cs" />
     <Compile Include="Report\VendorPaymentReportModel.cs" />
     <Compile Include="Report\VendorOutstandingReportModel.cs" />

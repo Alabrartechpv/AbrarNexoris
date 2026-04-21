@@ -14,7 +14,7 @@ using System.Windows.Forms;
 
 namespace PosBranch_Win.Reports.FinancialReports
 {
-    public partial class frmVendorPaymentReport : Form
+    public partial class frmCustomerReceiptReport : Form
     {
         private static readonly Color FormBackColor = Color.FromArgb(214, 230, 240);
         private static readonly Color FilterPanelBackColor = Color.FromArgb(214, 229, 241);
@@ -36,25 +36,25 @@ namespace PosBranch_Win.Reports.FinancialReports
         private static readonly Color SkyBlueOutline = Color.FromArgb(160, 210, 255);
         private static readonly Color ButtonTextBlue = Color.FromArgb(14, 47, 108);
 
-        private readonly VendorPaymentReportRepository _repository;
-        private List<VendorPaymentReportRow> _reportRows;
-        private List<VendorGridList> _vendors;
+        private readonly CustomerReceiptReportRepository _repository;
+        private List<CustomerReceiptReportRow> _reportRows;
+        private List<CustomerDDl> _customers;
         private bool _isLoading;
-        private bool _isSyncingVendorControls;
+        private bool _isSyncingCustomerControls;
         private readonly Dictionary<string, Label> _footerLabels;
         private readonly Dictionary<string, string> _columnAggregations;
 
-        public frmVendorPaymentReport()
+        public frmCustomerReceiptReport()
         {
-            _repository = new VendorPaymentReportRepository();
-            _reportRows = new List<VendorPaymentReportRow>();
-            _vendors = new List<VendorGridList>();
+            _repository = new CustomerReceiptReportRepository();
+            _reportRows = new List<CustomerReceiptReportRow>();
+            _customers = new List<CustomerDDl>();
             _footerLabels = new Dictionary<string, Label>();
             _columnAggregations = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             InitializeComponent();
 
-            Load += frmVendorPaymentReport_Load;
+            Load += frmCustomerReceiptReport_Load;
             btnSearch.Click += btnSearch_Click;
             btnClearFilters.Click += btnClearFilters_Click;
             btnExport.Click += btnExport_Click;
@@ -62,8 +62,8 @@ namespace PosBranch_Win.Reports.FinancialReports
             ultraComboPreset.ValueChanged += ultraComboPreset_ValueChanged;
             txtSearch.TextChanged += txtSearch_TextChanged;
             txtSearch.KeyDown += txtSearch_KeyDown;
-            ultraComboVendor.ValueChanged += ultraComboVendor_ValueChanged;
-            ultraComboVendor.KeyDown += ultraComboVendor_KeyDown;
+            ultraComboCustomer.ValueChanged += ultraComboCustomer_ValueChanged;
+            ultraComboCustomer.KeyDown += ultraComboCustomer_KeyDown;
             gridReport.InitializeLayout += gridReport_InitializeLayout;
             gridReport.InitializeRow += gridReport_InitializeRow;
             gridReport.Resize += gridReport_Resize;
@@ -72,10 +72,10 @@ namespace PosBranch_Win.Reports.FinancialReports
             ultraButton2.Click += ultraButton2_Click;
 
             KeyPreview = true;
-            KeyDown += frmVendorPaymentReport_KeyDown;
+            KeyDown += frmCustomerReceiptReport_KeyDown;
         }
 
-        private void frmVendorPaymentReport_Load(object sender, EventArgs e)
+        private void frmCustomerReceiptReport_Load(object sender, EventArgs e)
         {
             InitializeForm();
         }
@@ -86,7 +86,7 @@ namespace PosBranch_Win.Reports.FinancialReports
 
             try
             {
-                Text = "Vendor DN/Payment Report";
+                Text = "Customer Receipt Report";
                 WindowState = FormWindowState.Maximized;
                 StartPosition = FormStartPosition.CenterScreen;
 
@@ -97,7 +97,7 @@ namespace PosBranch_Win.Reports.FinancialReports
                 StyleFilterControls();
                 SetupGrid();
                 InitializeGridFooter();
-                LoadVendors();
+                LoadCustomers();
                 ResetReportView();
             }
             finally
@@ -130,9 +130,8 @@ namespace PosBranch_Win.Reports.FinancialReports
             comboBox1.Value = "ByRange";
 
             ultraComboPreset.Items.Clear();
-            ultraComboPreset.Items.Add("DebitNote", "Debit Note");
-            ultraComboPreset.Items.Add("VendorPayment", "Vendor Payment");
-            ultraComboPreset.Value = "DebitNote";
+            ultraComboPreset.Items.Add("CustomerReceipt", "Customer Receipt");
+            ultraComboPreset.Value = "CustomerReceipt";
 
             txtSearch.Text = string.Empty;
         }
@@ -197,7 +196,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             ultraPanelGridFooter.Appearance.BorderColor = GridFooterBorder;
             ultraPanelGridFooter.BorderStyle = UIElementBorderStyle.Solid;
 
-            StyleLabel(lblVendor);
+            StyleLabel(lblCustomer);
             StyleLabel(lblSearch);
             StyleLabel(lblPreset);
             StyleLabel(lblFromDate);
@@ -261,7 +260,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             StyleFilterCombo(comboBox1, true);
             StyleFilterCombo(txtSearch, false);
             StyleUltraCombo(ultraComboPreset);
-            StyleUltraCombo(ultraComboVendor);
+            StyleUltraCombo(ultraComboCustomer);
             StyleDateEditor(dtFrom);
             StyleDateEditor(dtTo);
         }
@@ -417,28 +416,28 @@ namespace PosBranch_Win.Reports.FinancialReports
             UpdateFooterValues();
         }
 
-        private void LoadVendors()
+        private void LoadCustomers()
         {
-            _vendors = _repository.GetVendors()
-                .Where(x => x != null && x.LedgerID > 0 && (SessionContext.BranchId <= 0 || x.BranchID == SessionContext.BranchId))
+            _customers = _repository.GetCustomers()
+                .Where(x => x != null && x.LedgerID > 0)
                 .OrderBy(x => x.LedgerName)
                 .ToList();
 
-            ultraComboVendor.Items.Clear();
-            ultraComboVendor.Items.Add(0, "All Vendors");
+            ultraComboCustomer.Items.Clear();
+            ultraComboCustomer.Items.Add(0, "All Customers");
             txtSearch.Items.Clear();
 
-            foreach (VendorGridList vendor in _vendors)
+            foreach (CustomerDDl customer in _customers)
             {
-                string displayText = GetVendorDisplayText(vendor);
+                string displayText = GetCustomerDisplayText(customer);
 
-                ultraComboVendor.Items.Add(vendor.LedgerID, displayText);
-                txtSearch.Items.Add("display_" + vendor.LedgerID, displayText);
-                txtSearch.Items.Add("id_" + vendor.LedgerID, vendor.LedgerID.ToString());
-                txtSearch.Items.Add("name_" + vendor.LedgerID, vendor.LedgerName ?? string.Empty);
+                ultraComboCustomer.Items.Add(customer.LedgerID, displayText);
+                txtSearch.Items.Add("display_" + customer.LedgerID, displayText);
+                txtSearch.Items.Add("id_" + customer.LedgerID, customer.LedgerID.ToString());
+                txtSearch.Items.Add("name_" + customer.LedgerID, customer.LedgerName ?? string.Empty);
             }
 
-            ultraComboVendor.Value = 0;
+            ultraComboCustomer.Value = 0;
         }
 
         private void LoadReport()
@@ -451,13 +450,12 @@ namespace PosBranch_Win.Reports.FinancialReports
 
             try
             {
-                VendorPaymentReportFilter filter = new VendorPaymentReportFilter
+                CustomerReceiptReportFilter filter = new CustomerReceiptReportFilter
                 {
                     FromDate = Convert.ToDateTime(dtFrom.Value).Date,
                     ToDate = Convert.ToDateTime(dtTo.Value).Date,
-                    CompanyId = SessionContext.CompanyId,
                     BranchId = SessionContext.BranchId,
-                    VendorLedgerId = GetSelectedLedgerId()
+                    CustomerLedgerId = GetSelectedLedgerId()
                 };
 
                 _reportRows = _repository.GetReport(filter);
@@ -465,7 +463,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Unable to load vendor DN/payment report.\n" + ex.Message, "Report Error",
+                MessageBox.Show("Unable to load customer receipt report.\n" + ex.Message, "Report Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
@@ -476,24 +474,21 @@ namespace PosBranch_Win.Reports.FinancialReports
 
         private void ApplyClientFilters()
         {
-            IEnumerable<VendorPaymentReportRow> filteredRows = _reportRows ?? Enumerable.Empty<VendorPaymentReportRow>();
+            IEnumerable<CustomerReceiptReportRow> filteredRows = _reportRows ?? Enumerable.Empty<CustomerReceiptReportRow>();
             string searchText = GetSearchText();
 
             if (!string.IsNullOrWhiteSpace(searchText))
             {
                 filteredRows = filteredRows.Where(x =>
-                    (!string.IsNullOrWhiteSpace(x.VendorName) && x.VendorName.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0) ||
-                    GetVendorDisplayText(x.VendorLedgerId, x.VendorName).IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    x.VendorLedgerId.ToString().IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    (!string.IsNullOrWhiteSpace(x.CustomerName) && x.CustomerName.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                    GetCustomerDisplayText(x.CustomerLedgerId, x.CustomerName).IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    x.CustomerLedgerId.ToString().IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0 ||
                     x.VoucherId.ToString().IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    x.PurchaseNo.ToString().IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    (!string.IsNullOrWhiteSpace(x.DocumentNo) && x.DocumentNo.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0) ||
-                    (!string.IsNullOrWhiteSpace(x.PaymentMode) && x.PaymentMode.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0) ||
-                    (!string.IsNullOrWhiteSpace(x.Remark) && x.Remark.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0) ||
-                    (!string.IsNullOrWhiteSpace(x.PaymentReference) && x.PaymentReference.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0));
+                    x.BillNo.ToString().IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    x.Status.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0);
             }
 
-            List<VendorPaymentReportRow> boundRows = filteredRows
+            List<CustomerReceiptReportRow> boundRows = filteredRows
                 .OrderByDescending(x => x.VoucherDate)
                 .ThenByDescending(x => x.VoucherId)
                 .ToList();
@@ -512,10 +507,10 @@ namespace PosBranch_Win.Reports.FinancialReports
                 comboBox1.Value = "ByRange";
                 dtFrom.Value = new DateTime(today.Year, today.Month, 1);
                 dtTo.Value = today;
-                ultraComboPreset.Value = "DebitNote";
-                ultraComboVendor.Value = 0;
+                ultraComboPreset.Value = "CustomerReceipt";
+                ultraComboCustomer.Value = 0;
                 txtSearch.Text = string.Empty;
-                _reportRows = new List<VendorPaymentReportRow>();
+                _reportRows = new List<CustomerReceiptReportRow>();
                 ResetReportView();
             }
             finally
@@ -548,11 +543,11 @@ namespace PosBranch_Win.Reports.FinancialReports
 
         private int GetSelectedLedgerId()
         {
-            if (ultraComboVendor.Value == null)
+            if (ultraComboCustomer.Value == null)
                 return 0;
 
             int ledgerId;
-            return int.TryParse(ultraComboVendor.Value.ToString(), out ledgerId) ? ledgerId : 0;
+            return int.TryParse(ultraComboCustomer.Value.ToString(), out ledgerId) ? ledgerId : 0;
         }
 
         private string GetSearchText()
@@ -562,7 +557,7 @@ namespace PosBranch_Win.Reports.FinancialReports
 
         private void ExportCsv()
         {
-            List<VendorPaymentReportRow> rows = gridReport.DataSource as List<VendorPaymentReportRow>;
+            List<CustomerReceiptReportRow> rows = gridReport.DataSource as List<CustomerReceiptReportRow>;
             if (rows == null || rows.Count == 0)
             {
                 MessageBox.Show("There is no data to export.", "Export",
@@ -573,27 +568,26 @@ namespace PosBranch_Win.Reports.FinancialReports
             using (SaveFileDialog dialog = new SaveFileDialog())
             {
                 dialog.Filter = "CSV files (*.csv)|*.csv";
-                dialog.FileName = string.Format("VendorPayment_{0:yyyyMMdd_HHmmss}.csv", DateTime.Now);
+                dialog.FileName = string.Format("CustomerReceipt_{0:yyyyMMdd_HHmmss}.csv", DateTime.Now);
 
                 if (dialog.ShowDialog(this) != DialogResult.OK)
                     return;
 
                 StringBuilder builder = new StringBuilder();
-                builder.AppendLine("Date,Doc No,Vendor,Company - Vendor Name,Amount,Balance,Mode,Remark,Status,Payment Ref");
+                builder.AppendLine("Date,Receipt No,Bill No,Customer ID,Customer,Total Amount,Receipt Amount,Balance,Status");
 
-                foreach (VendorPaymentReportRow row in rows)
+                foreach (CustomerReceiptReportRow row in rows)
                 {
                     builder.AppendLine(string.Join(",",
                         EscapeCsv(row.VoucherDate.ToString("yyyy-MM-dd")),
-                        EscapeCsv(row.DocumentNo),
-                        row.VendorLedgerId.ToString(),
-                        EscapeCsv(row.VendorName),
-                        row.Amount.ToString("F2"),
+                        row.VoucherId.ToString(),
+                        row.BillNo.ToString(),
+                        row.CustomerLedgerId.ToString(),
+                        EscapeCsv(row.CustomerName),
+                        row.TotalAmount.ToString("F2"),
+                        row.ReceiptAmount.ToString("F2"),
                         row.Balance.ToString("F2"),
-                        EscapeCsv(row.PaymentMode),
-                        EscapeCsv(row.Remark),
-                        EscapeCsv(row.Status),
-                        EscapeCsv(row.PaymentReference)));
+                        EscapeCsv(row.Status)));
                 }
 
                 File.WriteAllText(dialog.FileName, builder.ToString(), Encoding.UTF8);
@@ -658,8 +652,7 @@ namespace PosBranch_Win.Reports.FinancialReports
 
             switch (preset)
             {
-                case "DebitNote":
-                case "VendorPayment":
+                case "CustomerReceipt":
                     comboBox1.Value = "ByRange";
                     dtFrom.Value = new DateTime(today.Year, today.Month, 1);
                     dtTo.Value = today;
@@ -680,15 +673,15 @@ namespace PosBranch_Win.Reports.FinancialReports
             if (_isLoading)
                 return;
 
-            TrySyncVendorSelectionFromSearchText();
+            TrySyncCustomerSelectionFromSearchText();
         }
 
-        private void ultraComboVendor_ValueChanged(object sender, EventArgs e)
+        private void ultraComboCustomer_ValueChanged(object sender, EventArgs e)
         {
-            if (_isLoading || _isSyncingVendorControls)
+            if (_isLoading || _isSyncingCustomerControls)
                 return;
 
-            SyncSearchFromSelectedVendor();
+            SyncSearchFromSelectedCustomer();
         }
 
         private void gridReport_InitializeLayout(object sender, InitializeLayoutEventArgs e)
@@ -703,27 +696,26 @@ namespace PosBranch_Win.Reports.FinancialReports
             }
 
             ConfigureGridColumn(band, "VoucherDate", "Date", 108, "dd-MMM-yyyy", HAlign.Left, 0);
-            ConfigureGridColumn(band, "DocumentNo", "Doc No", 82, null, HAlign.Left, 1);
-            ConfigureGridColumn(band, "VendorLedgerId", "Vendor", 73, null, HAlign.Right, 2);
-            ConfigureGridColumn(band, "VendorName", "Company", 188, null, HAlign.Left, 3);
-            ConfigureGridColumn(band, "Amount", "Amount", 64, "#,##0.00", HAlign.Right, 4);
-            ConfigureGridColumn(band, "Balance", "Balance", 64, "#,##0.00", HAlign.Right, 5);
-            ConfigureGridColumn(band, "PaymentMode", "Mode", 48, null, HAlign.Left, 6);
-            ConfigureGridColumn(band, "Remark", "Remark", 142, null, HAlign.Left, 7);
-            ConfigureGridColumn(band, "Status", "Status", 56, null, HAlign.Left, 8);
-            ConfigureGridColumn(band, "PaymentReference", "Payment Ref", 94, null, HAlign.Left, 9);
+            ConfigureGridColumn(band, "VoucherId", "Receipt No", 92, null, HAlign.Right, 1);
+            ConfigureGridColumn(band, "BillNo", "Bill No", 92, null, HAlign.Right, 2);
+            ConfigureGridColumn(band, "CustomerLedgerId", "Customer ID", 92, null, HAlign.Right, 3);
+            ConfigureGridColumn(band, "CustomerName", "Customer", 210, null, HAlign.Left, 4);
+            ConfigureGridColumn(band, "TotalAmount", "Total Amount", 96, "#,##0.00", HAlign.Right, 5);
+            ConfigureGridColumn(band, "ReceiptAmount", "Receipt Amount", 104, "#,##0.00", HAlign.Right, 6);
+            ConfigureGridColumn(band, "Balance", "Balance", 84, "#,##0.00", HAlign.Right, 7);
+            ConfigureGridColumn(band, "Status", "Status", 72, null, HAlign.Left, 8);
 
-            if (band.Columns.Exists("VendorName"))
+            if (band.Columns.Exists("CustomerName"))
             {
-                band.Columns["VendorName"].CellAppearance.FontData.Bold = DefaultableBoolean.False;
-                band.Columns["VendorName"].CellAppearance.FontData.Name = "Microsoft Sans Serif";
-                band.Columns["VendorName"].CellAppearance.FontData.SizeInPoints = 8.25F;
+                band.Columns["CustomerName"].CellAppearance.FontData.Bold = DefaultableBoolean.False;
+                band.Columns["CustomerName"].CellAppearance.FontData.Name = "Microsoft Sans Serif";
+                band.Columns["CustomerName"].CellAppearance.FontData.SizeInPoints = 8.25F;
             }
 
-            if (band.Columns.Exists("Amount"))
+            if (band.Columns.Exists("ReceiptAmount"))
             {
-                band.Columns["Amount"].CellAppearance.ForeColor = Color.FromArgb(27, 94, 32);
-                band.Columns["Amount"].CellAppearance.FontData.Bold = DefaultableBoolean.True;
+                band.Columns["ReceiptAmount"].CellAppearance.ForeColor = Color.FromArgb(27, 94, 32);
+                band.Columns["ReceiptAmount"].CellAppearance.FontData.Bold = DefaultableBoolean.True;
             }
 
             if (band.Columns.Exists("Balance"))
@@ -1117,7 +1109,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             footerLabel.Text = string.Empty;
         }
 
-        private void frmVendorPaymentReport_KeyDown(object sender, KeyEventArgs e)
+        private void frmCustomerReceiptReport_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.F11)
             {
@@ -1148,7 +1140,7 @@ namespace PosBranch_Win.Reports.FinancialReports
 
         private void button1_Click(object sender, EventArgs e)
         {
-            OpenVendorDialog();
+            OpenCustomerDialog();
         }
 
         private void ultraButton1_Click(object sender, EventArgs e)
@@ -1160,12 +1152,12 @@ namespace PosBranch_Win.Reports.FinancialReports
         private void ultraButton2_Click(object sender, EventArgs e)
         {
             ShowReportFormatDialog(
-                "VENDOR PAYMENT",
+                "CUSTOMER RECEIPT",
                 new[]
                 {
-                    "VENDOR PAYMENT DETAILS",
-                    "VENDOR PAYMENT DETAILS - GROUP BY DOCUMENT",
-                    "VENDOR PAYMENT SUMMARY"
+                    "CUSTOMER RECEIPT DETAILS",
+                    "CUSTOMER RECEIPT DETAILS - GROUP BY DOCUMENT",
+                    "CUSTOMER RECEIPT SUMMARY"
                 });
         }
 
@@ -1186,148 +1178,149 @@ namespace PosBranch_Win.Reports.FinancialReports
         {
             if (e.KeyCode == Keys.F11)
             {
-                OpenVendorDialog();
+                OpenCustomerDialog();
                 e.Handled = true;
             }
         }
 
-        private void ultraComboVendor_KeyDown(object sender, KeyEventArgs e)
+        private void ultraComboCustomer_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.F11)
             {
-                OpenVendorDialog();
+                OpenCustomerDialog();
                 e.Handled = true;
             }
         }
 
-        private void OpenVendorDialog()
+        private void OpenCustomerDialog()
         {
-            using (frmVendorDig vendorDialog = new frmVendorDig())
+            using (frmCustomerDialog customerDialog = new frmCustomerDialog())
             {
-                if (vendorDialog.ShowDialog(this) != DialogResult.OK)
+                if (customerDialog.ShowDialog(this) != DialogResult.OK)
                     return;
 
-                if (vendorDialog.SelectedVendorId <= 0)
+                if (customerDialog.SelectedCustomerId <= 0)
                     return;
 
-                SelectVendor(vendorDialog.SelectedVendorId, vendorDialog.SelectedVendorName);
+                SelectCustomer(customerDialog.SelectedCustomerId, customerDialog.SelectedCustomerName);
             }
         }
 
-        private void SelectVendor(int vendorId, string vendorName)
+        private void SelectCustomer(int customerId, string customerName)
         {
-            _isSyncingVendorControls = true;
+            _isSyncingCustomerControls = true;
 
             try
             {
-                ultraComboVendor.Value = vendorId;
+                ultraComboCustomer.Value = customerId;
 
-                VendorGridList vendor = _vendors.FirstOrDefault(x => x.LedgerID == vendorId);
-                string searchText = vendor != null
-                    ? (vendor.LedgerName ?? string.Empty)
-                    : (vendorName ?? string.Empty);
+                CustomerDDl customer = _customers.FirstOrDefault(x => x.LedgerID == customerId);
+                string searchText = customer != null
+                    ? (customer.LedgerName ?? string.Empty)
+                    : (customerName ?? string.Empty);
 
                 txtSearch.Text = searchText;
             }
             finally
             {
-                _isSyncingVendorControls = false;
+                _isSyncingCustomerControls = false;
             }
         }
 
-        private void SyncSearchFromSelectedVendor()
+        private void SyncSearchFromSelectedCustomer()
         {
-            if (_isSyncingVendorControls)
+            if (_isSyncingCustomerControls)
                 return;
 
             int selectedLedgerId = GetSelectedLedgerId();
             if (selectedLedgerId <= 0)
                 return;
 
-            VendorGridList vendor = _vendors.FirstOrDefault(x => x.LedgerID == selectedLedgerId);
-            if (vendor == null)
+            CustomerDDl customer = _customers.FirstOrDefault(x => x.LedgerID == selectedLedgerId);
+            if (customer == null)
                 return;
 
-            _isSyncingVendorControls = true;
+            _isSyncingCustomerControls = true;
             try
             {
-                txtSearch.Text = vendor.LedgerName ?? string.Empty;
+                txtSearch.Text = customer.LedgerName ?? string.Empty;
             }
             finally
             {
-                _isSyncingVendorControls = false;
+                _isSyncingCustomerControls = false;
             }
         }
 
-        private void TrySyncVendorSelectionFromSearchText()
+        private void TrySyncCustomerSelectionFromSearchText()
         {
-            if (_isSyncingVendorControls)
+            if (_isSyncingCustomerControls)
                 return;
 
             string searchText = GetSearchText();
             if (string.IsNullOrWhiteSpace(searchText))
             {
-                _isSyncingVendorControls = true;
+                _isSyncingCustomerControls = true;
                 try
                 {
-                    ultraComboVendor.Value = 0;
+                    ultraComboCustomer.Value = 0;
                 }
                 finally
                 {
-                    _isSyncingVendorControls = false;
+                    _isSyncingCustomerControls = false;
                 }
 
                 return;
             }
 
-            VendorGridList vendor = _vendors.FirstOrDefault(x =>
+            CustomerDDl customer = _customers.FirstOrDefault(x =>
                 x.LedgerID.ToString().Equals(searchText, StringComparison.OrdinalIgnoreCase) ||
                 (!string.IsNullOrWhiteSpace(x.LedgerName) && x.LedgerName.Equals(searchText, StringComparison.OrdinalIgnoreCase)) ||
-                GetVendorDisplayText(x).Equals(searchText, StringComparison.OrdinalIgnoreCase));
+                GetCustomerDisplayText(x).Equals(searchText, StringComparison.OrdinalIgnoreCase));
 
-            if (vendor == null)
+            if (customer == null)
             {
                 if (GetSelectedLedgerId() > 0)
                 {
-                    _isSyncingVendorControls = true;
+                    _isSyncingCustomerControls = true;
                     try
                     {
-                        ultraComboVendor.Value = 0;
+                        ultraComboCustomer.Value = 0;
                     }
                     finally
                     {
-                        _isSyncingVendorControls = false;
+                        _isSyncingCustomerControls = false;
                     }
                 }
 
                 return;
             }
 
-            _isSyncingVendorControls = true;
+            _isSyncingCustomerControls = true;
             try
             {
-                ultraComboVendor.Value = vendor.LedgerID;
+                ultraComboCustomer.Value = customer.LedgerID;
             }
             finally
             {
-                _isSyncingVendorControls = false;
+                _isSyncingCustomerControls = false;
             }
         }
 
-        private static string GetVendorDisplayText(VendorGridList vendor)
+        private static string GetCustomerDisplayText(CustomerDDl customer)
         {
-            if (vendor == null)
+            if (customer == null)
                 return string.Empty;
 
-            return GetVendorDisplayText(vendor.LedgerID, vendor.LedgerName);
+            return GetCustomerDisplayText(customer.LedgerID, customer.LedgerName);
         }
 
-        private static string GetVendorDisplayText(int ledgerId, string vendorName)
+        private static string GetCustomerDisplayText(int ledgerId, string customerName)
         {
-            if (string.IsNullOrWhiteSpace(vendorName))
+            if (string.IsNullOrWhiteSpace(customerName))
                 return ledgerId.ToString();
 
-            return string.Format("{0} - {1}", ledgerId, vendorName);
+            return string.Format("{0} - {1}", ledgerId, customerName);
         }
     }
 }
+

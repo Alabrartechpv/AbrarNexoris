@@ -338,6 +338,9 @@
     <Compile Include="Reports\FinancialReports\frmCustomerOutstandingReport.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Reports\FinancialReports\frmCustomerReceiptReport.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Reports\FinancialReports\FrmCombinedPartyBalanceReport.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -346,6 +349,15 @@
     </Compile>
     <Compile Include="Reports\FinancialReports\frmCustomerOutstandingReport.Designer.cs">
       <DependentUpon>frmCustomerOutstandingReport.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Reports\FinancialReports\frmCustomerReceiptReport.Designer.cs">
+      <DependentUpon>frmCustomerReceiptReport.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Reports\FinancialReports\frmReportFormatDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reports\FinancialReports\frmReportFormatDialog.Designer.cs">
+      <DependentUpon>frmReportFormatDialog.cs</DependentUpon>
     </Compile>
     <Compile Include="Reports\FinancialReports\frmVendorPaymentReport.cs">
       <SubType>Form</SubType>
@@ -1366,6 +1378,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Reports\FinancialReports\FrmManualPartyBalanceReport.resx">
       <DependentUpon>FrmManualPartyBalanceReport.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Reports\FinancialReports\frmReportFormatDialog.resx">
+      <DependentUpon>frmReportFormatDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Reports\FinancialReports\FrmTradingPLAccount.resx">
       <DependentUpon>FrmTradingPLAccount.cs</DependentUpon>
