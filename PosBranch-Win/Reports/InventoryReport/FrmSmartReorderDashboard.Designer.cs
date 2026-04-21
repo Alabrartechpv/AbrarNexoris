@@ -52,63 +52,57 @@ namespace PosBranch_Win.Reports.InventoryReport
 
         private void InitializeComponent()
         {
-            this.components = new Container();
-            this.ultraPanelSelection = new UltraPanel();
-            this.lblItemNo = new UltraLabel();
-            this.cmbItemNoMode = new UltraComboEditor();
-            this.lblFromBarcode = new UltraLabel();
-            this.txtFromBarcode = new UltraTextEditor();
-            this.lblToBarcode = new UltraLabel();
-            this.txtToBarcode = new UltraTextEditor();
-            this.lblCategory = new UltraLabel();
-            this.cmbCategory = new UltraComboEditor();
-            this.lblGroup = new UltraLabel();
-            this.cmbGroup = new UltraComboEditor();
-            this.lblAlert = new UltraLabel();
-            this.cmbAlert = new UltraComboEditor();
-            this.chkShowOnlyExceptions = new UltraCheckEditor();
-            this.lblMoreOptions = new UltraLabel();
-            this.cmbMoreOptions = new UltraComboEditor();
-            this.ultraPanelActionBar = new UltraPanel();
-            this.btnViewGrid = new UltraButton();
-            this.btnPreviewGrid = new UltraButton();
-            this.btnPreviewReport = new UltraButton();
-            this.btnGeneratePO = new UltraButton();
-            this.btnGenBranchPO = new UltraButton();
-            this.btnRefreshStats = new UltraButton();
-            this.btnColumnChooser = new UltraButton();
-            this.btnHideSelection = new UltraButton();
-            this.ultraPanelGrid = new UltraPanel();
-            this.ultraGridMaster = new UltraGrid();
-            this.gridFooterPanel = new UltraPanel();
-            this.lblCount = new UltraLabel();
-            this.lblExceptionCount = new UltraLabel();
+            this.ultraPanelSelection = new Infragistics.Win.Misc.UltraPanel();
+            this.lblItemNo = new Infragistics.Win.Misc.UltraLabel();
+            this.cmbItemNoMode = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
+            this.lblFromBarcode = new Infragistics.Win.Misc.UltraLabel();
+            this.txtFromBarcode = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.lblToBarcode = new Infragistics.Win.Misc.UltraLabel();
+            this.txtToBarcode = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.lblCategory = new Infragistics.Win.Misc.UltraLabel();
+            this.cmbCategory = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
+            this.lblGroup = new Infragistics.Win.Misc.UltraLabel();
+            this.cmbGroup = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
+            this.lblAlert = new Infragistics.Win.Misc.UltraLabel();
+            this.cmbAlert = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
+            this.chkShowOnlyExceptions = new Infragistics.Win.UltraWinEditors.UltraCheckEditor();
+            this.lblMoreOptions = new Infragistics.Win.Misc.UltraLabel();
+            this.cmbMoreOptions = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
+            this.ultraPanelActionBar = new Infragistics.Win.Misc.UltraPanel();
+            this.btnViewGrid = new Infragistics.Win.Misc.UltraButton();
+            this.btnPreviewGrid = new Infragistics.Win.Misc.UltraButton();
+            this.btnPreviewReport = new Infragistics.Win.Misc.UltraButton();
+            this.btnGeneratePO = new Infragistics.Win.Misc.UltraButton();
+            this.btnGenBranchPO = new Infragistics.Win.Misc.UltraButton();
+            this.btnRefreshStats = new Infragistics.Win.Misc.UltraButton();
+            this.btnColumnChooser = new Infragistics.Win.Misc.UltraButton();
+            this.btnHideSelection = new Infragistics.Win.Misc.UltraButton();
+            this.ultraPanelGrid = new Infragistics.Win.Misc.UltraPanel();
+            this.ultraGridMaster = new Infragistics.Win.UltraWinGrid.UltraGrid();
+            this.gridFooterPanel = new Infragistics.Win.Misc.UltraPanel();
+            this.lblCount = new Infragistics.Win.Misc.UltraLabel();
+            this.lblExceptionCount = new Infragistics.Win.Misc.UltraLabel();
             this.ultraPanelSelection.ClientArea.SuspendLayout();
             this.ultraPanelSelection.SuspendLayout();
-            ((ISupportInitialize)(this.cmbItemNoMode)).BeginInit();
-            ((ISupportInitialize)(this.txtFromBarcode)).BeginInit();
-            ((ISupportInitialize)(this.txtToBarcode)).BeginInit();
-            ((ISupportInitialize)(this.cmbCategory)).BeginInit();
-            ((ISupportInitialize)(this.cmbGroup)).BeginInit();
-            ((ISupportInitialize)(this.cmbAlert)).BeginInit();
-            ((ISupportInitialize)(this.chkShowOnlyExceptions)).BeginInit();
-            ((ISupportInitialize)(this.cmbMoreOptions)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.cmbItemNoMode)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtFromBarcode)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtToBarcode)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.cmbCategory)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.cmbGroup)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.cmbAlert)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.chkShowOnlyExceptions)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.cmbMoreOptions)).BeginInit();
             this.ultraPanelActionBar.ClientArea.SuspendLayout();
             this.ultraPanelActionBar.SuspendLayout();
             this.ultraPanelGrid.ClientArea.SuspendLayout();
             this.ultraPanelGrid.SuspendLayout();
-            ((ISupportInitialize)(this.ultraGridMaster)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraGridMaster)).BeginInit();
             this.gridFooterPanel.ClientArea.SuspendLayout();
             this.gridFooterPanel.SuspendLayout();
             this.SuspendLayout();
             // 
             // ultraPanelSelection
             // 
-            this.ultraPanelSelection.Dock = System.Windows.Forms.DockStyle.Top;
-            this.ultraPanelSelection.Location = new System.Drawing.Point(0, 0);
-            this.ultraPanelSelection.Name = "ultraPanelSelection";
-            this.ultraPanelSelection.Size = new System.Drawing.Size(1280, 126);
-            this.ultraPanelSelection.TabIndex = 0;
             // 
             // ultraPanelSelection.ClientArea
             // 
@@ -127,135 +121,151 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.ultraPanelSelection.ClientArea.Controls.Add(this.chkShowOnlyExceptions);
             this.ultraPanelSelection.ClientArea.Controls.Add(this.lblMoreOptions);
             this.ultraPanelSelection.ClientArea.Controls.Add(this.cmbMoreOptions);
+            this.ultraPanelSelection.Dock = System.Windows.Forms.DockStyle.Top;
+            this.ultraPanelSelection.Location = new System.Drawing.Point(0, 0);
+            this.ultraPanelSelection.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.ultraPanelSelection.Name = "ultraPanelSelection";
+            this.ultraPanelSelection.Size = new System.Drawing.Size(1097, 102);
+            this.ultraPanelSelection.TabIndex = 0;
             // 
             // lblItemNo
             // 
-            this.lblItemNo.Location = new System.Drawing.Point(46, 18);
+            this.lblItemNo.Location = new System.Drawing.Point(39, 15);
+            this.lblItemNo.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.lblItemNo.Name = "lblItemNo";
-            this.lblItemNo.Size = new System.Drawing.Size(74, 23);
+            this.lblItemNo.Size = new System.Drawing.Size(63, 19);
             this.lblItemNo.TabIndex = 0;
             this.lblItemNo.Text = "Item No.";
             // 
             // cmbItemNoMode
             // 
             this.cmbItemNoMode.DropDownStyle = Infragistics.Win.DropDownStyle.DropDownList;
-            this.cmbItemNoMode.Location = new System.Drawing.Point(130, 15);
+            this.cmbItemNoMode.Location = new System.Drawing.Point(111, 12);
+            this.cmbItemNoMode.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.cmbItemNoMode.Name = "cmbItemNoMode";
-            this.cmbItemNoMode.Size = new System.Drawing.Size(160, 24);
+            this.cmbItemNoMode.Size = new System.Drawing.Size(137, 21);
             this.cmbItemNoMode.TabIndex = 1;
             // 
             // lblFromBarcode
             // 
-            this.lblFromBarcode.Location = new System.Drawing.Point(338, 18);
+            this.lblFromBarcode.Location = new System.Drawing.Point(290, 15);
+            this.lblFromBarcode.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.lblFromBarcode.Name = "lblFromBarcode";
-            this.lblFromBarcode.Size = new System.Drawing.Size(89, 23);
+            this.lblFromBarcode.Size = new System.Drawing.Size(76, 19);
             this.lblFromBarcode.TabIndex = 2;
             this.lblFromBarcode.Text = "From Item No.";
             // 
             // txtFromBarcode
             // 
-            this.txtFromBarcode.Location = new System.Drawing.Point(432, 15);
+            this.txtFromBarcode.Location = new System.Drawing.Point(370, 12);
+            this.txtFromBarcode.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.txtFromBarcode.Name = "txtFromBarcode";
-            this.txtFromBarcode.Size = new System.Drawing.Size(164, 24);
+            this.txtFromBarcode.Size = new System.Drawing.Size(141, 21);
             this.txtFromBarcode.TabIndex = 3;
             // 
             // lblToBarcode
             // 
-            this.lblToBarcode.Location = new System.Drawing.Point(640, 18);
+            this.lblToBarcode.Location = new System.Drawing.Point(549, 15);
+            this.lblToBarcode.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.lblToBarcode.Name = "lblToBarcode";
-            this.lblToBarcode.Size = new System.Drawing.Size(77, 23);
+            this.lblToBarcode.Size = new System.Drawing.Size(66, 19);
             this.lblToBarcode.TabIndex = 4;
             this.lblToBarcode.Text = "To Item No.";
             // 
             // txtToBarcode
             // 
-            this.txtToBarcode.Location = new System.Drawing.Point(720, 15);
+            this.txtToBarcode.Location = new System.Drawing.Point(617, 12);
+            this.txtToBarcode.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.txtToBarcode.Name = "txtToBarcode";
-            this.txtToBarcode.Size = new System.Drawing.Size(164, 24);
+            this.txtToBarcode.Size = new System.Drawing.Size(141, 21);
             this.txtToBarcode.TabIndex = 5;
             // 
             // lblCategory
             // 
-            this.lblCategory.Location = new System.Drawing.Point(60, 54);
+            this.lblCategory.Location = new System.Drawing.Point(51, 44);
+            this.lblCategory.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.lblCategory.Name = "lblCategory";
-            this.lblCategory.Size = new System.Drawing.Size(60, 23);
+            this.lblCategory.Size = new System.Drawing.Size(51, 19);
             this.lblCategory.TabIndex = 6;
             this.lblCategory.Text = "Category";
             // 
             // cmbCategory
             // 
             this.cmbCategory.DropDownStyle = Infragistics.Win.DropDownStyle.DropDownList;
-            this.cmbCategory.Location = new System.Drawing.Point(130, 51);
+            this.cmbCategory.Location = new System.Drawing.Point(111, 41);
+            this.cmbCategory.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.cmbCategory.Name = "cmbCategory";
-            this.cmbCategory.Size = new System.Drawing.Size(160, 24);
+            this.cmbCategory.Size = new System.Drawing.Size(137, 21);
             this.cmbCategory.TabIndex = 7;
             // 
             // lblGroup
             // 
-            this.lblGroup.Location = new System.Drawing.Point(381, 54);
+            this.lblGroup.Location = new System.Drawing.Point(327, 44);
+            this.lblGroup.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.lblGroup.Name = "lblGroup";
-            this.lblGroup.Size = new System.Drawing.Size(46, 23);
+            this.lblGroup.Size = new System.Drawing.Size(39, 19);
             this.lblGroup.TabIndex = 8;
             this.lblGroup.Text = "Group";
             // 
             // cmbGroup
             // 
             this.cmbGroup.DropDownStyle = Infragistics.Win.DropDownStyle.DropDownList;
-            this.cmbGroup.Location = new System.Drawing.Point(432, 51);
+            this.cmbGroup.Location = new System.Drawing.Point(370, 41);
+            this.cmbGroup.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.cmbGroup.Name = "cmbGroup";
-            this.cmbGroup.Size = new System.Drawing.Size(160, 24);
+            this.cmbGroup.Size = new System.Drawing.Size(137, 21);
             this.cmbGroup.TabIndex = 9;
-            this.cmbGroup.ValueChanged += new EventHandler(this.CmbGroup_ValueChanged);
+            this.cmbGroup.ValueChanged += new System.EventHandler(this.CmbGroup_ValueChanged);
             // 
             // lblAlert
             // 
-            this.lblAlert.Location = new System.Drawing.Point(671, 54);
+            this.lblAlert.Location = new System.Drawing.Point(575, 44);
+            this.lblAlert.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.lblAlert.Name = "lblAlert";
-            this.lblAlert.Size = new System.Drawing.Size(46, 23);
+            this.lblAlert.Size = new System.Drawing.Size(39, 19);
             this.lblAlert.TabIndex = 10;
             this.lblAlert.Text = "Alert";
             // 
             // cmbAlert
             // 
             this.cmbAlert.DropDownStyle = Infragistics.Win.DropDownStyle.DropDownList;
-            this.cmbAlert.Location = new System.Drawing.Point(720, 51);
+            this.cmbAlert.Location = new System.Drawing.Point(617, 41);
+            this.cmbAlert.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.cmbAlert.Name = "cmbAlert";
-            this.cmbAlert.Size = new System.Drawing.Size(164, 24);
+            this.cmbAlert.Size = new System.Drawing.Size(141, 21);
             this.cmbAlert.TabIndex = 11;
-            this.cmbAlert.ValueChanged += new EventHandler(this.CmbAlert_ValueChanged);
+            this.cmbAlert.ValueChanged += new System.EventHandler(this.CmbAlert_ValueChanged);
             // 
             // chkShowOnlyExceptions
             // 
-            this.chkShowOnlyExceptions.Location = new System.Drawing.Point(920, 53);
+            this.chkShowOnlyExceptions.Location = new System.Drawing.Point(789, 43);
+            this.chkShowOnlyExceptions.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.chkShowOnlyExceptions.Name = "chkShowOnlyExceptions";
-            this.chkShowOnlyExceptions.Size = new System.Drawing.Size(170, 20);
+            this.chkShowOnlyExceptions.Size = new System.Drawing.Size(146, 16);
             this.chkShowOnlyExceptions.TabIndex = 12;
             this.chkShowOnlyExceptions.Text = "Show Only Exceptions";
-            this.chkShowOnlyExceptions.CheckedChanged += new EventHandler(this.ChkShowOnlyExceptions_CheckedChanged);
+            this.chkShowOnlyExceptions.CheckedChanged += new System.EventHandler(this.ChkShowOnlyExceptions_CheckedChanged);
             // 
             // lblMoreOptions
             // 
-            this.lblMoreOptions.Location = new System.Drawing.Point(30, 90);
+            this.lblMoreOptions.Location = new System.Drawing.Point(26, 73);
+            this.lblMoreOptions.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.lblMoreOptions.Name = "lblMoreOptions";
-            this.lblMoreOptions.Size = new System.Drawing.Size(90, 23);
+            this.lblMoreOptions.Size = new System.Drawing.Size(77, 19);
             this.lblMoreOptions.TabIndex = 13;
             this.lblMoreOptions.Text = "More Options";
             // 
             // cmbMoreOptions
             // 
             this.cmbMoreOptions.DropDownStyle = Infragistics.Win.DropDownStyle.DropDownList;
-            this.cmbMoreOptions.Location = new System.Drawing.Point(130, 87);
+            this.cmbMoreOptions.Location = new System.Drawing.Point(111, 71);
+            this.cmbMoreOptions.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.cmbMoreOptions.Name = "cmbMoreOptions";
-            this.cmbMoreOptions.Size = new System.Drawing.Size(1126, 24);
+            this.cmbMoreOptions.Size = new System.Drawing.Size(965, 21);
             this.cmbMoreOptions.TabIndex = 14;
             // 
             // ultraPanelActionBar
             // 
-            this.ultraPanelActionBar.Dock = System.Windows.Forms.DockStyle.Top;
-            this.ultraPanelActionBar.Location = new System.Drawing.Point(0, 126);
-            this.ultraPanelActionBar.Name = "ultraPanelActionBar";
-            this.ultraPanelActionBar.Size = new System.Drawing.Size(1280, 42);
-            this.ultraPanelActionBar.TabIndex = 1;
             // 
             // ultraPanelActionBar.ClientArea
             // 
@@ -267,162 +277,183 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.ultraPanelActionBar.ClientArea.Controls.Add(this.btnRefreshStats);
             this.ultraPanelActionBar.ClientArea.Controls.Add(this.btnColumnChooser);
             this.ultraPanelActionBar.ClientArea.Controls.Add(this.btnHideSelection);
+            this.ultraPanelActionBar.Dock = System.Windows.Forms.DockStyle.Top;
+            this.ultraPanelActionBar.Location = new System.Drawing.Point(0, 102);
+            this.ultraPanelActionBar.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.ultraPanelActionBar.Name = "ultraPanelActionBar";
+            this.ultraPanelActionBar.Size = new System.Drawing.Size(1097, 34);
+            this.ultraPanelActionBar.TabIndex = 1;
             // 
             // btnViewGrid
             // 
-            this.btnViewGrid.Location = new System.Drawing.Point(16, 7);
+            this.btnViewGrid.Location = new System.Drawing.Point(14, 6);
+            this.btnViewGrid.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnViewGrid.Name = "btnViewGrid";
-            this.btnViewGrid.Size = new System.Drawing.Size(110, 28);
+            this.btnViewGrid.Size = new System.Drawing.Size(94, 23);
             this.btnViewGrid.TabIndex = 0;
             this.btnViewGrid.Text = "View Grid";
-            this.btnViewGrid.Click += new EventHandler(this.BtnViewGrid_Click);
+            this.btnViewGrid.Click += new System.EventHandler(this.BtnViewGrid_Click);
             // 
             // btnPreviewGrid
             // 
-            this.btnPreviewGrid.Location = new System.Drawing.Point(132, 7);
+            this.btnPreviewGrid.Location = new System.Drawing.Point(113, 6);
+            this.btnPreviewGrid.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnPreviewGrid.Name = "btnPreviewGrid";
-            this.btnPreviewGrid.Size = new System.Drawing.Size(120, 28);
+            this.btnPreviewGrid.Size = new System.Drawing.Size(103, 23);
             this.btnPreviewGrid.TabIndex = 1;
             this.btnPreviewGrid.Text = "Preview Grid";
-            this.btnPreviewGrid.Click += new EventHandler(this.BtnPreviewGrid_Click);
+            this.btnPreviewGrid.Click += new System.EventHandler(this.BtnPreviewGrid_Click);
             // 
             // btnPreviewReport
             // 
-            this.btnPreviewReport.Location = new System.Drawing.Point(258, 7);
+            this.btnPreviewReport.Location = new System.Drawing.Point(221, 6);
+            this.btnPreviewReport.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnPreviewReport.Name = "btnPreviewReport";
-            this.btnPreviewReport.Size = new System.Drawing.Size(126, 28);
+            this.btnPreviewReport.Size = new System.Drawing.Size(108, 23);
             this.btnPreviewReport.TabIndex = 2;
             this.btnPreviewReport.Text = "Preview Report";
-            this.btnPreviewReport.Click += new EventHandler(this.BtnPreviewReport_Click);
+            this.btnPreviewReport.Click += new System.EventHandler(this.BtnPreviewReport_Click);
             // 
             // btnGeneratePO
             // 
-            this.btnGeneratePO.Location = new System.Drawing.Point(390, 7);
+            this.btnGeneratePO.Location = new System.Drawing.Point(334, 6);
+            this.btnGeneratePO.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnGeneratePO.Name = "btnGeneratePO";
-            this.btnGeneratePO.Size = new System.Drawing.Size(118, 28);
+            this.btnGeneratePO.Size = new System.Drawing.Size(101, 23);
             this.btnGeneratePO.TabIndex = 3;
             this.btnGeneratePO.Text = "Generate PO";
-            this.btnGeneratePO.Click += new EventHandler(this.BtnGeneratePO_Click);
+            this.btnGeneratePO.Click += new System.EventHandler(this.BtnGeneratePO_Click);
             // 
             // btnGenBranchPO
             // 
-            this.btnGenBranchPO.Location = new System.Drawing.Point(514, 7);
+            this.btnGenBranchPO.Location = new System.Drawing.Point(441, 6);
+            this.btnGenBranchPO.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnGenBranchPO.Name = "btnGenBranchPO";
-            this.btnGenBranchPO.Size = new System.Drawing.Size(128, 28);
+            this.btnGenBranchPO.Size = new System.Drawing.Size(110, 23);
             this.btnGenBranchPO.TabIndex = 4;
             this.btnGenBranchPO.Text = "Gen. Branch PO";
-            this.btnGenBranchPO.Click += new EventHandler(this.BtnGenBranchPO_Click);
+            this.btnGenBranchPO.Click += new System.EventHandler(this.BtnGenBranchPO_Click);
             // 
             // btnRefreshStats
             // 
-            this.btnRefreshStats.Location = new System.Drawing.Point(648, 7);
+            this.btnRefreshStats.Location = new System.Drawing.Point(555, 6);
+            this.btnRefreshStats.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnRefreshStats.Name = "btnRefreshStats";
-            this.btnRefreshStats.Size = new System.Drawing.Size(118, 28);
+            this.btnRefreshStats.Size = new System.Drawing.Size(101, 23);
             this.btnRefreshStats.TabIndex = 5;
             this.btnRefreshStats.Text = "Refresh Stats";
-            this.btnRefreshStats.Click += new EventHandler(this.BtnRefreshStats_Click);
+            this.btnRefreshStats.Click += new System.EventHandler(this.BtnRefreshStats_Click);
             // 
             // btnColumnChooser
             // 
-            this.btnColumnChooser.Location = new System.Drawing.Point(772, 7);
+            this.btnColumnChooser.Location = new System.Drawing.Point(662, 6);
+            this.btnColumnChooser.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnColumnChooser.Name = "btnColumnChooser";
-            this.btnColumnChooser.Size = new System.Drawing.Size(128, 28);
+            this.btnColumnChooser.Size = new System.Drawing.Size(110, 23);
             this.btnColumnChooser.TabIndex = 6;
             this.btnColumnChooser.Text = "Column Chooser";
-            this.btnColumnChooser.Click += new EventHandler(this.BtnColumnChooser_Click);
+            this.btnColumnChooser.Click += new System.EventHandler(this.BtnColumnChooser_Click);
             // 
             // btnHideSelection
             // 
             this.btnHideSelection.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnHideSelection.Location = new System.Drawing.Point(1144, 7);
+            this.btnHideSelection.Location = new System.Drawing.Point(981, 6);
+            this.btnHideSelection.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnHideSelection.Name = "btnHideSelection";
-            this.btnHideSelection.Size = new System.Drawing.Size(120, 28);
+            this.btnHideSelection.Size = new System.Drawing.Size(103, 23);
             this.btnHideSelection.TabIndex = 7;
             this.btnHideSelection.Text = "Hide Selection";
-            this.btnHideSelection.Click += new EventHandler(this.BtnHideSelection_Click);
+            this.btnHideSelection.Click += new System.EventHandler(this.BtnHideSelection_Click);
             // 
             // ultraPanelGrid
             // 
-            this.ultraPanelGrid.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ultraPanelGrid.Location = new System.Drawing.Point(0, 168);
-            this.ultraPanelGrid.Name = "ultraPanelGrid";
-            this.ultraPanelGrid.Size = new System.Drawing.Size(1280, 552);
-            this.ultraPanelGrid.TabIndex = 2;
             // 
             // ultraPanelGrid.ClientArea
             // 
             this.ultraPanelGrid.ClientArea.Controls.Add(this.ultraGridMaster);
             this.ultraPanelGrid.ClientArea.Controls.Add(this.gridFooterPanel);
+            this.ultraPanelGrid.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ultraPanelGrid.Location = new System.Drawing.Point(0, 136);
+            this.ultraPanelGrid.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.ultraPanelGrid.Name = "ultraPanelGrid";
+            this.ultraPanelGrid.Size = new System.Drawing.Size(1097, 449);
+            this.ultraPanelGrid.TabIndex = 2;
             // 
             // ultraGridMaster
             // 
             this.ultraGridMaster.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ultraGridMaster.Location = new System.Drawing.Point(0, 0);
+            this.ultraGridMaster.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.ultraGridMaster.Name = "ultraGridMaster";
-            this.ultraGridMaster.Size = new System.Drawing.Size(1280, 526);
+            this.ultraGridMaster.Size = new System.Drawing.Size(1097, 428);
             this.ultraGridMaster.TabIndex = 0;
-            this.ultraGridMaster.InitializeLayout += new InitializeLayoutEventHandler(this.UltraGridMaster_InitializeLayout);
-            this.ultraGridMaster.InitializeRow += new InitializeRowEventHandler(this.UltraGridMaster_InitializeRow);
-            this.ultraGridMaster.AfterCellUpdate += new CellEventHandler(this.UltraGridMaster_AfterCellUpdate);
+            this.ultraGridMaster.AfterCellUpdate += new Infragistics.Win.UltraWinGrid.CellEventHandler(this.UltraGridMaster_AfterCellUpdate);
+            this.ultraGridMaster.InitializeLayout += new Infragistics.Win.UltraWinGrid.InitializeLayoutEventHandler(this.UltraGridMaster_InitializeLayout);
+            this.ultraGridMaster.InitializeRow += new Infragistics.Win.UltraWinGrid.InitializeRowEventHandler(this.UltraGridMaster_InitializeRow);
             // 
             // gridFooterPanel
             // 
-            this.gridFooterPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.gridFooterPanel.Location = new System.Drawing.Point(0, 526);
-            this.gridFooterPanel.Name = "gridFooterPanel";
-            this.gridFooterPanel.Size = new System.Drawing.Size(1280, 26);
-            this.gridFooterPanel.TabIndex = 1;
             // 
             // gridFooterPanel.ClientArea
             // 
             this.gridFooterPanel.ClientArea.Controls.Add(this.lblCount);
             this.gridFooterPanel.ClientArea.Controls.Add(this.lblExceptionCount);
+            this.gridFooterPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.gridFooterPanel.Location = new System.Drawing.Point(0, 428);
+            this.gridFooterPanel.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.gridFooterPanel.Name = "gridFooterPanel";
+            this.gridFooterPanel.Size = new System.Drawing.Size(1097, 21);
+            this.gridFooterPanel.TabIndex = 1;
             // 
             // lblCount
             // 
-            this.lblCount.Location = new System.Drawing.Point(12, 4);
+            this.lblCount.Location = new System.Drawing.Point(10, 3);
+            this.lblCount.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.lblCount.Name = "lblCount";
-            this.lblCount.Size = new System.Drawing.Size(120, 18);
+            this.lblCount.Size = new System.Drawing.Size(103, 15);
             this.lblCount.TabIndex = 0;
             this.lblCount.Text = "Rows: 0";
             // 
             // lblExceptionCount
             // 
-            this.lblExceptionCount.Location = new System.Drawing.Point(160, 4);
+            this.lblExceptionCount.Location = new System.Drawing.Point(137, 3);
+            this.lblExceptionCount.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.lblExceptionCount.Name = "lblExceptionCount";
-            this.lblExceptionCount.Size = new System.Drawing.Size(150, 18);
+            this.lblExceptionCount.Size = new System.Drawing.Size(129, 15);
             this.lblExceptionCount.TabIndex = 1;
             this.lblExceptionCount.Text = "Exceptions: 0";
             // 
             // FrmSmartReorderDashboard
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 16F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1280, 720);
+            this.ClientSize = new System.Drawing.Size(1097, 585);
             this.Controls.Add(this.ultraPanelGrid);
             this.Controls.Add(this.ultraPanelActionBar);
             this.Controls.Add(this.ultraPanelSelection);
+            this.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.Name = "FrmSmartReorderDashboard";
             this.Text = "Smart Reorder Dashboard";
             this.ultraPanelSelection.ClientArea.ResumeLayout(false);
             this.ultraPanelSelection.ClientArea.PerformLayout();
             this.ultraPanelSelection.ResumeLayout(false);
-            ((ISupportInitialize)(this.cmbItemNoMode)).EndInit();
-            ((ISupportInitialize)(this.txtFromBarcode)).EndInit();
-            ((ISupportInitialize)(this.txtToBarcode)).EndInit();
-            ((ISupportInitialize)(this.cmbCategory)).EndInit();
-            ((ISupportInitialize)(this.cmbGroup)).EndInit();
-            ((ISupportInitialize)(this.cmbAlert)).EndInit();
-            ((ISupportInitialize)(this.chkShowOnlyExceptions)).EndInit();
-            ((ISupportInitialize)(this.cmbMoreOptions)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.cmbItemNoMode)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtFromBarcode)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtToBarcode)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.cmbCategory)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.cmbGroup)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.cmbAlert)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.chkShowOnlyExceptions)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.cmbMoreOptions)).EndInit();
             this.ultraPanelActionBar.ClientArea.ResumeLayout(false);
             this.ultraPanelActionBar.ResumeLayout(false);
             this.ultraPanelGrid.ClientArea.ResumeLayout(false);
             this.ultraPanelGrid.ResumeLayout(false);
-            ((ISupportInitialize)(this.ultraGridMaster)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraGridMaster)).EndInit();
             this.gridFooterPanel.ClientArea.ResumeLayout(false);
             this.gridFooterPanel.ResumeLayout(false);
             this.ResumeLayout(false);
+
         }
     }
 }
