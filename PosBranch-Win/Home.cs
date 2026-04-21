@@ -66,6 +66,7 @@ namespace PosBranch_Win
             new ReportNavigatorDefinition("Purchase", "Purchase Details", "Purchase Details"),
             new ReportNavigatorDefinition("Purchase", "Purchase Return Report", "PurchaseReturn"),
             new ReportNavigatorDefinition("Customer", "Customer Outstanding Listing", "CustomerOutstandingReport"),
+            new ReportNavigatorDefinition("Customer", "Customer Receipt Report", "CustomerReceiptReport"),
             new ReportNavigatorDefinition("Vendor", "Vendor Outstanding Listing", "VendorOutstandingReport"),
             new ReportNavigatorDefinition("Vendor", "DN/payment", "VendorDNPaymentReport"),
             new ReportNavigatorDefinition("Analysis", "Trading & P/L Account", "TradingPLAccount"),
@@ -1957,6 +1958,11 @@ namespace PosBranch_Win
                 PosBranch_Win.Reports.FinancialReports.frmCustomerOutstandingReport customerOutstandingReport = new PosBranch_Win.Reports.FinancialReports.frmCustomerOutstandingReport();
                 OpenFormInTab(customerOutstandingReport, "Customer Outstanding Report");
             }
+            if (e.Tool.Key == "CustomerReceiptReport")
+            {
+                PosBranch_Win.Reports.FinancialReports.frmCustomerReceiptReport customerReceiptReport = new PosBranch_Win.Reports.FinancialReports.frmCustomerReceiptReport();
+                OpenFormInTab(customerReceiptReport, "Customer Receipt Report");
+            }
             if (e.Tool.Key == "VendorOutstandingReport")
             {
                 PosBranch_Win.Reports.FinancialReports.frmVendorOutstandingReport vendorOutstandingReport = new PosBranch_Win.Reports.FinancialReports.frmVendorOutstandingReport();
@@ -3399,7 +3405,10 @@ namespace PosBranch_Win
                 // Standard report items use ToolClick handler mechanisms already built
                 string keyToExecute = ResolveReportNavigatorActionKey(e.Item.Key);
                 
-                if (ultraToolbarsManager1.Tools.Exists(keyToExecute) || keyToExecute == "AuditTrail" || keyToExecute == "VendorDNPaymentReport")
+                if (ultraToolbarsManager1.Tools.Exists(keyToExecute) ||
+                    keyToExecute == "AuditTrail" ||
+                    keyToExecute == "VendorDNPaymentReport" ||
+                    keyToExecute == "CustomerReceiptReport")
                 {
                     Infragistics.Win.UltraWinToolbars.ToolBase toolToExecute;
 

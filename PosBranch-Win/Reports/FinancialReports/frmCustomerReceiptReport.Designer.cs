@@ -1,6 +1,6 @@
 namespace PosBranch_Win.Reports.FinancialReports
 {
-    partial class frmVendorPaymentReport
+    partial class frmCustomerReceiptReport
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -24,8 +24,8 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.lblSearch = new Infragistics.Win.Misc.UltraLabel();
             this.ultraComboPreset = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
             this.lblPreset = new Infragistics.Win.Misc.UltraLabel();
-            this.ultraComboVendor = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
-            this.lblVendor = new Infragistics.Win.Misc.UltraLabel();
+            this.ultraComboCustomer = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
+            this.lblCustomer = new Infragistics.Win.Misc.UltraLabel();
             this.dtTo = new Infragistics.Win.UltraWinEditors.UltraDateTimeEditor();
             this.lblToDate = new Infragistics.Win.Misc.UltraLabel();
             this.dtFrom = new Infragistics.Win.UltraWinEditors.UltraDateTimeEditor();
@@ -44,7 +44,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             ((System.ComponentModel.ISupportInitialize)(this.comboBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtSearch)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ultraComboPreset)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.ultraComboVendor)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraComboCustomer)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dtTo)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dtFrom)).BeginInit();
             this.ultraPanelMaster.ClientArea.SuspendLayout();
@@ -64,8 +64,8 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.ultraPanelControls.ClientArea.Controls.Add(this.lblSearch);
             this.ultraPanelControls.ClientArea.Controls.Add(this.ultraComboPreset);
             this.ultraPanelControls.ClientArea.Controls.Add(this.lblPreset);
-            this.ultraPanelControls.ClientArea.Controls.Add(this.ultraComboVendor);
-            this.ultraPanelControls.ClientArea.Controls.Add(this.lblVendor);
+            this.ultraPanelControls.ClientArea.Controls.Add(this.ultraComboCustomer);
+            this.ultraPanelControls.ClientArea.Controls.Add(this.lblCustomer);
             this.ultraPanelControls.ClientArea.Controls.Add(this.dtTo);
             this.ultraPanelControls.ClientArea.Controls.Add(this.lblToDate);
             this.ultraPanelControls.ClientArea.Controls.Add(this.dtFrom);
@@ -101,11 +101,11 @@ namespace PosBranch_Win.Reports.FinancialReports
             // 
             // lblSearch
             // 
-            this.lblSearch.Location = new System.Drawing.Point(69, 46);
+            this.lblSearch.Location = new System.Drawing.Point(60, 46);
             this.lblSearch.Name = "lblSearch";
-            this.lblSearch.Size = new System.Drawing.Size(62, 23);
+            this.lblSearch.Size = new System.Drawing.Size(72, 23);
             this.lblSearch.TabIndex = 6;
-            this.lblSearch.Text = "Vendor";
+            this.lblSearch.Text = "Customer";
             // 
             // ultraComboPreset
             // 
@@ -123,21 +123,21 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.lblPreset.TabIndex = 8;
             this.lblPreset.Text = "Options";
             // 
-            // ultraComboVendor
+            // ultraComboCustomer
             // 
-            this.ultraComboVendor.AutoCompleteMode = Infragistics.Win.AutoCompleteMode.SuggestAppend;
-            this.ultraComboVendor.Location = new System.Drawing.Point(472, 46);
-            this.ultraComboVendor.Name = "ultraComboVendor";
-            this.ultraComboVendor.Size = new System.Drawing.Size(406, 25);
-            this.ultraComboVendor.TabIndex = 5;
+            this.ultraComboCustomer.AutoCompleteMode = Infragistics.Win.AutoCompleteMode.SuggestAppend;
+            this.ultraComboCustomer.Location = new System.Drawing.Point(472, 46);
+            this.ultraComboCustomer.Name = "ultraComboCustomer";
+            this.ultraComboCustomer.Size = new System.Drawing.Size(406, 25);
+            this.ultraComboCustomer.TabIndex = 5;
             // 
-            // lblVendor
+            // lblCustomer
             // 
-            this.lblVendor.Location = new System.Drawing.Point(83, 15);
-            this.lblVendor.Name = "lblVendor";
-            this.lblVendor.Size = new System.Drawing.Size(46, 23);
-            this.lblVendor.TabIndex = 4;
-            this.lblVendor.Text = "Date";
+            this.lblCustomer.Location = new System.Drawing.Point(83, 15);
+            this.lblCustomer.Name = "lblCustomer";
+            this.lblCustomer.Size = new System.Drawing.Size(46, 23);
+            this.lblCustomer.TabIndex = 4;
+            this.lblCustomer.Text = "Date";
             // 
             // dtTo
             // 
@@ -261,7 +261,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.gridReport.TabIndex = 0;
             this.gridReport.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             // 
-            // frmVendorPaymentReport
+            // frmCustomerReceiptReport
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -271,9 +271,9 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.Controls.Add(this.ultraPanelControls);
             this.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.MinimumSize = new System.Drawing.Size(1024, 600);
-            this.Name = "frmVendorPaymentReport";
+            this.Name = "frmCustomerReceiptReport";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Vendor DN/Payment Report";
+            this.Text = "Customer Receipt Report";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.ultraPanelControls.ClientArea.ResumeLayout(false);
             this.ultraPanelControls.ClientArea.PerformLayout();
@@ -281,7 +281,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             ((System.ComponentModel.ISupportInitialize)(this.comboBox1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtSearch)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ultraComboPreset)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.ultraComboVendor)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraComboCustomer)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dtTo)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dtFrom)).EndInit();
             this.ultraPanelMaster.ClientArea.ResumeLayout(false);
@@ -289,7 +289,6 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.ultraPanelGridFooter.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.gridReport)).EndInit();
             this.ResumeLayout(false);
-
         }
 
         #endregion
@@ -301,8 +300,8 @@ namespace PosBranch_Win.Reports.FinancialReports
         private Infragistics.Win.Misc.UltraLabel lblSearch;
         private Infragistics.Win.UltraWinEditors.UltraComboEditor ultraComboPreset;
         private Infragistics.Win.Misc.UltraLabel lblPreset;
-        private Infragistics.Win.UltraWinEditors.UltraComboEditor ultraComboVendor;
-        private Infragistics.Win.Misc.UltraLabel lblVendor;
+        private Infragistics.Win.UltraWinEditors.UltraComboEditor ultraComboCustomer;
+        private Infragistics.Win.Misc.UltraLabel lblCustomer;
         private Infragistics.Win.Misc.UltraButton btnExport;
         private Infragistics.Win.UltraWinEditors.UltraDateTimeEditor dtTo;
         private Infragistics.Win.Misc.UltraLabel lblToDate;
