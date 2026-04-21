@@ -41,6 +41,7 @@ namespace Repository.ReportRepository
                         adapter.Fill(table);
 
                         list = MapRows(table);
+                        ApplyItemBarcodes(list, filter);
                     }
                 }
 
@@ -65,9 +66,11 @@ namespace Repository.ReportRepository
 
             foreach (DataRow row in table.Rows)
             {
-                string docNo = GetString(row, "Doc No");
+                string docNo = GetFirstString(row, "Doc No", "Doc No.", "DocNo");
                 string tableName = ResolveTableName(docNo);
-                int itemId = GetInt(row, "Item No.");
+                string itemNo = GetFirstString(row, "Item No.", "Item No", "ItemNo");
+                int itemId;
+                int.TryParse(itemNo, out itemId);
 
                 list.Add(new AuditTrailItem
                 {
@@ -75,7 +78,7 @@ namespace Repository.ReportRepository
                     ReportDate = GetDateTime(row, "Report Date"),
                     TableName = tableName,
                     ItemId = itemId,
-                    ItemNo = GetString(row, "Item No."),
+                    ItemNo = itemNo,
                     Description = GetString(row, "Description"),
                     CategoryName = GetString(row, "Category"),
                     GroupName = GetString(row, "Group"),
@@ -93,6 +96,92 @@ namespace Repository.ReportRepository
             }
 
             return list;
+        }
+
+        private void ApplyItemBarcodes(List<AuditTrailItem> items, AuditTrailFilter filter)
+        {
+            if (items == null || items.Count == 0)
+            {
+                return;
+            }
+
+            Dictionary<int, string> barcodes = GetBarcodesByItemId(items, filter);
+            foreach (AuditTrailItem item in items)
+            {
+                string barcode;
+                if (item.ItemId > 0 &&
+                    barcodes.TryGetValue(item.ItemId, out barcode) &&
+                    !string.IsNullOrWhiteSpace(barcode))
+                {
+                    item.ItemNo = barcode;
+                }
+            }
+        }
+
+        private Dictionary<int, string> GetBarcodesByItemId(List<AuditTrailItem> items, AuditTrailFilter filter)
+        {
+            Dictionary<int, string> barcodes = new Dictionary<int, string>();
+            if (items == null || items.Count == 0)
+            {
+                return barcodes;
+            }
+
+            List<int> itemIds = new List<int>();
+            foreach (AuditTrailItem item in items)
+            {
+                if (item.ItemId > 0 && !itemIds.Contains(item.ItemId))
+                {
+                    itemIds.Add(item.ItemId);
+                }
+            }
+
+            if (itemIds.Count == 0)
+            {
+                return barcodes;
+            }
+
+            List<string> parameterNames = new List<string>();
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                cmd.Connection = (SqlConnection)DataConnection;
+                cmd.CommandType = CommandType.Text;
+                cmd.Parameters.AddWithValue("@BranchId", filter != null && filter.BranchId > 0 ? (object)filter.BranchId : DBNull.Value);
+
+                for (int i = 0; i < itemIds.Count; i++)
+                {
+                    string parameterName = "@ItemId" + i;
+                    parameterNames.Add(parameterName);
+                    cmd.Parameters.AddWithValue(parameterName, itemIds[i]);
+                }
+
+                cmd.CommandText =
+                    @"SELECT im.ItemId,
+                             COALESCE(NULLIF(im.Barcode, ''), NULLIF(ps.BarCode, '')) AS Barcode
+                      FROM ItemMaster im
+                      LEFT JOIN (
+                          SELECT ItemId, MAX(BarCode) AS BarCode
+                          FROM PriceSettings
+                          WHERE (@BranchId IS NULL OR BranchId = @BranchId)
+                          GROUP BY ItemId
+                      ) ps ON ps.ItemId = im.ItemId
+                      WHERE im.ItemId IN (" + string.Join(", ", parameterNames.ToArray()) + ")";
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        int itemId = reader["ItemId"] != DBNull.Value ? Convert.ToInt32(reader["ItemId"]) : 0;
+                        string barcode = reader["Barcode"] != DBNull.Value ? Convert.ToString(reader["Barcode"]) : string.Empty;
+
+                        if (itemId > 0 && !string.IsNullOrWhiteSpace(barcode))
+                        {
+                            barcodes[itemId] = barcode.Trim();
+                        }
+                    }
+                }
+            }
+
+            return barcodes;
         }
 
         private List<AuditTrailItem> ApplyClientFilters(List<AuditTrailItem> source, AuditTrailFilter filter)
@@ -158,6 +247,11 @@ namespace Repository.ReportRepository
             foreach (AuditTrailItem item in source)
             {
                 if (filter.ItemId.HasValue && filter.ItemId.Value > 0 && item.ItemId != filter.ItemId.Value)
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrWhiteSpace(filter.ItemNo) && !string.Equals(item.ItemNo, filter.ItemNo, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
@@ -296,6 +390,25 @@ namespace Repository.ReportRepository
                 return string.Empty;
 
             return Convert.ToString(row[columnName]);
+        }
+
+        private static string GetFirstString(DataRow row, params string[] columnNames)
+        {
+            if (columnNames == null || columnNames.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            for (int i = 0; i < columnNames.Length; i++)
+            {
+                string value = GetString(row, columnNames[i]);
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    return value.Trim();
+                }
+            }
+
+            return string.Empty;
         }
 
         private static decimal GetDecimal(DataRow row, string columnName)

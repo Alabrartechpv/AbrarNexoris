@@ -3204,6 +3204,10 @@ namespace PosBranch_Win.DialogBox
                 ItemMaster.txt_ItemType.Text = getItem.ItemType;
 
                 ItemMaster.txt_ItemNo.Text = getItem.ItemNo.ToString();
+                ItemMaster.SetSmartReorderValues(
+                    getItem.Order_Cycle_Days,
+                    getItem.Box_Quantity,
+                    getItem.Is_Perishable);
 
 
                 // Load and set HSN code into textBox4 if present

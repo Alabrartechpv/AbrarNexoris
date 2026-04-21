@@ -66,7 +66,9 @@ namespace PosBranch_Win
             new ReportNavigatorDefinition("Purchase", "Purchase Details", "Purchase Details"),
             new ReportNavigatorDefinition("Purchase", "Purchase Return Report", "PurchaseReturn"),
             new ReportNavigatorDefinition("Customer", "Customer Outstanding Listing", "CustomerOutstandingReport"),
+            new ReportNavigatorDefinition("Customer", "Customer Receipt Report", "CustomerReceiptReport"),
             new ReportNavigatorDefinition("Vendor", "Vendor Outstanding Listing", "VendorOutstandingReport"),
+            new ReportNavigatorDefinition("Vendor", "DN/payment", "VendorDNPaymentReport"),
             new ReportNavigatorDefinition("Analysis", "Trading & P/L Account", "TradingPLAccount"),
             new ReportNavigatorDefinition("Analysis", "Balance Sheet", "BalanceSheet"),
             new ReportNavigatorDefinition("Analysis", "Cash & Bank Book", "CashBankBook"),
@@ -1928,6 +1930,11 @@ namespace PosBranch_Win
                 Reports.InventoryReport.frmStockReportAdvanced frmStkRptAdv = new Reports.InventoryReport.frmStockReportAdvanced();
                 OpenFormInTab(frmStkRptAdv, "StockReport");
             }
+            if (e.Tool.Key == "ReOrder")
+            {
+                Reports.InventoryReport.FrmSmartReorderDashboard reorderDashboard = new Reports.InventoryReport.FrmSmartReorderDashboard();
+                OpenFormInTab(reorderDashboard, "Smart Reorder Dashboard");
+            }
 
             // ADD THIS NEW CONDITION FOR UNIT MASTER
             if (e.Tool.Key == "UnitMaster")
@@ -1951,10 +1958,20 @@ namespace PosBranch_Win
                 PosBranch_Win.Reports.FinancialReports.frmCustomerOutstandingReport customerOutstandingReport = new PosBranch_Win.Reports.FinancialReports.frmCustomerOutstandingReport();
                 OpenFormInTab(customerOutstandingReport, "Customer Outstanding Report");
             }
+            if (e.Tool.Key == "CustomerReceiptReport")
+            {
+                PosBranch_Win.Reports.FinancialReports.frmCustomerReceiptReport customerReceiptReport = new PosBranch_Win.Reports.FinancialReports.frmCustomerReceiptReport();
+                OpenFormInTab(customerReceiptReport, "Customer Receipt Report");
+            }
             if (e.Tool.Key == "VendorOutstandingReport")
             {
                 PosBranch_Win.Reports.FinancialReports.frmVendorOutstandingReport vendorOutstandingReport = new PosBranch_Win.Reports.FinancialReports.frmVendorOutstandingReport();
                 OpenFormInTab(vendorOutstandingReport, "Vendor Outstanding Report");
+            }
+            if (e.Tool.Key == "VendorDNPaymentReport")
+            {
+                PosBranch_Win.Reports.FinancialReports.frmVendorPaymentReport vendorPaymentReport = new PosBranch_Win.Reports.FinancialReports.frmVendorPaymentReport();
+                OpenFormInTab(vendorPaymentReport, "Vendor DN/Payment Report");
             }
 
             #region here for reports sections menu
@@ -3388,7 +3405,10 @@ namespace PosBranch_Win
                 // Standard report items use ToolClick handler mechanisms already built
                 string keyToExecute = ResolveReportNavigatorActionKey(e.Item.Key);
                 
-                if (ultraToolbarsManager1.Tools.Exists(keyToExecute) || keyToExecute == "AuditTrail")
+                if (ultraToolbarsManager1.Tools.Exists(keyToExecute) ||
+                    keyToExecute == "AuditTrail" ||
+                    keyToExecute == "VendorDNPaymentReport" ||
+                    keyToExecute == "CustomerReceiptReport")
                 {
                     Infragistics.Win.UltraWinToolbars.ToolBase toolToExecute;
 

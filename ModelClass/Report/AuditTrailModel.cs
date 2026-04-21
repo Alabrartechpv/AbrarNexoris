@@ -39,6 +39,7 @@ namespace ModelClass.Report
         public string Action { get; set; }
         public string SearchText { get; set; }
         public int? ItemId { get; set; }
+        public string ItemNo { get; set; }
         public int? GroupId { get; set; }
         public int? CategoryId { get; set; }
         public int? BrandId { get; set; }
