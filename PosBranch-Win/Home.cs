@@ -1,4 +1,5 @@
 using ModelClass;
+using ModelClass.Report;
 using PosBranch_Win.Accounts;
 using PosBranch_Win.Master;
 using PosBranch_Win.Reports.SalesReports;
@@ -642,6 +643,59 @@ namespace PosBranch_Win
             {
                 System.Diagnostics.Debug.WriteLine($"Error ensuring form is ready: {ex.Message}");
                 throw; // Re-throw to prevent embedding a broken form
+            }
+        }
+
+        public void OpenSmartReorderPurchaseOrder(IEnumerable<SmartReorderItemModel> items)
+        {
+            List<SmartReorderItemModel> reorderItems = items == null
+                ? new List<SmartReorderItemModel>()
+                : items.Where(x => x != null && x.FinalQuantity > 0).ToList();
+
+            if (reorderItems.Count == 0)
+                return;
+
+            frmPurchaseOrder existingPurchaseOrder = FindOpenPurchaseOrderForm();
+            if (existingPurchaseOrder != null)
+            {
+                existingPurchaseOrder.LoadSmartReorderItems(reorderItems);
+                SelectTabForForm(existingPurchaseOrder);
+                existingPurchaseOrder.BringToFront();
+                existingPurchaseOrder.Focus();
+                return;
+            }
+
+            frmPurchaseOrder purchaseOrder = new frmPurchaseOrder();
+            purchaseOrder.LoadSmartReorderItems(reorderItems);
+            OpenFormInTab(purchaseOrder, "Purchase Order");
+        }
+
+        private frmPurchaseOrder FindOpenPurchaseOrderForm()
+        {
+            foreach (Infragistics.Win.UltraWinTabControl.UltraTab tab in tabControlMain.Tabs)
+            {
+                frmPurchaseOrder purchaseOrder = tab.TabPage.Controls.OfType<frmPurchaseOrder>().FirstOrDefault();
+                if (purchaseOrder != null)
+                {
+                    return purchaseOrder;
+                }
+            }
+
+            return null;
+        }
+
+        private void SelectTabForForm(Form form)
+        {
+            foreach (Infragistics.Win.UltraWinTabControl.UltraTab tab in tabControlMain.Tabs)
+            {
+                if (!tab.TabPage.Controls.Contains(form))
+                    continue;
+
+                tabControlMain.SelectedTab = tab;
+                ApplyTabStyling(tab, true);
+                UpdateHoldToolVisibility();
+                tab.TabPage.Refresh();
+                break;
             }
         }
 
@@ -1829,6 +1883,11 @@ namespace PosBranch_Win
             {
                 FrmPurchase purchase = new FrmPurchase();
                 OpenFormInTab(purchase, "Purchase");
+            }
+            if (e.Tool.Key == "Purchase Order")
+            {
+                frmPurchaseOrder purchaseOrder = new frmPurchaseOrder();
+                OpenFormInTab(purchaseOrder, "Purchase Order");
             }
             if (e.Tool.Key == "Purchase R/n")
             {

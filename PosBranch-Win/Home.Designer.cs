@@ -120,7 +120,6 @@ namespace PosBranch_Win
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool23 = new Infragistics.Win.UltraWinToolbars.ButtonTool("frmvendor");
             Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup21 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("ribbonGroup1");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool32 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Goods Received");
-            Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool43 = new Infragistics.Win.UltraWinToolbars.ButtonTool("PurchaseOrder");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool57 = new Infragistics.Win.UltraWinToolbars.ButtonTool("frmdebit");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool59 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Vendor Off Day");
             Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup22 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("ribbonGroup2");
@@ -212,7 +211,6 @@ namespace PosBranch_Win
             Infragistics.Win.Appearance appearance35 = new Infragistics.Win.Appearance();
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool33 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Goods Received");
             Infragistics.Win.Appearance appearance36 = new Infragistics.Win.Appearance();
-            Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool56 = new Infragistics.Win.UltraWinToolbars.ButtonTool("PurchaseOrder");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool58 = new Infragistics.Win.UltraWinToolbars.ButtonTool("frmdebit");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool60 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Vendor Off Day");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool62 = new Infragistics.Win.UltraWinToolbars.ButtonTool("DSales");
@@ -646,7 +644,6 @@ namespace PosBranch_Win
             buttonTool32.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             ribbonGroup21.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonTool32,
-            buttonTool43,
             buttonTool57,
             buttonTool59});
             ribbonGroup22.Caption = "Report";
@@ -829,7 +826,6 @@ namespace PosBranch_Win
             appearance36.Image = ((object)(resources.GetObject("appearance36.Image")));
             buttonTool33.SharedPropsInternal.AppearancesSmall.Appearance = appearance36;
             buttonTool33.SharedPropsInternal.Caption = "Goods Received";
-            buttonTool56.SharedPropsInternal.Caption = "PurchaseOrder";
             buttonTool58.SharedPropsInternal.Caption = "DebitNote";
             buttonTool60.SharedPropsInternal.Caption = "Vendor Off Day";
             buttonTool62.SharedPropsInternal.Caption = "Daily Sales";
@@ -1025,7 +1021,6 @@ namespace PosBranch_Win
             buttonTool55,
             buttonTool31,
             buttonTool33,
-            buttonTool56,
             buttonTool58,
             buttonTool60,
             buttonTool62,

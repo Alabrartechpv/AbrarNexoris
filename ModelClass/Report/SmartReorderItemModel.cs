@@ -5,8 +5,10 @@ namespace ModelClass.Report
     public class SmartReorderItemModel
     {
         public int ItemId { get; set; }
+        public int UnitId { get; set; }
         public string ItemName { get; set; }
         public string Barcode { get; set; }
+        public string Unit { get; set; }
         public int Order_Cycle_Days { get; set; }
         public int Box_Quantity { get; set; }
         public bool Is_Perishable { get; set; }
