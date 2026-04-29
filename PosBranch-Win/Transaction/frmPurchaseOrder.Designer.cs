@@ -741,7 +741,7 @@ namespace PosBranch_Win.Transaction
             // 
             // grpDocumentHeader
             // 
-            this.grpDocumentHeader.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.grpDocumentHeader.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.grpDocumentHeader.Controls.Add(this.ultraPanel13);
             this.grpDocumentHeader.Controls.Add(this.txtRemark);
@@ -981,7 +981,7 @@ namespace PosBranch_Win.Transaction
             // 
             // ultraPanelGridFooter
             // 
-            this.ultraPanelGridFooter.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.ultraPanelGridFooter.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.ultraPanelGridFooter.Location = new System.Drawing.Point(11, 425);
             this.ultraPanelGridFooter.Name = "ultraPanelGridFooter";
@@ -990,7 +990,7 @@ namespace PosBranch_Win.Transaction
             // 
             // gridReport
             // 
-            this.gridReport.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.gridReport.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.gridReport.Location = new System.Drawing.Point(11, 267);
             this.gridReport.Name = "gridReport";

@@ -389,7 +389,17 @@ namespace PosBranch_Win.Reports.InventoryReport
                 return;
             }
 
-           
+            Home homeForm = Application.OpenForms.OfType<Home>().FirstOrDefault();
+            if (homeForm != null)
+            {
+                homeForm.OpenSmartReorderPurchaseOrder(selectedItems);
+                return;
+            }
+
+            frmPurchaseOrder purchaseOrder = new frmPurchaseOrder();
+            purchaseOrder.LoadSmartReorderItems(selectedItems);
+            purchaseOrder.Show();
+            purchaseOrder.BringToFront();
         }
 
         private void BtnGenBranchPO_Click(object sender, EventArgs e)
@@ -450,6 +460,7 @@ namespace PosBranch_Win.Reports.InventoryReport
 
             ConfigureColumn(band, "Barcode", "Item No.", 120, false, null);
             ConfigureColumn(band, "ItemName", "Description", 220, false, null);
+            ConfigureColumn(band, "Unit", "Unit", 80, false, null);
             ConfigureColumn(band, "Order_Cycle_Days", "Cycle Days", 80, false, "0");
             ConfigureColumn(band, "Box_Quantity", "Box Qty", 70, false, "0");
             ConfigureColumn(band, "Category", "Category", 100, false, null);
@@ -465,6 +476,7 @@ namespace PosBranch_Win.Reports.InventoryReport
             ConfigureColumn(band, "Reason", "Reason", 260, false, null);
 
             HideColumn(band, "ItemId");
+            HideColumn(band, "UnitId");
             HideColumn(band, "Is_Perishable");
             HideColumn(band, "NearestExpiryDate");
             HideColumn(band, "LastSaleDate");
@@ -506,37 +518,47 @@ namespace PosBranch_Win.Reports.InventoryReport
             }
 
             string alert = (item.Alert ?? string.Empty).Trim();
+            e.Row.Appearance.BackColor = Color.Empty;
             e.Row.Appearance.ForeColor = Color.Black;
+
+            UltraGridCell alertCell = e.Row.Cells["Alert"];
+            if (alertCell == null)
+            {
+                return;
+            }
+
+            alertCell.Appearance.BackColor = Color.Empty;
+            alertCell.Appearance.ForeColor = Color.Black;
 
             if (alert.StartsWith("URGENT", StringComparison.OrdinalIgnoreCase))
             {
-                e.Row.Appearance.BackColor = Color.DarkRed;
-                e.Row.Appearance.ForeColor = Color.White;
+                alertCell.Appearance.BackColor = Color.DarkRed;
+                alertCell.Appearance.ForeColor = Color.White;
             }
             else if (string.Equals(alert, "Reorder Level Reached", StringComparison.OrdinalIgnoreCase))
             {
-                e.Row.Appearance.BackColor = Color.FromArgb(210, 51, 0);
-                e.Row.Appearance.ForeColor = Color.White;
+                alertCell.Appearance.BackColor = Color.FromArgb(210, 51, 0);
+                alertCell.Appearance.ForeColor = Color.White;
             }
             else if (string.Equals(alert, "Below Target Stock", StringComparison.OrdinalIgnoreCase))
             {
-                e.Row.Appearance.BackColor = Color.FromArgb(255, 240, 188);
-                e.Row.Appearance.ForeColor = Color.Black;
+                alertCell.Appearance.BackColor = Color.FromArgb(255, 240, 188);
+                alertCell.Appearance.ForeColor = Color.Black;
             }
             else if (string.Equals(alert, "Near Expiry", StringComparison.OrdinalIgnoreCase))
             {
-                e.Row.Appearance.BackColor = Color.LightSalmon;
-                e.Row.Appearance.ForeColor = Color.Black;
+                alertCell.Appearance.BackColor = Color.LightSalmon;
+                alertCell.Appearance.ForeColor = Color.Black;
             }
             else if (string.Equals(alert, "Dead Stock", StringComparison.OrdinalIgnoreCase))
             {
-                e.Row.Appearance.BackColor = Color.DimGray;
-                e.Row.Appearance.ForeColor = Color.Yellow;
+                alertCell.Appearance.BackColor = Color.DimGray;
+                alertCell.Appearance.ForeColor = Color.Yellow;
             }
             else if (string.Equals(alert, "INACTIVE ITEM", StringComparison.OrdinalIgnoreCase))
             {
-                e.Row.Appearance.BackColor = Color.FromArgb(110, 110, 110);
-                e.Row.Appearance.ForeColor = Color.White;
+                alertCell.Appearance.BackColor = Color.FromArgb(110, 110, 110);
+                alertCell.Appearance.ForeColor = Color.White;
             }
         }
 

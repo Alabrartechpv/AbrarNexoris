@@ -2,6 +2,7 @@ using Infragistics.Win;
 using Infragistics.Win.Misc;
 using Infragistics.Win.UltraWinGrid;
 using Infragistics.Win.UltraWinEditors;
+using ModelClass.Report;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -37,6 +38,8 @@ namespace PosBranch_Win.Transaction
         private static readonly Color PanelPressedTopColor = Color.FromArgb(205, 226, 248);
         private static readonly Color PanelPressedBottomColor = Color.FromArgb(128, 170, 224);
         private readonly Dictionary<string, Label> _footerLabels = new Dictionary<string, Label>(StringComparer.OrdinalIgnoreCase);
+        private readonly List<SmartReorderItemModel> _pendingSmartReorderItems = new List<SmartReorderItemModel>();
+        private bool _gridInitialized;
 
         public frmPurchaseOrder()
         {
@@ -61,6 +64,25 @@ namespace PosBranch_Win.Transaction
             ApplyTheme();
             InitializeDefaults();
             SetupGrid();
+            _gridInitialized = true;
+            ApplyPendingSmartReorderItems();
+        }
+
+        public void LoadSmartReorderItems(IEnumerable<SmartReorderItemModel> items)
+        {
+            _pendingSmartReorderItems.Clear();
+
+            if (items != null)
+            {
+                _pendingSmartReorderItems.AddRange(
+                    items.Where(x => x != null && x.FinalQuantity > 0)
+                         .Select(CloneSmartReorderItem));
+            }
+
+            if (_gridInitialized)
+            {
+                ApplyPendingSmartReorderItems();
+            }
         }
 
         private void ApplyTheme()
@@ -103,7 +125,7 @@ namespace PosBranch_Win.Transaction
             StyleTextEditor(txtDisc, false);
             StyleTextEditor(txtRounding, false, null, SoftReadonlyBackColor);
             StyleTextEditor(txtTotal, false, Color.Black);
-           
+
             txtRemark.Multiline = true;
             //txtRemark.ScrollBars = ScrollBars.Vertical;
             txtNavigator.ReadOnly = true;
@@ -113,7 +135,7 @@ namespace PosBranch_Win.Transaction
             txtDisc.ReadOnly = true;
             txtRounding.ReadOnly = true;
             txtTotal.ReadOnly = true;
-            
+
 
             txtTotal.BackColor = Color.Black;
             txtTotal.ForeColor = Color.Yellow;
@@ -124,7 +146,7 @@ namespace PosBranch_Win.Transaction
             txtRounding.Appearance.TextHAlign = HAlign.Center;
             txtTotal.Appearance.TextHAlign = HAlign.Center;
 
-           
+
             Button shipToLookupButton = grpDocumentHeader.Controls["btnShipToLookup"] as Button;
             if (shipToLookupButton != null)
             {
@@ -180,7 +202,7 @@ namespace PosBranch_Win.Transaction
             txtShipTo2.Text = "TAMAN KOTA MASAI, 81700 PASIR GUDANG ,JOHOR";
             txtTelephone.Text = "07-2528296";
             txtOrderBy.Text = "ASG";
-           
+
             txtSubtotal.Text = "0.00";
             txtPurchaseTax.Text = "0.00";
             txtDisc.Text = "0.00";
@@ -290,6 +312,115 @@ namespace PosBranch_Win.Transaction
 
             gridReport.DataSource = table;
             InitializeGridFooter();
+        }
+
+        private void ApplyPendingSmartReorderItems()
+        {
+            if (!_gridInitialized || _pendingSmartReorderItems.Count == 0)
+                return;
+
+            DataTable table = gridReport.DataSource as DataTable;
+            if (table == null)
+                return;
+
+            foreach (SmartReorderItemModel item in _pendingSmartReorderItems)
+            {
+                AddOrMergeSmartReorderItem(table, item);
+            }
+
+            RenumberGridRows(table);
+            UpdateFooterValues();
+            gridReport.Refresh();
+            _pendingSmartReorderItems.Clear();
+        }
+
+        private static SmartReorderItemModel CloneSmartReorderItem(SmartReorderItemModel item)
+        {
+            return new SmartReorderItemModel
+            {
+                ItemId = item.ItemId,
+                UnitId = item.UnitId,
+                ItemName = item.ItemName,
+                Barcode = item.Barcode,
+                Unit = item.Unit,
+                CurrentStock = item.CurrentStock,
+                SuggestedQuantity = item.SuggestedQuantity,
+                FinalQuantity = item.FinalQuantity
+            };
+        }
+
+        private void AddOrMergeSmartReorderItem(DataTable table, SmartReorderItemModel item)
+        {
+            decimal quantity = item.FinalQuantity > 0 ? item.FinalQuantity : item.SuggestedQuantity;
+            if (quantity <= 0)
+                return;
+
+            string itemNo = !string.IsNullOrWhiteSpace(item.Barcode)
+                ? item.Barcode.Trim()
+                : item.ItemId.ToString();
+            string description = string.IsNullOrWhiteSpace(item.ItemName) ? itemNo : item.ItemName.Trim();
+            string uom = string.IsNullOrWhiteSpace(item.Unit) ? string.Empty : item.Unit.Trim();
+
+            DataRow existingRow = null;
+            foreach (DataRow row in table.Rows)
+            {
+                if (string.Equals(Convert.ToString(row["ItemNo"]), itemNo, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(Convert.ToString(row["UOM"]), uom, StringComparison.OrdinalIgnoreCase))
+                {
+                    existingRow = row;
+                    break;
+                }
+            }
+
+            if (existingRow == null)
+            {
+                DataRow newRow = table.NewRow();
+                newRow["No"] = table.Rows.Count + 1;
+                newRow["ItemNo"] = itemNo;
+                newRow["Description"] = description;
+                newRow["UOM"] = uom;
+                newRow["QtyAvailable"] = item.CurrentStock;
+                newRow["Qty"] = quantity;
+                newRow["UPrice"] = 0m;
+                newRow["Amount"] = 0m;
+                newRow["Remark"] = "Smart Reorder";
+                newRow["BaseQty"] = quantity;
+                newRow["BaseQtyReceived"] = 0m;
+                newRow["TaxCode"] = string.Empty;
+                newRow["SST"] = 0m;
+                newRow["TotalSST"] = 0m;
+                table.Rows.Add(newRow);
+                return;
+            }
+
+            decimal updatedQuantity = GetDecimalValue(existingRow, "Qty") + quantity;
+            decimal unitPrice = GetDecimalValue(existingRow, "UPrice");
+
+            existingRow["Description"] = description;
+            existingRow["QtyAvailable"] = item.CurrentStock;
+            existingRow["Qty"] = updatedQuantity;
+            existingRow["BaseQty"] = GetDecimalValue(existingRow, "BaseQty") + quantity;
+            existingRow["Amount"] = Math.Round(updatedQuantity * unitPrice, 2);
+
+            if (string.IsNullOrWhiteSpace(Convert.ToString(existingRow["Remark"])))
+            {
+                existingRow["Remark"] = "Smart Reorder";
+            }
+        }
+
+        private static decimal GetDecimalValue(DataRow row, string columnName)
+        {
+            decimal value;
+            return decimal.TryParse(Convert.ToString(row[columnName]), out value) ? value : 0m;
+        }
+
+        private static void RenumberGridRows(DataTable table)
+        {
+            int rowNumber = 1;
+            foreach (DataRow row in table.Rows)
+            {
+                row["No"] = rowNumber++;
+            }
         }
 
         private void gridReport_InitializeLayout(object sender, InitializeLayoutEventArgs e)
@@ -662,6 +793,6 @@ namespace PosBranch_Win.Transaction
 
         }
 
-      
+
     }
 }
