@@ -176,6 +176,9 @@
             this.label12 = new System.Windows.Forms.Label();
             this.label13 = new System.Windows.Forms.Label();
             this.label14 = new System.Windows.Forms.Label();
+            this.lblOrderCycle = new System.Windows.Forms.Label();
+            this.lblBoxQty = new System.Windows.Forms.Label();
+            this.lblPerishable = new System.Windows.Forms.Label();
             this.label16 = new System.Windows.Forms.Label();
             this.label11 = new System.Windows.Forms.Label();
             this.label15 = new System.Windows.Forms.Label();
@@ -194,6 +197,9 @@
             this.label20 = new System.Windows.Forms.Label();
             this.txt_CEP = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.ultraPanel7 = new Infragistics.Win.Misc.UltraPanel();
+            this.ultraOrderCycle = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.ultraBoxQty = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.ultraIsPerishable = new Infragistics.Win.UltraWinEditors.UltraCheckEditor();
             this.ultraPanel13 = new Infragistics.Win.Misc.UltraPanel();
             this.label44 = new System.Windows.Forms.Label();
             this.ultraPictureBox7 = new Infragistics.Win.UltraWinEditors.UltraPictureBox();
@@ -337,6 +343,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.txt_CEP)).BeginInit();
             this.ultraPanel7.ClientArea.SuspendLayout();
             this.ultraPanel7.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraOrderCycle)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraBoxQty)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraIsPerishable)).BeginInit();
             this.ultraPanel13.ClientArea.SuspendLayout();
             this.ultraPanel13.SuspendLayout();
             this.ultraPanel4.ClientArea.SuspendLayout();
@@ -574,6 +583,7 @@
             this.textBox13.Text = "0";
             this.textBox13.UseFlatMode = Infragistics.Win.DefaultableBoolean.True;
             this.textBox13.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+            this.textBox13.Visible = false;
             // 
             // txt_qty
             // 
@@ -986,6 +996,39 @@
             this.label14.Text = "Reorder";
             this.label14.Visible = false;
             // 
+            // lblOrderCycle
+            // 
+            this.lblOrderCycle.AutoSize = true;
+            this.lblOrderCycle.BackColor = System.Drawing.Color.Transparent;
+            this.lblOrderCycle.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblOrderCycle.Location = new System.Drawing.Point(372, 24);
+            this.lblOrderCycle.Name = "lblOrderCycle";
+            this.lblOrderCycle.Size = new System.Drawing.Size(119, 17);
+            this.lblOrderCycle.TabIndex = 198;
+            this.lblOrderCycle.Text = "Order Cycle Days";
+            // 
+            // lblBoxQty
+            // 
+            this.lblBoxQty.AutoSize = true;
+            this.lblBoxQty.BackColor = System.Drawing.Color.Transparent;
+            this.lblBoxQty.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblBoxQty.Location = new System.Drawing.Point(372, 59);
+            this.lblBoxQty.Name = "lblBoxQty";
+            this.lblBoxQty.Size = new System.Drawing.Size(88, 17);
+            this.lblBoxQty.TabIndex = 199;
+            this.lblBoxQty.Text = "Box Quantity";
+            // 
+            // lblPerishable
+            // 
+            this.lblPerishable.AutoSize = true;
+            this.lblPerishable.BackColor = System.Drawing.Color.Transparent;
+            this.lblPerishable.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblPerishable.Location = new System.Drawing.Point(372, 93);
+            this.lblPerishable.Name = "lblPerishable";
+            this.lblPerishable.Size = new System.Drawing.Size(89, 17);
+            this.lblPerishable.TabIndex = 200;
+            this.lblPerishable.Text = "Is Perishable";
+            // 
             // label16
             // 
             this.label16.AutoSize = true;
@@ -1233,6 +1276,12 @@
             // 
             // ultraPanel7.ClientArea
             // 
+            this.ultraPanel7.ClientArea.Controls.Add(this.lblOrderCycle);
+            this.ultraPanel7.ClientArea.Controls.Add(this.lblBoxQty);
+            this.ultraPanel7.ClientArea.Controls.Add(this.lblPerishable);
+            this.ultraPanel7.ClientArea.Controls.Add(this.ultraOrderCycle);
+            this.ultraPanel7.ClientArea.Controls.Add(this.ultraBoxQty);
+            this.ultraPanel7.ClientArea.Controls.Add(this.ultraIsPerishable);
             this.ultraPanel7.ClientArea.Controls.Add(this.ultraPanel13);
             this.ultraPanel7.ClientArea.Controls.Add(this.ultraPanel4);
             this.ultraPanel7.Location = new System.Drawing.Point(571, 49);
@@ -1240,6 +1289,39 @@
             this.ultraPanel7.Size = new System.Drawing.Size(644, 334);
             this.ultraPanel7.TabIndex = 194;
             this.ultraPanel7.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+            // 
+            // ultraOrderCycle
+            // 
+            this.ultraOrderCycle.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ultraOrderCycle.Location = new System.Drawing.Point(498, 19);
+            this.ultraOrderCycle.Name = "ultraOrderCycle";
+            this.ultraOrderCycle.Size = new System.Drawing.Size(77, 26);
+            this.ultraOrderCycle.TabIndex = 195;
+            this.ultraOrderCycle.Text = "30";
+            this.ultraOrderCycle.UseFlatMode = Infragistics.Win.DefaultableBoolean.True;
+            this.ultraOrderCycle.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+            // 
+            // ultraBoxQty
+            // 
+            this.ultraBoxQty.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ultraBoxQty.Location = new System.Drawing.Point(498, 54);
+            this.ultraBoxQty.Name = "ultraBoxQty";
+            this.ultraBoxQty.Size = new System.Drawing.Size(77, 26);
+            this.ultraBoxQty.TabIndex = 196;
+            this.ultraBoxQty.Text = "1";
+            this.ultraBoxQty.UseFlatMode = Infragistics.Win.DefaultableBoolean.True;
+            this.ultraBoxQty.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+            // 
+            // ultraIsPerishable
+            // 
+            this.ultraIsPerishable.BackColor = System.Drawing.Color.Transparent;
+            this.ultraIsPerishable.BackColorInternal = System.Drawing.Color.Transparent;
+            this.ultraIsPerishable.Location = new System.Drawing.Point(499, 91);
+            this.ultraIsPerishable.Name = "ultraIsPerishable";
+            this.ultraIsPerishable.Size = new System.Drawing.Size(20, 20);
+            this.ultraIsPerishable.TabIndex = 197;
+            this.ultraIsPerishable.UseFlatMode = Infragistics.Win.DefaultableBoolean.True;
+            this.ultraIsPerishable.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             // 
             // ultraPanel13
             // 
@@ -3006,7 +3088,11 @@
             ((System.ComponentModel.ISupportInitialize)(this.txt_Retail)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.txt_CEP)).EndInit();
             this.ultraPanel7.ClientArea.ResumeLayout(false);
+            this.ultraPanel7.ClientArea.PerformLayout();
             this.ultraPanel7.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.ultraOrderCycle)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraBoxQty)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraIsPerishable)).EndInit();
             this.ultraPanel13.ClientArea.ResumeLayout(false);
             this.ultraPanel13.ClientArea.PerformLayout();
             this.ultraPanel13.ResumeLayout(false);
@@ -3130,6 +3216,9 @@
         public Infragistics.Win.UltraWinEditors.UltraTextEditor txt_hold;
         private Infragistics.Win.UltraWinEditors.UltraTextEditor textBox13;
         public Infragistics.Win.UltraWinEditors.UltraTextEditor txt_qty;
+        private Infragistics.Win.UltraWinEditors.UltraTextEditor ultraOrderCycle;
+        private Infragistics.Win.UltraWinEditors.UltraTextEditor ultraBoxQty;
+        private Infragistics.Win.UltraWinEditors.UltraCheckEditor ultraIsPerishable;
         private Infragistics.Win.UltraWinEditors.UltraTextEditor txt_CEP;
         private Infragistics.Win.UltraWinEditors.UltraTextEditor txt_Mrp;
         private Infragistics.Win.UltraWinEditors.UltraTextEditor txt_CardP;
@@ -3161,6 +3250,9 @@
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.Label label13;
         private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.Label lblOrderCycle;
+        private System.Windows.Forms.Label lblBoxQty;
+        private System.Windows.Forms.Label lblPerishable;
         private System.Windows.Forms.Label label16;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label label11;

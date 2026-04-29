@@ -119,7 +119,7 @@ namespace PosBranch_Win.Reports.AuditReport
             this.lblItemNo.Name = "lblItemNo";
             this.lblItemNo.Size = new System.Drawing.Size(76, 23);
             this.lblItemNo.TabIndex = 0;
-            this.lblItemNo.Text = "Item No.";
+            this.lblItemNo.Text = "Barcode";
             // 
             // cmbItemNo
             // 
@@ -130,6 +130,7 @@ namespace PosBranch_Win.Reports.AuditReport
             this.cmbItemNo.TabIndex = 1;
             this.cmbItemNo.UseAppStyling = false;
             this.cmbItemNo.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+            this.cmbItemNo.KeyDown += new System.Windows.Forms.KeyEventHandler(this.CmbItemNo_KeyDown);
             // 
             // lblDate
             // 

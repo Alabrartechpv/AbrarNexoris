@@ -1830,6 +1830,11 @@ namespace PosBranch_Win
                 FrmPurchase purchase = new FrmPurchase();
                 OpenFormInTab(purchase, "Purchase");
             }
+            if (e.Tool.Key == "Purchase Order")
+            {
+                frmPurchaseOrder purchaseOrder = new frmPurchaseOrder();
+                OpenFormInTab(purchaseOrder, "Purchase Order");
+            }
             if (e.Tool.Key == "Purchase R/n")
             {
                 frmPurchaseReturn preturn = new frmPurchaseReturn();
@@ -1929,6 +1934,11 @@ namespace PosBranch_Win
             {
                 Reports.InventoryReport.frmStockReportAdvanced frmStkRptAdv = new Reports.InventoryReport.frmStockReportAdvanced();
                 OpenFormInTab(frmStkRptAdv, "StockReport");
+            }
+            if (e.Tool.Key == "ReOrder")
+            {
+                Reports.InventoryReport.FrmSmartReorderDashboard reorderDashboard = new Reports.InventoryReport.FrmSmartReorderDashboard();
+                OpenFormInTab(reorderDashboard, "Smart Reorder Dashboard");
             }
 
             // ADD THIS NEW CONDITION FOR UNIT MASTER

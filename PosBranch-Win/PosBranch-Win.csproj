@@ -901,6 +901,12 @@
     <Compile Include="Reports\FinancialReports\frmVendorOutstandingReport.Designer.cs">
       <DependentUpon>frmVendorOutstandingReport.cs</DependentUpon>
     </Compile>
+    <Compile Include="Reports\InventoryReport\FrmSmartReorderDashboard.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reports\InventoryReport\FrmSmartReorderDashboard.Designer.cs">
+      <DependentUpon>FrmSmartReorderDashboard.cs</DependentUpon>
+    </Compile>
     <Compile Include="Settings\frmChangeItemNo.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1391,6 +1397,9 @@
     <EmbeddedResource Include="Reports\InventoryReport\frmItemReport.resx">
       <DependentUpon>frmItemReport.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Reports\InventoryReport\FrmSmartReorderDashboard.resx">
+      <DependentUpon>FrmSmartReorderDashboard.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Reports\InventoryReport\frmStockReportAdvanced.resx">
       <DependentUpon>frmStockReportAdvanced.cs</DependentUpon>
     </EmbeddedResource>
@@ -1423,6 +1432,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Transaction\FrmPurchase.resx">
       <DependentUpon>FrmPurchase.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Transaction\frmPurchaseOrder.resx">
+      <DependentUpon>frmPurchaseOrder.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Transaction\frmPurchaseReturn.resx">
       <DependentUpon>frmPurchaseReturn.cs</DependentUpon>
