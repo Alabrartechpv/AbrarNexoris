@@ -17,13 +17,14 @@ namespace PosBranch_Win.Transaction
         {
             public int SlNo { get; set; }
             public int ItemId { get; set; }
+            public int UnitId { get; set; }
             public string ItemNo { get; set; }
             public string Description { get; set; }
+            public string Unit { get; set; }
             public string Category { get; set; }
             public string Group { get; set; }
-            public int CycleDays { get; set; }
             public int BoxQty { get; set; }
-            public decimal SuggestedQty { get; set; }
+            public decimal DefaultQty { get; set; }
             public decimal FinalQty { get; set; }
         }
 
@@ -51,13 +52,14 @@ namespace PosBranch_Win.Transaction
                 {
                     SlNo = slNo++,
                     ItemId = item.ItemId,
+                    UnitId = item.UnitId,
                     ItemNo = item.Barcode,
                     Description = item.ItemName,
+                    Unit = item.Unit,
                     Category = item.Category,
                     Group = item.Group,
-                    CycleDays = item.Order_Cycle_Days,
                     BoxQty = item.Box_Quantity,
-                    SuggestedQty = item.SuggestedQuantity,
+                    DefaultQty = item.FinalQuantity,
                     FinalQty = item.FinalQuantity
                 });
             }
@@ -115,10 +117,10 @@ namespace PosBranch_Win.Transaction
         private void BindGrid()
         {
             ultraGridDraft.DataSource = _draftLines;
-            lblDraftTitle.Text = "Purchase Order Draft";
+            lblDraftTitle.Text = "Purchase Order";
             lblDraftNote.Text = _draftLines.Count == 0
                 ? "No reorder items were selected."
-                : "Review the selected reorder items below. You can adjust Final Qty before creating the actual PO later.";
+                : "Review the selected items below, adjust Final Qty if needed, then continue to purchase for saving.";
         }
 
         private void UpdateSummary()
@@ -136,15 +138,24 @@ namespace PosBranch_Win.Transaction
                 band.Columns["ItemId"].Hidden = true;
             }
 
+            if (band.Columns.Exists("UnitId"))
+            {
+                band.Columns["UnitId"].Hidden = true;
+            }
+
             ConfigureColumn(band, "SlNo", "Sl.No", 55, false, "0");
             ConfigureColumn(band, "ItemNo", "Item No.", 120, false, null);
             ConfigureColumn(band, "Description", "Description", 250, false, null);
+            ConfigureColumn(band, "Unit", "Unit", 80, false, null);
             ConfigureColumn(band, "Category", "Category", 120, false, null);
             ConfigureColumn(band, "Group", "Group", 120, false, null);
-            ConfigureColumn(band, "CycleDays", "Cycle Days", 85, false, "0");
             ConfigureColumn(band, "BoxQty", "Box Qty", 70, false, "0");
-            ConfigureColumn(band, "SuggestedQty", "Suggested Qty", 95, false, "0.####");
             ConfigureColumn(band, "FinalQty", "Final Qty", 95, true, "0.####");
+
+            if (band.Columns.Exists("DefaultQty"))
+            {
+                band.Columns["DefaultQty"].Hidden = true;
+            }
         }
 
         private void ConfigureColumn(UltraGridBand band, string key, string caption, int width, bool editable, string format)
@@ -191,11 +202,39 @@ namespace PosBranch_Win.Transaction
         {
             foreach (PurchaseOrderDraftLine line in _draftLines)
             {
-                line.FinalQty = line.SuggestedQty;
+                line.FinalQty = line.DefaultQty;
             }
 
             ultraGridDraft.Refresh();
             UpdateSummary();
+        }
+
+        private void btnOpenPurchase_Click(object sender, EventArgs e)
+        {
+            List<SmartReorderItemModel> purchaseItems = _draftLines
+                .Where(x => x.FinalQty > 0)
+                .Select(x => new SmartReorderItemModel
+                {
+                    ItemId = x.ItemId,
+                    UnitId = x.UnitId,
+                    Barcode = x.ItemNo,
+                    ItemName = x.Description,
+                    Unit = x.Unit,
+                    Category = x.Category,
+                    Group = x.Group,
+                    Box_Quantity = x.BoxQty,
+                    FinalQuantity = x.FinalQty
+                })
+                .ToList();
+
+            if (purchaseItems.Count == 0)
+            {
+                MessageBox.Show("Keep Final Qty greater than zero for at least one item to continue.", "Purchase Order", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            
+            
         }
 
         private void btnClose_Click(object sender, EventArgs e)

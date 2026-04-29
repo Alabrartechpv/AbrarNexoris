@@ -14,6 +14,7 @@ namespace PosBranch_Win.Transaction
         private UltraLabel lblDraftTitle;
         private UltraLabel lblDraftNote;
         private UltraButton btnUseSuggested;
+        private UltraButton btnOpenPurchase;
         private UltraButton btnClose;
         private UltraGrid ultraGridDraft;
         private UltraLabel lblLineCount;
@@ -37,6 +38,7 @@ namespace PosBranch_Win.Transaction
             this.lblDraftNote = new UltraLabel();
             this.ultraPanelAction = new UltraPanel();
             this.btnUseSuggested = new UltraButton();
+            this.btnOpenPurchase = new UltraButton();
             this.btnClose = new UltraButton();
             this.ultraPanelGrid = new UltraPanel();
             this.ultraGridDraft = new UltraGrid();
@@ -94,16 +96,26 @@ namespace PosBranch_Win.Transaction
             // ultraPanelAction.ClientArea
             // 
             this.ultraPanelAction.ClientArea.Controls.Add(this.btnUseSuggested);
+            this.ultraPanelAction.ClientArea.Controls.Add(this.btnOpenPurchase);
             this.ultraPanelAction.ClientArea.Controls.Add(this.btnClose);
             // 
             // btnUseSuggested
             // 
             this.btnUseSuggested.Location = new System.Drawing.Point(16, 7);
             this.btnUseSuggested.Name = "btnUseSuggested";
-            this.btnUseSuggested.Size = new System.Drawing.Size(140, 28);
+            this.btnUseSuggested.Size = new System.Drawing.Size(100, 28);
             this.btnUseSuggested.TabIndex = 0;
-            this.btnUseSuggested.Text = "Use Suggested Qty";
+            this.btnUseSuggested.Text = "Reset Qty";
             this.btnUseSuggested.Click += new System.EventHandler(this.btnUseSuggested_Click);
+            // 
+            // btnOpenPurchase
+            // 
+            this.btnOpenPurchase.Location = new System.Drawing.Point(124, 7);
+            this.btnOpenPurchase.Name = "btnOpenPurchase";
+            this.btnOpenPurchase.Size = new System.Drawing.Size(148, 28);
+            this.btnOpenPurchase.TabIndex = 1;
+            this.btnOpenPurchase.Text = "Continue To Purchase";
+            this.btnOpenPurchase.Click += new System.EventHandler(this.btnOpenPurchase_Click);
             // 
             // btnClose
             // 
@@ -111,7 +123,7 @@ namespace PosBranch_Win.Transaction
             this.btnClose.Location = new System.Drawing.Point(872, 7);
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new System.Drawing.Size(112, 28);
-            this.btnClose.TabIndex = 1;
+            this.btnClose.TabIndex = 2;
             this.btnClose.Text = "Close";
             this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
             // 
@@ -176,7 +188,7 @@ namespace PosBranch_Win.Transaction
             this.Controls.Add(this.ultraPanelAction);
             this.Controls.Add(this.ultraPanelHeader);
             this.Name = "frmPurchaseOrder";
-            this.Text = "Purchase Order Draft";
+            this.Text = "Purchase Order";
             this.ultraPanelHeader.ClientArea.ResumeLayout(false);
             this.ultraPanelHeader.ClientArea.PerformLayout();
             this.ultraPanelHeader.ResumeLayout(false);
