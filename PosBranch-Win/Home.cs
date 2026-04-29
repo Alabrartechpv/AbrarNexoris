@@ -1830,6 +1830,11 @@ namespace PosBranch_Win
                 FrmPurchase purchase = new FrmPurchase();
                 OpenFormInTab(purchase, "Purchase");
             }
+            if (e.Tool.Key == "Purchase Order")
+            {
+                frmPurchaseOrder purchaseOrder = new frmPurchaseOrder();
+                OpenFormInTab(purchaseOrder, "Purchase Order");
+            }
             if (e.Tool.Key == "Purchase R/n")
             {
                 frmPurchaseReturn preturn = new frmPurchaseReturn();

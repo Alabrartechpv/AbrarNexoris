@@ -389,10 +389,7 @@ namespace PosBranch_Win.Reports.InventoryReport
                 return;
             }
 
-            using (frmPurchaseOrder purchaseOrder = new frmPurchaseOrder(selectedItems))
-            {
-                purchaseOrder.ShowDialog(this);
-            }
+           
         }
 
         private void BtnGenBranchPO_Click(object sender, EventArgs e)

@@ -1433,6 +1433,9 @@
     <EmbeddedResource Include="Transaction\FrmPurchase.resx">
       <DependentUpon>FrmPurchase.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Transaction\frmPurchaseOrder.resx">
+      <DependentUpon>frmPurchaseOrder.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Transaction\frmPurchaseReturn.resx">
       <DependentUpon>frmPurchaseReturn.cs</DependentUpon>
     </EmbeddedResource>

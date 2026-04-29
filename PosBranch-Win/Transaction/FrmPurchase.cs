@@ -371,6 +371,7 @@ namespace PosBranch_Win.Transaction
 
         // Dictionary to track footer labels by column key
         private Dictionary<string, Label> footerLabels = new Dictionary<string, Label>();
+
         // Dictionary to track the aggregation function for each column
         private Dictionary<string, string> columnAggregations = new Dictionary<string, string>();
 
@@ -530,6 +531,7 @@ namespace PosBranch_Win.Transaction
 
             // Setup column chooser functionality
             SetupColumnChooserMenu();
+
         }
 
         private void FrmPurchase_Load(object sender, EventArgs e)
