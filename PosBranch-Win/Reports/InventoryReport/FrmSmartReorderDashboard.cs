@@ -389,10 +389,17 @@ namespace PosBranch_Win.Reports.InventoryReport
                 return;
             }
 
-            using (frmPurchaseOrder purchaseOrder = new frmPurchaseOrder(selectedItems))
+            Home homeForm = Application.OpenForms.OfType<Home>().FirstOrDefault();
+            if (homeForm != null)
             {
-                purchaseOrder.ShowDialog(this);
+                homeForm.OpenSmartReorderPurchaseOrder(selectedItems);
+                return;
             }
+
+            frmPurchaseOrder purchaseOrder = new frmPurchaseOrder();
+            purchaseOrder.LoadSmartReorderItems(selectedItems);
+            purchaseOrder.Show();
+            purchaseOrder.BringToFront();
         }
 
         private void BtnGenBranchPO_Click(object sender, EventArgs e)
