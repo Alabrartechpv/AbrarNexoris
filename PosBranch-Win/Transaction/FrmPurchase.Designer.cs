@@ -132,6 +132,7 @@ namespace PosBranch_Win.Transaction
             this.button1 = new System.Windows.Forms.Button();
             this.ultraLabel1 = new Infragistics.Win.Misc.UltraLabel();
             this.ultraPanel7 = new Infragistics.Win.Misc.UltraPanel();
+            this.button7 = new System.Windows.Forms.Button();
             this.button5 = new System.Windows.Forms.Button();
             this.button4 = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
@@ -143,6 +144,7 @@ namespace PosBranch_Win.Transaction
             this.ultraPictureBox7 = new Infragistics.Win.UltraWinEditors.UltraPictureBox();
             this.textBox1 = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.ultraPanel4 = new Infragistics.Win.Misc.UltraPanel();
+            this.button6 = new System.Windows.Forms.Button();
             this.label17 = new System.Windows.Forms.Label();
             this.ultraGrid1 = new Infragistics.Win.UltraWinGrid.UltraGrid();
             this.comboBox1 = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
@@ -151,9 +153,9 @@ namespace PosBranch_Win.Transaction
             this.ultraPanel3 = new Infragistics.Win.Misc.UltraPanel();
             this.label1 = new System.Windows.Forms.Label();
             this.txtRemark = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
-            this.label2 = new System.Windows.Forms.Label();
             this.txtBilledBy = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.label5 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
             this.ultraPictureBox2 = new Infragistics.Win.UltraWinEditors.UltraPictureBox();
             this.ultraLabel2 = new Infragistics.Win.Misc.UltraLabel();
             this.ultraLabel5 = new Infragistics.Win.Misc.UltraLabel();
@@ -165,8 +167,6 @@ namespace PosBranch_Win.Transaction
             this.ultraLabel3 = new Infragistics.Win.Misc.UltraLabel();
             this.pbxSave = new Infragistics.Win.UltraWinEditors.UltraPictureBox();
             this.ultraPictureBox3 = new Infragistics.Win.UltraWinEditors.UltraPictureBox();
-            this.button6 = new System.Windows.Forms.Button();
-            this.button7 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.txtPurchaseNo)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dtpPurchaseDate)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.CmboVendor)).BeginInit();
@@ -670,7 +670,7 @@ namespace PosBranch_Win.Transaction
             this.label4.Font = new System.Drawing.Font("DS-Digital", 36F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.Location = new System.Drawing.Point(0, 0);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(233, 82);
+            this.label4.Size = new System.Drawing.Size(231, 80);
             this.label4.TabIndex = 0;
             this.label4.Text = "0.00";
             this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -892,6 +892,20 @@ namespace PosBranch_Win.Transaction
             this.ultraPanel7.Size = new System.Drawing.Size(326, 224);
             this.ultraPanel7.TabIndex = 5;
             // 
+            // button7
+            // 
+            this.button7.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(122)))), ((int)(((byte)(204)))));
+            this.button7.FlatAppearance.BorderColor = System.Drawing.Color.Black;
+            this.button7.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button7.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button7.ForeColor = System.Drawing.Color.White;
+            this.button7.Location = new System.Drawing.Point(235, 7);
+            this.button7.Name = "button7";
+            this.button7.Size = new System.Drawing.Size(36, 29);
+            this.button7.TabIndex = 128;
+            this.button7.Text = "Clr";
+            this.button7.UseVisualStyleBackColor = false;
+            // 
             // button5
             // 
             this.button5.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(122)))), ((int)(((byte)(204)))));
@@ -1098,6 +1112,20 @@ namespace PosBranch_Win.Transaction
             this.ultraPanel4.Size = new System.Drawing.Size(904, 224);
             this.ultraPanel4.TabIndex = 2;
             // 
+            // button6
+            // 
+            this.button6.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(122)))), ((int)(((byte)(204)))));
+            this.button6.FlatAppearance.BorderColor = System.Drawing.Color.Black;
+            this.button6.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button6.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button6.ForeColor = System.Drawing.Color.White;
+            this.button6.Location = new System.Drawing.Point(519, 7);
+            this.button6.Name = "button6";
+            this.button6.Size = new System.Drawing.Size(81, 27);
+            this.button6.TabIndex = 127;
+            this.button6.Text = "Clear";
+            this.button6.UseVisualStyleBackColor = false;
+            // 
             // label17
             // 
             this.label17.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -1272,17 +1300,6 @@ namespace PosBranch_Win.Transaction
             this.txtRemark.Size = new System.Drawing.Size(893, 49);
             this.txtRemark.TabIndex = 69;
             // 
-            // label2
-            // 
-            this.label2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(497, 8);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(64, 18);
-            this.label2.TabIndex = 68;
-            this.label2.Text = "BIlled By";
-            // 
             // txtBilledBy
             // 
             this.txtBilledBy.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -1304,6 +1321,17 @@ namespace PosBranch_Win.Transaction
             this.label5.Size = new System.Drawing.Size(102, 18);
             this.label5.TabIndex = 18;
             this.label5.Text = "PurchaseDate";
+            // 
+            // label2
+            // 
+            this.label2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.Location = new System.Drawing.Point(497, 8);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(64, 18);
+            this.label2.TabIndex = 68;
+            this.label2.Text = "BIlled By";
             // 
             // ultraPictureBox2
             // 
@@ -1480,34 +1508,6 @@ namespace PosBranch_Win.Transaction
             this.ultraPictureBox3.Size = new System.Drawing.Size(55, 10);
             this.ultraPictureBox3.TabIndex = 35;
             this.ultraPictureBox3.Visible = false;
-            // 
-            // button6
-            // 
-            this.button6.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(122)))), ((int)(((byte)(204)))));
-            this.button6.FlatAppearance.BorderColor = System.Drawing.Color.Black;
-            this.button6.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button6.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button6.ForeColor = System.Drawing.Color.White;
-            this.button6.Location = new System.Drawing.Point(519, 7);
-            this.button6.Name = "button6";
-            this.button6.Size = new System.Drawing.Size(81, 27);
-            this.button6.TabIndex = 127;
-            this.button6.Text = "Clear";
-            this.button6.UseVisualStyleBackColor = false;
-            // 
-            // button7
-            // 
-            this.button7.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(122)))), ((int)(((byte)(204)))));
-            this.button7.FlatAppearance.BorderColor = System.Drawing.Color.Black;
-            this.button7.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button7.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button7.ForeColor = System.Drawing.Color.White;
-            this.button7.Location = new System.Drawing.Point(235, 7);
-            this.button7.Name = "button7";
-            this.button7.Size = new System.Drawing.Size(36, 29);
-            this.button7.TabIndex = 128;
-            this.button7.Text = "Clr";
-            this.button7.UseVisualStyleBackColor = false;
             // 
             // FrmPurchase
             // 
