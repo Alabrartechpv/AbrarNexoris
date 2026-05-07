@@ -98,6 +98,7 @@
     <Compile Include="STOREDPROCEDURE.cs" />
     <Compile Include="TransactionRepository\frmSalesInvoice.cs" />
     <Compile Include="TransactionRepository\PurchaseInvoiceRepository.cs" />
+    <Compile Include="TransactionRepository\PurchaseOrderRepository.cs" />
     <Compile Include="TransactionRepository\PurchaseReturnRepository.cs" />
     <Compile Include="TransactionRepository\SalesRepository.cs" />
     <Compile Include="TransactionRepository\SalesReturnRepository.cs" />

@@ -98,6 +98,7 @@
     <Compile Include="SessionContextExtensions.cs" />
     <Compile Include="TransactionModels\HoldItemDetails.cs" />
     <Compile Include="TransactionModels\PurchaseModel.cs" />
+    <Compile Include="TransactionModels\PurchaseOrderModel.cs" />
     <Compile Include="TransactionModels\PurchaseReturnModel.cs" />
     <Compile Include="TransactionModels\ReasonModel.cs" />
     <Compile Include="TransactionModels\SalesModel.cs" />

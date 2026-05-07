@@ -47,6 +47,8 @@ namespace Repository
         public static string _POS_GetBill = "_POS_GetBill";
         public static string POS_Purchase = "POS_Purchase";
         public static string POS_Purchase_Details = "POS_Purchase_Details";
+        public static string POS_PurchaseOrder = "_PurchaseOrder";
+        public static string POS_PurchaseOrder_Details = "_PurchaseOrder_PurchaseOrderDetails";
         public static string POS_PurchaseInvoice_PriceSettings = "POS_PurchaseInvoice_PriceSettings";
         public static string _POS_Sales_Win_Hold = "_POS_Sales_Win_Hold";
         public static string _POS_SDetails_Win_Hold = "_POS_SDetails_Win_Hold";

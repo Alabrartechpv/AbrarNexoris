@@ -2,12 +2,19 @@ using Infragistics.Win;
 using Infragistics.Win.Misc;
 using Infragistics.Win.UltraWinGrid;
 using Infragistics.Win.UltraWinEditors;
+using ModelClass;
 using ModelClass.Report;
+using ModelClass.TransactionModels;
+using PosBranch_Win.DialogBox;
+using Repository;
+using Repository.TransactionRepository;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 
 namespace PosBranch_Win.Transaction
@@ -38,8 +45,13 @@ namespace PosBranch_Win.Transaction
         private static readonly Color PanelPressedTopColor = Color.FromArgb(205, 226, 248);
         private static readonly Color PanelPressedBottomColor = Color.FromArgb(128, 170, 224);
         private readonly Dictionary<string, Label> _footerLabels = new Dictionary<string, Label>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, string> _columnAggregations = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private readonly List<SmartReorderItemModel> _pendingSmartReorderItems = new List<SmartReorderItemModel>();
+        private readonly List<PaymodeDDl> _paymentModes = new List<PaymodeDDl>();
+        private static readonly string[] DefaultPaymentTerms = { "Cash", "Credit", "30 Days", "60 Days" };
+        private PurchaseOrderRepository _purchaseOrderRepository;
         private bool _gridInitialized;
+        private int _currentPurchaseOrderId;
 
         public frmPurchaseOrder()
         {
@@ -47,6 +59,7 @@ namespace PosBranch_Win.Transaction
             Load += frmPurchaseOrder_Load;
             gridReport.InitializeLayout += gridReport_InitializeLayout;
             gridReport.Resize += gridReport_Resize;
+            gridReport.AfterCellUpdate += gridReport_AfterCellUpdate;
         }
 
         private void frmPurchaseOrder_Load(object sender, EventArgs e)
@@ -63,8 +76,10 @@ namespace PosBranch_Win.Transaction
 
             ApplyTheme();
             InitializeDefaults();
+            LoadPaymentTerms();
             SetupGrid();
             _gridInitialized = true;
+            LoadNextDocumentNumber();
             ApplyPendingSmartReorderItems();
         }
 
@@ -191,23 +206,61 @@ namespace PosBranch_Win.Transaction
         private void InitializeDefaults()
         {
             dtpDate.Value = DateTime.Today;
-            cmbPaymentTerm.Items.Clear();
-            cmbPaymentTerm.Items.Add("Cash", "Cash");
-            cmbPaymentTerm.Items.Add("Credit", "Credit");
-            cmbPaymentTerm.Items.Add("30 Days", "30 Days");
-            cmbPaymentTerm.Items.Add("60 Days", "60 Days");
+            PopulateDefaultPaymentTerms();
             cmbPaymentTerm.Text = string.Empty;
 
-            txtShipTo1.Text = "NO.73, JALAN MANGGA 7";
-            txtShipTo2.Text = "TAMAN KOTA MASAI, 81700 PASIR GUDANG ,JOHOR";
-            txtTelephone.Text = "07-2528296";
-            txtOrderBy.Text = "ASG";
+            txtAccount.Text = string.Empty;
+            txtNavigator.Text = string.Empty;
+            txtDocNo.Text = string.Empty;
+            txtReference.Text = string.Empty;
+            txtShipTo1.Text = string.Empty;
+            txtShipTo2.Text = string.Empty;
+            txtShipTo3.Text = string.Empty;
+            txtShipTo4.Text = string.Empty;
+            txtTelephone.Text = string.Empty;
+            txtOrderBy.Text = GetUserName();
+            txtBarcode.Text = string.Empty;
+            txtRemark.Text = string.Empty;
+            dtpExpectedDate.Value = DateTime.Today;
 
             txtSubtotal.Text = "0.00";
             txtPurchaseTax.Text = "0.00";
             txtDisc.Text = "0.00";
             txtRounding.Text = "0.00";
             txtTotal.Text = "0.00";
+        }
+
+        private void LoadPaymentTerms()
+        {
+            PopulateDefaultPaymentTerms();
+
+            _paymentModes.Clear();
+
+            if (IsDesignerHosted())
+                return;
+
+            try
+            {
+                Dropdowns dropdowns = new Dropdowns();
+                PaymodeDDlGrid payModeGrid = dropdowns.GetPaymode();
+                if (payModeGrid != null && payModeGrid.List != null)
+                {
+                    _paymentModes.AddRange(payModeGrid.List.Where(x => x != null));
+                }
+            }
+            catch
+            {
+                // Keep the hardcoded payment term options available even if DB lookup fails.
+            }
+        }
+
+        private void PopulateDefaultPaymentTerms()
+        {
+            cmbPaymentTerm.Items.Clear();
+            foreach (string term in DefaultPaymentTerms)
+            {
+                cmbPaymentTerm.Items.Add(term, term);
+            }
         }
 
         private void SetupGrid()
@@ -253,6 +306,8 @@ namespace PosBranch_Win.Transaction
             layout.Override.RowSelectorAppearance.ForeColor = Color.White;
             layout.Override.RowSelectorAppearance.FontData.Bold = DefaultableBoolean.True;
             layout.Override.RowSelectorAppearance.TextHAlign = HAlign.Center;
+            layout.ScrollBounds = ScrollBounds.ScrollToFill;
+            layout.ScrollStyle = ScrollStyle.Immediate;
 
             layout.Override.HeaderAppearance.BackColor = GridHeaderBlue;
             layout.Override.HeaderAppearance.BackColor2 = GridHeaderBlueDark;
@@ -296,6 +351,9 @@ namespace PosBranch_Win.Transaction
 
             DataTable table = new DataTable();
             table.Columns.Add("No", typeof(int));
+            table.Columns.Add("ItemId", typeof(int));
+            table.Columns.Add("UnitId", typeof(int));
+            table.Columns.Add("Barcode", typeof(string));
             table.Columns.Add("ItemNo", typeof(string));
             table.Columns.Add("Description");
             table.Columns.Add("UOM");
@@ -330,6 +388,7 @@ namespace PosBranch_Win.Transaction
 
             RenumberGridRows(table);
             UpdateFooterValues();
+            RecalculateTotals();
             gridReport.Refresh();
             _pendingSmartReorderItems.Clear();
         }
@@ -376,6 +435,9 @@ namespace PosBranch_Win.Transaction
             {
                 DataRow newRow = table.NewRow();
                 newRow["No"] = table.Rows.Count + 1;
+                newRow["ItemId"] = item.ItemId;
+                newRow["UnitId"] = item.UnitId;
+                newRow["Barcode"] = item.Barcode ?? string.Empty;
                 newRow["ItemNo"] = itemNo;
                 newRow["Description"] = description;
                 newRow["UOM"] = uom;
@@ -396,6 +458,9 @@ namespace PosBranch_Win.Transaction
             decimal updatedQuantity = GetDecimalValue(existingRow, "Qty") + quantity;
             decimal unitPrice = GetDecimalValue(existingRow, "UPrice");
 
+            existingRow["ItemId"] = item.ItemId;
+            existingRow["UnitId"] = item.UnitId;
+            existingRow["Barcode"] = item.Barcode ?? string.Empty;
             existingRow["Description"] = description;
             existingRow["QtyAvailable"] = item.CurrentStock;
             existingRow["Qty"] = updatedQuantity;
@@ -454,6 +519,7 @@ namespace PosBranch_Win.Transaction
             CreateFooterCells();
             UpdateFooterCellPositions();
             UpdateFooterValues();
+            RecalculateTotals();
         }
 
         private void ConfigureGridColumn(UltraGridBand band, string key, string header, int width, string format, HAlign align, int visiblePosition)
@@ -514,13 +580,101 @@ namespace PosBranch_Win.Transaction
                 footerLabel.Height = Math.Max(ultraPanelGridFooter.Height - 2, 20);
                 footerLabel.Left = xOffset;
                 footerLabel.Top = 1;
+                footerLabel.Tag = Tuple.Create(column.Key, string.Empty);
                 footerLabel.ForeColor = Color.White;
                 footerLabel.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+                footerLabel.Paint += FooterLabel_Paint;
+                footerLabel.ContextMenuStrip = CreateFooterContextMenu(column.Key);
 
                 ultraPanelGridFooter.ClientArea.Controls.Add(footerLabel);
                 _footerLabels[column.Key] = footerLabel;
+
+                if (!_columnAggregations.ContainsKey(column.Key))
+                {
+                    _columnAggregations[column.Key] = "None";
+                }
+
                 xOffset += column.Width;
             }
+        }
+
+        private ContextMenuStrip CreateFooterContextMenu(string columnKey)
+        {
+            ContextMenuStrip menu = new ContextMenuStrip();
+            menu.Tag = columnKey;
+
+            bool isNumeric = gridReport.DisplayLayout.Bands.Count > 0 &&
+                             gridReport.DisplayLayout.Bands[0].Columns.Exists(columnKey) &&
+                             IsSummableColumn(gridReport.DisplayLayout.Bands[0].Columns[columnKey]);
+
+            ToolStripMenuItem itemSum = new ToolStripMenuItem("Sum");
+            itemSum.Tag = "Sum";
+            itemSum.Enabled = isNumeric;
+            itemSum.Click += FooterContextMenu_Click;
+
+            ToolStripMenuItem itemMin = new ToolStripMenuItem("Min");
+            itemMin.Tag = "Min";
+            itemMin.Click += FooterContextMenu_Click;
+
+            ToolStripMenuItem itemMax = new ToolStripMenuItem("Max");
+            itemMax.Tag = "Max";
+            itemMax.Click += FooterContextMenu_Click;
+
+            ToolStripMenuItem itemCount = new ToolStripMenuItem("Count");
+            itemCount.Tag = "Count";
+            itemCount.Click += FooterContextMenu_Click;
+
+            ToolStripMenuItem itemAverage = new ToolStripMenuItem("Average");
+            itemAverage.Tag = "Avg";
+            itemAverage.Enabled = isNumeric;
+            itemAverage.Click += FooterContextMenu_Click;
+
+            ToolStripMenuItem itemNone = new ToolStripMenuItem("None");
+            itemNone.Tag = "None";
+            itemNone.Click += FooterContextMenu_Click;
+
+            menu.Items.Add(itemSum);
+            menu.Items.Add(itemMin);
+            menu.Items.Add(itemMax);
+            menu.Items.Add(itemCount);
+            menu.Items.Add(itemAverage);
+            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add(itemNone);
+
+            menu.Opening += (sender, e) =>
+            {
+                string currentAggregation = _columnAggregations.ContainsKey(columnKey)
+                    ? _columnAggregations[columnKey]
+                    : "None";
+
+                foreach (ToolStripItem menuItem in menu.Items)
+                {
+                    ToolStripMenuItem toolStripMenuItem = menuItem as ToolStripMenuItem;
+                    if (toolStripMenuItem != null && toolStripMenuItem.Tag != null)
+                    {
+                        toolStripMenuItem.Checked = string.Equals(toolStripMenuItem.Tag.ToString(), currentAggregation, StringComparison.OrdinalIgnoreCase);
+                    }
+                }
+            };
+
+            return menu;
+        }
+
+        private void FooterContextMenu_Click(object sender, EventArgs e)
+        {
+            ToolStripMenuItem item = sender as ToolStripMenuItem;
+            if (item == null)
+                return;
+
+            ContextMenuStrip menu = item.Owner as ContextMenuStrip;
+            if (menu == null || menu.Tag == null || item.Tag == null)
+                return;
+
+            string columnKey = menu.Tag.ToString();
+            string aggregation = item.Tag.ToString();
+
+            _columnAggregations[columnKey] = aggregation;
+            UpdateFooterValues();
         }
 
         private void UpdateFooterCellPositions()
@@ -544,54 +698,222 @@ namespace PosBranch_Win.Transaction
 
         private void UpdateFooterValues()
         {
-            foreach (KeyValuePair<string, Label> entry in _footerLabels)
-            {
-                entry.Value.Text = string.Empty;
-            }
-
-            if (gridReport.Rows == null || gridReport.Rows.Count == 0)
+            if (_footerLabels.Count == 0)
                 return;
 
-            SetFooterText("No", gridReport.Rows.Count.ToString());
-            SetFooterText("QtyAvailable", SumColumn("QtyAvailable").ToString("#,##0.##"));
-            SetFooterText("Qty", SumColumn("Qty").ToString("#,##0.##"));
-            SetFooterText("Amount", SumColumn("Amount").ToString("#,##0.00"));
-            SetFooterText("BaseQty", SumColumn("BaseQty").ToString("#,##0.##"));
-            SetFooterText("BaseQtyReceived", SumColumn("BaseQtyReceived").ToString("#,##0.##"));
-            SetFooterText("SST", SumColumn("SST").ToString("#,##0.00"));
-            SetFooterText("TotalSST", SumColumn("TotalSST").ToString("#,##0.00"));
-        }
-
-        private void SetFooterText(string columnKey, string text)
-        {
-            if (_footerLabels.ContainsKey(columnKey))
+            List<UltraGridRow> visibleRows = GetVisibleDataRows().ToList();
+            foreach (KeyValuePair<string, Label> footerEntry in _footerLabels)
             {
-                _footerLabels[columnKey].Text = text;
-            }
-        }
+                string columnKey = footerEntry.Key;
+                Label footerLabel = footerEntry.Value;
 
-        private decimal SumColumn(string columnKey)
-        {
-            decimal sum = 0m;
-
-            foreach (UltraGridRow row in gridReport.Rows)
-            {
-                if (!row.Cells.Exists(columnKey))
-                    continue;
-
-                decimal value;
-                if (decimal.TryParse(Convert.ToString(row.Cells[columnKey].Value), out value))
+                if (!_columnAggregations.ContainsKey(columnKey) ||
+                    string.Equals(_columnAggregations[columnKey], "None", StringComparison.OrdinalIgnoreCase))
                 {
-                    sum += value;
+                    footerLabel.Text = string.Empty;
+                    footerLabel.Tag = Tuple.Create(columnKey, string.Empty);
+                    footerLabel.Invalidate();
+                    continue;
                 }
+
+                object result = CalculateAggregation(columnKey, _columnAggregations[columnKey], visibleRows);
+                string displayValue = FormatAggregationResult(columnKey, _columnAggregations[columnKey], result);
+
+                footerLabel.Text = displayValue;
+                footerLabel.Tag = Tuple.Create(columnKey, displayValue);
+                footerLabel.ForeColor = Color.White;
+                footerLabel.Invalidate();
+            }
+        }
+
+        private object CalculateAggregation(string columnKey, string aggregation, List<UltraGridRow> visibleRows)
+        {
+            if (visibleRows == null || visibleRows.Count == 0)
+            {
+                return aggregation == "Count" ? (object)0 : null;
             }
 
-            return sum;
+            switch (aggregation)
+            {
+                case "Sum":
+                    return visibleRows
+                        .Where(row => row.Cells.Exists(columnKey))
+                        .Select(row => GetNumericValue(row.Cells[columnKey].Value))
+                        .Where(value => value.HasValue)
+                        .Sum(value => value.Value);
+                case "Min":
+                    return visibleRows
+                        .Where(row => row.Cells.Exists(columnKey))
+                        .Select(row => row.Cells[columnKey].Value)
+                        .Where(HasCellValue)
+                        .Cast<IComparable>()
+                        .OrderBy(value => value)
+                        .FirstOrDefault();
+                case "Max":
+                    return visibleRows
+                        .Where(row => row.Cells.Exists(columnKey))
+                        .Select(row => row.Cells[columnKey].Value)
+                        .Where(HasCellValue)
+                        .Cast<IComparable>()
+                        .OrderByDescending(value => value)
+                        .FirstOrDefault();
+                case "Count":
+                    return visibleRows.Count(row => row.Cells.Exists(columnKey) && HasCellValue(row.Cells[columnKey].Value));
+                case "Avg":
+                    List<decimal> values = visibleRows
+                        .Where(row => row.Cells.Exists(columnKey))
+                        .Select(row => GetNumericValue(row.Cells[columnKey].Value))
+                        .Where(value => value.HasValue)
+                        .Select(value => value.Value)
+                        .ToList();
+                    return values.Count == 0 ? 0m : values.Average();
+                default:
+                    return null;
+            }
         }
 
         private void gridReport_Resize(object sender, EventArgs e)
         {
             UpdateFooterCellPositions();
+        }
+
+        private void gridReport_AfterCellUpdate(object sender, Infragistics.Win.UltraWinGrid.CellEventArgs e)
+        {
+            if (e == null || e.Cell == null || e.Cell.Row == null)
+                return;
+
+            string columnKey = e.Cell.Column != null ? e.Cell.Column.Key : string.Empty;
+            if (columnKey == "Qty" || columnKey == "UPrice" || columnKey == "SST")
+            {
+                RecalculateRow(e.Cell.Row);
+            }
+
+            UpdateFooterValues();
+            RecalculateTotals();
+        }
+
+        private string FormatAggregationResult(string columnKey, string aggregation, object result)
+        {
+            if (result == null)
+                return string.Empty;
+
+            if (aggregation == "Count")
+                return Convert.ToString(result);
+
+            if (gridReport.DisplayLayout != null &&
+                gridReport.DisplayLayout.Bands.Count > 0 &&
+                gridReport.DisplayLayout.Bands[0].Columns.Exists(columnKey))
+            {
+                UltraGridColumn column = gridReport.DisplayLayout.Bands[0].Columns[columnKey];
+                decimal? numericValue = GetNumericValue(result);
+                if (numericValue.HasValue)
+                {
+                    if (!string.IsNullOrWhiteSpace(column.Format))
+                        return numericValue.Value.ToString(column.Format);
+
+                    return numericValue.Value.ToString("N2");
+                }
+            }
+
+            return Convert.ToString(result);
+        }
+
+        private IEnumerable<UltraGridRow> GetVisibleDataRows()
+        {
+            foreach (UltraGridRow row in gridReport.Rows)
+            {
+                if (row != null && row.IsDataRow && !row.IsFilteredOut)
+                {
+                    yield return row;
+                }
+            }
+        }
+
+        private static bool HasCellValue(object value)
+        {
+            return value != null &&
+                   value != DBNull.Value &&
+                   !string.IsNullOrWhiteSpace(Convert.ToString(value));
+        }
+
+        private static decimal? GetNumericValue(object value)
+        {
+            if (value == null || value == DBNull.Value)
+                return null;
+
+            decimal result;
+            return decimal.TryParse(Convert.ToString(value), out result) ? result : (decimal?)null;
+        }
+
+        private static bool IsSummableColumn(UltraGridColumn column)
+        {
+            if (column == null || column.DataType == null)
+                return false;
+
+            Type type = System.Nullable.GetUnderlyingType(column.DataType) ?? column.DataType;
+            return type == typeof(decimal) ||
+                   type == typeof(double) ||
+                   type == typeof(float) ||
+                   type == typeof(int) ||
+                   type == typeof(long) ||
+                   type == typeof(short) ||
+                   type == typeof(byte);
+        }
+
+        private void FooterLabel_Paint(object sender, PaintEventArgs e)
+        {
+            Label footerLabel = sender as Label;
+            if (footerLabel == null)
+                return;
+
+            Tuple<string, string> tagData = footerLabel.Tag as Tuple<string, string>;
+            string columnKey = tagData != null ? tagData.Item1 : string.Empty;
+            string displayText = tagData != null ? tagData.Item2 : footerLabel.Text;
+
+            if (string.IsNullOrWhiteSpace(displayText))
+                return;
+
+            if (_columnAggregations.ContainsKey(columnKey) &&
+                string.Equals(_columnAggregations[columnKey], "None", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            Graphics graphics = e.Graphics;
+            graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+            SizeF textSize = graphics.MeasureString(displayText, footerLabel.Font);
+            int padding = 6;
+            int cornerRadius = 6;
+            int margin = 1;
+            int boxWidth = footerLabel.Width - (margin * 2);
+            int boxHeight = (int)textSize.Height + padding;
+            int x = margin;
+            int y = (footerLabel.Height - boxHeight) / 2;
+
+            Rectangle rect = new Rectangle(x, y, boxWidth, boxHeight);
+            Color boxColor = Color.FromArgb(0, 80, 160);
+
+            using (System.Drawing.Drawing2D.GraphicsPath path = new System.Drawing.Drawing2D.GraphicsPath())
+            {
+                path.AddArc(rect.X, rect.Y, cornerRadius * 2, cornerRadius * 2, 180, 90);
+                path.AddArc(rect.X + rect.Width - cornerRadius * 2, rect.Y, cornerRadius * 2, cornerRadius * 2, 270, 90);
+                path.AddArc(rect.X + rect.Width - cornerRadius * 2, rect.Y + rect.Height - cornerRadius * 2, cornerRadius * 2, cornerRadius * 2, 0, 90);
+                path.AddArc(rect.X, rect.Y + rect.Height - cornerRadius * 2, cornerRadius * 2, cornerRadius * 2, 90, 90);
+                path.CloseAllFigures();
+
+                using (SolidBrush brush = new SolidBrush(boxColor))
+                {
+                    graphics.FillPath(brush, path);
+                }
+            }
+
+            using (SolidBrush textBrush = new SolidBrush(Color.White))
+            {
+                float textX = x + (boxWidth - textSize.Width) / 2;
+                float textY = y + (boxHeight - textSize.Height) / 2 - 1;
+                graphics.DrawString(displayText, footerLabel.Font, textBrush, textX, textY);
+            }
+
+            footerLabel.Text = string.Empty;
         }
 
         private static void StyleTextEditor(Infragistics.Win.UltraWinEditors.UltraTextEditor editor, bool warmBackColor, Color? foreColorOverride = null, Color? backColorOverride = null)
@@ -785,7 +1107,745 @@ namespace PosBranch_Win.Transaction
             if (panel != null)
             {
                 panel.Focus();
+
+                if (panel == ultraPanel1)
+                {
+                    OpenVendorDialog();
+                }
+                else if (panel == ultraPanel14)
+                {
+                    OpenPurchaseOrderDialog();
+                }
+                else if (panel == ultraPanel12)
+                {
+                    OpenItemDialog();
+                }
             }
+        }
+
+        private void OpenPurchaseOrderDialog()
+        {
+            using (frmPurchaseOrderDig dialog = new frmPurchaseOrderDig())
+            {
+                if (dialog.ShowDialog(this) == DialogResult.OK && dialog.SelectedPurchaseOrderId > 0)
+                {
+                    LoadPurchaseOrder(dialog.SelectedPurchaseOrderId);
+                }
+            }
+        }
+
+        private void OpenVendorDialog()
+        {
+            using (frmVendorDig vendorDialog = new frmVendorDig())
+            {
+                if (vendorDialog.ShowDialog(this) == DialogResult.OK)
+                {
+                    txtAccount.Text = vendorDialog.SelectedVendorId > 0
+                        ? vendorDialog.SelectedVendorId.ToString()
+                        : string.Empty;
+                    txtNavigator.Text = vendorDialog.SelectedVendorName ?? string.Empty;
+                }
+            }
+        }
+
+        private void OpenItemDialog()
+        {
+            using (frmdialForItemMaster itemDialog = new frmdialForItemMaster("FrmBarcode"))
+            {
+                if (itemDialog.ShowDialog(this) != DialogResult.OK)
+                    return;
+
+                Dictionary<string, object> itemData = itemDialog.GetSelectedItemData();
+                if (itemData == null || itemData.Count == 0)
+                    return;
+
+                AddSelectedItemToGrid(itemData);
+            }
+        }
+
+        private void AddSelectedItemToGrid(Dictionary<string, object> itemData)
+        {
+            DataTable table = gridReport.DataSource as DataTable;
+            if (table == null)
+                return;
+
+            string itemNo = GetString(itemData, "BarCode", "Barcode", "ItemNo", "ItemId");
+            string description = GetString(itemData, "Description", "ItemName", "ProductName");
+            string uom = GetString(itemData, "Unit", "UOM");
+            int itemId = GetInt(itemData, "ItemId", "ID", "ItemID");
+            int unitId = GetInt(itemData, "UnitId", "UID");
+            decimal qtyAvailable = GetDecimal(itemData, "QtyAvailable", "CurrentStock", "StockQty", "BalanceQty");
+            decimal qty = 1m;
+            decimal unitPrice = GetDecimal(itemData, "Cost", "PurchasePrice", "RetailPrice", "UnitPrice");
+            decimal amount = Math.Round(qty * unitPrice, 2);
+            decimal taxPercent = GetDecimal(itemData, "TaxPer", "SST");
+            decimal totalSst = Math.Round(amount * taxPercent / 100m, 2);
+            string taxCode = GetString(itemData, "TaxType", "TaxCode");
+            string targetItemNo = itemNo;
+            string targetUom = uom;
+
+            DataRow existingRow = table.Rows.Cast<DataRow>().FirstOrDefault(row =>
+                string.Equals(Convert.ToString(row["ItemNo"]), itemNo, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(Convert.ToString(row["UOM"]), uom, StringComparison.OrdinalIgnoreCase));
+
+            if (existingRow == null)
+            {
+                DataRow newRow = table.NewRow();
+                newRow["No"] = table.Rows.Count + 1;
+                newRow["ItemId"] = itemId;
+                newRow["UnitId"] = unitId;
+                newRow["Barcode"] = itemNo;
+                newRow["ItemNo"] = itemNo;
+                newRow["Description"] = description;
+                newRow["UOM"] = uom;
+                newRow["QtyAvailable"] = qtyAvailable;
+                newRow["Qty"] = qty;
+                newRow["UPrice"] = unitPrice;
+                newRow["Amount"] = amount;
+                newRow["Remark"] = string.Empty;
+                newRow["BaseQty"] = qty;
+                newRow["BaseQtyReceived"] = 0m;
+                newRow["TaxCode"] = taxCode;
+                newRow["SST"] = taxPercent;
+                newRow["TotalSST"] = totalSst;
+                table.Rows.Add(newRow);
+            }
+            else
+            {
+                decimal updatedQty = GetDecimalValue(existingRow, "Qty") + qty;
+                existingRow["ItemId"] = itemId;
+                existingRow["UnitId"] = unitId;
+                existingRow["Barcode"] = itemNo;
+                existingRow["Description"] = description;
+                existingRow["QtyAvailable"] = qtyAvailable;
+                existingRow["Qty"] = updatedQty;
+                existingRow["UPrice"] = unitPrice;
+                existingRow["Amount"] = Math.Round(updatedQty * unitPrice, 2);
+                existingRow["BaseQty"] = GetDecimalValue(existingRow, "BaseQty") + qty;
+                existingRow["TaxCode"] = taxCode;
+                existingRow["SST"] = taxPercent;
+                existingRow["TotalSST"] = Math.Round(Convert.ToDecimal(existingRow["Amount"]) * taxPercent / 100m, 2);
+            }
+
+            RenumberGridRows(table);
+            UpdateFooterValues();
+            RecalculateTotals();
+            gridReport.Refresh();
+            HighlightLatestLoadedItem(targetItemNo, targetUom);
+        }
+
+        private void HighlightLatestLoadedItem(string itemNo, string uom)
+        {
+            if (gridReport.Rows == null || gridReport.Rows.Count == 0)
+                return;
+
+            UltraGridRow targetRow = null;
+            foreach (UltraGridRow row in gridReport.Rows)
+            {
+                if (row.Cells.Exists("ItemNo") &&
+                    row.Cells.Exists("UOM") &&
+                    string.Equals(Convert.ToString(row.Cells["ItemNo"].Value), itemNo, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(Convert.ToString(row.Cells["UOM"].Value), uom, StringComparison.OrdinalIgnoreCase))
+                {
+                    targetRow = row;
+                }
+            }
+
+            if (targetRow == null)
+                return;
+
+            gridReport.Selected.Rows.Clear();
+            targetRow.Selected = true;
+            gridReport.ActiveRow = targetRow;
+
+            try
+            {
+                targetRow.Activate();
+                if (gridReport.DisplayLayout.RowScrollRegions.Count > 0)
+                {
+                    gridReport.DisplayLayout.RowScrollRegions[0].ScrollRowIntoView(targetRow);
+                }
+            }
+            catch
+            {
+                // Keep selection active even if a specific scroll action is not available.
+            }
+        }
+
+        private static string GetString(Dictionary<string, object> data, params string[] keys)
+        {
+            foreach (string key in keys)
+            {
+                if (data.TryGetValue(key, out object value) && value != null)
+                {
+                    string text = Convert.ToString(value);
+                    if (!string.IsNullOrWhiteSpace(text))
+                        return text.Trim();
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private static decimal GetDecimal(Dictionary<string, object> data, params string[] keys)
+        {
+            foreach (string key in keys)
+            {
+                if (data.TryGetValue(key, out object value) && value != null)
+                {
+                    decimal parsed;
+                    if (decimal.TryParse(Convert.ToString(value), out parsed))
+                        return parsed;
+                }
+            }
+
+            return 0m;
+        }
+
+        private static int GetInt(Dictionary<string, object> data, params string[] keys)
+        {
+            foreach (string key in keys)
+            {
+                if (data.TryGetValue(key, out object value) && value != null)
+                {
+                    int parsed;
+                    if (int.TryParse(Convert.ToString(value), out parsed))
+                        return parsed;
+                }
+            }
+
+            return 0;
+        }
+
+        private void RecalculateRow(UltraGridRow row)
+        {
+            if (row == null)
+                return;
+
+            decimal qty = GetNumericValue(row.Cells.Exists("Qty") ? row.Cells["Qty"].Value : null) ?? 0m;
+            decimal unitPrice = GetNumericValue(row.Cells.Exists("UPrice") ? row.Cells["UPrice"].Value : null) ?? 0m;
+            decimal sstPercent = GetNumericValue(row.Cells.Exists("SST") ? row.Cells["SST"].Value : null) ?? 0m;
+            decimal amount = Math.Round(qty * unitPrice, 2);
+            decimal totalSst = Math.Round(amount * sstPercent / 100m, 2);
+
+            if (row.Cells.Exists("Amount"))
+                row.Cells["Amount"].Value = amount;
+            if (row.Cells.Exists("BaseQty"))
+                row.Cells["BaseQty"].Value = qty;
+            if (row.Cells.Exists("TotalSST"))
+                row.Cells["TotalSST"].Value = totalSst;
+        }
+
+        private void RecalculateTotals()
+        {
+            decimal subTotal = 0m;
+            decimal purchaseTax = 0m;
+
+            foreach (UltraGridRow row in gridReport.Rows)
+            {
+                if (row == null || !row.IsDataRow)
+                    continue;
+
+                subTotal += GetNumericValue(row.Cells.Exists("Amount") ? row.Cells["Amount"].Value : null) ?? 0m;
+                purchaseTax += GetNumericValue(row.Cells.Exists("TotalSST") ? row.Cells["TotalSST"].Value : null) ?? 0m;
+            }
+
+            decimal discount = ParseDecimal(txtDisc.Text);
+            decimal grossTotal = subTotal + purchaseTax - discount;
+            decimal rounding = ultraCheckEditorRound.Checked
+                ? Math.Round(grossTotal, 0, MidpointRounding.AwayFromZero) - grossTotal
+                : 0m;
+            decimal total = grossTotal + rounding;
+
+            txtSubtotal.Text = subTotal.ToString("0.00");
+            txtPurchaseTax.Text = purchaseTax.ToString("0.00");
+            txtRounding.Text = rounding.ToString("0.00");
+            txtTotal.Text = total.ToString("0.00");
+        }
+
+        private static decimal ParseDecimal(string text)
+        {
+            decimal value;
+            return decimal.TryParse(text, out value) ? value : 0m;
+        }
+
+        private static DateTime GetEditorDate(UltraDateTimeEditor editor)
+        {
+            if (editor != null && editor.Value != null)
+            {
+                DateTime parsedDate;
+                if (DateTime.TryParse(Convert.ToString(editor.Value), out parsedDate))
+                    return parsedDate.Date;
+            }
+
+            return DateTime.Today;
+        }
+
+        private void LoadNextDocumentNumber()
+        {
+            if (IsDesignerHosted())
+            {
+                txtDocNo.Text = "PO-";
+                return;
+            }
+
+            int purchaseOrderNo = GetPurchaseOrderRepository().GeneratePurchaseOrderNo(GetFinYearId(), GetBranchId());
+            txtDocNo.Text = purchaseOrderNo > 0 ? "PO-" + purchaseOrderNo.ToString() : string.Empty;
+        }
+
+        public void SaveData()
+        {
+            if (string.IsNullOrWhiteSpace(txtNavigator.Text))
+            {
+                MessageBox.Show("Please select a vendor.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            List<PurchaseOrderDetail> details = BuildPurchaseOrderDetails();
+            if (details.Count == 0)
+            {
+                MessageBox.Show("Please add at least one item.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            PurchaseOrderMaster master = BuildPurchaseOrderMaster();
+            bool isUpdate = _currentPurchaseOrderId > 0;
+            string result = isUpdate
+                ? GetPurchaseOrderRepository().UpdatePurchaseOrder(master, details)
+                : GetPurchaseOrderRepository().SavePurchaseOrder(master, details);
+
+            if (!string.Equals(result, "SUCCESS", StringComparison.OrdinalIgnoreCase))
+            {
+                MessageBox.Show(result, "Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            MessageBox.Show(
+                isUpdate ? "Purchase order updated successfully." : "Purchase order saved successfully.",
+                isUpdate ? "Update" : "Save",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            ClearForm();
+        }
+
+        public void RibbonClear()
+        {
+            ClearForm();
+        }
+
+        public void ClearForm()
+        {
+            InitializeDefaults();
+            _currentPurchaseOrderId = 0;
+
+            DataTable table = gridReport.DataSource as DataTable;
+            if (table != null)
+            {
+                table.Rows.Clear();
+            }
+
+            gridReport.Refresh();
+            UpdateFooterValues();
+            RecalculateTotals();
+            LoadNextDocumentNumber();
+        }
+
+        private PurchaseOrderMaster BuildPurchaseOrderMaster()
+        {
+            decimal subTotal = ParseDecimal(txtSubtotal.Text);
+            decimal taxAmount = ParseDecimal(txtPurchaseTax.Text);
+            decimal roundOff = ParseDecimal(txtRounding.Text);
+            decimal grandTotal = ParseDecimal(txtTotal.Text);
+            DateTime documentDate = GetEditorDate(dtpDate);
+            DateTime expectedDate = GetEditorDate(dtpExpectedDate);
+            string selectedPaymentTerm = (cmbPaymentTerm.Text ?? string.Empty).Trim();
+
+            return new PurchaseOrderMaster
+            {
+                CompanyId = GetCompanyId(),
+                FinYearId = GetFinYearId(),
+                BranchId = GetBranchId(),
+                BranchName = string.Empty,
+                PurchaseNo = ParseDocumentNumber(txtDocNo.Text),
+                PurchaseDate = documentDate,
+                InvoiceNo = txtReference.Text.Trim(),
+                InvoiceDate = expectedDate,
+                LedgerID = ParseInt(txtAccount.Text),
+                VendorName = txtNavigator.Text.Trim(),
+                PaymodeID = GetPaymentModeId(selectedPaymentTerm),
+                Paymode = GetPaymentModeName(selectedPaymentTerm),
+                PaymodeLedgerID = 0,
+                CreditPeriod = GetCreditPeriodDays(selectedPaymentTerm),
+                SubTotal = Convert.ToDouble(subTotal),
+                SpDisPer = 0,
+                SpDsiAmt = 0,
+                BillDiscountPer = 0,
+                BillDiscountAmt = Convert.ToDouble(ParseDecimal(txtDisc.Text)),
+                TaxPer = 0,
+                TaxAmt = Convert.ToDouble(taxAmount),
+                Frieght = 0,
+                ExpenseAmt = 0,
+                OtherExpAmt = 0,
+                GrandTotal = Convert.ToDouble(grandTotal),
+                CancelFlag = false,
+                UserID = GetUserId(),
+                UserName = GetUserName(),
+                TaxType = "I",
+                Remarks = BuildRemarks(),
+                RoundOff = Convert.ToDouble(roundOff),
+                CessPer = 0,
+                CessAmt = 0,
+                CalAfterTax = 0,
+                CurrencyID = 0,
+                CurSymbol = string.Empty,
+                SeriesID = 0,
+                VoucherID = 0,
+                IsSyncd = false,
+                Paid = false,
+                Pid = 0,
+                POrderMasterId = _currentPurchaseOrderId,
+                PayedAmount = 0,
+                BilledBy = txtOrderBy.Text.Trim(),
+                TrnsType = "Purchase Order",
+                NetTotal = Convert.ToDouble(grandTotal),
+                ReferenceNo = txtReference.Text.Trim(),
+                ShipTo1 = txtShipTo1.Text.Trim(),
+                ShipTo2 = txtShipTo2.Text.Trim(),
+                ShipTo3 = txtShipTo3.Text.Trim(),
+                ShipTo4 = txtShipTo4.Text.Trim(),
+                Telephone = txtTelephone.Text.Trim(),
+                OrderBy = txtOrderBy.Text.Trim(),
+                ExpectedDate = expectedDate,
+                CreditPeriodTerm = selectedPaymentTerm,
+                ApprovedBy = string.Empty,
+                CreatedBy = GetUserName(),
+                ShipVia = string.Empty,
+                FobPoints = string.Empty
+            };
+        }
+
+        private List<PurchaseOrderDetail> BuildPurchaseOrderDetails()
+        {
+            List<PurchaseOrderDetail> details = new List<PurchaseOrderDetail>();
+
+            foreach (UltraGridRow row in gridReport.Rows)
+            {
+                if (row == null || !row.IsDataRow)
+                    continue;
+
+                int itemId = ParseInt(Convert.ToString(row.Cells["ItemId"].Value));
+                if (itemId <= 0)
+                    continue;
+
+                details.Add(new PurchaseOrderDetail
+                {
+                    CompanyId = GetCompanyId(),
+                    FinYearId = GetFinYearId(),
+                    BranchID = GetBranchId(),
+                    PurchaseDate = GetEditorDate(dtpDate),
+                    InvoiceNo = txtReference.Text.Trim(),
+                    SlNo = ParseInt(Convert.ToString(row.Cells["No"].Value)),
+                    ItemID = itemId,
+                    ItemName = Convert.ToString(row.Cells["Description"].Value),
+                    UnitId = ParseInt(Convert.ToString(row.Cells["UnitId"].Value)),
+                    Unit = Convert.ToString(row.Cells["UOM"].Value),
+                    BaseUnit = "Y",
+                    Packing = 1,
+                    Qty = Convert.ToDouble(GetNumericValue(row.Cells["Qty"].Value) ?? 0m),
+                    Free = 0,
+                    Cost = Convert.ToDouble(GetNumericValue(row.Cells["UPrice"].Value) ?? 0m),
+                    DisPer = 0,
+                    DisAmt = 0,
+                    SalesPrice = Convert.ToDouble(GetNumericValue(row.Cells["Amount"].Value) ?? 0m),
+                    TaxPer = Convert.ToDouble(GetNumericValue(row.Cells["SST"].Value) ?? 0m),
+                    TaxAmt = Convert.ToDouble(GetNumericValue(row.Cells["TotalSST"].Value) ?? 0m),
+                    TotalSP = Convert.ToDouble(GetNumericValue(row.Cells["Amount"].Value) ?? 0m),
+                    OriginalCost = Convert.ToDouble(GetNumericValue(row.Cells["UPrice"].Value) ?? 0m),
+                    OriginalSP = Convert.ToDouble(GetNumericValue(row.Cells["Amount"].Value) ?? 0m),
+                    IsExpiry = false,
+                    TaxType = Convert.ToString(row.Cells["TaxCode"].Value),
+                    SeriesID = 0,
+                    CessAmt = 0,
+                    CessPer = 0,
+                    IsSyncd = false,
+                    OldQty = 0,
+                    RetailPrice = 0,
+                    WholeSalePrice = 0,
+                    CreditPrice = 0,
+                    Barcode = Convert.ToString(row.Cells["Barcode"].Value),
+                    SingleItemCost = Convert.ToDouble(GetNumericValue(row.Cells["UPrice"].Value) ?? 0m),
+                    TrnsType = "Purchase Order",
+                    RowRemark = Convert.ToString(row.Cells["Remark"].Value),
+                    BaseQty = Convert.ToDouble(GetNumericValue(row.Cells["BaseQty"].Value) ?? 0m),
+                    BaseQtyReceived = Convert.ToDouble(GetNumericValue(row.Cells["BaseQtyReceived"].Value) ?? 0m),
+                    TotalSst = Convert.ToDouble(GetNumericValue(row.Cells["TotalSST"].Value) ?? 0m)
+                });
+            }
+
+            return details;
+        }
+
+        private string BuildRemarks()
+        {
+            StringBuilder builder = new StringBuilder();
+
+            AppendRemarkLine(builder, "Reference", txtReference.Text);
+            AppendRemarkLine(builder, "ShipTo1", txtShipTo1.Text);
+            AppendRemarkLine(builder, "ShipTo2", txtShipTo2.Text);
+            AppendRemarkLine(builder, "ShipTo3", txtShipTo3.Text);
+            AppendRemarkLine(builder, "ShipTo4", txtShipTo4.Text);
+            AppendRemarkLine(builder, "Telephone", txtTelephone.Text);
+            AppendRemarkLine(builder, "OrderBy", txtOrderBy.Text);
+            AppendRemarkLine(builder, "ExpectedDate", GetEditorDate(dtpExpectedDate).ToString("dd/MM/yyyy"));
+            AppendRemarkLine(builder, "Remark", txtRemark.Text);
+
+            return builder.ToString();
+        }
+
+        private static void AppendRemarkLine(StringBuilder builder, string label, string value)
+        {
+            string text = string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+            if (string.IsNullOrWhiteSpace(text))
+                return;
+
+            if (builder.Length > 0)
+                builder.AppendLine();
+
+            builder.Append(label);
+            builder.Append(": ");
+            builder.Append(text);
+        }
+
+        private void LoadPurchaseOrder(int purchaseOrderId)
+        {
+            PurchaseOrderLoadResult result = GetPurchaseOrderRepository().GetPurchaseOrderById(purchaseOrderId);
+            if (result == null || result.Master == null)
+            {
+                MessageBox.Show("Unable to load the selected purchase order.", "Purchase Order", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            PurchaseOrderMaster master = result.Master;
+            Dictionary<string, string> remarks = ParseRemarks(master.Remarks);
+
+            _currentPurchaseOrderId = master.POrderMasterId > 0 ? master.POrderMasterId : purchaseOrderId;
+
+            txtDocNo.Text = master.PurchaseNo > 0 ? "PO-" + master.PurchaseNo.ToString() : string.Empty;
+            dtpDate.Value = master.PurchaseDate == DateTime.MinValue ? DateTime.Today : master.PurchaseDate;
+            txtReference.Text = GetRemarkValue(remarks, "Reference", master.InvoiceNo);
+            txtAccount.Text = master.LedgerID > 0 ? master.LedgerID.ToString() : string.Empty;
+            txtNavigator.Text = master.VendorName ?? string.Empty;
+            cmbPaymentTerm.Text = !string.IsNullOrWhiteSpace(master.CreditPeriodTerm)
+                ? master.CreditPeriodTerm
+                : (master.Paymode ?? string.Empty);
+            txtShipTo1.Text = GetRemarkValue(remarks, "ShipTo1", master.ShipTo1);
+            txtShipTo2.Text = GetRemarkValue(remarks, "ShipTo2", master.ShipTo2);
+            txtShipTo3.Text = GetRemarkValue(remarks, "ShipTo3", master.ShipTo3);
+            txtShipTo4.Text = GetRemarkValue(remarks, "ShipTo4", master.ShipTo4);
+            txtTelephone.Text = GetRemarkValue(remarks, "Telephone", master.Telephone);
+            txtOrderBy.Text = GetRemarkValue(remarks, "OrderBy", master.OrderBy);
+            txtRemark.Text = GetRemarkValue(remarks, "Remark", string.Empty);
+            dtpExpectedDate.Value = GetRemarkDate(remarks, "ExpectedDate", master.InvoiceDate);
+            txtDisc.Text = Convert.ToDecimal(master.BillDiscountAmt).ToString("0.00");
+            txtSubtotal.Text = Convert.ToDecimal(master.SubTotal).ToString("0.00");
+            txtPurchaseTax.Text = Convert.ToDecimal(master.TaxAmt).ToString("0.00");
+            txtRounding.Text = Convert.ToDecimal(master.RoundOff).ToString("0.00");
+            txtTotal.Text = Convert.ToDecimal(master.GrandTotal).ToString("0.00");
+
+            PopulateGrid(result.Details);
+            UpdateFooterValues();
+            RecalculateTotals();
+        }
+
+        private void PopulateGrid(IEnumerable<PurchaseOrderDetail> details)
+        {
+            DataTable table = gridReport.DataSource as DataTable;
+            if (table == null)
+                return;
+
+            table.Rows.Clear();
+
+            if (details != null)
+            {
+                int rowNumber = 1;
+                foreach (PurchaseOrderDetail detail in details)
+                {
+                    if (detail == null)
+                        continue;
+
+                    DataRow row = table.NewRow();
+                    row["No"] = rowNumber++;
+                    row["ItemId"] = detail.ItemID;
+                    row["UnitId"] = detail.UnitId;
+                    row["Barcode"] = detail.Barcode ?? string.Empty;
+                    row["ItemNo"] = !string.IsNullOrWhiteSpace(detail.Barcode) ? detail.Barcode : detail.ItemID.ToString();
+                    row["Description"] = detail.ItemName ?? string.Empty;
+                    row["UOM"] = detail.Unit ?? string.Empty;
+                    row["QtyAvailable"] = 0m;
+                    row["Qty"] = Convert.ToDecimal(detail.Qty);
+                    row["UPrice"] = Convert.ToDecimal(detail.Cost);
+                    row["Amount"] = Convert.ToDecimal(detail.TotalSP);
+                    row["Remark"] = detail.RowRemark ?? string.Empty;
+                    row["BaseQty"] = Convert.ToDecimal(detail.BaseQty);
+                    row["BaseQtyReceived"] = Convert.ToDecimal(detail.BaseQtyReceived);
+                    row["TaxCode"] = detail.TaxType ?? string.Empty;
+                    row["SST"] = Convert.ToDecimal(detail.TaxPer);
+                    row["TotalSST"] = Convert.ToDecimal(detail.TotalSst);
+                    table.Rows.Add(row);
+                }
+            }
+
+            gridReport.Refresh();
+        }
+
+        private static Dictionary<string, string> ParseRemarks(string remarks)
+        {
+            Dictionary<string, string> values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (string.IsNullOrWhiteSpace(remarks))
+                return values;
+
+            string[] lines = remarks.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string line in lines)
+            {
+                int separatorIndex = line.IndexOf(':');
+                if (separatorIndex <= 0)
+                    continue;
+
+                string key = line.Substring(0, separatorIndex).Trim();
+                string value = line.Substring(separatorIndex + 1).Trim();
+                values[key] = value;
+            }
+
+            return values;
+        }
+
+        private static string GetRemarkValue(Dictionary<string, string> remarks, string key, string fallback)
+        {
+            if (remarks != null && remarks.TryGetValue(key, out string value) && !string.IsNullOrWhiteSpace(value))
+                return value;
+
+            return fallback ?? string.Empty;
+        }
+
+        private static DateTime GetRemarkDate(Dictionary<string, string> remarks, string key, DateTime fallback)
+        {
+            if (remarks != null && remarks.TryGetValue(key, out string value))
+            {
+                DateTime parsedDate;
+                if (DateTime.TryParse(value, out parsedDate))
+                    return parsedDate.Date;
+            }
+
+            return fallback == DateTime.MinValue ? DateTime.Today : fallback.Date;
+        }
+
+        private static int ParseDocumentNumber(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return 0;
+
+            string numericPart = new string(text.Where(char.IsDigit).ToArray());
+            int value;
+            return int.TryParse(numericPart, out value) ? value : 0;
+        }
+
+        private static int ParseInt(string text)
+        {
+            int value;
+            return int.TryParse(text, out value) ? value : 0;
+        }
+
+        private int GetCompanyId()
+        {
+            if (ModelClass.SessionContext.IsInitialized && ModelClass.SessionContext.CompanyId > 0)
+                return ModelClass.SessionContext.CompanyId;
+
+            return ParseInt(Convert.ToString(ModelClass.DataBase.CompanyId));
+        }
+
+        private int GetBranchId()
+        {
+            if (ModelClass.SessionContext.IsInitialized && ModelClass.SessionContext.BranchId > 0)
+                return ModelClass.SessionContext.BranchId;
+
+            return ParseInt(Convert.ToString(ModelClass.DataBase.BranchId));
+        }
+
+        private int GetFinYearId()
+        {
+            if (ModelClass.SessionContext.IsInitialized && ModelClass.SessionContext.FinYearId > 0)
+                return ModelClass.SessionContext.FinYearId;
+
+            return 0;
+        }
+
+        private int GetUserId()
+        {
+            if (ModelClass.SessionContext.IsInitialized && ModelClass.SessionContext.UserId > 0)
+                return ModelClass.SessionContext.UserId;
+
+            return 0;
+        }
+
+        private string GetUserName()
+        {
+            if (!string.IsNullOrWhiteSpace(ModelClass.SessionContext.UserName))
+                return ModelClass.SessionContext.UserName;
+
+            return string.Empty;
+        }
+
+        private int GetPaymentModeId(string selectedPaymentTerm)
+        {
+            if (string.IsNullOrWhiteSpace(selectedPaymentTerm))
+                return 0;
+
+            string normalized = selectedPaymentTerm.Trim();
+            string targetPaymode = string.Equals(normalized, "Cash", StringComparison.OrdinalIgnoreCase)
+                ? "Cash"
+                : "Credit";
+
+            PaymodeDDl paymode = _paymentModes.FirstOrDefault(p =>
+                p != null &&
+                !string.IsNullOrWhiteSpace(p.PayModeName) &&
+                string.Equals(p.PayModeName.Trim(), targetPaymode, StringComparison.OrdinalIgnoreCase));
+
+            if (paymode != null && paymode.PayModeID > 0)
+                return paymode.PayModeID;
+
+            return 0;
+        }
+
+        private static string GetPaymentModeName(string selectedPaymentTerm)
+        {
+            if (string.Equals(selectedPaymentTerm, "Cash", StringComparison.OrdinalIgnoreCase))
+                return "Cash";
+
+            return "Credit";
+        }
+
+        private static int GetCreditPeriodDays(string selectedPaymentTerm)
+        {
+            if (string.IsNullOrWhiteSpace(selectedPaymentTerm))
+                return 0;
+
+            int days;
+            return int.TryParse(new string(selectedPaymentTerm.Where(char.IsDigit).ToArray()), out days) ? days : 0;
+        }
+
+        private PurchaseOrderRepository GetPurchaseOrderRepository()
+        {
+            if (_purchaseOrderRepository == null)
+            {
+                _purchaseOrderRepository = new PurchaseOrderRepository();
+            }
+
+            return _purchaseOrderRepository;
+        }
+
+        private bool IsDesignerHosted()
+        {
+            return LicenseManager.UsageMode == LicenseUsageMode.Designtime || DesignMode;
         }
 
         private void ultraPictureBox8_Click(object sender, EventArgs e)

@@ -32,10 +32,12 @@ namespace PosBranch_Win.Transaction
                 if (System.IO.File.Exists(GridLayoutPath))
                 {
                     ultraGrid1.DisplayLayout.LoadFromXml(GridLayoutPath);
+                    ApplyGridTheme(ultraGrid1);
+                    RefreshGridColumnTheme(ultraGrid1);
 
                     // Re-apply essential layout configurations specifically overridden by XML structure
-                    ultraGrid1.DisplayLayout.Override.RowAlternateAppearance.BackColor = Color.White;
-                    ultraGrid1.DisplayLayout.Override.RowAlternateAppearance.BackColor2 = Color.White;
+                    ultraGrid1.DisplayLayout.Override.RowAlternateAppearance.BackColor = GridAltRow;
+                    ultraGrid1.DisplayLayout.Override.RowAlternateAppearance.BackColor2 = GridAltRow;
                     ultraGrid1.DisplayLayout.Override.RowAlternateAppearance.BackGradientStyle = GradientStyle.None;
 
                     // Ensure old layouts don't override the new Gross/NetAmt requirement
@@ -87,6 +89,19 @@ namespace PosBranch_Win.Transaction
 
         // Flag to track if the user manually changed label4 (Net Total) via ".." shortcut in txtBarcode
         private bool _isNetTotalManuallySet = false;
+
+        // Layout state for PO section toggle in the purchase screen
+        private int _poPanelLeft;
+        private int _poPanelTop;
+        private int _poPanelWidth;
+        private int _panelTop;
+        private int _panelGap;
+        private int _rightMargin;
+        private int _itemPanelVisibleLeft;
+        private int _label9OffsetX;
+        private int _label10OffsetX;
+        private int _labelOffsetY;
+        private bool _purchaseOrderPanelVisible;
 
         // Helper method to raise the price update event safely
         private static void RaisePriceSettingsUpdated(int itemId)
@@ -355,22 +370,51 @@ namespace PosBranch_Win.Transaction
         public PurchaseMaster ObjPurchaseMaster = new PurchaseMaster();
         public PurchaseDetails ObjPurchaseDetails = new PurchaseDetails();
         public PurchaseInvoiceRepository ObjPurchaseInviceRepo = new PurchaseInvoiceRepository();
+        private readonly PurchaseOrderRepository _purchaseOrderRepository = new PurchaseOrderRepository();
+
+        private static readonly Color FormBackColor = Color.FromArgb(214, 230, 240);
+        private static readonly Color PanelBackColor = Color.FromArgb(214, 229, 241);
+        private static readonly Color SoftGreyPanelBackColor = Color.FromArgb(228, 231, 235);
+        private static readonly Color BorderBlue = Color.FromArgb(118, 154, 198);
+        private static readonly Color ControlBackColor = Color.White;
+        private static readonly Color WarmControlBackColor = Color.FromArgb(255, 229, 198);
+        private static readonly Color SoftReadonlyBackColor = Color.FromArgb(233, 231, 214);
+        private static readonly Color ControlTextColor = Color.FromArgb(18, 49, 102);
+        private static readonly Color SkyBlueOutline = Color.FromArgb(160, 210, 255);
+        private static readonly Color GridHeaderBlue = Color.FromArgb(93, 151, 214);
+        private static readonly Color GridHeaderBlueDark = Color.FromArgb(67, 118, 184);
+        private static readonly Color GridSelectedBlue = Color.FromArgb(126, 126, 245);
+        private static readonly Color GridRowLine = Color.FromArgb(197, 217, 241);
+        private static readonly Color GridAltRow = Color.FromArgb(246, 250, 255);
+        private static readonly Color GridFooterBorder = Color.FromArgb(144, 181, 223);
+        private static readonly Color ActionPanelBackColor = Color.FromArgb(206, 223, 238);
+        private static readonly Color ButtonBlueTop = Color.FromArgb(232, 241, 252);
+        private static readonly Color ButtonBlueBottom = Color.FromArgb(145, 181, 224);
+        private static readonly Color ButtonBlueBorder = Color.FromArgb(62, 104, 166);
+        private static readonly Color ButtonTextBlue = Color.FromArgb(14, 47, 108);
+        private static readonly Color PanelHoverTopColor = Color.FromArgb(245, 250, 255);
+        private static readonly Color PanelHoverBottomColor = Color.FromArgb(170, 206, 244);
+        private static readonly Color PanelPressedTopColor = Color.FromArgb(205, 226, 248);
+        private static readonly Color PanelPressedBottomColor = Color.FromArgb(128, 170, 224);
 
         // Define the highlight color for mandatory fields
-        private Color mandatoryFieldColor = Color.FromArgb(255, 200, 150); // Darker reddish-yellow
+        private Color mandatoryFieldColor = WarmControlBackColor;
         private Color defaultBackColor;
 
         // Add tooltip for barcode commands
         private System.Windows.Forms.ToolTip barcodeTooltip = new System.Windows.Forms.ToolTip();
+        private Timer _barcodeFlashTimer;
 
         // Note: ultraPanel6 is defined in the Designer.cs file
         // We'll use gridFooterPanel as a separate panel for the footer functionality
 
         // Dedicated panel for grid footer
         private Infragistics.Win.Misc.UltraPanel gridFooterPanel;
+        private Infragistics.Win.Misc.UltraPanel ultraGrid2FooterPanel;
 
         // Dictionary to track footer labels by column key
         private Dictionary<string, Label> footerLabels = new Dictionary<string, Label>();
+        private Dictionary<string, Label> ultraGrid2FooterLabels = new Dictionary<string, Label>();
         // Dictionary to track the aggregation function for each column
         private Dictionary<string, string> columnAggregations = new Dictionary<string, string>();
 
@@ -404,6 +448,8 @@ namespace PosBranch_Win.Transaction
         public FrmPurchase()
         {
             InitializeComponent();
+            CapturePurchasePanelLayout();
+            ApplyPurchaseOrderTheme();
 
             // Setup Custom Digital Font for labels
             try
@@ -430,6 +476,10 @@ namespace PosBranch_Win.Transaction
             this.Controls.Add(gridFooterPanel);
             gridFooterPanel.Visible = false; // Initially invisible until properly positioned
 
+            ultraGrid2FooterPanel = new Infragistics.Win.Misc.UltraPanel();
+            ultraPanel7.ClientArea.Controls.Add(ultraGrid2FooterPanel);
+            ultraGrid2FooterPanel.Visible = false;
+
             // Add click event for save button
             pbxSave.Click += (s, e) => this.SavePurchase();
 
@@ -444,19 +494,24 @@ namespace PosBranch_Win.Transaction
 
             // Add click event for button2
             button2.Click += (s, e) => ShowPurchaseDisplayDialog();
+            WireGridClearButton("button6", ClearUltraGrid1Contents);
+            WireGridClearButton("button7", ClearUltraGrid2Contents);
 
             // Add click event for btnFInd (F7)
             btnFInd.Click += btnFInd_Click;
 
-            // Add SelectedIndexChanged event for CmboVendor
-            CmboVendor.SelectedIndexChanged += CmboVendor_SelectedIndexChanged;
+            // UltraComboEditor raises ValueChanged when the selected item changes.
+            CmboVendor.ValueChanged += CmboVendor_ValueChanged;
 
             // Add DoubleClickCell event for ultraGrid1
             ultraGrid1.DoubleClickCell += UltraGrid1_DoubleClickCell;
+            ultraGrid2.InitializeLayout += UltraGrid2_InitializeLayout;
+            ultraGrid2.Resize += (s, e) => UpdateUltraGrid2FooterCellPositions();
 
             // Register for resize events to update footer position
             ultraGrid1.Resize += (s, e) => UpdateFooterCellPositions();
             this.Resize += (s, e) => UpdateFooterCellPositions();
+            ultraPanel1.Resize += (s, e) => SetPurchaseOrderPanelVisibility(_purchaseOrderPanelVisible);
 
             // Add click event for ultraPictureBox7 to open PurchaseEdit with highlighted row
 
@@ -491,7 +546,7 @@ namespace PosBranch_Win.Transaction
             textBox1.TextChanged += textBox1_TextChanged;
 
             // Add TextChanged events for mandatory fields
-            CmboPayment.SelectedIndexChanged += MandatoryField_Changed;
+            CmboPayment.ValueChanged += MandatoryField_Changed;
             txtInvoiceNo.TextChanged += MandatoryField_Changed;
             txtBilledBy.TextChanged += MandatoryField_Changed;
 
@@ -530,6 +585,620 @@ namespace PosBranch_Win.Transaction
 
             // Setup column chooser functionality
             SetupColumnChooserMenu();
+        }
+
+        private void ApplyPurchaseOrderTheme()
+        {
+            BackColor = FormBackColor;
+
+            ultraPanel1.Appearance.BackColor = FormBackColor;
+            ultraPanel1.Appearance.BackColor2 = FormBackColor;
+            ultraPanel1.Appearance.BackGradientStyle = GradientStyle.None;
+
+            ApplyLightPanelTheme(ultraPanel3, FormBackColor);
+            ApplyLightPanelTheme(ultraPanel7, FormBackColor);
+            ApplyLightPanelTheme(ultraPanel4, FormBackColor);
+
+            ultraPanel5.Appearance.BackColor = FormBackColor;
+            ultraPanel5.Appearance.BackColor2 = FormBackColor;
+            ultraPanel5.Appearance.BackGradientStyle = GradientStyle.None;
+
+            StyleUltraTextEditor(textBox1, true);
+            StyleUltraTextEditor(txtPurchaseNo, false, SoftReadonlyBackColor);
+            StyleUltraTextEditor(txtInvoiceNo, true);
+            StyleUltraTextEditor(txtBilledBy, true);
+            StyleUltraTextEditor(txtRoundOff, false);
+            StyleUltraTextEditor(textBox2, false, SoftReadonlyBackColor);
+            StyleUltraTextEditor(textBox3, false, SoftReadonlyBackColor);
+            StyleUltraTextEditor(textBox4, false, SoftReadonlyBackColor);
+            StyleUltraTextEditor(textBox5, false);
+            StyleUltraTextEditor(txtBarcode, true);
+            StyleUltraTextEditor(txtRemark, false);
+
+            StyleUltraDateTimeEditor(DtpInoviceDate);
+            StyleUltraDateTimeEditor(dtpPurchaseDate);
+
+            StyleUltraComboEditor(CmboVendor);
+            StyleUltraComboEditor(CmboPayment);
+            StyleLegacyComboBox(CmboBranch);
+            StyleUltraComboEditor(comboBox1);
+
+            StyleStandardButton(button1, "F11");
+            StyleStandardButton(button2, "...");
+            StyleStandardButton(button3, "F6");
+            StyleStandardButton(button4, ">>");
+            StyleStandardButton(button5, ">");
+
+            StyleSectionLabels(ultraPanel1.ClientArea.Controls);
+            StyleSectionLabels(ultraPanel3.ClientArea.Controls);
+            StyleSectionLabels(ultraPanel5.ClientArea.Controls);
+            StyleSectionLabels(ultraPanel7.ClientArea.Controls);
+            StyleSectionLabels(ultraPanel4.ClientArea.Controls);
+
+            label7.Font = new Font("Tahoma", 11F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label9.Font = new Font("Tahoma", 11F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label10.Font = new Font("Tahoma", 11F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label7.ForeColor = Color.Black;
+            label9.ForeColor = Color.Black;
+            label10.ForeColor = Color.Black;
+
+            lblSubTotalAmt.BackColor = SoftReadonlyBackColor;
+            lblSubTotalAmt.ForeColor = ControlTextColor;
+        }
+
+        private static void ApplyLightPanelTheme(Infragistics.Win.Misc.UltraPanel panel, Color? backColorOverride = null)
+        {
+            if (panel == null)
+                return;
+
+            Color panelBackColor = backColorOverride ?? PanelBackColor;
+            panel.Appearance.BackColor = panelBackColor;
+            panel.Appearance.BackColor2 = panelBackColor;
+            panel.Appearance.BackGradientStyle = GradientStyle.None;
+            panel.Appearance.BorderColor = BorderBlue;
+            panel.BorderStyle = UIElementBorderStyle.Solid;
+        }
+
+        private static void StyleStandardTextBox(TextBox textBox, bool warmBackColor, Color? backColorOverride = null)
+        {
+            if (textBox == null)
+                return;
+
+            textBox.BorderStyle = BorderStyle.FixedSingle;
+            textBox.BackColor = backColorOverride ?? (warmBackColor ? WarmControlBackColor : ControlBackColor);
+            textBox.ForeColor = ControlTextColor;
+            textBox.Font = new Font("Tahoma", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+        }
+
+        private static void StyleUltraTextEditor(Infragistics.Win.UltraWinEditors.UltraTextEditor editor, bool warmBackColor, Color? backColorOverride = null)
+        {
+            if (editor == null)
+                return;
+
+            editor.BorderStyle = UIElementBorderStyle.Solid;
+            editor.UseOsThemes = DefaultableBoolean.False;
+            editor.Appearance.BackColor = backColorOverride ?? (warmBackColor ? WarmControlBackColor : ControlBackColor);
+            editor.BackColor = editor.Appearance.BackColor;
+            editor.Appearance.BorderColor = SkyBlueOutline;
+            editor.Appearance.ForeColor = ControlTextColor;
+            editor.Appearance.FontData.Name = "Tahoma";
+            editor.Appearance.FontData.SizeInPoints = 9F;
+        }
+
+        private static void StyleUltraDateTimeEditor(Infragistics.Win.UltraWinEditors.UltraDateTimeEditor dateEditor)
+        {
+            if (dateEditor == null)
+                return;
+
+            dateEditor.UseAppStyling = false;
+            dateEditor.DisplayStyle = EmbeddableElementDisplayStyle.Office2013;
+            dateEditor.BorderStyle = UIElementBorderStyle.Solid;
+            dateEditor.UseOsThemes = DefaultableBoolean.False;
+            dateEditor.Appearance.BackColor = ControlBackColor;
+            dateEditor.BackColor = ControlBackColor;
+            dateEditor.Appearance.BorderColor = SkyBlueOutline;
+            dateEditor.Appearance.ForeColor = ControlTextColor;
+            dateEditor.Appearance.FontData.Name = "Tahoma";
+            dateEditor.Appearance.FontData.SizeInPoints = 10F;
+            dateEditor.ButtonStyle = UIElementButtonStyle.Office2003ToolbarButton;
+            dateEditor.FormatString = "dd/MMM/yyyy";
+            dateEditor.MaskInput = "{date}";
+        }
+
+        private static void StyleUltraComboEditor(Infragistics.Win.UltraWinEditors.UltraComboEditor combo)
+        {
+            if (combo == null)
+                return;
+
+            combo.UseAppStyling = false;
+            combo.DisplayStyle = EmbeddableElementDisplayStyle.Office2013;
+            combo.BorderStyle = UIElementBorderStyle.Solid;
+            combo.UseOsThemes = DefaultableBoolean.False;
+            combo.AutoCompleteMode = Infragistics.Win.AutoCompleteMode.SuggestAppend;
+            combo.Appearance.BackColor = ControlBackColor;
+            combo.BackColor = ControlBackColor;
+            combo.Appearance.BorderColor = SkyBlueOutline;
+            combo.Appearance.ForeColor = ControlTextColor;
+            combo.Appearance.FontData.Name = "Tahoma";
+            combo.Appearance.FontData.SizeInPoints = 10F;
+            combo.ButtonStyle = UIElementButtonStyle.Office2003ToolbarButton;
+            combo.DropDownStyle = Infragistics.Win.DropDownStyle.DropDownList;
+        }
+
+        private static void StyleLegacyComboBox(ComboBox comboBox)
+        {
+            if (comboBox == null)
+                return;
+
+            comboBox.FlatStyle = FlatStyle.Flat;
+            comboBox.BackColor = ControlBackColor;
+            comboBox.ForeColor = ControlTextColor;
+            comboBox.Font = new Font("Tahoma", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+        }
+
+        private static void StyleStandardButton(Button button, string text)
+        {
+            if (button == null)
+                return;
+
+            button.Text = text;
+            button.FlatStyle = FlatStyle.Flat;
+            button.FlatAppearance.BorderColor = ButtonBlueBorder;
+            button.FlatAppearance.MouseOverBackColor = Color.FromArgb(169, 197, 230);
+            button.FlatAppearance.MouseDownBackColor = Color.FromArgb(126, 166, 214);
+            button.BackColor = Color.FromArgb(155, 188, 224);
+            button.ForeColor = ButtonTextBlue;
+            button.Font = new Font("Tahoma", 8.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+        }
+
+        private void InitializeActionPanels()
+        {
+            RegisterActionPanel(ultraPanel2, TogglePurchaseOrderPanelVisibility);
+        }
+
+        private void CapturePurchasePanelLayout()
+        {
+            _poPanelLeft = ultraPanel7.Left;
+            _poPanelTop = ultraPanel7.Top;
+            _poPanelWidth = ultraPanel7.Width;
+            _panelTop = ultraPanel4.Top;
+            _panelGap = ultraPanel4.Left - ultraPanel7.Right;
+            _itemPanelVisibleLeft = _poPanelLeft + _poPanelWidth + _panelGap;
+            _rightMargin = ultraPanel1.ClientArea.Width - ultraPanel4.Right;
+            _label9OffsetX = label9.Left - ultraPanel7.Left;
+            _label10OffsetX = label10.Left - ultraPanel4.Left;
+            _labelOffsetY = label10.Top;
+        }
+
+        private void TogglePurchaseOrderPanelVisibility()
+        {
+            SetPurchaseOrderPanelVisibility(!_purchaseOrderPanelVisible);
+        }
+
+        private void SetPurchaseOrderPanelVisibility(bool visible)
+        {
+            if (ultraPanel1 == null)
+                return;
+
+            ultraPanel1.SuspendLayout();
+            ultraPanel7.SuspendLayout();
+            ultraPanel4.SuspendLayout();
+
+            try
+            {
+                _purchaseOrderPanelVisible = visible;
+
+                int clientWidth = ultraPanel1.ClientArea.Width;
+                int itemPanelLeft = visible ? _itemPanelVisibleLeft : _poPanelLeft;
+                int itemPanelWidth = Math.Max(0, clientWidth - _rightMargin - itemPanelLeft);
+
+                ultraPanel7.Left = _poPanelLeft;
+                ultraPanel7.Top = _poPanelTop;
+                ultraPanel7.Width = _poPanelWidth;
+                ultraPanel7.Visible = visible;
+
+                label9.Location = new Point(_poPanelLeft + _label9OffsetX, _labelOffsetY);
+                label9.Visible = visible;
+
+                ultraPanel4.Left = itemPanelLeft;
+                ultraPanel4.Top = _panelTop;
+                ultraPanel4.Width = itemPanelWidth;
+                label10.Location = new Point(itemPanelLeft + _label10OffsetX, _labelOffsetY);
+            }
+            finally
+            {
+                ultraPanel4.ResumeLayout();
+                ultraPanel7.ResumeLayout();
+                ultraPanel1.ResumeLayout();
+            }
+
+            ultraPanel4.PerformLayout();
+            ultraPanel7.PerformLayout();
+            ultraPanel1.PerformLayout();
+            UpdateFooterCellPositions();
+            UpdateUltraGrid2FooterCellPositions();
+        }
+
+        private void RegisterActionPanel(Infragistics.Win.Misc.UltraPanel panel, Action clickAction)
+        {
+            if (panel == null)
+                return;
+
+            panel.UseAppStyling = false;
+            panel.Cursor = Cursors.Hand;
+            panel.BorderStyle = UIElementBorderStyle.Rounded1;
+            ApplyActionPanelStyle(panel, false, false);
+
+            EventHandler clickHandler = (s, e) => clickAction?.Invoke();
+            EventHandler mouseEnterHandler = (s, e) => ApplyActionPanelStyle(panel, true, false);
+            EventHandler mouseLeaveHandler = (s, e) =>
+            {
+                Point clientPoint = panel.PointToClient(Control.MousePosition);
+                bool isInside = panel.ClientRectangle.Contains(clientPoint);
+                ApplyActionPanelStyle(panel, isInside, false);
+            };
+            MouseEventHandler mouseDownHandler = (s, e) =>
+            {
+                if (e.Button == MouseButtons.Left)
+                {
+                    ApplyActionPanelStyle(panel, true, true);
+                }
+            };
+            MouseEventHandler mouseUpHandler = (s, e) =>
+            {
+                Point clientPoint = panel.PointToClient(Control.MousePosition);
+                bool isInside = panel.ClientRectangle.Contains(clientPoint);
+                ApplyActionPanelStyle(panel, isInside, false);
+            };
+
+            panel.Click += clickHandler;
+            panel.MouseEnter += mouseEnterHandler;
+            panel.MouseLeave += mouseLeaveHandler;
+            panel.MouseDown += mouseDownHandler;
+            panel.MouseUp += mouseUpHandler;
+
+            panel.ClientArea.Click += clickHandler;
+            panel.ClientArea.MouseEnter += mouseEnterHandler;
+            panel.ClientArea.MouseLeave += mouseLeaveHandler;
+            panel.ClientArea.MouseDown += mouseDownHandler;
+            panel.ClientArea.MouseUp += mouseUpHandler;
+
+            foreach (Control child in panel.ClientArea.Controls)
+            {
+                child.Cursor = Cursors.Hand;
+                child.Click += clickHandler;
+                child.MouseEnter += mouseEnterHandler;
+                child.MouseLeave += mouseLeaveHandler;
+                child.MouseDown += mouseDownHandler;
+                child.MouseUp += mouseUpHandler;
+
+                if (child is Label label)
+                {
+                    label.ForeColor = ButtonTextBlue;
+                    label.Font = new Font("Tahoma", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+                    label.BackColor = Color.Transparent;
+                }
+            }
+        }
+
+        private static void ApplyActionPanelStyle(Infragistics.Win.Misc.UltraPanel panel, bool isHover, bool isPressed)
+        {
+            if (panel == null)
+                return;
+
+            AppearanceBase appearance = panel.Appearance;
+            appearance.BackGradientStyle = GradientStyle.Vertical;
+            appearance.BorderColor = ButtonBlueBorder;
+            appearance.ForeColor = ButtonTextBlue;
+
+            if (isPressed)
+            {
+                appearance.BackColor = PanelPressedTopColor;
+                appearance.BackColor2 = PanelPressedBottomColor;
+            }
+            else if (isHover)
+            {
+                appearance.BackColor = PanelHoverTopColor;
+                appearance.BackColor2 = PanelHoverBottomColor;
+            }
+            else
+            {
+                appearance.BackColor = ButtonBlueTop;
+                appearance.BackColor2 = ButtonBlueBottom;
+            }
+        }
+
+        private static void StyleSectionLabels(Control.ControlCollection controls)
+        {
+            foreach (Control control in controls)
+            {
+                if (control is Label label)
+                {
+                    label.ForeColor = Color.Black;
+                    label.BackColor = Color.Transparent;
+                    if (label.Font.Size < 11F)
+                    {
+                        label.Font = new Font("Tahoma", 9F, label.Font.Style, GraphicsUnit.Point, 0);
+                    }
+                }
+            }
+        }
+
+        private void ConfigureUltraGrid2Theme()
+        {
+            ApplyGridTheme(ultraGrid2);
+            RefreshGridColumnTheme(ultraGrid2);
+        }
+
+        private static void ApplyGridTheme(UltraGrid grid)
+        {
+            if (grid == null)
+                return;
+
+            grid.UseAppStyling = false;
+            grid.UseOsThemes = DefaultableBoolean.False;
+
+            UltraGridLayout layout = grid.DisplayLayout;
+            layout.BorderStyle = UIElementBorderStyle.Solid;
+            layout.CaptionVisible = DefaultableBoolean.False;
+            layout.GroupByBox.Hidden = false;
+            layout.GroupByBox.BandLabelAppearance.BackColor = GridHeaderBlueDark;
+            layout.GroupByBox.BandLabelAppearance.ForeColor = Color.White;
+            layout.GroupByBox.BandLabelAppearance.FontData.Bold = DefaultableBoolean.True;
+            layout.GroupByBox.PromptAppearance.BackColor = GridHeaderBlue;
+            layout.GroupByBox.PromptAppearance.BackColor2 = GridHeaderBlueDark;
+            layout.GroupByBox.PromptAppearance.BackGradientStyle = GradientStyle.Horizontal;
+            layout.GroupByBox.PromptAppearance.ForeColor = Color.White;
+            layout.GroupByBox.Prompt = "Drag a column header here to group by that column";
+            layout.GroupByBox.Appearance.BackColor = Color.FromArgb(109, 167, 226);
+            layout.GroupByBox.Appearance.BackColor2 = Color.FromArgb(69, 125, 190);
+            layout.GroupByBox.Appearance.BackGradientStyle = GradientStyle.Vertical;
+
+            layout.Appearance.BackColor = Color.White;
+            layout.Appearance.BackColor2 = FormBackColor;
+            layout.Appearance.BackGradientStyle = GradientStyle.None;
+            layout.Appearance.BorderColor = BorderBlue;
+
+            layout.Override.AllowAddNew = AllowAddNew.No;
+            layout.Override.AllowDelete = DefaultableBoolean.False;
+            layout.Override.AllowUpdate = DefaultableBoolean.True;
+            layout.Override.CellClickAction = CellClickAction.EditAndSelectText;
+            layout.Override.HeaderClickAction = HeaderClickAction.SortSingle;
+            layout.Override.SelectTypeRow = SelectType.Single;
+            layout.Override.RowSelectors = DefaultableBoolean.True;
+            layout.Override.RowSelectorWidth = 20;
+            layout.Override.RowSelectorNumberStyle = RowSelectorNumberStyle.RowIndex;
+            layout.Override.RowSelectorAppearance.BackColor = GridHeaderBlueDark;
+            layout.Override.RowSelectorAppearance.BackColor2 = GridHeaderBlue;
+            layout.Override.RowSelectorAppearance.BackGradientStyle = GradientStyle.Vertical;
+            layout.Override.RowSelectorAppearance.BorderColor = BorderBlue;
+            layout.Override.RowSelectorAppearance.ForeColor = Color.White;
+            layout.Override.RowSelectorAppearance.FontData.Bold = DefaultableBoolean.True;
+            layout.Override.RowSelectorAppearance.TextHAlign = HAlign.Center;
+
+            layout.Override.HeaderAppearance.BackColor = GridHeaderBlue;
+            layout.Override.HeaderAppearance.BackColor2 = GridHeaderBlueDark;
+            layout.Override.HeaderAppearance.BackGradientStyle = GradientStyle.Vertical;
+            layout.Override.HeaderAppearance.ForeColor = Color.White;
+            layout.Override.HeaderAppearance.BorderColor = BorderBlue;
+            layout.Override.HeaderAppearance.FontData.Bold = DefaultableBoolean.False;
+            layout.Override.HeaderAppearance.FontData.Name = "Microsoft Sans Serif";
+            layout.Override.HeaderAppearance.FontData.SizeInPoints = 8.25F;
+
+            layout.Override.RowAppearance.BackColor = Color.White;
+            layout.Override.RowAppearance.BorderColor = GridRowLine;
+            layout.Override.RowAlternateAppearance.BackColor = GridAltRow;
+            layout.Override.RowAlternateAppearance.BorderColor = GridRowLine;
+            layout.Override.ActiveRowAppearance.BackColor = GridSelectedBlue;
+            layout.Override.ActiveRowAppearance.ForeColor = Color.White;
+            layout.Override.ActiveRowAppearance.BorderColor = BorderBlue;
+            layout.Override.SelectedRowAppearance.BackColor = GridSelectedBlue;
+            layout.Override.SelectedRowAppearance.ForeColor = Color.White;
+            layout.Override.SelectedRowAppearance.FontData.Bold = DefaultableBoolean.False;
+            layout.Override.CellAppearance.BorderColor = GridRowLine;
+            layout.Override.CellAppearance.ForeColor = Color.FromArgb(10, 31, 79);
+            layout.Override.CellAppearance.FontData.Name = "Microsoft Sans Serif";
+            layout.Override.CellAppearance.FontData.SizeInPoints = 8.25F;
+            layout.Override.BorderStyleHeader = UIElementBorderStyle.Solid;
+            layout.Override.BorderStyleCell = UIElementBorderStyle.Solid;
+            layout.Override.BorderStyleRow = UIElementBorderStyle.Solid;
+            layout.Override.MinRowHeight = 19;
+            layout.Override.DefaultRowHeight = 19;
+            layout.RowConnectorStyle = RowConnectorStyle.Solid;
+            layout.RowConnectorColor = GridRowLine;
+            layout.ScrollBarLook.Appearance.BackColor = ActionPanelBackColor;
+            layout.ScrollBarLook.Appearance.BorderColor = BorderBlue;
+            layout.ScrollBarLook.TrackAppearance.BackColor = Color.FromArgb(225, 236, 246);
+            layout.ScrollBarLook.ButtonAppearance.BackColor = GridHeaderBlue;
+            layout.ScrollBarLook.ButtonAppearance.BackColor2 = GridHeaderBlueDark;
+            layout.ScrollBarLook.ButtonAppearance.BackGradientStyle = GradientStyle.Vertical;
+            layout.ScrollBarLook.ButtonAppearance.BorderColor = BorderBlue;
+
+            grid.BackColor = FormBackColor;
+            grid.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+        }
+
+        private static void RefreshGridColumnTheme(UltraGrid grid)
+        {
+            if (grid == null || grid.DisplayLayout == null || grid.DisplayLayout.Bands.Count == 0)
+                return;
+
+            UltraGridBand band = grid.DisplayLayout.Bands[0];
+            foreach (UltraGridColumn column in band.Columns)
+            {
+                column.Header.Appearance.BackColor = GridHeaderBlue;
+                column.Header.Appearance.BackColor2 = GridHeaderBlueDark;
+                column.Header.Appearance.BackGradientStyle = GradientStyle.Vertical;
+                column.Header.Appearance.ForeColor = Color.White;
+                column.Header.Appearance.BorderColor = BorderBlue;
+                column.Header.Appearance.FontData.Bold = DefaultableBoolean.False;
+                column.Header.Appearance.FontData.Name = "Microsoft Sans Serif";
+                column.Header.Appearance.FontData.SizeInPoints = 8.25F;
+
+                column.CellAppearance.BorderColor = GridRowLine;
+                column.CellAppearance.ForeColor = Color.FromArgb(10, 31, 79);
+                column.CellAppearance.FontData.Name = "Microsoft Sans Serif";
+                column.CellAppearance.FontData.SizeInPoints = 8.25F;
+            }
+        }
+
+        private void SetupUltraGrid2Footer()
+        {
+            if (ultraGrid2FooterPanel == null)
+                return;
+
+            const int footerHeight = 24;
+            if (ultraGrid2.Height > footerHeight + 60)
+            {
+                ultraGrid2.Height -= footerHeight;
+            }
+
+            ultraGrid2FooterPanel.Appearance.BackColor = GridHeaderBlue;
+            ultraGrid2FooterPanel.Appearance.BackColor2 = GridHeaderBlue;
+            ultraGrid2FooterPanel.Appearance.BackGradientStyle = GradientStyle.None;
+            ultraGrid2FooterPanel.Appearance.BorderColor = GridFooterBorder;
+            ultraGrid2FooterPanel.BorderStyle = UIElementBorderStyle.Solid;
+            ultraGrid2FooterPanel.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+
+            ultraGrid2FooterPanel.Left = ultraGrid2.Left;
+            ultraGrid2FooterPanel.Width = ultraGrid2.Width;
+            ultraGrid2FooterPanel.Height = footerHeight;
+            ultraGrid2FooterPanel.Top = ultraGrid2.Bottom;
+            ultraGrid2FooterPanel.Visible = true;
+            ultraGrid2FooterPanel.BringToFront();
+
+            InitializeUltraGrid2Footer();
+        }
+
+        private void UltraGrid2_InitializeLayout(object sender, InitializeLayoutEventArgs e)
+        {
+            ApplyGridTheme(ultraGrid2);
+
+            if (e.Layout.Bands.Count == 0)
+                return;
+
+            UltraGridBand band = e.Layout.Bands[0];
+            foreach (UltraGridColumn column in band.Columns)
+            {
+                column.Hidden = true;
+            }
+
+            string[] visibleColumns = { "SLNO", "BarCode", "Description", "Unit", "Packing", "Cost", "Qty", "TaxPer", "TaxAmt", "NetAmt" };
+            int visiblePosition = 0;
+            foreach (string columnKey in visibleColumns)
+            {
+                if (!band.Columns.Exists(columnKey))
+                    continue;
+
+                UltraGridColumn column = band.Columns[columnKey];
+                column.Hidden = false;
+                column.Header.VisiblePosition = visiblePosition++;
+                column.Header.Appearance.BorderColor = GridRowLine;
+                column.CellAppearance.BorderColor = GridRowLine;
+                column.CellAppearance.FontData.Name = "Microsoft Sans Serif";
+                column.CellAppearance.FontData.SizeInPoints = 8.25F;
+            }
+
+            if (band.Columns.Exists("SLNO")) band.Columns["SLNO"].Width = 48;
+            if (band.Columns.Exists("BarCode")) band.Columns["BarCode"].Width = 95;
+            if (band.Columns.Exists("Description")) band.Columns["Description"].Width = 180;
+            if (band.Columns.Exists("Unit")) band.Columns["Unit"].Width = 62;
+            if (band.Columns.Exists("Packing")) band.Columns["Packing"].Width = 70;
+            if (band.Columns.Exists("Cost")) band.Columns["Cost"].Width = 72;
+            if (band.Columns.Exists("Qty")) band.Columns["Qty"].Width = 62;
+            if (band.Columns.Exists("TaxPer")) band.Columns["TaxPer"].Width = 62;
+            if (band.Columns.Exists("TaxAmt")) band.Columns["TaxAmt"].Width = 72;
+            if (band.Columns.Exists("NetAmt")) band.Columns["NetAmt"].Width = 82;
+
+            InitializeUltraGrid2Footer();
+        }
+
+        private void InitializeUltraGrid2Footer()
+        {
+            if (ultraGrid2FooterPanel == null)
+                return;
+
+            ultraGrid2FooterPanel.ClientArea.Controls.Clear();
+            ultraGrid2FooterLabels.Clear();
+            CreateUltraGrid2FooterCells();
+            UpdateUltraGrid2FooterCellPositions();
+            UpdateUltraGrid2FooterValues();
+        }
+
+        private void CreateUltraGrid2FooterCells()
+        {
+            if (ultraGrid2.DisplayLayout == null || ultraGrid2.DisplayLayout.Bands.Count == 0)
+                return;
+
+            UltraGridBand band = ultraGrid2.DisplayLayout.Bands[0];
+            int xOffset = ultraGrid2.DisplayLayout.Override.RowSelectorWidth;
+
+            foreach (UltraGridColumn column in band.Columns.Cast<UltraGridColumn>().OrderBy(c => c.Header.VisiblePosition))
+            {
+                if (column.Hidden)
+                    continue;
+
+                Label footerLabel = new Label();
+                footerLabel.Name = "footer2_" + column.Key;
+                footerLabel.TextAlign = ContentAlignment.MiddleCenter;
+                footerLabel.BackColor = GridHeaderBlue;
+                footerLabel.ForeColor = Color.White;
+                footerLabel.BorderStyle = BorderStyle.None;
+                footerLabel.AutoSize = false;
+                footerLabel.Width = column.Width;
+                footerLabel.Height = Math.Max(ultraGrid2FooterPanel.Height - 2, 20);
+                footerLabel.Left = xOffset;
+                footerLabel.Top = 1;
+                footerLabel.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+
+                ultraGrid2FooterPanel.ClientArea.Controls.Add(footerLabel);
+                ultraGrid2FooterLabels[column.Key] = footerLabel;
+                xOffset += column.Width;
+            }
+        }
+
+        private void UpdateUltraGrid2FooterCellPositions()
+        {
+            if (ultraGrid2FooterPanel == null || ultraGrid2.DisplayLayout == null || ultraGrid2.DisplayLayout.Bands.Count == 0 || ultraGrid2FooterLabels.Count == 0)
+                return;
+
+            ultraGrid2FooterPanel.Left = ultraGrid2.Left;
+            ultraGrid2FooterPanel.Top = ultraGrid2.Bottom;
+            ultraGrid2FooterPanel.Width = ultraGrid2.Width;
+
+            int xOffset = ultraGrid2.DisplayLayout.Override.RowSelectorWidth;
+            foreach (UltraGridColumn column in ultraGrid2.DisplayLayout.Bands[0].Columns.Cast<UltraGridColumn>().OrderBy(c => c.Header.VisiblePosition))
+            {
+                if (column.Hidden || !ultraGrid2FooterLabels.ContainsKey(column.Key))
+                    continue;
+
+                Label footerLabel = ultraGrid2FooterLabels[column.Key];
+                footerLabel.Left = xOffset;
+                footerLabel.Width = column.Width;
+                footerLabel.Height = Math.Max(ultraGrid2FooterPanel.Height - 2, 20);
+                xOffset += column.Width;
+            }
+        }
+
+        private void UpdateUltraGrid2FooterValues()
+        {
+            foreach (KeyValuePair<string, Label> entry in ultraGrid2FooterLabels)
+            {
+                entry.Value.Text = string.Empty;
+            }
+
+            if (ultraGrid2.Rows == null || ultraGrid2.Rows.Count == 0 || ultraGrid2.DisplayLayout.Bands.Count == 0)
+                return;
+
+            UltraGridColumn firstVisibleColumn = ultraGrid2.DisplayLayout.Bands[0].Columns.Cast<UltraGridColumn>()
+                .Where(c => !c.Hidden)
+                .OrderBy(c => c.Header.VisiblePosition)
+                .FirstOrDefault();
+
+            if (firstVisibleColumn != null && ultraGrid2FooterLabels.ContainsKey(firstVisibleColumn.Key))
+            {
+                ultraGrid2FooterLabels[firstVisibleColumn.Key].Text = ultraGrid2.Rows.Count.ToString();
+            }
         }
 
         private void FrmPurchase_Load(object sender, EventArgs e)
@@ -578,18 +1247,17 @@ namespace PosBranch_Win.Transaction
             CmboVendor.ValueMember = "LedgerID";
 
             // Initialize comboBox1 with TaxType options
-            comboBox1.Items.Clear();
-            comboBox1.Items.Add("ALL");
-            comboBox1.Items.Add("incl");
-            comboBox1.Items.Add("excl");
-            comboBox1.SelectedIndex = 0; // Default to "ALL"
+            comboBox1.DataSource = new[] { "ALL", "incl", "excl" };
+            comboBox1.Value = "ALL";
 
             // Generate and display purchase number dynamically
             GenerateAndDisplayPurchaseNumber();
 
             ConfigureItemsGridLayout();
+            ConfigureUltraGrid2Theme();
             SetupGridDocking();
             SetupRowFooter(); // Setup the row footer using gridFooterPanel
+            SetupUltraGrid2Footer();
 
             // Load saved user layout customizations
             LoadGridLayout();
@@ -624,6 +1292,9 @@ namespace PosBranch_Win.Transaction
 
             // Add click event for button1 (F11)
             button1.Click += (s, ev) => ShowVendorDialog();
+            button3.Click += (s, ev) => ShowPurchaseOrderDialog();
+            button4.Click += (s, ev) => LoadAllPurchaseOrderItemsToPurchaseGrid();
+            button5.Click += (s, ev) => LoadSelectedPurchaseOrderItemToPurchaseGrid();
             LblPid.Visible = false;
             lblVoucherId.Visible = false;
 
@@ -643,10 +1314,12 @@ namespace PosBranch_Win.Transaction
             }
 
             // Store default background color
-            defaultBackColor = textBox1.BackColor;
+            defaultBackColor = textBox1.Appearance.BackColor;
 
             // Highlight mandatory fields
             HighlightMandatoryFields();
+            InitializeActionPanels();
+            SetPurchaseOrderPanelVisibility(false);
 
             // Style ultraPanel6 to look like a button (preserving current colors)
             if (this.Controls.Find("ultraPanel6", true).Length > 0)
@@ -808,30 +1481,17 @@ namespace PosBranch_Win.Transaction
         private void ConfigureDatePickers()
         {
             // Apply custom format to date pickers (14/May/2025 format)
-            dtpPurchaseDate.Format = DateTimePickerFormat.Custom;
-            dtpPurchaseDate.CustomFormat = "dd/MMM/yyyy";
-            dtpPurchaseDate.ShowUpDown = false;
+            dtpPurchaseDate.FormatString = "dd/MMM/yyyy";
+            dtpPurchaseDate.MaskInput = "{date}";
 
-            DtpInoviceDate.Format = DateTimePickerFormat.Custom;
-            DtpInoviceDate.CustomFormat = "dd/MMM/yyyy";
-            DtpInoviceDate.ShowUpDown = false;
+            DtpInoviceDate.FormatString = "dd/MMM/yyyy";
+            DtpInoviceDate.MaskInput = "{date}";
 
             // Set calendar font to match the image
             try
             {
-                dtpPurchaseDate.CalendarFont = new Font("Microsoft Sans Serif", 10F);
-                DtpInoviceDate.CalendarFont = new Font("Microsoft Sans Serif", 10F);
-
-                // Make sure both date pickers have the calendar icon visible
-                dtpPurchaseDate.ShowCheckBox = false;
-                DtpInoviceDate.ShowCheckBox = false;
-
-                // Calendar appearance settings
-                dtpPurchaseDate.CalendarTitleBackColor = Color.FromArgb(0, 122, 204);
-                dtpPurchaseDate.CalendarTitleForeColor = Color.White;
-
-                DtpInoviceDate.CalendarTitleBackColor = Color.FromArgb(0, 122, 204);
-                DtpInoviceDate.CalendarTitleForeColor = Color.White;
+                dtpPurchaseDate.Appearance.FontData.SizeInPoints = 9F;
+                DtpInoviceDate.Appearance.FontData.SizeInPoints = 9F;
             }
             catch (Exception ex)
             {
@@ -1035,23 +1695,41 @@ namespace PosBranch_Win.Transaction
         private void HighlightMandatoryFields()
         {
             // Highlight mandatory fields with light reddish-yellow
-            textBox1.BackColor = mandatoryFieldColor;
-            CmboPayment.BackColor = mandatoryFieldColor;
-            txtInvoiceNo.BackColor = mandatoryFieldColor;
-            txtBilledBy.BackColor = mandatoryFieldColor;
+            SetEditorBackColor(textBox1, mandatoryFieldColor);
+            SetComboBackColor(CmboPayment, mandatoryFieldColor);
+            SetEditorBackColor(txtInvoiceNo, mandatoryFieldColor);
+            SetEditorBackColor(txtBilledBy, mandatoryFieldColor);
 
             // Check if any fields already have values and set appropriate colors
             if (!string.IsNullOrWhiteSpace(textBox1.Text))
-                textBox1.BackColor = defaultBackColor;
+                SetEditorBackColor(textBox1, defaultBackColor);
 
             if (CmboPayment.SelectedIndex != -1)
-                CmboPayment.BackColor = defaultBackColor;
+                SetComboBackColor(CmboPayment, defaultBackColor);
 
             if (!string.IsNullOrWhiteSpace(txtInvoiceNo.Text))
-                txtInvoiceNo.BackColor = defaultBackColor;
+                SetEditorBackColor(txtInvoiceNo, defaultBackColor);
 
             if (!string.IsNullOrWhiteSpace(txtBilledBy.Text))
-                txtBilledBy.BackColor = defaultBackColor;
+                SetEditorBackColor(txtBilledBy, defaultBackColor);
+        }
+
+        private static void SetEditorBackColor(Infragistics.Win.UltraWinEditors.UltraTextEditor editor, Color color)
+        {
+            if (editor == null)
+                return;
+
+            editor.Appearance.BackColor = color;
+            editor.BackColor = color;
+        }
+
+        private static void SetComboBackColor(Infragistics.Win.UltraWinEditors.UltraComboEditor combo, Color color)
+        {
+            if (combo == null)
+                return;
+
+            combo.Appearance.BackColor = color;
+            combo.BackColor = color;
         }
 
         // Event handler for mandatory fields changes
@@ -1061,18 +1739,15 @@ namespace PosBranch_Win.Transaction
             if (control != null)
             {
                 // For TextBox controls
-                if (control is TextBox)
+                if (control is Infragistics.Win.UltraWinEditors.UltraTextEditor)
                 {
-                    TextBox textBox = control as TextBox;
-                    textBox.BackColor = !string.IsNullOrWhiteSpace(textBox.Text) ?
-                        defaultBackColor : mandatoryFieldColor;
+                    Infragistics.Win.UltraWinEditors.UltraTextEditor editor = control as Infragistics.Win.UltraWinEditors.UltraTextEditor;
+                    SetEditorBackColor(editor, !string.IsNullOrWhiteSpace(editor.Text) ? defaultBackColor : mandatoryFieldColor);
                 }
-                // For ComboBox controls
-                else if (control is ComboBox)
+                else if (control is Infragistics.Win.UltraWinEditors.UltraComboEditor)
                 {
-                    ComboBox comboBox = control as ComboBox;
-                    comboBox.BackColor = comboBox.SelectedIndex != -1 ?
-                        defaultBackColor : mandatoryFieldColor;
+                    Infragistics.Win.UltraWinEditors.UltraComboEditor combo = control as Infragistics.Win.UltraWinEditors.UltraComboEditor;
+                    SetComboBackColor(combo, combo.SelectedIndex != -1 ? defaultBackColor : mandatoryFieldColor);
                 }
             }
         }
@@ -1129,14 +1804,10 @@ namespace PosBranch_Win.Transaction
 
                 // Reset everything first to ensure clean slate
                 ultraGrid1.DisplayLayout.Reset();
+                ApplyGridTheme(ultraGrid1);
 
-                // Define colors - Updated to match the light blue from the image
-                Color lightBlue = Color.FromArgb(173, 216, 230); // Light blue for borders
-                Color gridLineColor = lightBlue; // Using light blue for grid lines as shown in image
-                Color selectedBlue = Color.FromArgb(173, 216, 255); // Light blue for selection (as requested)
-
-                // Header color matching FrmPurchaseDisplayDialog.cs
-                Color headerBlue = Color.FromArgb(0, 123, 255); // Solid blue color for headers
+                Color lightBlue = GridRowLine;
+                Color headerBlue = GridHeaderBlue;
 
                 // Configure the grid appearance
                 ultraGrid1.DisplayLayout.Override.AllowAddNew = AllowAddNew.No;
@@ -1156,8 +1827,8 @@ namespace PosBranch_Win.Transaction
 
                 // Apply grid spacing and appearance - matching frmdialForItemMaster
                 ultraGrid1.DisplayLayout.Override.RowSizing = RowSizing.AutoFree;
-                ultraGrid1.DisplayLayout.Override.MinRowHeight = 30;
-                ultraGrid1.DisplayLayout.Override.DefaultRowHeight = 30;
+                ultraGrid1.DisplayLayout.Override.MinRowHeight = 19;
+                ultraGrid1.DisplayLayout.Override.DefaultRowHeight = 19;
                 ultraGrid1.DisplayLayout.Override.RowSpacingBefore = 0; // Remove row spacing
                 ultraGrid1.DisplayLayout.Override.RowSpacingAfter = 0;
                 ultraGrid1.DisplayLayout.Override.CellPadding = 0;
@@ -1169,44 +1840,42 @@ namespace PosBranch_Win.Transaction
                 // Configure header appearance with solid color matching FrmPurchaseDisplayDialog.cs
                 ultraGrid1.DisplayLayout.Override.HeaderStyle = HeaderStyle.WindowsXPCommand;
                 ultraGrid1.DisplayLayout.Override.HeaderAppearance.BackColor = headerBlue;
-                ultraGrid1.DisplayLayout.Override.HeaderAppearance.BackColor2 = headerBlue;
-                ultraGrid1.DisplayLayout.Override.HeaderAppearance.BackGradientStyle = GradientStyle.None;
+                ultraGrid1.DisplayLayout.Override.HeaderAppearance.BackColor2 = GridHeaderBlueDark;
+                ultraGrid1.DisplayLayout.Override.HeaderAppearance.BackGradientStyle = GradientStyle.Vertical;
                 ultraGrid1.DisplayLayout.Override.HeaderAppearance.ForeColor = Color.White;
                 ultraGrid1.DisplayLayout.Override.HeaderAppearance.TextHAlign = HAlign.Center;
                 ultraGrid1.DisplayLayout.Override.HeaderAppearance.TextVAlign = VAlign.Middle;
                 ultraGrid1.DisplayLayout.Override.HeaderAppearance.FontData.Bold = DefaultableBoolean.False; // Change from bold to regular
-                ultraGrid1.DisplayLayout.Override.HeaderAppearance.FontData.SizeInPoints = 9;
+                ultraGrid1.DisplayLayout.Override.HeaderAppearance.FontData.SizeInPoints = 8.25F;
                 ultraGrid1.DisplayLayout.Override.HeaderAppearance.ThemedElementAlpha = Alpha.Transparent;
-                ultraGrid1.DisplayLayout.Override.HeaderAppearance.BorderColor = lightBlue; // Set header border to light blue
+                ultraGrid1.DisplayLayout.Override.HeaderAppearance.BorderColor = BorderBlue;
 
                 // Set font weight for all cells to regular (not bold)
                 ultraGrid1.DisplayLayout.Override.CellAppearance.FontData.Bold = DefaultableBoolean.False;
-                ultraGrid1.DisplayLayout.Override.CellAppearance.FontData.SizeInPoints = 10;
-                ultraGrid1.DisplayLayout.Override.RowAppearance.FontData.SizeInPoints = 10;
+                ultraGrid1.DisplayLayout.Override.CellAppearance.FontData.SizeInPoints = 8.25F;
+                ultraGrid1.DisplayLayout.Override.RowAppearance.FontData.SizeInPoints = 8.25F;
 
                 // Set row selector appearance to match header with solid color matching FrmPurchaseDisplayDialog.cs
-                ultraGrid1.DisplayLayout.Override.RowSelectorAppearance.BackColor = headerBlue;
-                ultraGrid1.DisplayLayout.Override.RowSelectorAppearance.BackColor2 = headerBlue;
-                ultraGrid1.DisplayLayout.Override.RowSelectorAppearance.BackGradientStyle = GradientStyle.None;
+                ultraGrid1.DisplayLayout.Override.RowSelectorAppearance.BackColor = GridHeaderBlueDark;
+                ultraGrid1.DisplayLayout.Override.RowSelectorAppearance.BackColor2 = GridHeaderBlue;
+                ultraGrid1.DisplayLayout.Override.RowSelectorAppearance.BackGradientStyle = GradientStyle.Vertical;
                 ultraGrid1.DisplayLayout.Override.RowSelectorAppearance.ForeColor = Color.White;
-                ultraGrid1.DisplayLayout.Override.RowSelectorAppearance.BorderColor = lightBlue; // Set row selector border to light blue
+                ultraGrid1.DisplayLayout.Override.RowSelectorAppearance.BorderColor = BorderBlue;
                 ultraGrid1.DisplayLayout.Override.RowSelectorHeaderStyle = RowSelectorHeaderStyle.ColumnChooserButton;
-                ultraGrid1.DisplayLayout.Override.RowSelectorWidth = 15; // Match FrmPurchaseDisplayDialog width
-                ultraGrid1.DisplayLayout.Override.RowSelectorNumberStyle = RowSelectorNumberStyle.None; // Remove numbers
+                ultraGrid1.DisplayLayout.Override.RowSelectorWidth = 20;
+                ultraGrid1.DisplayLayout.Override.RowSelectorNumberStyle = RowSelectorNumberStyle.RowIndex;
                 ultraGrid1.DisplayLayout.Override.ExpansionIndicator = ShowExpansionIndicator.Never;
 
-                // Configure row appearance - all white (no alternate row coloring)
+                // Configure row appearance like frmPurchaseOrder
                 ultraGrid1.DisplayLayout.Override.RowAppearance.BackColor = Color.White;
                 ultraGrid1.DisplayLayout.Override.RowAppearance.BackColor2 = Color.White;
                 ultraGrid1.DisplayLayout.Override.RowAppearance.BackGradientStyle = GradientStyle.None;
 
-                // Remove alternate row appearance (make all rows white)
-                ultraGrid1.DisplayLayout.Override.RowAlternateAppearance.BackColor = Color.White;
-                ultraGrid1.DisplayLayout.Override.RowAlternateAppearance.BackColor2 = Color.White;
+                ultraGrid1.DisplayLayout.Override.RowAlternateAppearance.BackColor = GridAltRow;
+                ultraGrid1.DisplayLayout.Override.RowAlternateAppearance.BackColor2 = GridAltRow;
                 ultraGrid1.DisplayLayout.Override.RowAlternateAppearance.BackGradientStyle = GradientStyle.None;
 
-                // Set selected row appearance with bright blue highlighting (matching frmdialForItemMaster)
-                Color selectedRowBlue = Color.FromArgb(0, 120, 215); // Bright blue from frmdialForItemMaster
+                Color selectedRowBlue = GridSelectedBlue;
                 ultraGrid1.DisplayLayout.Override.SelectedRowAppearance.BackColor = selectedRowBlue;
                 ultraGrid1.DisplayLayout.Override.SelectedRowAppearance.BackColor2 = selectedRowBlue;
                 ultraGrid1.DisplayLayout.Override.SelectedRowAppearance.BackGradientStyle = GradientStyle.None;
@@ -1224,9 +1893,8 @@ namespace PosBranch_Win.Transaction
                 ultraGrid1.DisplayLayout.Override.BorderStyleRow = UIElementBorderStyle.Solid;
                 ultraGrid1.DisplayLayout.Override.BorderStyleCell = UIElementBorderStyle.Solid;
 
-                // Set border colors to match light blue from image
-                ultraGrid1.DisplayLayout.Override.RowAppearance.BorderColor = lightBlue;
-                ultraGrid1.DisplayLayout.Override.CellAppearance.BorderColor = lightBlue;
+                ultraGrid1.DisplayLayout.Override.RowAppearance.BorderColor = GridRowLine;
+                ultraGrid1.DisplayLayout.Override.CellAppearance.BorderColor = GridRowLine;
 
                 // Configure spacing and expansion behavior
                 ultraGrid1.DisplayLayout.InterBandSpacing = 0;
@@ -1240,7 +1908,7 @@ namespace PosBranch_Win.Transaction
                     // Set default vertical alignment for all cells
                     band.Override.CellAppearance.TextVAlign = VAlign.Middle;
                     band.Override.CellAppearance.FontData.Bold = DefaultableBoolean.False;
-                    band.Override.CellAppearance.BorderColor = lightBlue; // Set cell borders to light blue
+                    band.Override.CellAppearance.BorderColor = GridRowLine;
 
                     // Configure each column per the requested order
                     SetupColumn(band.Columns["SLNO"], "SLNO", 60, HAlign.Center, true, false);
@@ -1284,6 +1952,8 @@ namespace PosBranch_Win.Transaction
                     band.Columns["Gross"].Header.VisiblePosition = band.Columns.Count - 2;
                     band.Columns["NetAmt"].Header.VisiblePosition = band.Columns.Count - 1;
                 }
+
+                RefreshGridColumnTheme(ultraGrid1);
 
                 // Subscribe to InitializeLayout event for consistent styling
                 ultraGrid1.InitializeLayout += UltraGrid1_InitializeLayout;
@@ -1999,17 +2669,15 @@ namespace PosBranch_Win.Transaction
         {
             try
             {
+                ApplyGridTheme(ultraGrid1);
+
                 // Ensure column moving and swapping are always enabled even after layout restore
                 e.Layout.Override.AllowColMoving = Infragistics.Win.UltraWinGrid.AllowColMoving.WithinBand;
                 e.Layout.Override.AllowColSwapping = Infragistics.Win.UltraWinGrid.AllowColSwapping.WithinBand;
                 e.Layout.Override.AllowColSizing = Infragistics.Win.UltraWinGrid.AllowColSizing.Free;
 
-                // Define grid line color to match light blue from the image
-                Color lightBlue = Color.FromArgb(173, 216, 230); // Light blue for borders
-                Color gridLineColor = lightBlue; // Using light blue for grid lines
-
-                // Header color matching FrmPurchaseDisplayDialog.cs
-                Color headerBlue = Color.FromArgb(0, 123, 255); // Solid blue color for headers
+                Color lightBlue = GridRowLine;
+                Color headerBlue = GridHeaderBlue;
 
                 // Apply proper grid line styles - changed to solid lines as requested
                 e.Layout.Override.BorderStyleRow = Infragistics.Win.UIElementBorderStyle.Solid;
@@ -2033,43 +2701,43 @@ namespace PosBranch_Win.Transaction
                 e.Layout.InterBandSpacing = 0;
 
                 // Configure row height to match frmdialForItemMaster (30 pixels)
-                e.Layout.Override.MinRowHeight = 30;
-                e.Layout.Override.DefaultRowHeight = 30;
+                e.Layout.Override.MinRowHeight = 19;
+                e.Layout.Override.DefaultRowHeight = 19;
 
                 // Define colors - matching frmdialForItemMaster
-                Color selectedRowBlue = Color.FromArgb(0, 120, 215); // Bright blue for selection
+                Color selectedRowBlue = GridSelectedBlue;
 
                 // Set default alignment for all cells
                 e.Layout.Override.CellAppearance.TextVAlign = Infragistics.Win.VAlign.Middle;
                 e.Layout.Override.CellAppearance.TextHAlign = Infragistics.Win.HAlign.Center;
 
                 // Set font size for all cells (matching frmdialForItemMaster)
-                e.Layout.Override.CellAppearance.FontData.SizeInPoints = 10;
-                e.Layout.Override.RowAppearance.FontData.SizeInPoints = 10;
+                e.Layout.Override.CellAppearance.FontData.SizeInPoints = 8.25F;
+                e.Layout.Override.RowAppearance.FontData.SizeInPoints = 8.25F;
                 e.Layout.Override.CellAppearance.FontData.Name = "Microsoft Sans Serif";
                 e.Layout.Override.RowAppearance.FontData.Name = "Microsoft Sans Serif";
 
                 // Add header styling with solid color matching FrmPurchaseDisplayDialog.cs
                 e.Layout.Override.HeaderStyle = Infragistics.Win.HeaderStyle.WindowsXPCommand;
                 e.Layout.Override.HeaderAppearance.BackColor = headerBlue;
-                e.Layout.Override.HeaderAppearance.BackColor2 = headerBlue;
-                e.Layout.Override.HeaderAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.None;
+                e.Layout.Override.HeaderAppearance.BackColor2 = GridHeaderBlueDark;
+                e.Layout.Override.HeaderAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
                 e.Layout.Override.HeaderAppearance.ForeColor = Color.White;
                 e.Layout.Override.HeaderAppearance.TextHAlign = Infragistics.Win.HAlign.Center;
                 e.Layout.Override.HeaderAppearance.TextVAlign = Infragistics.Win.VAlign.Middle;
                 e.Layout.Override.HeaderAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.False; // Change from bold to regular
-                e.Layout.Override.HeaderAppearance.FontData.SizeInPoints = 9;
+                e.Layout.Override.HeaderAppearance.FontData.SizeInPoints = 8.25F;
                 e.Layout.Override.HeaderAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
-                e.Layout.Override.HeaderAppearance.BorderColor = lightBlue; // Set header border to light blue
+                e.Layout.Override.HeaderAppearance.BorderColor = BorderBlue;
 
                 // Configure row selector appearance with solid color matching FrmPurchaseDisplayDialog.cs
-                e.Layout.Override.RowSelectorAppearance.BackColor = headerBlue;
-                e.Layout.Override.RowSelectorAppearance.BackColor2 = headerBlue;
-                e.Layout.Override.RowSelectorAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.None;
-                e.Layout.Override.RowSelectorAppearance.BorderColor = lightBlue; // Set row selector border to light blue
+                e.Layout.Override.RowSelectorAppearance.BackColor = GridHeaderBlueDark;
+                e.Layout.Override.RowSelectorAppearance.BackColor2 = GridHeaderBlue;
+                e.Layout.Override.RowSelectorAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
+                e.Layout.Override.RowSelectorAppearance.BorderColor = BorderBlue;
                 e.Layout.Override.RowSelectorHeaderStyle = Infragistics.Win.UltraWinGrid.RowSelectorHeaderStyle.ColumnChooserButton;
-                e.Layout.Override.RowSelectorWidth = 15; // Match FrmPurchaseDisplayDialog width
-                e.Layout.Override.RowSelectorNumberStyle = Infragistics.Win.UltraWinGrid.RowSelectorNumberStyle.None; // Remove numbers
+                e.Layout.Override.RowSelectorWidth = 20;
+                e.Layout.Override.RowSelectorNumberStyle = Infragistics.Win.UltraWinGrid.RowSelectorNumberStyle.RowIndex;
                 e.Layout.Override.ExpansionIndicator = Infragistics.Win.UltraWinGrid.ShowExpansionIndicator.Never;
 
                 // Set all cells to have white background (no alternate row coloring)
@@ -2078,8 +2746,8 @@ namespace PosBranch_Win.Transaction
                 e.Layout.Override.RowAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.None;
 
                 // Remove alternate row appearance (make all rows white)
-                e.Layout.Override.RowAlternateAppearance.BackColor = Color.White;
-                e.Layout.Override.RowAlternateAppearance.BackColor2 = Color.White;
+                e.Layout.Override.RowAlternateAppearance.BackColor = GridAltRow;
+                e.Layout.Override.RowAlternateAppearance.BackColor2 = GridAltRow;
                 e.Layout.Override.RowAlternateAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.None;
 
                 // Configure selected row appearance with bright blue highlight (matching frmdialForItemMaster)
@@ -2120,15 +2788,15 @@ namespace PosBranch_Win.Transaction
                 {
                     // Style track and buttons with blue colors
                     e.Layout.ScrollBarLook.ButtonAppearance.BackColor = headerBlue;
-                    e.Layout.ScrollBarLook.ButtonAppearance.BackColor2 = headerBlue;
-                    e.Layout.ScrollBarLook.ButtonAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.None;
-                    e.Layout.ScrollBarLook.TrackAppearance.BackColor = Color.White;
-                    e.Layout.ScrollBarLook.TrackAppearance.BackColor2 = Color.White;
+                    e.Layout.ScrollBarLook.ButtonAppearance.BackColor2 = GridHeaderBlueDark;
+                    e.Layout.ScrollBarLook.ButtonAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
+                    e.Layout.ScrollBarLook.TrackAppearance.BackColor = Color.FromArgb(225, 236, 246);
+                    e.Layout.ScrollBarLook.TrackAppearance.BackColor2 = Color.FromArgb(225, 236, 246);
                     e.Layout.ScrollBarLook.TrackAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.None;
-                    e.Layout.ScrollBarLook.TrackAppearance.BorderColor = lightBlue;
+                    e.Layout.ScrollBarLook.TrackAppearance.BorderColor = BorderBlue;
                     e.Layout.ScrollBarLook.ThumbAppearance.BackColor = headerBlue;
-                    e.Layout.ScrollBarLook.ThumbAppearance.BackColor2 = headerBlue;
-                    e.Layout.ScrollBarLook.ThumbAppearance.BorderColor = headerBlue;
+                    e.Layout.ScrollBarLook.ThumbAppearance.BackColor2 = GridHeaderBlueDark;
+                    e.Layout.ScrollBarLook.ThumbAppearance.BorderColor = BorderBlue;
                 }
 
                 // Disable filter indicators and other unnecessary features
@@ -2145,10 +2813,10 @@ namespace PosBranch_Win.Transaction
                     {
                         // Customize column header with solid blue color
                         col.Header.Appearance.BackColor = headerBlue;
-                        col.Header.Appearance.BackColor2 = headerBlue;
-                        col.Header.Appearance.BackGradientStyle = Infragistics.Win.GradientStyle.None;
+                        col.Header.Appearance.BackColor2 = GridHeaderBlueDark;
+                        col.Header.Appearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
                         col.Header.Appearance.ForeColor = Color.White;
-                        col.Header.Appearance.BorderColor = lightBlue; // Set header border to light blue
+                        col.Header.Appearance.BorderColor = GridRowLine;
                         col.Header.Appearance.TextHAlign = Infragistics.Win.HAlign.Center;
                         col.Header.Appearance.TextVAlign = Infragistics.Win.VAlign.Middle;
                         col.Header.Appearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.False; // Change from bold to regular
@@ -2159,7 +2827,7 @@ namespace PosBranch_Win.Transaction
                         // Set cell appearance with solid borders and light blue color
                         col.CellAppearance.TextVAlign = Infragistics.Win.VAlign.Middle;
                         col.CellAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.False;
-                        col.CellAppearance.BorderColor = lightBlue; // Set cell borders to light blue
+                        col.CellAppearance.BorderColor = GridRowLine;
 
                         // Format numeric columns
                         if (col.DataType == typeof(decimal) || col.DataType == typeof(float) ||
@@ -2172,6 +2840,8 @@ namespace PosBranch_Win.Transaction
 
                     ApplyLockedPurchaseGridColumns(band);
                 }
+
+                RefreshGridColumnTheme(ultraGrid1);
             }
             catch (Exception ex)
             {
@@ -4597,14 +5267,14 @@ namespace PosBranch_Win.Transaction
                     return;
                 }
 
-                if (CmboVendor.SelectedValue == null)
+                if (CmboVendor.Value == null)
                 {
                     MessageBox.Show("Please select a vendor", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     CmboVendor.Focus();
                     return;
                 }
 
-                if (CmboPayment.SelectedValue == null)
+                if (CmboPayment.Value == null)
                 {
                     MessageBox.Show("Please select a payment mode", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     CmboPayment.Focus();
@@ -4619,9 +5289,9 @@ namespace PosBranch_Win.Transaction
                 }
 
                 // Store vendor ID in textBox1
-                if (CmboVendor.SelectedValue != null)
+                if (CmboVendor.Value != null)
                 {
-                    textBox1.Text = CmboVendor.SelectedValue.ToString();
+                    textBox1.Text = CmboVendor.Value.ToString();
                 }
 
                 // Setup purchase master data
@@ -4630,13 +5300,13 @@ namespace PosBranch_Win.Transaction
                 // Get FinYearId - returns 0 if not found, repository will handle getting it from database
                 ObjPurchaseMaster.FinYearId = GetFinYearId();
                 ObjPurchaseMaster.BranchName = CmboBranch.Text;
-                ObjPurchaseMaster.PurchaseDate = dtpPurchaseDate.Value;
+                ObjPurchaseMaster.PurchaseDate = Convert.ToDateTime(dtpPurchaseDate.Value);
                 ObjPurchaseMaster.InvoiceNo = txtInvoiceNo.Text;
-                ObjPurchaseMaster.InvoiceDate = DtpInoviceDate.Value;
-                ObjPurchaseMaster.LedgerID = Convert.ToInt32(CmboVendor.SelectedValue);
-                ObjPurchaseMaster.VendorName = CmboVendor.GetItemText(CmboVendor.SelectedItem);
-                ObjPurchaseMaster.PaymodeID = Convert.ToInt32(CmboPayment.SelectedValue);
-                ObjPurchaseMaster.Paymode = CmboPayment.GetItemText(CmboPayment.SelectedItem);
+                ObjPurchaseMaster.InvoiceDate = Convert.ToDateTime(DtpInoviceDate.Value);
+                ObjPurchaseMaster.LedgerID = Convert.ToInt32(CmboVendor.Value);
+                ObjPurchaseMaster.VendorName = CmboVendor.Text;
+                ObjPurchaseMaster.PaymodeID = Convert.ToInt32(CmboPayment.Value);
+                ObjPurchaseMaster.Paymode = CmboPayment.Text;
                 ObjPurchaseMaster.PaymodeLedgerID = 0;
                 ObjPurchaseMaster.CreditPeriod = 0;
                 ObjPurchaseMaster.SubTotal = SubTotal;
@@ -4779,7 +5449,7 @@ namespace PosBranch_Win.Transaction
                     // Use FinYearId from ObjPurchaseMaster (already set with error handling above)
                     ObjPurchaseDetails.FinYearId = ObjPurchaseMaster.FinYearId;
                     ObjPurchaseDetails.BranchName = CmboBranch.Text;
-                    ObjPurchaseDetails.PurchaseDate = dtpPurchaseDate.Value;
+                    ObjPurchaseDetails.PurchaseDate = Convert.ToDateTime(dtpPurchaseDate.Value);
                     ObjPurchaseDetails.InvoiceNo = txtInvoiceNo.Text;
                     ObjPurchaseDetails.SlNo = Convert.ToInt32(dt.Rows[0]["SLNO"]);
                     ObjPurchaseDetails.ItemID = Convert.ToInt32(dt.Rows[0]["ItemId"]);
@@ -4852,11 +5522,8 @@ namespace PosBranch_Win.Transaction
             DtpInoviceDate.Value = DateTime.Today;
 
             // Reset grid
-            DataTable dt = ultraGrid1.DataSource as DataTable;
-            if (dt != null)
-            {
-                dt.Rows.Clear();
-            }
+            ClearUltraGrid1Contents();
+            ClearUltraGrid2Contents();
 
             // Reset calculation values
             SubTotal = 0;
@@ -4886,25 +5553,49 @@ namespace PosBranch_Win.Transaction
             barcodeFocus();
         }
 
-        private void lblBranch_Click(object sender, EventArgs e)
+        private void WireGridClearButton(string buttonName, Action clearAction)
         {
+            if (clearAction == null || string.IsNullOrWhiteSpace(buttonName))
+                return;
 
+            Control clearButton = this.Controls.Find(buttonName, true).FirstOrDefault();
+            if (clearButton != null)
+            {
+                clearButton.Click += (s, e) => clearAction();
+            }
         }
 
-        private void groupBoxMain_Enter(object sender, EventArgs e)
+        private void ClearUltraGrid1Contents()
         {
+            DataTable dt = ultraGrid1.DataSource as DataTable;
+            if (dt != null)
+            {
+                dt.Rows.Clear();
+            }
 
+            ultraGrid1.ActiveRow = null;
+            ultraGrid1.Selected.Rows.Clear();
+            UpdateNetAmtColumnVisibility();
+            CaluateTotals();
         }
 
-        private void ultraPanel1_PaintClient(object sender, PaintEventArgs e)
+        private void ClearUltraGrid2Contents()
         {
+            DataTable purchaseOrderTable = ultraGrid2.DataSource as DataTable;
+            if (purchaseOrderTable != null)
+            {
+                purchaseOrderTable.Rows.Clear();
+            }
+            else
+            {
+                ultraGrid2.DataSource = null;
+            }
 
+            ultraGrid2.ActiveRow = null;
+            ultraGrid2.Selected.Rows.Clear();
+            UpdateUltraGrid2FooterValues();
         }
 
-        private void lblPayedAmt_Click(object sender, EventArgs e)
-        {
-
-        }
 
         private void txtRoundOff_TextChanged(object sender, EventArgs e)
         {
@@ -5149,9 +5840,9 @@ namespace PosBranch_Win.Transaction
 
                 // Pass the selected TaxType from comboBox1 to the dialog
                 string selectedTaxType = "ALL"; // Default to ALL
-                if (comboBox1.SelectedItem != null)
+                if (!string.IsNullOrWhiteSpace(comboBox1.Text))
                 {
-                    selectedTaxType = comboBox1.SelectedItem.ToString();
+                    selectedTaxType = comboBox1.Text;
                 }
                 itemDialog.TaxTypeFilter = selectedTaxType;
 
@@ -5224,7 +5915,7 @@ namespace PosBranch_Win.Transaction
                 string vendorName = vendorDialog.SelectedVendorName;
 
                 // Set selected vendor to combo box
-                CmboVendor.SelectedValue = vendorId;
+                CmboVendor.Value = vendorId;
 
                 // Update textBox1 with vendor ID
                 textBox1.Text = vendorId.ToString();
@@ -5244,6 +5935,314 @@ namespace PosBranch_Win.Transaction
                 // Calculate totals
                 this.CaluateTotals();
             }
+        }
+
+        private void ShowPurchaseOrderDialog()
+        {
+            try
+            {
+                int vendorId = GetSelectedVendorIdForPurchaseOrder();
+                if (vendorId <= 0)
+                {
+                    MessageBox.Show("Please select a vendor first.", "Purchase Order", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                using (frmPurchaseOrderDig dialog = new frmPurchaseOrderDig())
+                {
+                    dialog.FilterLedgerId = vendorId;
+                    if (dialog.ShowDialog(this) == DialogResult.OK && dialog.SelectedPurchaseOrderId > 0)
+                    {
+                        LoadPurchaseOrderIntoUltraGrid2(dialog.SelectedPurchaseOrderId);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error opening purchase order lookup: " + ex.Message, "Purchase Order", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void LoadPurchaseOrderIntoUltraGrid2(int purchaseOrderId)
+        {
+            try
+            {
+                PurchaseOrderLoadResult result = _purchaseOrderRepository.GetPurchaseOrderById(purchaseOrderId);
+                if (result == null || result.Master == null)
+                {
+                    MessageBox.Show("Unable to load the selected purchase order.", "Purchase Order", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                ultraGrid2.DataSource = BuildPurchaseOrderGridTable(result.Details);
+                ConfigureUltraGrid2Theme();
+                UpdateUltraGrid2FooterValues();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading purchase order: " + ex.Message, "Purchase Order", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private static DataTable BuildPurchaseOrderGridTable(IEnumerable<PurchaseOrderDetail> details)
+        {
+            DataTable table = new DataTable();
+            table.Columns.Add("SLNO", typeof(int));
+            table.Columns.Add("BarCode", typeof(string));
+            table.Columns.Add("Description", typeof(string));
+            table.Columns.Add("Unit", typeof(string));
+            table.Columns.Add("Packing", typeof(float));
+            table.Columns.Add("Cost", typeof(float));
+            table.Columns.Add("Qty", typeof(float));
+            table.Columns.Add("TaxPer", typeof(float));
+            table.Columns.Add("TaxAmt", typeof(float));
+            table.Columns.Add("NetAmt", typeof(float));
+            table.Columns.Add("ItemId", typeof(int));
+            table.Columns.Add("UnitId", typeof(int));
+            table.Columns.Add("TaxType", typeof(string));
+
+            if (details == null)
+                return table;
+
+            int rowNo = 1;
+            foreach (PurchaseOrderDetail detail in details)
+            {
+                if (detail == null)
+                    continue;
+
+                DataRow row = table.NewRow();
+                row["SLNO"] = rowNo++;
+                row["BarCode"] = detail.Barcode ?? string.Empty;
+                row["Description"] = detail.ItemName ?? string.Empty;
+                row["Unit"] = detail.Unit ?? string.Empty;
+                row["Packing"] = Convert.ToSingle(detail.Packing);
+                row["Cost"] = Convert.ToSingle(detail.Cost);
+                row["Qty"] = Convert.ToSingle(detail.Qty);
+                row["TaxPer"] = Convert.ToSingle(detail.TaxPer);
+                row["TaxAmt"] = Convert.ToSingle(detail.TaxAmt);
+                row["NetAmt"] = Convert.ToSingle(detail.TotalSP + detail.TaxAmt);
+                row["ItemId"] = detail.ItemID;
+                row["UnitId"] = detail.UnitId;
+                row["TaxType"] = detail.TaxType ?? string.Empty;
+                table.Rows.Add(row);
+            }
+
+            return table;
+        }
+
+        private int GetSelectedVendorIdForPurchaseOrder()
+        {
+            int vendorId;
+            if (int.TryParse(textBox1.Text, out vendorId) && vendorId > 0)
+                return vendorId;
+
+            try
+            {
+                if (CmboVendor.Value != null)
+                {
+                    vendorId = Convert.ToInt32(CmboVendor.Value);
+                    if (vendorId > 0)
+                        return vendorId;
+                }
+            }
+            catch
+            {
+            }
+
+            return 0;
+        }
+
+        private void LoadSelectedPurchaseOrderItemToPurchaseGrid()
+        {
+            if (ultraGrid2.ActiveRow == null || !ultraGrid2.ActiveRow.IsDataRow)
+            {
+                MessageBox.Show("Please select a purchase order item first.", "Purchase Order", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            ImportPurchaseOrderRowToPurchaseGrid(ultraGrid2.ActiveRow, true);
+        }
+
+        private void LoadAllPurchaseOrderItemsToPurchaseGrid()
+        {
+            if (ultraGrid2.Rows == null || ultraGrid2.Rows.Count == 0)
+            {
+                MessageBox.Show("There are no purchase order items to load.", "Purchase Order", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            foreach (UltraGridRow row in ultraGrid2.Rows)
+            {
+                if (row != null && row.IsDataRow)
+                    ImportPurchaseOrderRowToPurchaseGrid(row, false);
+            }
+
+            FinalizePurchaseOrderImport();
+            barcodeFocus();
+        }
+
+        private void ImportPurchaseOrderRowToPurchaseGrid(UltraGridRow sourceRow, bool flashBarcode)
+        {
+            if (sourceRow == null)
+                return;
+
+            DataTable table = ultraGrid1.DataSource as DataTable;
+            if (table == null)
+                return;
+
+            string barcode = Convert.ToString(sourceRow.Cells["BarCode"].Value) ?? string.Empty;
+            float qty = GetRowFloat(sourceRow, "Qty");
+            if (qty <= 0)
+                qty = 1f;
+
+            DataRow existingRow = table.AsEnumerable().FirstOrDefault(row =>
+                string.Equals(Convert.ToString(row["BarCode"]), barcode, StringComparison.OrdinalIgnoreCase));
+
+            if (existingRow != null)
+            {
+                float existingQty = Convert.ToSingle(existingRow["Qty"]);
+                float updatedQty = existingQty + qty;
+                existingRow["Qty"] = updatedQty;
+
+                float costWithTax = GetDataRowFloat(existingRow, "Cost");
+                if (costWithTax <= 0)
+                    costWithTax = GetRowFloat(sourceRow, "Cost");
+
+                RecalculateTaxForExistingItem(existingRow, costWithTax, updatedQty);
+            }
+            else
+            {
+                DataRow newRow = table.NewRow();
+                string taxType = NormalizeTaxType(GetRowString(sourceRow, "TaxType"));
+                float costWithTax = GetRowFloat(sourceRow, "Cost");
+                float taxPer = GetRowFloat(sourceRow, "TaxPer");
+                float taxAmt = GetRowFloat(sourceRow, "TaxAmt");
+                float baseCost = costWithTax;
+
+                if (DataBase.IsTaxEnabled && taxPer > 0)
+                {
+                    if (taxType == "incl")
+                    {
+                        baseCost = qty > 0 ? costWithTax - (taxAmt / qty) : costWithTax;
+                    }
+                    else if (taxType == "excl")
+                    {
+                        baseCost = costWithTax;
+                    }
+                }
+
+                newRow["SLNO"] = table.Rows.Count + 1;
+                newRow["BarCode"] = barcode;
+                newRow["Description"] = GetRowString(sourceRow, "Description");
+                newRow["Unit"] = GetRowString(sourceRow, "Unit");
+                newRow["Packing"] = GetRowFloat(sourceRow, "Packing");
+                newRow["RetailPrice"] = 0f;
+                newRow["Free"] = 0f;
+                newRow["SellingPrice"] = 0f;
+                newRow["UnitSP"] = 0f;
+                newRow["BaseCost"] = baseCost;
+                newRow["Cost"] = costWithTax;
+                newRow["Qty"] = qty;
+                newRow["Gross"] = 0f;
+                newRow["NetAmt"] = 0f;
+                newRow["NewBaseCost"] = 0f;
+                newRow["ItemId"] = GetRowInt(sourceRow, "ItemId");
+                newRow["UnitId"] = GetRowInt(sourceRow, "UnitId");
+                newRow["UnitPrize"] = 0f;
+                newRow["MarginPer"] = 0f;
+                newRow["MarginAmt"] = 0f;
+                newRow["TaxPer"] = DataBase.IsTaxEnabled ? taxPer : 0f;
+                newRow["TaxAmt"] = DataBase.IsTaxEnabled ? taxAmt : 0f;
+                newRow["TaxType"] = taxType;
+                newRow["WholeSalePrice"] = 0f;
+                newRow["CreditPrice"] = 0f;
+                newRow["CardPrice"] = 0f;
+                ApplyItemStatusToPurchaseRow(newRow, null);
+                table.Rows.Add(newRow);
+
+                RecalculateTaxForExistingItem(newRow, costWithTax, qty);
+            }
+
+            RenumberPurchaseGridRows(table);
+
+            if (flashBarcode)
+            {
+                FinalizePurchaseOrderImport();
+                FlashBarcode(barcode);
+            }
+        }
+
+        private void FinalizePurchaseOrderImport()
+        {
+            UpdateNetAmtColumnVisibility();
+            UpdateGrossColumnVisibility();
+            RecalculateNewBaseCostForAllRows();
+            CaluateTotals();
+            ultraGrid1.Rows.Refresh(RefreshRow.FireInitializeRow);
+        }
+
+        private void RenumberPurchaseGridRows(DataTable table)
+        {
+            int rowNo = 1;
+            foreach (DataRow row in table.Rows)
+            {
+                row["SLNO"] = rowNo++;
+            }
+        }
+
+        private void FlashBarcode(string barcode)
+        {
+            if (_barcodeFlashTimer == null)
+            {
+                _barcodeFlashTimer = new Timer();
+                _barcodeFlashTimer.Interval = 1000;
+                _barcodeFlashTimer.Tick += (s, e) =>
+                {
+                    _barcodeFlashTimer.Stop();
+                    barcodeFocus();
+                };
+            }
+
+            _barcodeFlashTimer.Stop();
+            txtBarcode.Text = barcode ?? string.Empty;
+            txtBarcode.Focus();
+            txtBarcode.SelectionStart = txtBarcode.Text.Length;
+            _barcodeFlashTimer.Start();
+        }
+
+        private static float GetRowFloat(UltraGridRow row, string columnKey)
+        {
+            if (row == null || !row.Cells.Exists(columnKey) || row.Cells[columnKey].Value == null || row.Cells[columnKey].Value == DBNull.Value)
+                return 0f;
+
+            float value;
+            return float.TryParse(Convert.ToString(row.Cells[columnKey].Value), out value) ? value : 0f;
+        }
+
+        private static int GetRowInt(UltraGridRow row, string columnKey)
+        {
+            if (row == null || !row.Cells.Exists(columnKey) || row.Cells[columnKey].Value == null || row.Cells[columnKey].Value == DBNull.Value)
+                return 0;
+
+            int value;
+            return int.TryParse(Convert.ToString(row.Cells[columnKey].Value), out value) ? value : 0;
+        }
+
+        private static string GetRowString(UltraGridRow row, string columnKey)
+        {
+            if (row == null || !row.Cells.Exists(columnKey) || row.Cells[columnKey].Value == null || row.Cells[columnKey].Value == DBNull.Value)
+                return string.Empty;
+
+            return Convert.ToString(row.Cells[columnKey].Value) ?? string.Empty;
+        }
+
+        private static float GetDataRowFloat(DataRow row, string columnKey)
+        {
+            if (row == null || row.Table == null || !row.Table.Columns.Contains(columnKey) || row[columnKey] == null || row[columnKey] == DBNull.Value)
+                return 0f;
+
+            float value;
+            return float.TryParse(Convert.ToString(row[columnKey]), out value) ? value : 0f;
         }
 
         private void label4_Click(object sender, EventArgs e)
@@ -5301,29 +6300,16 @@ namespace PosBranch_Win.Transaction
                         txtPurchaseNo.Text = "GRN-" + pm.PurchaseNo.ToString();
                         dtpPurchaseDate.Value = Convert.ToDateTime(pm.PurchaseDate.ToShortDateString());
 
-                        // Set vendor combobox by LedgerID value
-                        for (int i = 0; i < CmboVendor.Items.Count; i++)
-                        {
-                            CmboVendor.SelectedIndex = i;
-                            if (CmboVendor.SelectedValue != null &&
-                                CmboVendor.SelectedValue.ToString() == pm.LedgerID.ToString())
-                                break;
-                        }
+                        CmboVendor.Value = pm.LedgerID;
 
                         // Update textBox1 with vendor ID
-                        if (CmboVendor.SelectedValue != null)
+                        if (CmboVendor.Value != null)
                         {
-                            textBox1.Text = CmboVendor.SelectedValue.ToString();
+                            textBox1.Text = CmboVendor.Value.ToString();
                         }
 
                         // Set payment mode combobox by PaymodeID value
-                        for (int i = 0; i < CmboPayment.Items.Count; i++)
-                        {
-                            CmboPayment.SelectedIndex = i;
-                            if (CmboPayment.SelectedValue != null &&
-                                CmboPayment.SelectedValue.ToString() == pm.PaymodeID.ToString())
-                                break;
-                        }
+                        CmboPayment.Value = pm.PaymodeID;
 
                         txtInvoiceNo.Text = pm.InvoiceNo.ToString();
                         DtpInoviceDate.Value = Convert.ToDateTime(pm.InvoiceDate.ToShortDateString());
@@ -5593,7 +6579,7 @@ namespace PosBranch_Win.Transaction
                     return;
                 }
 
-                if (CmboVendor.SelectedValue == null)
+                if (CmboVendor.Value == null)
                 {
                     MessageBox.Show("Please select a vendor", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     CmboVendor.Focus();
@@ -5601,9 +6587,9 @@ namespace PosBranch_Win.Transaction
                 }
 
                 // Store vendor ID in textBox1
-                if (CmboVendor.SelectedValue != null)
+                if (CmboVendor.Value != null)
                 {
-                    textBox1.Text = CmboVendor.SelectedValue.ToString();
+                    textBox1.Text = CmboVendor.Value.ToString();
                 }
 
                 // Make sure we have the Pid value for update
@@ -5624,13 +6610,13 @@ namespace PosBranch_Win.Transaction
                     ObjPurchaseMaster.FinYearId = GetFinYearId();
                 }
                 ObjPurchaseMaster.BranchName = CmboBranch.Text;
-                ObjPurchaseMaster.PurchaseDate = dtpPurchaseDate.Value;
+                ObjPurchaseMaster.PurchaseDate = Convert.ToDateTime(dtpPurchaseDate.Value);
                 ObjPurchaseMaster.InvoiceNo = txtInvoiceNo.Text;
-                ObjPurchaseMaster.InvoiceDate = DtpInoviceDate.Value;
-                ObjPurchaseMaster.LedgerID = Convert.ToInt32(CmboVendor.SelectedValue);
-                ObjPurchaseMaster.VendorName = CmboVendor.GetItemText(CmboVendor.SelectedItem);
-                ObjPurchaseMaster.PaymodeID = Convert.ToInt32(CmboPayment.SelectedValue);
-                ObjPurchaseMaster.Paymode = CmboPayment.GetItemText(CmboPayment.SelectedItem);
+                ObjPurchaseMaster.InvoiceDate = Convert.ToDateTime(DtpInoviceDate.Value);
+                ObjPurchaseMaster.LedgerID = Convert.ToInt32(CmboVendor.Value);
+                ObjPurchaseMaster.VendorName = CmboVendor.Text;
+                ObjPurchaseMaster.PaymodeID = Convert.ToInt32(CmboPayment.Value);
+                ObjPurchaseMaster.Paymode = CmboPayment.Text;
                 ObjPurchaseMaster.PaymodeLedgerID = 0;
                 ObjPurchaseMaster.CreditPeriod = 0;
                 ObjPurchaseMaster.SubTotal = SubTotal;
@@ -5762,7 +6748,7 @@ namespace PosBranch_Win.Transaction
                     ObjPurchaseDetails.BranchID = GetBranchId();
                     ObjPurchaseDetails.FinYearId = ObjPurchaseMaster.FinYearId;
                     ObjPurchaseDetails.BranchName = CmboBranch.Text;
-                    ObjPurchaseDetails.PurchaseDate = dtpPurchaseDate.Value;
+                    ObjPurchaseDetails.PurchaseDate = Convert.ToDateTime(dtpPurchaseDate.Value);
                     ObjPurchaseDetails.InvoiceNo = txtInvoiceNo.Text;
                     ObjPurchaseDetails.SlNo = Convert.ToInt32(dt.Rows[0]["SLNO"]);
                     ObjPurchaseDetails.ItemID = Convert.ToInt32(dt.Rows[0]["ItemId"]);
@@ -6181,7 +7167,7 @@ namespace PosBranch_Win.Transaction
                     if (dataSource != null)
                     {
                         // Find the vendor directly without cycling through items
-                        CmboVendor.SelectedValue = vendorId;
+                        CmboVendor.Value = vendorId;
 
                         // Check if a valid vendor was found
                         if (CmboVendor.SelectedIndex == -1)
@@ -6254,11 +7240,11 @@ namespace PosBranch_Win.Transaction
             }
         }
 
-        private void CmboVendor_SelectedIndexChanged(object sender, EventArgs e)
+        private void CmboVendor_ValueChanged(object sender, EventArgs e)
         {
-            if (CmboVendor.SelectedValue != null)
+            if (CmboVendor.Value != null)
             {
-                textBox1.Text = CmboVendor.SelectedValue.ToString();
+                textBox1.Text = CmboVendor.Value.ToString();
             }
         }
 
@@ -6272,8 +7258,8 @@ namespace PosBranch_Win.Transaction
             }
 
             // Update background color based on content
-            textBox1.BackColor = !string.IsNullOrWhiteSpace(textBox1.Text) ?
-                defaultBackColor : mandatoryFieldColor;
+            SetEditorBackColor(textBox1, !string.IsNullOrWhiteSpace(textBox1.Text) ?
+                defaultBackColor : mandatoryFieldColor);
         }
 
         private void UltraGrid1_DoubleClickCell(object sender, Infragistics.Win.UltraWinGrid.DoubleClickCellEventArgs e)
@@ -7902,13 +8888,29 @@ namespace PosBranch_Win.Transaction
             return null;
         }
 
+
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void lblPurchaseNo_Click(object sender, EventArgs e)
+        {
+
+        }
+
+
+
+
+
         // Handler for vendor save event - refreshes vendor dropdown when a new vendor is created
         private void RefreshVendorDropdown()
         {
             try
             {
                 // Store currently selected vendor if any
-                object selectedVendorId = CmboVendor.SelectedValue;
+                object selectedVendorId = CmboVendor.Value;
 
                 // Reload vendor dropdown
                 VendorDDLGrids VendorDDLGrids = drop.VendorDDL();
@@ -7919,7 +8921,7 @@ namespace PosBranch_Win.Transaction
                 // Restore selection if vendor still exists
                 if (selectedVendorId != null)
                 {
-                    CmboVendor.SelectedValue = selectedVendorId;
+                    CmboVendor.Value = selectedVendorId;
                 }
             }
             catch (Exception ex)
