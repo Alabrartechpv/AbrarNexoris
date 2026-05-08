@@ -63,6 +63,7 @@ namespace PosBranch_Win
             new ReportNavigatorDefinition("Sales", "Sales Details", "Sales Details"),
             new ReportNavigatorDefinition("Sales", "Sales Return Report", "SalesReturn"),
             new ReportNavigatorDefinition("Sales", "Sales Profit", "SalesProfit"),
+            new ReportNavigatorDefinition("Sales", "Salesman Incentive Report", "SalesmanIncentiveReport"),
             new ReportNavigatorDefinition("Sales", "Daily Sales", "DSales"),
             new ReportNavigatorDefinition("Purchase", "Purchase Details", "Purchase Details"),
             new ReportNavigatorDefinition("Purchase", "Purchase Return Report", "PurchaseReturn"),
@@ -1961,6 +1962,11 @@ namespace PosBranch_Win
                 Reports.SalesReports.frmSalesProfit frmSalesProfit = new Reports.SalesReports.frmSalesProfit();
                 OpenFormInTab(frmSalesProfit, "Sales Profit");
             }
+            if (e.Tool.Key == "SalesmanIncentiveReport")
+            {
+                Reports.SalesReports.frmSalesmanIncentiveReport frmSalesmanIncentiveReport = new Reports.SalesReports.frmSalesmanIncentiveReport();
+                OpenFormInTab(frmSalesmanIncentiveReport, "Salesman Incentive Report");
+            }
             if (e.Tool.Key == "Purchase Details")
             {
 
@@ -3467,7 +3473,8 @@ namespace PosBranch_Win
                 if (ultraToolbarsManager1.Tools.Exists(keyToExecute) ||
                     keyToExecute == "AuditTrail" ||
                     keyToExecute == "VendorDNPaymentReport" ||
-                    keyToExecute == "CustomerReceiptReport")
+                    keyToExecute == "CustomerReceiptReport" ||
+                    keyToExecute == "SalesmanIncentiveReport")
                 {
                     Infragistics.Win.UltraWinToolbars.ToolBase toolToExecute;
 
