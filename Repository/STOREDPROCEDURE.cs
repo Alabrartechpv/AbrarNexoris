@@ -90,6 +90,7 @@ namespace Repository
         public static string _POS_StockReportAdvanced = "_Test16";
         public static string POS_RolePermission = "POS_RolePermission";
         public static string _SalesProfitReport = "SalesProfitReport";
+        public static string _POS_Salesman_Incentive_Report = "_POS_Salesman_Incentive_Report";
         public static string _POS_TradingPLAccount = "POS_TradingPLAccount";
         public static string _POS_BalanceSheet = "POS_BalanceSheet";
         public static string _CustomerOutstandingReport = "_CustomerOutstandingReport";

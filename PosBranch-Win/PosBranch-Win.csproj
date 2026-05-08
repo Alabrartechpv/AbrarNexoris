@@ -982,6 +982,12 @@
     <Compile Include="Reports\SalesReports\frmSalesProfit.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Reports\SalesReports\frmSalesmanIncentiveReport.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reports\SalesReports\frmSalesmanIncentiveReport.Designer.cs">
+      <DependentUpon>frmSalesmanIncentiveReport.cs</DependentUpon>
+    </Compile>
     <Compile Include="Reports\SalesReports\frmSalesProfit.Designer.cs">
       <DependentUpon>frmSalesProfit.cs</DependentUpon>
     </Compile>
