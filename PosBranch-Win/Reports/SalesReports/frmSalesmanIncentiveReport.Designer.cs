@@ -92,6 +92,9 @@ namespace PosBranch_Win.Reports.SalesReports
             // 
             // pnlMain
             // 
+            // 
+            // pnlMain.ClientArea
+            // 
             this.pnlMain.ClientArea.Controls.Add(this.pnlContent);
             this.pnlMain.ClientArea.Controls.Add(this.pnlFooter);
             this.pnlMain.ClientArea.Controls.Add(this.pnlToolbar);
@@ -103,6 +106,9 @@ namespace PosBranch_Win.Reports.SalesReports
             this.pnlMain.TabIndex = 0;
             // 
             // pnlContent
+            // 
+            // 
+            // pnlContent.ClientArea
             // 
             this.pnlContent.ClientArea.Controls.Add(this.splitMain);
             this.pnlContent.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -117,7 +123,13 @@ namespace PosBranch_Win.Reports.SalesReports
             this.splitMain.Location = new System.Drawing.Point(0, 0);
             this.splitMain.Name = "splitMain";
             this.splitMain.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitMain.Panel1
+            // 
             this.splitMain.Panel1.Controls.Add(this.grpSummary);
+            // 
+            // splitMain.Panel2
+            // 
             this.splitMain.Panel2.Controls.Add(this.grpDetails);
             this.splitMain.Size = new System.Drawing.Size(1244, 471);
             this.splitMain.SplitterDistance = 183;
@@ -160,6 +172,9 @@ namespace PosBranch_Win.Reports.SalesReports
             this.gridDetails.TabIndex = 0;
             // 
             // pnlFooter
+            // 
+            // 
+            // pnlFooter.ClientArea
             // 
             this.pnlFooter.ClientArea.Controls.Add(this.lblIncentiveValue);
             this.pnlFooter.ClientArea.Controls.Add(this.lblIncentiveCaption);
@@ -223,6 +238,9 @@ namespace PosBranch_Win.Reports.SalesReports
             // 
             // pnlToolbar
             // 
+            // 
+            // pnlToolbar.ClientArea
+            // 
             this.pnlToolbar.ClientArea.Controls.Add(this.btnHideSelection);
             this.pnlToolbar.ClientArea.Controls.Add(this.btnPreviewReport);
             this.pnlToolbar.ClientArea.Controls.Add(this.btnPreviewGrid);
@@ -235,7 +253,9 @@ namespace PosBranch_Win.Reports.SalesReports
             // 
             // btnHideSelection
             // 
-            this.btnHideSelection.Location = new System.Drawing.Point(393, 12);
+            this.btnHideSelection.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnHideSelection.Location = new System.Drawing.Point(1127, 12);
             this.btnHideSelection.Name = "btnHideSelection";
             this.btnHideSelection.Size = new System.Drawing.Size(114, 28);
             this.btnHideSelection.TabIndex = 3;
@@ -314,7 +334,7 @@ namespace PosBranch_Win.Reports.SalesReports
             this.lblIncentivePercent.AutoSize = true;
             this.lblIncentivePercent.Location = new System.Drawing.Point(883, 93);
             this.lblIncentivePercent.Name = "lblIncentivePercent";
-            this.lblIncentivePercent.Size = new System.Drawing.Size(89, 13);
+            this.lblIncentivePercent.Size = new System.Drawing.Size(62, 13);
             this.lblIncentivePercent.TabIndex = 20;
             this.lblIncentivePercent.Text = "Incentive %";
             // 
@@ -378,7 +398,7 @@ namespace PosBranch_Win.Reports.SalesReports
             this.lblGroup.AutoSize = true;
             this.lblGroup.Location = new System.Drawing.Point(25, 93);
             this.lblGroup.Name = "lblGroup";
-            this.lblGroup.Size = new System.Drawing.Size(39, 13);
+            this.lblGroup.Size = new System.Drawing.Size(36, 13);
             this.lblGroup.TabIndex = 12;
             this.lblGroup.Text = "Group";
             // 
@@ -410,7 +430,7 @@ namespace PosBranch_Win.Reports.SalesReports
             this.lblSalesman.AutoSize = true;
             this.lblSalesman.Location = new System.Drawing.Point(771, 50);
             this.lblSalesman.Name = "lblSalesman";
-            this.lblSalesman.Size = new System.Drawing.Size(58, 13);
+            this.lblSalesman.Size = new System.Drawing.Size(53, 13);
             this.lblSalesman.TabIndex = 8;
             this.lblSalesman.Text = "Salesman";
             // 
@@ -443,7 +463,7 @@ namespace PosBranch_Win.Reports.SalesReports
             this.lblDatePreset.AutoSize = true;
             this.lblDatePreset.Location = new System.Drawing.Point(313, 50);
             this.lblDatePreset.Name = "lblDatePreset";
-            this.lblDatePreset.Size = new System.Drawing.Size(63, 13);
+            this.lblDatePreset.Size = new System.Drawing.Size(61, 13);
             this.lblDatePreset.TabIndex = 4;
             this.lblDatePreset.Text = "Quick Date";
             // 
@@ -521,6 +541,7 @@ namespace PosBranch_Win.Reports.SalesReports
             ((System.ComponentModel.ISupportInitialize)(this.dtToDate)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dtFromDate)).EndInit();
             this.ResumeLayout(false);
+
         }
 
         private Infragistics.Win.Misc.UltraPanel pnlMain;
