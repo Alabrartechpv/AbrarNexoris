@@ -37,6 +37,7 @@ namespace PosBranch_Win.Reports.InventoryReport
         private CheckedListBox _columnChooserListBox;
         private ContextMenuStrip _gridMenu;
         private bool _layoutLoaded;
+        private bool _suppressGridCellUpdate;
 
         private const string GridLayoutFileName = "SmartReorderGridLayout.xml";
         private string GridLayoutPath => Path.Combine(Application.StartupPath, GridLayoutFileName);
@@ -106,17 +107,14 @@ namespace PosBranch_Win.Reports.InventoryReport
         private void InitializeRuntimeAppearance()
         {
             ConfigureButton(btnViewGrid, Color.FromArgb(72, 122, 214), Color.FromArgb(95, 145, 230));
-            ConfigureButton(btnPreviewGrid, Color.FromArgb(94, 116, 202), Color.FromArgb(121, 141, 222));
-            ConfigureButton(btnPreviewReport, Color.FromArgb(74, 130, 176), Color.FromArgb(104, 155, 196));
+         
             ConfigureButton(btnGeneratePO, Color.FromArgb(86, 118, 208), Color.FromArgb(117, 146, 225));
             ConfigureButton(btnGenBranchPO, Color.FromArgb(86, 118, 208), Color.FromArgb(117, 146, 225));
             ConfigureButton(btnRefreshStats, Color.FromArgb(67, 160, 71), Color.FromArgb(102, 187, 106));
-            ConfigureButton(btnColumnChooser, Color.FromArgb(99, 116, 135), Color.FromArgb(129, 146, 165));
             ConfigureButton(btnHideSelection, Color.FromArgb(84, 120, 190), Color.FromArgb(112, 148, 214));
 
             ConfigureGridAppearance();
             _toolTip.SetToolTip(btnRefreshStats, "Refresh ADS snapshot from the database.");
-            _toolTip.SetToolTip(btnColumnChooser, "Show or hide columns.");
         }
 
         private void ConfigureButton(Infragistics.Win.Misc.UltraButton button, Color startColor, Color endColor)
@@ -297,14 +295,16 @@ namespace PosBranch_Win.Reports.InventoryReport
             {
                 int companyId = CurrentCompanyId;
                 int branchId = CurrentBranchId;
+                string barcodeFilter = txtFromBarcode.Text.Trim();
+                string toBarcodeFilter = string.IsNullOrWhiteSpace(barcodeFilter) ? null : barcodeFilter;
 
                 IEnumerable<SmartReorderItemModel> data = _repository.GetSmartReorderSuggestions(
                     companyId > 0 ? (int?)companyId : null,
                     branchId > 0 ? (int?)branchId : null,
                     ToNullableInt(GetSelectedValue(cmbCategory)),
                     ToNullableInt(GetSelectedValue(cmbGroup)),
-                    txtFromBarcode.Text.Trim(),
-                    txtToBarcode.Text.Trim());
+                    string.IsNullOrWhiteSpace(barcodeFilter) ? null : barcodeFilter,
+                    toBarcodeFilter);
 
                 _allRows = data.ToList();
                 ApplyClientFilters();
@@ -379,9 +379,20 @@ namespace PosBranch_Win.Reports.InventoryReport
 
         private void BtnGeneratePO_Click(object sender, EventArgs e)
         {
-            List<SmartReorderItemModel> selectedItems = _allRows
-                .Where(x => x.IsSelected && x.FinalQuantity > 0)
-                .ToList();
+            // Commit any pending edits in the grid
+            ultraGridMaster.UpdateData();
+
+            List<SmartReorderItemModel> selectedItems = new List<SmartReorderItemModel>();
+
+            // Only grab rows that are currently visible/filtered
+            foreach (UltraGridRow row in ultraGridMaster.Rows.GetFilteredInNonGroupByRows())
+            {
+                SmartReorderItemModel item = row.ListObject as SmartReorderItemModel;
+                if (item != null && item.IsSelected && item.FinalQuantity > 0)
+                {
+                    selectedItems.Add(item);
+                }
+            }
 
             if (selectedItems.Count == 0)
             {
@@ -564,7 +575,7 @@ namespace PosBranch_Win.Reports.InventoryReport
 
         private void UltraGridMaster_AfterCellUpdate(object sender, CellEventArgs e)
         {
-            if (e.Cell == null)
+            if (_suppressGridCellUpdate || e.Cell == null)
             {
                 return;
             }
@@ -577,7 +588,21 @@ namespace PosBranch_Win.Reports.InventoryReport
                     value = 0;
                 }
 
-                e.Cell.Value = value;
+                decimal existingValue;
+                if (decimal.TryParse(Convert.ToString(e.Cell.Value), out existingValue) && existingValue == value)
+                {
+                    return;
+                }
+
+                try
+                {
+                    _suppressGridCellUpdate = true;
+                    e.Cell.Value = value;
+                }
+                finally
+                {
+                    _suppressGridCellUpdate = false;
+                }
             }
         }
 

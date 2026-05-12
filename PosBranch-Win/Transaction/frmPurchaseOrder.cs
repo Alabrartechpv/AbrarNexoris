@@ -3,10 +3,12 @@ using Infragistics.Win.Misc;
 using Infragistics.Win.UltraWinGrid;
 using Infragistics.Win.UltraWinEditors;
 using ModelClass;
+using ModelClass.Master;
 using ModelClass.Report;
 using ModelClass.TransactionModels;
 using PosBranch_Win.DialogBox;
 using Repository;
+using Repository.MasterRepositry;
 using Repository.TransactionRepository;
 using System;
 using System.Collections.Generic;
@@ -48,6 +50,7 @@ namespace PosBranch_Win.Transaction
         private readonly Dictionary<string, string> _columnAggregations = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private readonly List<SmartReorderItemModel> _pendingSmartReorderItems = new List<SmartReorderItemModel>();
         private readonly List<PaymodeDDl> _paymentModes = new List<PaymodeDDl>();
+        private readonly ItemMasterRepository _itemMasterRepository = new ItemMasterRepository();
         private static readonly string[] DefaultPaymentTerms = { "Cash", "Credit", "30 Days", "60 Days" };
         private PurchaseOrderRepository _purchaseOrderRepository;
         private bool _gridInitialized;
@@ -367,6 +370,8 @@ namespace PosBranch_Win.Transaction
             table.Columns.Add("TaxCode", typeof(string));
             table.Columns.Add("SST", typeof(decimal));
             table.Columns.Add("TotalSST", typeof(decimal));
+            table.Columns.Add("Packing", typeof(decimal));
+            table.Columns.Add("BaseUnit", typeof(string));
 
             gridReport.DataSource = table;
             InitializeGridFooter();
@@ -408,6 +413,81 @@ namespace PosBranch_Win.Transaction
             };
         }
 
+        private sealed class SmartReorderPurchaseDefaults
+        {
+            public decimal UnitPrice { get; set; }
+            public decimal TaxPercent { get; set; }
+            public string TaxCode { get; set; } = string.Empty;
+            public decimal Packing { get; set; } = 1m;
+            public string BaseUnit { get; set; } = "Y";
+        }
+
+        private SmartReorderPurchaseDefaults GetSmartReorderPurchaseDefaults(SmartReorderItemModel item)
+        {
+            SmartReorderPurchaseDefaults defaults = new SmartReorderPurchaseDefaults();
+            if (item == null || item.ItemId <= 0)
+            {
+                return defaults;
+            }
+
+            try
+            {
+                List<ItemMasterPriceSettings> priceSettings = _itemMasterRepository.GetItemPriceSettings(item.ItemId);
+                if (priceSettings == null || priceSettings.Count == 0)
+                {
+                    return defaults;
+                }
+
+                ItemMasterPriceSettings match = null;
+
+                if (item.UnitId > 0)
+                {
+                    match = priceSettings.FirstOrDefault(x => x != null && x.UnitId == item.UnitId);
+                }
+
+                if (match == null && !string.IsNullOrWhiteSpace(item.Unit))
+                {
+                    match = priceSettings.FirstOrDefault(x =>
+                        x != null &&
+                        string.Equals((x.Unit ?? string.Empty).Trim(), item.Unit.Trim(), StringComparison.OrdinalIgnoreCase));
+                }
+
+                if (match == null && !string.IsNullOrWhiteSpace(item.Barcode))
+                {
+                    match = priceSettings.FirstOrDefault(x =>
+                        x != null &&
+                        string.Equals((x.BarCode ?? string.Empty).Trim(), item.Barcode.Trim(), StringComparison.OrdinalIgnoreCase));
+                }
+
+                if (match == null)
+                {
+                    match = priceSettings.FirstOrDefault(x =>
+                        x != null &&
+                        string.Equals(NormalizeBaseUnitValue(x.IsBaseUnit), "Y", StringComparison.OrdinalIgnoreCase));
+                }
+
+                if (match == null)
+                {
+                    match = priceSettings.FirstOrDefault(x => x != null);
+                }
+
+                if (match != null)
+                {
+                    defaults.UnitPrice = Convert.ToDecimal(match.Cost);
+                    defaults.TaxPercent = Convert.ToDecimal(match.TaxPer);
+                    defaults.TaxCode = match.TaxType ?? string.Empty;
+                    defaults.Packing = Convert.ToDecimal(match.Packing <= 0 ? 1d : match.Packing);
+                    defaults.BaseUnit = NormalizeBaseUnitValue(match.IsBaseUnit);
+                }
+            }
+            catch
+            {
+                // Keep safe defaults if price-settings lookup fails.
+            }
+
+            return defaults;
+        }
+
         private void AddOrMergeSmartReorderItem(DataTable table, SmartReorderItemModel item)
         {
             decimal quantity = item.FinalQuantity > 0 ? item.FinalQuantity : item.SuggestedQuantity;
@@ -419,6 +499,12 @@ namespace PosBranch_Win.Transaction
                 : item.ItemId.ToString();
             string description = string.IsNullOrWhiteSpace(item.ItemName) ? itemNo : item.ItemName.Trim();
             string uom = string.IsNullOrWhiteSpace(item.Unit) ? string.Empty : item.Unit.Trim();
+            SmartReorderPurchaseDefaults defaults = GetSmartReorderPurchaseDefaults(item);
+            decimal packing = defaults.Packing > 0 ? defaults.Packing : 1m;
+            decimal unitPrice = defaults.UnitPrice;
+            decimal amount = Math.Round(quantity * unitPrice, 2);
+            decimal totalSst = Math.Round(amount * defaults.TaxPercent / 100m, 2);
+            decimal baseQty = Math.Round(quantity * packing, 4);
 
             DataRow existingRow = null;
             foreach (DataRow row in table.Rows)
@@ -443,20 +529,21 @@ namespace PosBranch_Win.Transaction
                 newRow["UOM"] = uom;
                 newRow["QtyAvailable"] = item.CurrentStock;
                 newRow["Qty"] = quantity;
-                newRow["UPrice"] = 0m;
-                newRow["Amount"] = 0m;
+                newRow["UPrice"] = unitPrice;
+                newRow["Amount"] = amount;
                 newRow["Remark"] = "Smart Reorder";
-                newRow["BaseQty"] = quantity;
+                newRow["BaseQty"] = baseQty;
                 newRow["BaseQtyReceived"] = 0m;
-                newRow["TaxCode"] = string.Empty;
-                newRow["SST"] = 0m;
-                newRow["TotalSST"] = 0m;
+                newRow["TaxCode"] = defaults.TaxCode;
+                newRow["SST"] = defaults.TaxPercent;
+                newRow["TotalSST"] = totalSst;
+                newRow["Packing"] = packing;
+                newRow["BaseUnit"] = defaults.BaseUnit;
                 table.Rows.Add(newRow);
                 return;
             }
 
             decimal updatedQuantity = GetDecimalValue(existingRow, "Qty") + quantity;
-            decimal unitPrice = GetDecimalValue(existingRow, "UPrice");
 
             existingRow["ItemId"] = item.ItemId;
             existingRow["UnitId"] = item.UnitId;
@@ -464,8 +551,14 @@ namespace PosBranch_Win.Transaction
             existingRow["Description"] = description;
             existingRow["QtyAvailable"] = item.CurrentStock;
             existingRow["Qty"] = updatedQuantity;
-            existingRow["BaseQty"] = GetDecimalValue(existingRow, "BaseQty") + quantity;
+            existingRow["UPrice"] = unitPrice;
+            existingRow["BaseQty"] = Math.Round(updatedQuantity * packing, 4);
             existingRow["Amount"] = Math.Round(updatedQuantity * unitPrice, 2);
+            existingRow["TaxCode"] = defaults.TaxCode;
+            existingRow["SST"] = defaults.TaxPercent;
+            existingRow["TotalSST"] = Math.Round(Convert.ToDecimal(existingRow["Amount"]) * defaults.TaxPercent / 100m, 2);
+            existingRow["Packing"] = packing;
+            existingRow["BaseUnit"] = defaults.BaseUnit;
 
             if (string.IsNullOrWhiteSpace(Convert.ToString(existingRow["Remark"])))
             {
@@ -477,6 +570,11 @@ namespace PosBranch_Win.Transaction
         {
             decimal value;
             return decimal.TryParse(Convert.ToString(row[columnName]), out value) ? value : 0m;
+        }
+
+        private static string NormalizeBaseUnitValue(string value)
+        {
+            return string.Equals((value ?? string.Empty).Trim(), "Y", StringComparison.OrdinalIgnoreCase) ? "Y" : "N";
         }
 
         private static void RenumberGridRows(DataTable table)
@@ -1181,6 +1279,17 @@ namespace PosBranch_Win.Transaction
             decimal taxPercent = GetDecimal(itemData, "TaxPer", "SST");
             decimal totalSst = Math.Round(amount * taxPercent / 100m, 2);
             string taxCode = GetString(itemData, "TaxType", "TaxCode");
+            decimal packing = GetDecimal(itemData, "Packing");
+            if (packing <= 0)
+            {
+                packing = 1m;
+            }
+            string baseUnit = GetString(itemData, "BaseUnit", "IsBaseUnit");
+            if (string.IsNullOrWhiteSpace(baseUnit))
+            {
+                baseUnit = packing == 1m ? "Y" : "N";
+            }
+            decimal baseQty = Math.Round(qty * packing, 4);
             string targetItemNo = itemNo;
             string targetUom = uom;
 
@@ -1203,11 +1312,13 @@ namespace PosBranch_Win.Transaction
                 newRow["UPrice"] = unitPrice;
                 newRow["Amount"] = amount;
                 newRow["Remark"] = string.Empty;
-                newRow["BaseQty"] = qty;
+                newRow["BaseQty"] = baseQty;
                 newRow["BaseQtyReceived"] = 0m;
                 newRow["TaxCode"] = taxCode;
                 newRow["SST"] = taxPercent;
                 newRow["TotalSST"] = totalSst;
+                newRow["Packing"] = packing;
+                newRow["BaseUnit"] = baseUnit;
                 table.Rows.Add(newRow);
             }
             else
@@ -1221,10 +1332,12 @@ namespace PosBranch_Win.Transaction
                 existingRow["Qty"] = updatedQty;
                 existingRow["UPrice"] = unitPrice;
                 existingRow["Amount"] = Math.Round(updatedQty * unitPrice, 2);
-                existingRow["BaseQty"] = GetDecimalValue(existingRow, "BaseQty") + qty;
+                existingRow["BaseQty"] = Math.Round(updatedQty * packing, 4);
                 existingRow["TaxCode"] = taxCode;
                 existingRow["SST"] = taxPercent;
                 existingRow["TotalSST"] = Math.Round(Convert.ToDecimal(existingRow["Amount"]) * taxPercent / 100m, 2);
+                existingRow["Packing"] = packing;
+                existingRow["BaseUnit"] = baseUnit;
             }
 
             RenumberGridRows(table);
@@ -1549,8 +1662,8 @@ namespace PosBranch_Win.Transaction
                     ItemName = Convert.ToString(row.Cells["Description"].Value),
                     UnitId = ParseInt(Convert.ToString(row.Cells["UnitId"].Value)),
                     Unit = Convert.ToString(row.Cells["UOM"].Value),
-                    BaseUnit = "Y",
-                    Packing = 1,
+                    BaseUnit = NormalizeBaseUnitValue(Convert.ToString(row.Cells["BaseUnit"].Value)),
+                    Packing = Convert.ToDouble(GetNumericValue(row.Cells["Packing"].Value) ?? 1m),
                     Qty = Convert.ToDouble(GetNumericValue(row.Cells["Qty"].Value) ?? 0m),
                     Free = 0,
                     Cost = Convert.ToDouble(GetNumericValue(row.Cells["UPrice"].Value) ?? 0m),
@@ -1691,6 +1804,8 @@ namespace PosBranch_Win.Transaction
                     row["TaxCode"] = detail.TaxType ?? string.Empty;
                     row["SST"] = Convert.ToDecimal(detail.TaxPer);
                     row["TotalSST"] = Convert.ToDecimal(detail.TotalSst);
+                    row["Packing"] = Convert.ToDecimal(detail.Packing);
+                    row["BaseUnit"] = NormalizeBaseUnitValue(detail.BaseUnit);
                     table.Rows.Add(row);
                 }
             }
