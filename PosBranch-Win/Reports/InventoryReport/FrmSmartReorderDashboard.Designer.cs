@@ -15,26 +15,21 @@ namespace PosBranch_Win.Reports.InventoryReport
         private UltraPanel gridFooterPanel;
         private UltraLabel lblItemNo;
         private UltraLabel lblFromBarcode;
-        private UltraLabel lblToBarcode;
         private UltraLabel lblCategory;
         private UltraLabel lblGroup;
         private UltraLabel lblMoreOptions;
         private UltraLabel lblAlert;
         private UltraComboEditor cmbItemNoMode;
         private UltraTextEditor txtFromBarcode;
-        private UltraTextEditor txtToBarcode;
         private UltraComboEditor cmbCategory;
         private UltraComboEditor cmbGroup;
         private UltraCheckEditor chkShowOnlyExceptions;
         private UltraComboEditor cmbMoreOptions;
         private UltraComboEditor cmbAlert;
         private UltraButton btnViewGrid;
-        private UltraButton btnPreviewGrid;
-        private UltraButton btnPreviewReport;
         private UltraButton btnGeneratePO;
         private UltraButton btnGenBranchPO;
         private UltraButton btnRefreshStats;
-        private UltraButton btnColumnChooser;
         private UltraButton btnHideSelection;
         private UltraGrid ultraGridMaster;
         private UltraLabel lblCount;
@@ -57,8 +52,6 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.cmbItemNoMode = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
             this.lblFromBarcode = new Infragistics.Win.Misc.UltraLabel();
             this.txtFromBarcode = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
-            this.lblToBarcode = new Infragistics.Win.Misc.UltraLabel();
-            this.txtToBarcode = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.lblCategory = new Infragistics.Win.Misc.UltraLabel();
             this.cmbCategory = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
             this.lblGroup = new Infragistics.Win.Misc.UltraLabel();
@@ -70,12 +63,9 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.cmbMoreOptions = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
             this.ultraPanelActionBar = new Infragistics.Win.Misc.UltraPanel();
             this.btnViewGrid = new Infragistics.Win.Misc.UltraButton();
-            this.btnPreviewGrid = new Infragistics.Win.Misc.UltraButton();
-            this.btnPreviewReport = new Infragistics.Win.Misc.UltraButton();
             this.btnGeneratePO = new Infragistics.Win.Misc.UltraButton();
             this.btnGenBranchPO = new Infragistics.Win.Misc.UltraButton();
             this.btnRefreshStats = new Infragistics.Win.Misc.UltraButton();
-            this.btnColumnChooser = new Infragistics.Win.Misc.UltraButton();
             this.btnHideSelection = new Infragistics.Win.Misc.UltraButton();
             this.ultraPanelGrid = new Infragistics.Win.Misc.UltraPanel();
             this.ultraGridMaster = new Infragistics.Win.UltraWinGrid.UltraGrid();
@@ -86,7 +76,6 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.ultraPanelSelection.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.cmbItemNoMode)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtFromBarcode)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtToBarcode)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.cmbCategory)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.cmbGroup)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.cmbAlert)).BeginInit();
@@ -110,8 +99,6 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.ultraPanelSelection.ClientArea.Controls.Add(this.cmbItemNoMode);
             this.ultraPanelSelection.ClientArea.Controls.Add(this.lblFromBarcode);
             this.ultraPanelSelection.ClientArea.Controls.Add(this.txtFromBarcode);
-            this.ultraPanelSelection.ClientArea.Controls.Add(this.lblToBarcode);
-            this.ultraPanelSelection.ClientArea.Controls.Add(this.txtToBarcode);
             this.ultraPanelSelection.ClientArea.Controls.Add(this.lblCategory);
             this.ultraPanelSelection.ClientArea.Controls.Add(this.cmbCategory);
             this.ultraPanelSelection.ClientArea.Controls.Add(this.lblGroup);
@@ -148,12 +135,13 @@ namespace PosBranch_Win.Reports.InventoryReport
             // 
             // lblFromBarcode
             // 
-            this.lblFromBarcode.Location = new System.Drawing.Point(290, 15);
+            this.lblFromBarcode.AutoSize = true;
+            this.lblFromBarcode.Location = new System.Drawing.Point(315, 15);
             this.lblFromBarcode.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.lblFromBarcode.Name = "lblFromBarcode";
-            this.lblFromBarcode.Size = new System.Drawing.Size(76, 19);
+            this.lblFromBarcode.Size = new System.Drawing.Size(46, 14);
             this.lblFromBarcode.TabIndex = 2;
-            this.lblFromBarcode.Text = "From Item No.";
+            this.lblFromBarcode.Text = "Barcode";
             // 
             // txtFromBarcode
             // 
@@ -162,23 +150,6 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.txtFromBarcode.Name = "txtFromBarcode";
             this.txtFromBarcode.Size = new System.Drawing.Size(141, 21);
             this.txtFromBarcode.TabIndex = 3;
-            // 
-            // lblToBarcode
-            // 
-            this.lblToBarcode.Location = new System.Drawing.Point(549, 15);
-            this.lblToBarcode.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
-            this.lblToBarcode.Name = "lblToBarcode";
-            this.lblToBarcode.Size = new System.Drawing.Size(66, 19);
-            this.lblToBarcode.TabIndex = 4;
-            this.lblToBarcode.Text = "To Item No.";
-            // 
-            // txtToBarcode
-            // 
-            this.txtToBarcode.Location = new System.Drawing.Point(617, 12);
-            this.txtToBarcode.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
-            this.txtToBarcode.Name = "txtToBarcode";
-            this.txtToBarcode.Size = new System.Drawing.Size(141, 21);
-            this.txtToBarcode.TabIndex = 5;
             // 
             // lblCategory
             // 
@@ -270,12 +241,9 @@ namespace PosBranch_Win.Reports.InventoryReport
             // ultraPanelActionBar.ClientArea
             // 
             this.ultraPanelActionBar.ClientArea.Controls.Add(this.btnViewGrid);
-            this.ultraPanelActionBar.ClientArea.Controls.Add(this.btnPreviewGrid);
-            this.ultraPanelActionBar.ClientArea.Controls.Add(this.btnPreviewReport);
             this.ultraPanelActionBar.ClientArea.Controls.Add(this.btnGeneratePO);
             this.ultraPanelActionBar.ClientArea.Controls.Add(this.btnGenBranchPO);
             this.ultraPanelActionBar.ClientArea.Controls.Add(this.btnRefreshStats);
-            this.ultraPanelActionBar.ClientArea.Controls.Add(this.btnColumnChooser);
             this.ultraPanelActionBar.ClientArea.Controls.Add(this.btnHideSelection);
             this.ultraPanelActionBar.Dock = System.Windows.Forms.DockStyle.Top;
             this.ultraPanelActionBar.Location = new System.Drawing.Point(0, 102);
@@ -294,29 +262,9 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.btnViewGrid.Text = "View Grid";
             this.btnViewGrid.Click += new System.EventHandler(this.BtnViewGrid_Click);
             // 
-            // btnPreviewGrid
-            // 
-            this.btnPreviewGrid.Location = new System.Drawing.Point(113, 6);
-            this.btnPreviewGrid.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
-            this.btnPreviewGrid.Name = "btnPreviewGrid";
-            this.btnPreviewGrid.Size = new System.Drawing.Size(103, 23);
-            this.btnPreviewGrid.TabIndex = 1;
-            this.btnPreviewGrid.Text = "Preview Grid";
-            this.btnPreviewGrid.Click += new System.EventHandler(this.BtnPreviewGrid_Click);
-            // 
-            // btnPreviewReport
-            // 
-            this.btnPreviewReport.Location = new System.Drawing.Point(221, 6);
-            this.btnPreviewReport.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
-            this.btnPreviewReport.Name = "btnPreviewReport";
-            this.btnPreviewReport.Size = new System.Drawing.Size(108, 23);
-            this.btnPreviewReport.TabIndex = 2;
-            this.btnPreviewReport.Text = "Preview Report";
-            this.btnPreviewReport.Click += new System.EventHandler(this.BtnPreviewReport_Click);
-            // 
             // btnGeneratePO
             // 
-            this.btnGeneratePO.Location = new System.Drawing.Point(334, 6);
+            this.btnGeneratePO.Location = new System.Drawing.Point(111, 6);
             this.btnGeneratePO.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnGeneratePO.Name = "btnGeneratePO";
             this.btnGeneratePO.Size = new System.Drawing.Size(101, 23);
@@ -326,7 +274,7 @@ namespace PosBranch_Win.Reports.InventoryReport
             // 
             // btnGenBranchPO
             // 
-            this.btnGenBranchPO.Location = new System.Drawing.Point(441, 6);
+            this.btnGenBranchPO.Location = new System.Drawing.Point(218, 6);
             this.btnGenBranchPO.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnGenBranchPO.Name = "btnGenBranchPO";
             this.btnGenBranchPO.Size = new System.Drawing.Size(110, 23);
@@ -336,23 +284,13 @@ namespace PosBranch_Win.Reports.InventoryReport
             // 
             // btnRefreshStats
             // 
-            this.btnRefreshStats.Location = new System.Drawing.Point(555, 6);
+            this.btnRefreshStats.Location = new System.Drawing.Point(332, 6);
             this.btnRefreshStats.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnRefreshStats.Name = "btnRefreshStats";
             this.btnRefreshStats.Size = new System.Drawing.Size(101, 23);
             this.btnRefreshStats.TabIndex = 5;
             this.btnRefreshStats.Text = "Refresh Stats";
             this.btnRefreshStats.Click += new System.EventHandler(this.BtnRefreshStats_Click);
-            // 
-            // btnColumnChooser
-            // 
-            this.btnColumnChooser.Location = new System.Drawing.Point(662, 6);
-            this.btnColumnChooser.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
-            this.btnColumnChooser.Name = "btnColumnChooser";
-            this.btnColumnChooser.Size = new System.Drawing.Size(110, 23);
-            this.btnColumnChooser.TabIndex = 6;
-            this.btnColumnChooser.Text = "Column Chooser";
-            this.btnColumnChooser.Click += new System.EventHandler(this.BtnColumnChooser_Click);
             // 
             // btnHideSelection
             // 
@@ -439,7 +377,6 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.ultraPanelSelection.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.cmbItemNoMode)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtFromBarcode)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.txtToBarcode)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.cmbCategory)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.cmbGroup)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.cmbAlert)).EndInit();

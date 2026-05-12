@@ -406,6 +406,7 @@ namespace Repository.MasterRepositry
                     throw new Exception("Failed to create item master. Description may already exist; please use a unique item name for cloned items.");
                 }
                 item.ItemId = newItemId; // FIX: Update the item object with the new ID so the UI can use it
+                PersistSmartReorderFields(item, transaction);
 
                 // Save price settings for each unit
                 for (int i = 0; i < dgv_Uom.Rows.Count; i++)
@@ -600,6 +601,7 @@ namespace Repository.MasterRepositry
                 {
                     throw new Exception("Failed to update item master");
                 }
+                PersistSmartReorderFields(item, transaction);
 
                 // Get existing stock values BEFORE deleting to preserve them
                 // Use the GetItemPriceSettings method or query the existing price settings
@@ -1071,6 +1073,38 @@ namespace Repository.MasterRepositry
             }
 
             return dyn;
+        }
+
+        /// <summary>
+        /// Persists smart reorder fields explicitly because the item master stored procedure
+        /// does not reliably save these columns during create flows.
+        /// </summary>
+        private void PersistSmartReorderFields(Item item, IDbTransaction transaction)
+        {
+            if (item == null || item.ItemId <= 0)
+            {
+                return;
+            }
+
+            const string sql = @"
+UPDATE ItemMaster
+SET Order_Cycle_Days = @Order_Cycle_Days,
+    Box_Quantity = @Box_Quantity,
+    Is_Perishable = @Is_Perishable
+WHERE ItemId = @ItemId";
+
+            DataConnection.Execute(
+                sql,
+                new
+                {
+                    ItemId = item.ItemId,
+                    Order_Cycle_Days = item.Order_Cycle_Days > 0 ? item.Order_Cycle_Days : 0,
+                    Box_Quantity = item.Box_Quantity > 0 ? item.Box_Quantity : 0,
+                    Is_Perishable = item.Is_Perishable
+                },
+                transaction,
+                commandType: CommandType.Text
+            );
         }
 
         #region Additional Utility Methods

@@ -144,12 +144,12 @@ namespace PosBranch_Win.Master
             {
                 if (ultraOrderCycle != null)
                 {
-                    ultraOrderCycle.Text = orderCycleDays > 0 ? orderCycleDays.ToString() : "30";
+                    ultraOrderCycle.Text = orderCycleDays > 0 ? orderCycleDays.ToString() : string.Empty;
                 }
 
                 if (ultraBoxQty != null)
                 {
-                    ultraBoxQty.Text = boxQuantity > 0 ? boxQuantity.ToString() : "1";
+                    ultraBoxQty.Text = boxQuantity > 0 ? boxQuantity.ToString() : string.Empty;
                 }
 
                 if (ultraIsPerishable != null)
@@ -157,8 +157,8 @@ namespace PosBranch_Win.Master
                     ultraIsPerishable.Checked = isPerishable;
                 }
 
-                ItemMaster.Order_Cycle_Days = orderCycleDays > 0 ? orderCycleDays : 30;
-                ItemMaster.Box_Quantity = boxQuantity > 0 ? boxQuantity : 1;
+                ItemMaster.Order_Cycle_Days = orderCycleDays > 0 ? orderCycleDays : 0;
+                ItemMaster.Box_Quantity = boxQuantity > 0 ? boxQuantity : 0;
                 ItemMaster.Is_Perishable = isPerishable;
             }
             catch (Exception ex)
@@ -170,13 +170,13 @@ namespace PosBranch_Win.Master
         private int GetSmartReorderOrderCycleDays()
         {
             int orderCycleDays;
-            return int.TryParse(ultraOrderCycle?.Text, out orderCycleDays) && orderCycleDays > 0 ? orderCycleDays : 30;
+            return int.TryParse(ultraOrderCycle?.Text, out orderCycleDays) && orderCycleDays > 0 ? orderCycleDays : 0;
         }
 
         private int GetSmartReorderBoxQuantity()
         {
             int boxQuantity;
-            return int.TryParse(ultraBoxQty?.Text, out boxQuantity) && boxQuantity > 0 ? boxQuantity : 1;
+            return int.TryParse(ultraBoxQty?.Text, out boxQuantity) && boxQuantity > 0 ? boxQuantity : 0;
         }
 
         private bool GetSmartReorderIsPerishable()
@@ -3190,8 +3190,8 @@ WHEN NOT MATCHED THEN
                 if (txt_CEP != null) txt_CEP.Text = "0.000";
                 if (txt_Mrp != null) txt_Mrp.Text = "0.000";
                 if (txt_CardP != null) txt_CardP.Text = "0.000";
-                if (ultraOrderCycle != null) ultraOrderCycle.Text = "30";
-                if (ultraBoxQty != null) ultraBoxQty.Text = "1";
+                if (ultraOrderCycle != null) ultraOrderCycle.Text = string.Empty;
+                if (ultraBoxQty != null) ultraBoxQty.Text = string.Empty;
                 if (ultraIsPerishable != null) ultraIsPerishable.Checked = false;
 
                 // Clear selling price fields (use Control type to match Load event handling)
@@ -4608,8 +4608,8 @@ WHEN NOT MATCHED THEN
                     ItemMaster.ForCustomerType = getItem.ForCustomerType;
                     ItemMaster.NameInLocalLanguage = getItem.NameInLocalLanguage;
                     ItemMaster.HSNCode = getItem.HSNCode;
-                    ItemMaster.Order_Cycle_Days = getItem.Order_Cycle_Days > 0 ? getItem.Order_Cycle_Days : 30;
-                    ItemMaster.Box_Quantity = getItem.Box_Quantity > 0 ? getItem.Box_Quantity : 1;
+                    ItemMaster.Order_Cycle_Days = getItem.Order_Cycle_Days > 0 ? getItem.Order_Cycle_Days : 0;
+                    ItemMaster.Box_Quantity = getItem.Box_Quantity > 0 ? getItem.Box_Quantity : 0;
                     ItemMaster.Is_Perishable = getItem.Is_Perishable;
                     ItemMaster.CompanyId = getItem.CompanyId;
                     ItemMaster.BranchId = getItem.BranchId;
@@ -7578,6 +7578,9 @@ WHEN NOT MATCHED THEN
                     ItemMaster.Description = desc;
                     ItemMaster.Barcode = barcode;
                     ItemMaster.NameInLocalLanguage = txt_LocalLanguage?.Text ?? string.Empty;
+                    ItemMaster.Order_Cycle_Days = GetSmartReorderOrderCycleDays();
+                    ItemMaster.Box_Quantity = GetSmartReorderBoxQuantity();
+                    ItemMaster.Is_Perishable = GetSmartReorderIsPerishable();
                     // Resolve IDs from text controls where only names are present
                     ResolveAndAssignMasterIds();
                 }
