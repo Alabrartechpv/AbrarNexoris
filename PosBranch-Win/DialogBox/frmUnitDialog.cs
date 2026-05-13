@@ -248,7 +248,9 @@ namespace PosBranch_Win.DialogBox
                 ultraGrid1.DisplayLayout.Override.AllowDelete = Infragistics.Win.DefaultableBoolean.False;
                 ultraGrid1.DisplayLayout.Override.AllowUpdate = Infragistics.Win.DefaultableBoolean.True;
                 ultraGrid1.DisplayLayout.Override.RowSelectors = Infragistics.Win.DefaultableBoolean.True;
-                ultraGrid1.DisplayLayout.Override.SelectTypeRow = Infragistics.Win.UltraWinGrid.SelectType.Extended;
+                ultraGrid1.DisplayLayout.Override.SelectTypeRow = Infragistics.Win.UltraWinGrid.SelectType.Single;
+                ultraGrid1.DisplayLayout.Override.SelectTypeCell = Infragistics.Win.UltraWinGrid.SelectType.None;
+                ultraGrid1.DisplayLayout.Override.SelectTypeCol = Infragistics.Win.UltraWinGrid.SelectType.None;
                 ultraGrid1.DisplayLayout.Override.HeaderClickAction = Infragistics.Win.UltraWinGrid.HeaderClickAction.SortSingle;
 
                 // Enable column moving and dragging - important for column draggability
@@ -468,17 +470,16 @@ namespace PosBranch_Win.DialogBox
                 // Store total record count for navigation
                 totalRecords = dt.Rows.Count;
 
-                // Identify which units are already assigned to the item
+                // Identify which units are already assigned to the item and keep only one row highlighted
                 List<string> assignedUnits = GetItemAssignedUnits(_itemId);
-                bool anySelected = false;
+                Infragistics.Win.UltraWinGrid.UltraGridRow rowToSelect = null;
 
-                // Select assigned rows
-                ultraGrid1.Selected.Rows.Clear();
                 if (assignedUnits.Count > 0 && ultraGrid1.Rows.Count > 0)
                 {
                     foreach (Infragistics.Win.UltraWinGrid.UltraGridRow row in ultraGrid1.Rows)
                     {
-                        string unitName = "";
+                        string unitName = string.Empty;
+
                         // Check IU_UOM_A column (displayed name)
                         if (row.Cells.Exists("IU_UOM_A") && row.Cells["IU_UOM_A"].Value != null)
                             unitName = row.Cells["IU_UOM_A"].Value.ToString();
@@ -487,20 +488,25 @@ namespace PosBranch_Win.DialogBox
                         if (string.IsNullOrEmpty(unitName) && row.Cells.Exists("UnitName") && row.Cells["UnitName"].Value != null)
                             unitName = row.Cells["UnitName"].Value.ToString();
 
-                        if (!string.IsNullOrEmpty(unitName) && assignedUnits.Contains(unitName.ToUpper()))
+                        if (!string.IsNullOrEmpty(unitName) && assignedUnits.Contains(unitName.ToUpperInvariant()))
                         {
-                            row.Selected = true;
-                            anySelected = true;
-                            if (ultraGrid1.ActiveRow == null) ultraGrid1.ActiveRow = row;
+                            rowToSelect = row;
+                            break;
                         }
                     }
                 }
 
-                // If nothing selected, select the first row by default
-                if (!anySelected && totalRecords > 0 && ultraGrid1.Rows.Count > 0)
+                // If nothing matched, select the first row by default
+                if (rowToSelect == null && totalRecords > 0 && ultraGrid1.Rows.Count > 0)
                 {
-                    ultraGrid1.ActiveRow = ultraGrid1.Rows[0];
-                    ultraGrid1.Selected.Rows.Add(ultraGrid1.Rows[0]);
+                    rowToSelect = ultraGrid1.Rows[0];
+                }
+
+                ultraGrid1.Selected.Rows.Clear();
+                if (rowToSelect != null)
+                {
+                    ultraGrid1.ActiveRow = rowToSelect;
+                    ultraGrid1.Selected.Rows.Add(rowToSelect);
                 }
 
                 if (ultraGrid1.ActiveRow != null)
