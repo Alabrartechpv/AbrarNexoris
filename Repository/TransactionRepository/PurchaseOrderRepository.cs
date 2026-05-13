@@ -230,6 +230,54 @@ namespace Repository.TransactionRepository
             return SaveInternal(master, details, true);
         }
 
+        public decimal GetLatestItemPurchaseCost(int itemId, int unitId, int companyId, int branchId)
+        {
+            if (itemId <= 0)
+                return 0m;
+
+            bool wasClosed = DataConnection.State != ConnectionState.Open;
+
+            try
+            {
+                if (wasClosed)
+                    DataConnection.Open();
+
+                string sql = @"
+SELECT TOP 1 ISNULL(pd.Cost, 0)
+FROM PDetails pd
+INNER JOIN PMaster pm
+    ON pm.PurchaseNo = pd.PurchaseNo
+    AND pm.FinYearId = pd.FinYearId
+    AND pm.BranchId = pd.BranchID
+WHERE pd.ItemID = @ItemId
+    AND (@UnitId <= 0 OR pd.UnitId = @UnitId)
+    AND (@CompanyId <= 0 OR pm.CompanyId = @CompanyId)
+    AND (@BranchId <= 0 OR pm.BranchId = @BranchId)
+    AND ISNULL(pm.CancelFlag, 0) = 0
+ORDER BY pm.PurchaseDate DESC, pm.Pid DESC, pd.SlNo DESC";
+
+                using (SqlCommand cmd = new SqlCommand(sql, (SqlConnection)DataConnection))
+                {
+                    cmd.CommandType = CommandType.Text;
+                    cmd.Parameters.AddWithValue("@ItemId", itemId);
+                    cmd.Parameters.AddWithValue("@UnitId", unitId);
+                    cmd.Parameters.AddWithValue("@CompanyId", companyId);
+                    cmd.Parameters.AddWithValue("@BranchId", branchId);
+
+                    object result = cmd.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)
+                        return Convert.ToDecimal(result);
+                }
+            }
+            finally
+            {
+                if (wasClosed && DataConnection.State == ConnectionState.Open)
+                    DataConnection.Close();
+            }
+
+            return 0m;
+        }
+
         private string SaveInternal(PurchaseOrderMaster master, IList<PurchaseOrderDetail> details, bool isUpdate)
         {
             if (master == null)
@@ -237,9 +285,6 @@ namespace Repository.TransactionRepository
 
             if (details == null || details.Count == 0)
                 return "Purchase order must contain at least one item.";
-
-            if (master.PaymodeID <= 0)
-                return "Please select a valid payment term.";
 
             bool wasClosed = DataConnection.State != ConnectionState.Open;
             SqlTransaction transaction = null;

@@ -49,9 +49,7 @@ namespace PosBranch_Win.Transaction
         private readonly Dictionary<string, Label> _footerLabels = new Dictionary<string, Label>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, string> _columnAggregations = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private readonly List<SmartReorderItemModel> _pendingSmartReorderItems = new List<SmartReorderItemModel>();
-        private readonly List<PaymodeDDl> _paymentModes = new List<PaymodeDDl>();
         private readonly ItemMasterRepository _itemMasterRepository = new ItemMasterRepository();
-        private static readonly string[] DefaultPaymentTerms = { "Cash", "Credit", "30 Days", "60 Days" };
         private PurchaseOrderRepository _purchaseOrderRepository;
         private bool _gridInitialized;
         private int _currentPurchaseOrderId;
@@ -63,6 +61,8 @@ namespace PosBranch_Win.Transaction
             gridReport.InitializeLayout += gridReport_InitializeLayout;
             gridReport.Resize += gridReport_Resize;
             gridReport.AfterCellUpdate += gridReport_AfterCellUpdate;
+            gridReport.DoubleClickCell += gridReport_DoubleClickCell;
+            txtBarcode.KeyDown += txtBarcode_KeyDown;
         }
 
         private void frmPurchaseOrder_Load(object sender, EventArgs e)
@@ -79,7 +79,6 @@ namespace PosBranch_Win.Transaction
 
             ApplyTheme();
             InitializeDefaults();
-            LoadPaymentTerms();
             SetupGrid();
             _gridInitialized = true;
             LoadNextDocumentNumber();
@@ -134,7 +133,6 @@ namespace PosBranch_Win.Transaction
             StyleTextEditor(txtShipTo4, false);
             StyleTextEditor(txtRemark, false);
             StyleDateEditor(dtpExpectedDate);
-            StyleCombo(cmbPaymentTerm);
             StyleTextEditor(txtTelephone, false);
             StyleTextEditor(txtOrderBy, false);
             StyleTextEditor(txtBarcode, true);
@@ -209,8 +207,6 @@ namespace PosBranch_Win.Transaction
         private void InitializeDefaults()
         {
             dtpDate.Value = DateTime.Today;
-            PopulateDefaultPaymentTerms();
-            cmbPaymentTerm.Text = string.Empty;
 
             txtAccount.Text = string.Empty;
             txtNavigator.Text = string.Empty;
@@ -231,39 +227,6 @@ namespace PosBranch_Win.Transaction
             txtDisc.Text = "0.00";
             txtRounding.Text = "0.00";
             txtTotal.Text = "0.00";
-        }
-
-        private void LoadPaymentTerms()
-        {
-            PopulateDefaultPaymentTerms();
-
-            _paymentModes.Clear();
-
-            if (IsDesignerHosted())
-                return;
-
-            try
-            {
-                Dropdowns dropdowns = new Dropdowns();
-                PaymodeDDlGrid payModeGrid = dropdowns.GetPaymode();
-                if (payModeGrid != null && payModeGrid.List != null)
-                {
-                    _paymentModes.AddRange(payModeGrid.List.Where(x => x != null));
-                }
-            }
-            catch
-            {
-                // Keep the hardcoded payment term options available even if DB lookup fails.
-            }
-        }
-
-        private void PopulateDefaultPaymentTerms()
-        {
-            cmbPaymentTerm.Items.Clear();
-            foreach (string term in DefaultPaymentTerms)
-            {
-                cmbPaymentTerm.Items.Add(term, term);
-            }
         }
 
         private void SetupGrid()
@@ -360,16 +323,11 @@ namespace PosBranch_Win.Transaction
             table.Columns.Add("ItemNo", typeof(string));
             table.Columns.Add("Description");
             table.Columns.Add("UOM");
-            table.Columns.Add("QtyAvailable", typeof(decimal));
             table.Columns.Add("Qty", typeof(decimal));
+            table.Columns.Add("Cost", typeof(decimal));
             table.Columns.Add("UPrice", typeof(decimal));
             table.Columns.Add("Amount", typeof(decimal));
             table.Columns.Add("Remark");
-            table.Columns.Add("BaseQty", typeof(decimal));
-            table.Columns.Add("BaseQtyReceived", typeof(decimal));
-            table.Columns.Add("TaxCode", typeof(string));
-            table.Columns.Add("SST", typeof(decimal));
-            table.Columns.Add("TotalSST", typeof(decimal));
             table.Columns.Add("Packing", typeof(decimal));
             table.Columns.Add("BaseUnit", typeof(string));
 
@@ -415,9 +373,9 @@ namespace PosBranch_Win.Transaction
 
         private sealed class SmartReorderPurchaseDefaults
         {
-            public decimal UnitPrice { get; set; }
+            public decimal Cost { get; set; }
+            public decimal UnitCost { get; set; }
             public decimal TaxPercent { get; set; }
-            public string TaxCode { get; set; } = string.Empty;
             public decimal Packing { get; set; } = 1m;
             public string BaseUnit { get; set; } = "Y";
         }
@@ -473,9 +431,9 @@ namespace PosBranch_Win.Transaction
 
                 if (match != null)
                 {
-                    defaults.UnitPrice = Convert.ToDecimal(match.Cost);
+                    defaults.UnitCost = Convert.ToDecimal(match.Cost);
+                    defaults.Cost = GetLatestPurchaseItemUnitCost(item.ItemId, match.UnitId, match.Unit, defaults.UnitCost);
                     defaults.TaxPercent = Convert.ToDecimal(match.TaxPer);
-                    defaults.TaxCode = match.TaxType ?? string.Empty;
                     defaults.Packing = Convert.ToDecimal(match.Packing <= 0 ? 1d : match.Packing);
                     defaults.BaseUnit = NormalizeBaseUnitValue(match.IsBaseUnit);
                 }
@@ -501,10 +459,7 @@ namespace PosBranch_Win.Transaction
             string uom = string.IsNullOrWhiteSpace(item.Unit) ? string.Empty : item.Unit.Trim();
             SmartReorderPurchaseDefaults defaults = GetSmartReorderPurchaseDefaults(item);
             decimal packing = defaults.Packing > 0 ? defaults.Packing : 1m;
-            decimal unitPrice = defaults.UnitPrice;
-            decimal amount = Math.Round(quantity * unitPrice, 2);
-            decimal totalSst = Math.Round(amount * defaults.TaxPercent / 100m, 2);
-            decimal baseQty = Math.Round(quantity * packing, 4);
+            decimal amount = Math.Round(quantity * defaults.Cost, 2);
 
             DataRow existingRow = null;
             foreach (DataRow row in table.Rows)
@@ -527,16 +482,11 @@ namespace PosBranch_Win.Transaction
                 newRow["ItemNo"] = itemNo;
                 newRow["Description"] = description;
                 newRow["UOM"] = uom;
-                newRow["QtyAvailable"] = item.CurrentStock;
                 newRow["Qty"] = quantity;
-                newRow["UPrice"] = unitPrice;
+                newRow["Cost"] = defaults.Cost;
+                newRow["UPrice"] = defaults.UnitCost;
                 newRow["Amount"] = amount;
                 newRow["Remark"] = "Smart Reorder";
-                newRow["BaseQty"] = baseQty;
-                newRow["BaseQtyReceived"] = 0m;
-                newRow["TaxCode"] = defaults.TaxCode;
-                newRow["SST"] = defaults.TaxPercent;
-                newRow["TotalSST"] = totalSst;
                 newRow["Packing"] = packing;
                 newRow["BaseUnit"] = defaults.BaseUnit;
                 table.Rows.Add(newRow);
@@ -549,14 +499,10 @@ namespace PosBranch_Win.Transaction
             existingRow["UnitId"] = item.UnitId;
             existingRow["Barcode"] = item.Barcode ?? string.Empty;
             existingRow["Description"] = description;
-            existingRow["QtyAvailable"] = item.CurrentStock;
             existingRow["Qty"] = updatedQuantity;
-            existingRow["UPrice"] = unitPrice;
-            existingRow["BaseQty"] = Math.Round(updatedQuantity * packing, 4);
-            existingRow["Amount"] = Math.Round(updatedQuantity * unitPrice, 2);
-            existingRow["TaxCode"] = defaults.TaxCode;
-            existingRow["SST"] = defaults.TaxPercent;
-            existingRow["TotalSST"] = Math.Round(Convert.ToDecimal(existingRow["Amount"]) * defaults.TaxPercent / 100m, 2);
+            existingRow["Cost"] = defaults.Cost;
+            existingRow["UPrice"] = defaults.UnitCost;
+            existingRow["Amount"] = Math.Round(updatedQuantity * defaults.Cost, 2);
             existingRow["Packing"] = packing;
             existingRow["BaseUnit"] = defaults.BaseUnit;
 
@@ -602,16 +548,11 @@ namespace PosBranch_Win.Transaction
             ConfigureGridColumn(band, "ItemNo", "Item No", 92, null, HAlign.Left, 1);
             ConfigureGridColumn(band, "Description", "Description", 185, null, HAlign.Left, 2);
             ConfigureGridColumn(band, "UOM", "UOM", 58, null, HAlign.Center, 3);
-            ConfigureGridColumn(band, "QtyAvailable", "Qty Available", 85, "#,##0.##", HAlign.Right, 4);
-            ConfigureGridColumn(band, "Qty", "Qty", 60, "#,##0.##", HAlign.Right, 5);
-            ConfigureGridColumn(band, "UPrice", "U/Price", 76, "#,##0.00", HAlign.Right, 6);
+            ConfigureGridColumn(band, "Qty", "Qty", 60, "#,##0.##", HAlign.Right, 4);
+            ConfigureGridColumn(band, "Cost", "Cost", 76, "#,##0.00", HAlign.Right, 5);
+            ConfigureGridColumn(band, "UPrice", "U/Cost", 76, "#,##0.00", HAlign.Right, 6);
             ConfigureGridColumn(band, "Amount", "Amount", 88, "#,##0.00", HAlign.Right, 7);
             ConfigureGridColumn(band, "Remark", "Remark", 108, null, HAlign.Left, 8);
-            ConfigureGridColumn(band, "BaseQty", "Base Qty", 78, "#,##0.##", HAlign.Right, 9);
-            ConfigureGridColumn(band, "BaseQtyReceived", "Base Qty Received", 124, "#,##0.##", HAlign.Right, 10);
-            ConfigureGridColumn(band, "TaxCode", "Tax Code", 76, null, HAlign.Left, 11);
-            ConfigureGridColumn(band, "SST", "SST", 56, "#,##0.00", HAlign.Right, 12);
-            ConfigureGridColumn(band, "TotalSST", "Total SST", 86, "#,##0.00", HAlign.Right, 13);
 
             e.Layout.AutoFitStyle = AutoFitStyle.None;
             CreateFooterCells();
@@ -881,7 +822,7 @@ namespace PosBranch_Win.Transaction
                 return;
 
             string columnKey = e.Cell.Column != null ? e.Cell.Column.Key : string.Empty;
-            if (columnKey == "Qty" || columnKey == "UPrice" || columnKey == "SST")
+            if (columnKey == "Qty" || columnKey == "Cost")
             {
                 RecalculateRow(e.Cell.Row);
             }
@@ -1272,13 +1213,10 @@ namespace PosBranch_Win.Transaction
             string uom = GetString(itemData, "Unit", "UOM");
             int itemId = GetInt(itemData, "ItemId", "ID", "ItemID");
             int unitId = GetInt(itemData, "UnitId", "UID");
-            decimal qtyAvailable = GetDecimal(itemData, "QtyAvailable", "CurrentStock", "StockQty", "BalanceQty");
             decimal qty = 1m;
-            decimal unitPrice = GetDecimal(itemData, "Cost", "PurchasePrice", "RetailPrice", "UnitPrice");
-            decimal amount = Math.Round(qty * unitPrice, 2);
-            decimal taxPercent = GetDecimal(itemData, "TaxPer", "SST");
-            decimal totalSst = Math.Round(amount * taxPercent / 100m, 2);
-            string taxCode = GetString(itemData, "TaxType", "TaxCode");
+            decimal itemMasterUnitCost = GetItemMasterUnitCost(itemId, unitId, uom, GetDecimal(itemData, "Cost", "PurchasePrice", "RetailPrice", "UnitPrice"));
+            decimal cost = GetLatestPurchaseItemUnitCost(itemId, unitId, uom, itemMasterUnitCost);
+            decimal amount = Math.Round(qty * cost, 2);
             decimal packing = GetDecimal(itemData, "Packing");
             if (packing <= 0)
             {
@@ -1289,7 +1227,6 @@ namespace PosBranch_Win.Transaction
             {
                 baseUnit = packing == 1m ? "Y" : "N";
             }
-            decimal baseQty = Math.Round(qty * packing, 4);
             string targetItemNo = itemNo;
             string targetUom = uom;
 
@@ -1307,16 +1244,11 @@ namespace PosBranch_Win.Transaction
                 newRow["ItemNo"] = itemNo;
                 newRow["Description"] = description;
                 newRow["UOM"] = uom;
-                newRow["QtyAvailable"] = qtyAvailable;
                 newRow["Qty"] = qty;
-                newRow["UPrice"] = unitPrice;
+                newRow["Cost"] = cost;
+                newRow["UPrice"] = itemMasterUnitCost;
                 newRow["Amount"] = amount;
                 newRow["Remark"] = string.Empty;
-                newRow["BaseQty"] = baseQty;
-                newRow["BaseQtyReceived"] = 0m;
-                newRow["TaxCode"] = taxCode;
-                newRow["SST"] = taxPercent;
-                newRow["TotalSST"] = totalSst;
                 newRow["Packing"] = packing;
                 newRow["BaseUnit"] = baseUnit;
                 table.Rows.Add(newRow);
@@ -1328,14 +1260,10 @@ namespace PosBranch_Win.Transaction
                 existingRow["UnitId"] = unitId;
                 existingRow["Barcode"] = itemNo;
                 existingRow["Description"] = description;
-                existingRow["QtyAvailable"] = qtyAvailable;
                 existingRow["Qty"] = updatedQty;
-                existingRow["UPrice"] = unitPrice;
-                existingRow["Amount"] = Math.Round(updatedQty * unitPrice, 2);
-                existingRow["BaseQty"] = Math.Round(updatedQty * packing, 4);
-                existingRow["TaxCode"] = taxCode;
-                existingRow["SST"] = taxPercent;
-                existingRow["TotalSST"] = Math.Round(Convert.ToDecimal(existingRow["Amount"]) * taxPercent / 100m, 2);
+                existingRow["Cost"] = cost;
+                existingRow["UPrice"] = itemMasterUnitCost;
+                existingRow["Amount"] = Math.Round(updatedQty * cost, 2);
                 existingRow["Packing"] = packing;
                 existingRow["BaseUnit"] = baseUnit;
             }
@@ -1383,6 +1311,244 @@ namespace PosBranch_Win.Transaction
             {
                 // Keep selection active even if a specific scroll action is not available.
             }
+        }
+
+        private void txtBarcode_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e == null || e.KeyCode != Keys.Enter)
+                return;
+
+            string value = (txtBarcode.Text ?? string.Empty).Trim();
+            if (!string.Equals(value, "u", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            e.Handled = true;
+            e.SuppressKeyPress = true;
+            txtBarcode.Clear();
+            OpenUnitDialogForActivePurchaseOrderRow(true);
+        }
+
+        private void gridReport_DoubleClickCell(object sender, DoubleClickCellEventArgs e)
+        {
+            if (e == null || e.Cell == null || e.Cell.Row == null || !e.Cell.Row.IsDataRow)
+                return;
+
+            if (e.Cell.Column != null && string.Equals(e.Cell.Column.Key, "UOM", StringComparison.OrdinalIgnoreCase))
+            {
+                OpenUnitDialogForPurchaseOrderRow(e.Cell.Row, false);
+            }
+        }
+
+        private void OpenUnitDialogForActivePurchaseOrderRow(bool refocusBarcodeAfterClose)
+        {
+            UltraGridRow row = gridReport.ActiveRow;
+            if (row == null || !row.IsDataRow)
+            {
+                foreach (UltraGridRow selectedRow in gridReport.Selected.Rows)
+                {
+                    if (selectedRow != null && selectedRow.IsDataRow)
+                    {
+                        row = selectedRow;
+                        break;
+                    }
+                }
+            }
+
+            OpenUnitDialogForPurchaseOrderRow(row, refocusBarcodeAfterClose);
+        }
+
+        private bool TryGetSelectedUnitFromDialogTag(object dialogTag, out string selectedUnit, out decimal iuRate)
+        {
+            selectedUnit = string.Empty;
+            iuRate = 0;
+
+            string tagValue = dialogTag?.ToString() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(tagValue))
+                return false;
+
+            if (tagValue.Contains("|"))
+            {
+                string[] parts = tagValue.Split('|');
+                selectedUnit = parts[0];
+                if (parts.Length > 1)
+                {
+                    decimal.TryParse(parts[1], out iuRate);
+                }
+            }
+            else
+            {
+                selectedUnit = tagValue;
+            }
+
+            return !string.IsNullOrWhiteSpace(selectedUnit);
+        }
+
+        private void OpenUnitDialogForPurchaseOrderRow(UltraGridRow targetRow, bool refocusBarcodeAfterClose)
+        {
+            try
+            {
+                if (targetRow == null)
+                    return;
+
+                int itemId = ParseInt(Convert.ToString(targetRow.Cells["ItemId"].Value));
+                if (itemId <= 0)
+                    return;
+
+                using (frmUnitDialog uomDialog = new frmUnitDialog("frmSalesInvoice", itemId))
+                {
+                    if (uomDialog.ShowDialog(this) != DialogResult.OK)
+                        return;
+
+                    string selectedUnit;
+                    decimal iuRate;
+                    if (!TryGetSelectedUnitFromDialogTag(uomDialog.Tag, out selectedUnit, out iuRate))
+                        return;
+
+                    ApplySelectedUnitToPurchaseOrderRow(targetRow, itemId, selectedUnit, iuRate);
+                }
+            }
+            finally
+            {
+                if (refocusBarcodeAfterClose)
+                {
+                    txtBarcode.Focus();
+                }
+            }
+        }
+
+        private void ApplySelectedUnitToPurchaseOrderRow(UltraGridRow targetRow, int itemId, string selectedUnit, decimal iuRate)
+        {
+            if (targetRow == null || itemId <= 0 || string.IsNullOrWhiteSpace(selectedUnit))
+                return;
+
+            ItemDDl unitData = GetItemUnitData(itemId, selectedUnit);
+            decimal packing = unitData != null && unitData.Packing > 0 ? Convert.ToDecimal(unitData.Packing) : 1m;
+            int unitId = unitData != null && unitData.UnitId > 0
+                ? unitData.UnitId
+                : ParseInt(Convert.ToString(targetRow.Cells["UnitId"].Value));
+            decimal itemMasterUnitCost = GetItemMasterUnitCost(itemId, unitId, selectedUnit, unitData != null ? Convert.ToDecimal(unitData.Cost) : 0m);
+            decimal latestCost = GetLatestPurchaseItemUnitCost(itemId, unitId, selectedUnit, itemMasterUnitCost);
+
+            targetRow.Cells["UOM"].Value = selectedUnit;
+            targetRow.Cells["UnitId"].Value = unitId;
+            targetRow.Cells["Packing"].Value = packing;
+            targetRow.Cells["Cost"].Value = latestCost;
+            targetRow.Cells["UPrice"].Value = itemMasterUnitCost;
+            targetRow.Cells["BaseUnit"].Value = packing == 1m ? "Y" : "N";
+
+            RecalculateRow(targetRow);
+            UpdateFooterValues();
+            RecalculateTotals();
+            gridReport.Refresh();
+        }
+
+        private ItemDDl GetItemUnitData(int itemId, string selectedUnit)
+        {
+            try
+            {
+                Dropdowns dropdowns = new Dropdowns();
+                ItemDDlGrid unitGrid = dropdowns.GetItemUnits(itemId);
+                return unitGrid?.List?.FirstOrDefault(x =>
+                    x != null &&
+                    string.Equals((x.Unit ?? string.Empty).Trim(), selectedUnit.Trim(), StringComparison.OrdinalIgnoreCase));
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private decimal GetItemMasterUnitCost(int itemId, int unitId, string unitName, decimal fallbackCost)
+        {
+            try
+            {
+                List<ItemMasterPriceSettings> priceSettings = _itemMasterRepository.GetItemPriceSettings(itemId);
+                ItemMasterPriceSettings match = FindItemPriceSetting(priceSettings, unitId, unitName);
+                if (match != null)
+                    return Convert.ToDecimal(match.Cost);
+            }
+            catch
+            {
+                // Fall back to the item dialog/dropdown cost if price-settings lookup is unavailable.
+            }
+
+            return fallbackCost;
+        }
+
+        private decimal GetLatestPurchaseItemUnitCost(int itemId, int unitId, string unitName, decimal fallbackCost)
+        {
+            int resolvedUnitId = unitId;
+            decimal itemMasterCost = GetItemMasterUnitCost(itemId, unitId, unitName, fallbackCost);
+
+            try
+            {
+                List<ItemMasterPriceSettings> priceSettings = _itemMasterRepository.GetItemPriceSettings(itemId);
+                ItemMasterPriceSettings match = FindItemPriceSetting(priceSettings, resolvedUnitId, unitName);
+                if (match != null)
+                    resolvedUnitId = match.UnitId;
+            }
+            catch
+            {
+                // Use the provided unit id if price-settings lookup is unavailable.
+            }
+
+            decimal purchaseCost = GetPurchaseOrderRepository().GetLatestItemPurchaseCost(
+                itemId,
+                resolvedUnitId,
+                GetCompanyId(),
+                GetBranchId());
+
+            return purchaseCost > 0 ? purchaseCost : itemMasterCost;
+        }
+
+        private static ItemMasterPriceSettings FindItemPriceSetting(List<ItemMasterPriceSettings> priceSettings, int unitId, string unitName)
+        {
+            if (priceSettings == null || priceSettings.Count == 0)
+                return null;
+
+            ItemMasterPriceSettings match = null;
+
+            if (unitId > 0)
+                match = priceSettings.FirstOrDefault(x => x != null && x.UnitId == unitId);
+
+            if (match == null && !string.IsNullOrWhiteSpace(unitName))
+            {
+                match = priceSettings.FirstOrDefault(x =>
+                    x != null &&
+                    string.Equals((x.Unit ?? string.Empty).Trim(), unitName.Trim(), StringComparison.OrdinalIgnoreCase));
+            }
+
+            return match;
+        }
+
+        private void RefreshGridCostsFromLatestPurchases()
+        {
+            if (gridReport == null || gridReport.Rows == null)
+                return;
+
+            foreach (UltraGridRow row in gridReport.Rows)
+            {
+                if (row == null || !row.IsDataRow)
+                    continue;
+
+                int itemId = ParseInt(Convert.ToString(row.Cells["ItemId"].Value));
+                int unitId = ParseInt(Convert.ToString(row.Cells["UnitId"].Value));
+                string unit = Convert.ToString(row.Cells["UOM"].Value);
+                decimal fallbackCost = GetNumericValue(row.Cells.Exists("Cost") ? row.Cells["Cost"].Value : null) ?? 0m;
+                decimal latestCost = GetLatestPurchaseItemUnitCost(itemId, unitId, unit, fallbackCost);
+                decimal itemMasterUnitCost = GetItemMasterUnitCost(itemId, unitId, unit, GetNumericValue(row.Cells.Exists("UPrice") ? row.Cells["UPrice"].Value : null) ?? 0m);
+
+                if (latestCost <= 0)
+                    continue;
+
+                row.Cells["Cost"].Value = latestCost;
+                row.Cells["UPrice"].Value = itemMasterUnitCost;
+                RecalculateRow(row);
+            }
+
+            UpdateFooterValues();
+            RecalculateTotals();
+            gridReport.Refresh();
         }
 
         private static string GetString(Dictionary<string, object> data, params string[] keys)
@@ -1436,23 +1602,16 @@ namespace PosBranch_Win.Transaction
                 return;
 
             decimal qty = GetNumericValue(row.Cells.Exists("Qty") ? row.Cells["Qty"].Value : null) ?? 0m;
-            decimal unitPrice = GetNumericValue(row.Cells.Exists("UPrice") ? row.Cells["UPrice"].Value : null) ?? 0m;
-            decimal sstPercent = GetNumericValue(row.Cells.Exists("SST") ? row.Cells["SST"].Value : null) ?? 0m;
-            decimal amount = Math.Round(qty * unitPrice, 2);
-            decimal totalSst = Math.Round(amount * sstPercent / 100m, 2);
+            decimal cost = GetNumericValue(row.Cells.Exists("Cost") ? row.Cells["Cost"].Value : null) ?? 0m;
+            decimal amount = Math.Round(qty * cost, 2);
 
             if (row.Cells.Exists("Amount"))
                 row.Cells["Amount"].Value = amount;
-            if (row.Cells.Exists("BaseQty"))
-                row.Cells["BaseQty"].Value = qty;
-            if (row.Cells.Exists("TotalSST"))
-                row.Cells["TotalSST"].Value = totalSst;
         }
 
         private void RecalculateTotals()
         {
             decimal subTotal = 0m;
-            decimal purchaseTax = 0m;
 
             foreach (UltraGridRow row in gridReport.Rows)
             {
@@ -1460,18 +1619,17 @@ namespace PosBranch_Win.Transaction
                     continue;
 
                 subTotal += GetNumericValue(row.Cells.Exists("Amount") ? row.Cells["Amount"].Value : null) ?? 0m;
-                purchaseTax += GetNumericValue(row.Cells.Exists("TotalSST") ? row.Cells["TotalSST"].Value : null) ?? 0m;
             }
 
             decimal discount = ParseDecimal(txtDisc.Text);
-            decimal grossTotal = subTotal + purchaseTax - discount;
+            decimal grossTotal = subTotal - discount;
             decimal rounding = ultraCheckEditorRound.Checked
                 ? Math.Round(grossTotal, 0, MidpointRounding.AwayFromZero) - grossTotal
                 : 0m;
             decimal total = grossTotal + rounding;
 
             txtSubtotal.Text = subTotal.ToString("0.00");
-            txtPurchaseTax.Text = purchaseTax.ToString("0.00");
+            txtPurchaseTax.Text = "0.00";
             txtRounding.Text = rounding.ToString("0.00");
             txtTotal.Text = total.ToString("0.00");
         }
@@ -1571,7 +1729,6 @@ namespace PosBranch_Win.Transaction
             decimal grandTotal = ParseDecimal(txtTotal.Text);
             DateTime documentDate = GetEditorDate(dtpDate);
             DateTime expectedDate = GetEditorDate(dtpExpectedDate);
-            string selectedPaymentTerm = (cmbPaymentTerm.Text ?? string.Empty).Trim();
 
             return new PurchaseOrderMaster
             {
@@ -1585,10 +1742,10 @@ namespace PosBranch_Win.Transaction
                 InvoiceDate = expectedDate,
                 LedgerID = ParseInt(txtAccount.Text),
                 VendorName = txtNavigator.Text.Trim(),
-                PaymodeID = GetPaymentModeId(selectedPaymentTerm),
-                Paymode = GetPaymentModeName(selectedPaymentTerm),
+                PaymodeID = 0,
+                Paymode = string.Empty,
                 PaymodeLedgerID = 0,
-                CreditPeriod = GetCreditPeriodDays(selectedPaymentTerm),
+                CreditPeriod = 0,
                 SubTotal = Convert.ToDouble(subTotal),
                 SpDisPer = 0,
                 SpDsiAmt = 0,
@@ -1629,7 +1786,7 @@ namespace PosBranch_Win.Transaction
                 Telephone = txtTelephone.Text.Trim(),
                 OrderBy = txtOrderBy.Text.Trim(),
                 ExpectedDate = expectedDate,
-                CreditPeriodTerm = selectedPaymentTerm,
+                CreditPeriodTerm = string.Empty,
                 ApprovedBy = string.Empty,
                 CreatedBy = GetUserName(),
                 ShipVia = string.Empty,
@@ -1666,17 +1823,17 @@ namespace PosBranch_Win.Transaction
                     Packing = Convert.ToDouble(GetNumericValue(row.Cells["Packing"].Value) ?? 1m),
                     Qty = Convert.ToDouble(GetNumericValue(row.Cells["Qty"].Value) ?? 0m),
                     Free = 0,
-                    Cost = Convert.ToDouble(GetNumericValue(row.Cells["UPrice"].Value) ?? 0m),
+                    Cost = Convert.ToDouble(GetNumericValue(row.Cells["Cost"].Value) ?? 0m),
                     DisPer = 0,
                     DisAmt = 0,
                     SalesPrice = Convert.ToDouble(GetNumericValue(row.Cells["Amount"].Value) ?? 0m),
-                    TaxPer = Convert.ToDouble(GetNumericValue(row.Cells["SST"].Value) ?? 0m),
-                    TaxAmt = Convert.ToDouble(GetNumericValue(row.Cells["TotalSST"].Value) ?? 0m),
+                    TaxPer = 0,
+                    TaxAmt = 0,
                     TotalSP = Convert.ToDouble(GetNumericValue(row.Cells["Amount"].Value) ?? 0m),
-                    OriginalCost = Convert.ToDouble(GetNumericValue(row.Cells["UPrice"].Value) ?? 0m),
+                    OriginalCost = Convert.ToDouble(GetNumericValue(row.Cells["Cost"].Value) ?? 0m),
                     OriginalSP = Convert.ToDouble(GetNumericValue(row.Cells["Amount"].Value) ?? 0m),
                     IsExpiry = false,
-                    TaxType = Convert.ToString(row.Cells["TaxCode"].Value),
+                    TaxType = string.Empty,
                     SeriesID = 0,
                     CessAmt = 0,
                     CessPer = 0,
@@ -1686,12 +1843,12 @@ namespace PosBranch_Win.Transaction
                     WholeSalePrice = 0,
                     CreditPrice = 0,
                     Barcode = Convert.ToString(row.Cells["Barcode"].Value),
-                    SingleItemCost = Convert.ToDouble(GetNumericValue(row.Cells["UPrice"].Value) ?? 0m),
+                    SingleItemCost = Convert.ToDouble(GetNumericValue(row.Cells["Cost"].Value) ?? 0m),
                     TrnsType = "Purchase Order",
                     RowRemark = Convert.ToString(row.Cells["Remark"].Value),
-                    BaseQty = Convert.ToDouble(GetNumericValue(row.Cells["BaseQty"].Value) ?? 0m),
-                    BaseQtyReceived = Convert.ToDouble(GetNumericValue(row.Cells["BaseQtyReceived"].Value) ?? 0m),
-                    TotalSst = Convert.ToDouble(GetNumericValue(row.Cells["TotalSST"].Value) ?? 0m)
+                    BaseQty = Convert.ToDouble((GetNumericValue(row.Cells["Qty"].Value) ?? 0m) * (GetNumericValue(row.Cells["Packing"].Value) ?? 1m)),
+                    BaseQtyReceived = 0,
+                    TotalSst = 0
                 });
             }
 
@@ -1748,9 +1905,6 @@ namespace PosBranch_Win.Transaction
             txtReference.Text = GetRemarkValue(remarks, "Reference", master.InvoiceNo);
             txtAccount.Text = master.LedgerID > 0 ? master.LedgerID.ToString() : string.Empty;
             txtNavigator.Text = master.VendorName ?? string.Empty;
-            cmbPaymentTerm.Text = !string.IsNullOrWhiteSpace(master.CreditPeriodTerm)
-                ? master.CreditPeriodTerm
-                : (master.Paymode ?? string.Empty);
             txtShipTo1.Text = GetRemarkValue(remarks, "ShipTo1", master.ShipTo1);
             txtShipTo2.Text = GetRemarkValue(remarks, "ShipTo2", master.ShipTo2);
             txtShipTo3.Text = GetRemarkValue(remarks, "ShipTo3", master.ShipTo3);
@@ -1794,16 +1948,11 @@ namespace PosBranch_Win.Transaction
                     row["ItemNo"] = !string.IsNullOrWhiteSpace(detail.Barcode) ? detail.Barcode : detail.ItemID.ToString();
                     row["Description"] = detail.ItemName ?? string.Empty;
                     row["UOM"] = detail.Unit ?? string.Empty;
-                    row["QtyAvailable"] = 0m;
                     row["Qty"] = Convert.ToDecimal(detail.Qty);
-                    row["UPrice"] = Convert.ToDecimal(detail.Cost);
-                    row["Amount"] = Convert.ToDecimal(detail.TotalSP);
+                    row["Cost"] = GetLatestPurchaseItemUnitCost(detail.ItemID, detail.UnitId, detail.Unit, Convert.ToDecimal(detail.Cost));
+                    row["UPrice"] = GetItemMasterUnitCost(detail.ItemID, detail.UnitId, detail.Unit, Convert.ToDecimal(detail.Cost));
+                    row["Amount"] = Math.Round(Convert.ToDecimal(detail.Qty) * Convert.ToDecimal(row["Cost"]), 2);
                     row["Remark"] = detail.RowRemark ?? string.Empty;
-                    row["BaseQty"] = Convert.ToDecimal(detail.BaseQty);
-                    row["BaseQtyReceived"] = Convert.ToDecimal(detail.BaseQtyReceived);
-                    row["TaxCode"] = detail.TaxType ?? string.Empty;
-                    row["SST"] = Convert.ToDecimal(detail.TaxPer);
-                    row["TotalSST"] = Convert.ToDecimal(detail.TotalSst);
                     row["Packing"] = Convert.ToDecimal(detail.Packing);
                     row["BaseUnit"] = NormalizeBaseUnitValue(detail.BaseUnit);
                     table.Rows.Add(row);
@@ -1908,44 +2057,6 @@ namespace PosBranch_Win.Transaction
                 return ModelClass.SessionContext.UserName;
 
             return string.Empty;
-        }
-
-        private int GetPaymentModeId(string selectedPaymentTerm)
-        {
-            if (string.IsNullOrWhiteSpace(selectedPaymentTerm))
-                return 0;
-
-            string normalized = selectedPaymentTerm.Trim();
-            string targetPaymode = string.Equals(normalized, "Cash", StringComparison.OrdinalIgnoreCase)
-                ? "Cash"
-                : "Credit";
-
-            PaymodeDDl paymode = _paymentModes.FirstOrDefault(p =>
-                p != null &&
-                !string.IsNullOrWhiteSpace(p.PayModeName) &&
-                string.Equals(p.PayModeName.Trim(), targetPaymode, StringComparison.OrdinalIgnoreCase));
-
-            if (paymode != null && paymode.PayModeID > 0)
-                return paymode.PayModeID;
-
-            return 0;
-        }
-
-        private static string GetPaymentModeName(string selectedPaymentTerm)
-        {
-            if (string.Equals(selectedPaymentTerm, "Cash", StringComparison.OrdinalIgnoreCase))
-                return "Cash";
-
-            return "Credit";
-        }
-
-        private static int GetCreditPeriodDays(string selectedPaymentTerm)
-        {
-            if (string.IsNullOrWhiteSpace(selectedPaymentTerm))
-                return 0;
-
-            int days;
-            return int.TryParse(new string(selectedPaymentTerm.Where(char.IsDigit).ToArray()), out days) ? days : 0;
         }
 
         private PurchaseOrderRepository GetPurchaseOrderRepository()
