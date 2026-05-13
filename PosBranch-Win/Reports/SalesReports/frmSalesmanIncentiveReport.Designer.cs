@@ -37,20 +37,24 @@ namespace PosBranch_Win.Reports.SalesReports
             this.pnlSelection = new Infragistics.Win.Misc.UltraGroupBox();
             this.numIncentivePercent = new Infragistics.Win.UltraWinEditors.UltraNumericEditor();
             this.lblIncentivePercent = new System.Windows.Forms.Label();
-            this.cmbVendor = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
+            this.txtVendor = new System.Windows.Forms.TextBox();
             this.lblVendor = new System.Windows.Forms.Label();
-            this.cmbBrand = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
+            this.btnLookupVendor = new System.Windows.Forms.Button();
+            this.txtBrand = new System.Windows.Forms.TextBox();
             this.lblBrand = new System.Windows.Forms.Label();
-            this.cmbCategory = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
+            this.btnLookupBrand = new System.Windows.Forms.Button();
+            this.txtCategory = new System.Windows.Forms.TextBox();
             this.lblCategory = new System.Windows.Forms.Label();
-            this.cmbGroup = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
+            this.btnLookupCategory = new System.Windows.Forms.Button();
+            this.txtGroup = new System.Windows.Forms.TextBox();
             this.lblGroup = new System.Windows.Forms.Label();
-            this.cmbUser = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
+            this.btnLookupGroup = new System.Windows.Forms.Button();
+            this.txtUser = new System.Windows.Forms.TextBox();
             this.lblUser = new System.Windows.Forms.Label();
-            this.cmbSalesman = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
+            this.btnLookupUser = new System.Windows.Forms.Button();
+            this.txtSalesman = new System.Windows.Forms.TextBox();
             this.lblSalesman = new System.Windows.Forms.Label();
-            this.cmbBranch = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
-            this.lblBranch = new System.Windows.Forms.Label();
+            this.btnLookupSalesman = new System.Windows.Forms.Button();
             this.cmbDatePreset = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
             this.lblDatePreset = new System.Windows.Forms.Label();
             this.dtToDate = new Infragistics.Win.UltraWinEditors.UltraDateTimeEditor();
@@ -78,19 +82,15 @@ namespace PosBranch_Win.Reports.SalesReports
             ((System.ComponentModel.ISupportInitialize)(this.pnlSelection)).BeginInit();
             this.pnlSelection.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numIncentivePercent)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cmbVendor)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cmbBrand)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cmbCategory)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cmbGroup)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cmbUser)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cmbSalesman)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cmbBranch)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.cmbDatePreset)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dtToDate)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dtFromDate)).BeginInit();
             this.SuspendLayout();
             // 
             // pnlMain
+            // 
+            // 
+            // pnlMain.ClientArea
             // 
             this.pnlMain.ClientArea.Controls.Add(this.pnlContent);
             this.pnlMain.ClientArea.Controls.Add(this.pnlFooter);
@@ -103,6 +103,9 @@ namespace PosBranch_Win.Reports.SalesReports
             this.pnlMain.TabIndex = 0;
             // 
             // pnlContent
+            // 
+            // 
+            // pnlContent.ClientArea
             // 
             this.pnlContent.ClientArea.Controls.Add(this.splitMain);
             this.pnlContent.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -117,7 +120,13 @@ namespace PosBranch_Win.Reports.SalesReports
             this.splitMain.Location = new System.Drawing.Point(0, 0);
             this.splitMain.Name = "splitMain";
             this.splitMain.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitMain.Panel1
+            // 
             this.splitMain.Panel1.Controls.Add(this.grpSummary);
+            // 
+            // splitMain.Panel2
+            // 
             this.splitMain.Panel2.Controls.Add(this.grpDetails);
             this.splitMain.Size = new System.Drawing.Size(1244, 471);
             this.splitMain.SplitterDistance = 183;
@@ -160,6 +169,9 @@ namespace PosBranch_Win.Reports.SalesReports
             this.gridDetails.TabIndex = 0;
             // 
             // pnlFooter
+            // 
+            // 
+            // pnlFooter.ClientArea
             // 
             this.pnlFooter.ClientArea.Controls.Add(this.lblIncentiveValue);
             this.pnlFooter.ClientArea.Controls.Add(this.lblIncentiveCaption);
@@ -223,6 +235,9 @@ namespace PosBranch_Win.Reports.SalesReports
             // 
             // pnlToolbar
             // 
+            // 
+            // pnlToolbar.ClientArea
+            // 
             this.pnlToolbar.ClientArea.Controls.Add(this.btnHideSelection);
             this.pnlToolbar.ClientArea.Controls.Add(this.btnPreviewReport);
             this.pnlToolbar.ClientArea.Controls.Add(this.btnPreviewGrid);
@@ -235,7 +250,9 @@ namespace PosBranch_Win.Reports.SalesReports
             // 
             // btnHideSelection
             // 
-            this.btnHideSelection.Location = new System.Drawing.Point(393, 12);
+            this.btnHideSelection.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnHideSelection.Location = new System.Drawing.Point(1127, 12);
             this.btnHideSelection.Name = "btnHideSelection";
             this.btnHideSelection.Size = new System.Drawing.Size(114, 28);
             this.btnHideSelection.TabIndex = 3;
@@ -271,28 +288,32 @@ namespace PosBranch_Win.Reports.SalesReports
             // 
             // pnlSelection
             // 
+            this.pnlSelection.Controls.Add(this.btnLookupUser);
+            this.pnlSelection.Controls.Add(this.btnLookupSalesman);
+            this.pnlSelection.Controls.Add(this.btnLookupVendor);
+            this.pnlSelection.Controls.Add(this.btnLookupBrand);
+            this.pnlSelection.Controls.Add(this.btnLookupCategory);
             this.pnlSelection.Controls.Add(this.numIncentivePercent);
             this.pnlSelection.Controls.Add(this.lblIncentivePercent);
-            this.pnlSelection.Controls.Add(this.cmbVendor);
+            this.pnlSelection.Controls.Add(this.txtVendor);
             this.pnlSelection.Controls.Add(this.lblVendor);
-            this.pnlSelection.Controls.Add(this.cmbBrand);
+            this.pnlSelection.Controls.Add(this.txtBrand);
             this.pnlSelection.Controls.Add(this.lblBrand);
-            this.pnlSelection.Controls.Add(this.cmbCategory);
+            this.pnlSelection.Controls.Add(this.txtCategory);
             this.pnlSelection.Controls.Add(this.lblCategory);
-            this.pnlSelection.Controls.Add(this.cmbGroup);
             this.pnlSelection.Controls.Add(this.lblGroup);
-            this.pnlSelection.Controls.Add(this.cmbUser);
+            this.pnlSelection.Controls.Add(this.btnLookupGroup);
+            this.pnlSelection.Controls.Add(this.txtUser);
             this.pnlSelection.Controls.Add(this.lblUser);
-            this.pnlSelection.Controls.Add(this.cmbSalesman);
+            this.pnlSelection.Controls.Add(this.txtSalesman);
             this.pnlSelection.Controls.Add(this.lblSalesman);
-            this.pnlSelection.Controls.Add(this.cmbBranch);
-            this.pnlSelection.Controls.Add(this.lblBranch);
             this.pnlSelection.Controls.Add(this.cmbDatePreset);
             this.pnlSelection.Controls.Add(this.lblDatePreset);
             this.pnlSelection.Controls.Add(this.dtToDate);
             this.pnlSelection.Controls.Add(this.lblToDate);
             this.pnlSelection.Controls.Add(this.dtFromDate);
             this.pnlSelection.Controls.Add(this.lblFromDate);
+            this.pnlSelection.Controls.Add(this.txtGroup);
             this.pnlSelection.Dock = System.Windows.Forms.DockStyle.Top;
             this.pnlSelection.Location = new System.Drawing.Point(0, 0);
             this.pnlSelection.Name = "pnlSelection";
@@ -302,7 +323,7 @@ namespace PosBranch_Win.Reports.SalesReports
             // 
             // numIncentivePercent
             // 
-            this.numIncentivePercent.Location = new System.Drawing.Point(988, 89);
+            this.numIncentivePercent.Location = new System.Drawing.Point(953, 89);
             this.numIncentivePercent.MaskInput = "{double:5.3}";
             this.numIncentivePercent.Name = "numIncentivePercent";
             this.numIncentivePercent.NumericType = Infragistics.Win.UltraWinEditors.NumericType.Decimal;
@@ -314,16 +335,17 @@ namespace PosBranch_Win.Reports.SalesReports
             this.lblIncentivePercent.AutoSize = true;
             this.lblIncentivePercent.Location = new System.Drawing.Point(883, 93);
             this.lblIncentivePercent.Name = "lblIncentivePercent";
-            this.lblIncentivePercent.Size = new System.Drawing.Size(89, 13);
+            this.lblIncentivePercent.Size = new System.Drawing.Size(62, 13);
             this.lblIncentivePercent.TabIndex = 20;
             this.lblIncentivePercent.Text = "Incentive %";
             // 
-            // cmbVendor
+            // txtVendor
             // 
-            this.cmbVendor.Location = new System.Drawing.Point(706, 89);
-            this.cmbVendor.Name = "cmbVendor";
-            this.cmbVendor.Size = new System.Drawing.Size(155, 21);
-            this.cmbVendor.TabIndex = 19;
+            this.txtVendor.Location = new System.Drawing.Point(706, 89);
+            this.txtVendor.Name = "txtVendor";
+            this.txtVendor.ReadOnly = true;
+            this.txtVendor.Size = new System.Drawing.Size(126, 20);
+            this.txtVendor.TabIndex = 19;
             // 
             // lblVendor
             // 
@@ -334,12 +356,23 @@ namespace PosBranch_Win.Reports.SalesReports
             this.lblVendor.TabIndex = 18;
             this.lblVendor.Text = "Vendor";
             // 
-            // cmbBrand
+            // btnLookupVendor
             // 
-            this.cmbBrand.Location = new System.Drawing.Point(473, 89);
-            this.cmbBrand.Name = "cmbBrand";
-            this.cmbBrand.Size = new System.Drawing.Size(155, 21);
-            this.cmbBrand.TabIndex = 17;
+            this.btnLookupVendor.Location = new System.Drawing.Point(807, 90);
+            this.btnLookupVendor.Name = "btnLookupVendor";
+            this.btnLookupVendor.Size = new System.Drawing.Size(24, 18);
+            this.btnLookupVendor.TabIndex = 41;
+            this.btnLookupVendor.Text = "...";
+            this.btnLookupVendor.UseVisualStyleBackColor = true;
+            this.btnLookupVendor.Click += new System.EventHandler(this.btnLookupVendor_Click);
+            // 
+            // txtBrand
+            // 
+            this.txtBrand.Location = new System.Drawing.Point(473, 89);
+            this.txtBrand.Name = "txtBrand";
+            this.txtBrand.ReadOnly = true;
+            this.txtBrand.Size = new System.Drawing.Size(126, 20);
+            this.txtBrand.TabIndex = 17;
             // 
             // lblBrand
             // 
@@ -350,12 +383,23 @@ namespace PosBranch_Win.Reports.SalesReports
             this.lblBrand.TabIndex = 16;
             this.lblBrand.Text = "Brand";
             // 
-            // cmbCategory
+            // btnLookupBrand
             // 
-            this.cmbCategory.Location = new System.Drawing.Point(245, 89);
-            this.cmbCategory.Name = "cmbCategory";
-            this.cmbCategory.Size = new System.Drawing.Size(155, 21);
-            this.cmbCategory.TabIndex = 15;
+            this.btnLookupBrand.Location = new System.Drawing.Point(574, 90);
+            this.btnLookupBrand.Name = "btnLookupBrand";
+            this.btnLookupBrand.Size = new System.Drawing.Size(24, 18);
+            this.btnLookupBrand.TabIndex = 40;
+            this.btnLookupBrand.Text = "...";
+            this.btnLookupBrand.UseVisualStyleBackColor = true;
+            this.btnLookupBrand.Click += new System.EventHandler(this.btnLookupBrand_Click);
+            // 
+            // txtCategory
+            // 
+            this.txtCategory.Location = new System.Drawing.Point(245, 89);
+            this.txtCategory.Name = "txtCategory";
+            this.txtCategory.ReadOnly = true;
+            this.txtCategory.Size = new System.Drawing.Size(126, 20);
+            this.txtCategory.TabIndex = 15;
             // 
             // lblCategory
             // 
@@ -366,73 +410,100 @@ namespace PosBranch_Win.Reports.SalesReports
             this.lblCategory.TabIndex = 14;
             this.lblCategory.Text = "Category";
             // 
-            // cmbGroup
+            // btnLookupCategory
             // 
-            this.cmbGroup.Location = new System.Drawing.Point(79, 89);
-            this.cmbGroup.Name = "cmbGroup";
-            this.cmbGroup.Size = new System.Drawing.Size(94, 21);
-            this.cmbGroup.TabIndex = 13;
+            this.btnLookupCategory.Location = new System.Drawing.Point(345, 90);
+            this.btnLookupCategory.Name = "btnLookupCategory";
+            this.btnLookupCategory.Size = new System.Drawing.Size(24, 18);
+            this.btnLookupCategory.TabIndex = 39;
+            this.btnLookupCategory.Text = "...";
+            this.btnLookupCategory.UseVisualStyleBackColor = true;
+            this.btnLookupCategory.Click += new System.EventHandler(this.btnLookupCategory_Click);
+            // 
+            // txtGroup
+            // 
+            this.txtGroup.Location = new System.Drawing.Point(68, 89);
+            this.txtGroup.Name = "txtGroup";
+            this.txtGroup.ReadOnly = true;
+            this.txtGroup.Size = new System.Drawing.Size(94, 20);
+            this.txtGroup.TabIndex = 13;
             // 
             // lblGroup
             // 
             this.lblGroup.AutoSize = true;
             this.lblGroup.Location = new System.Drawing.Point(25, 93);
             this.lblGroup.Name = "lblGroup";
-            this.lblGroup.Size = new System.Drawing.Size(39, 13);
+            this.lblGroup.Size = new System.Drawing.Size(36, 13);
             this.lblGroup.TabIndex = 12;
             this.lblGroup.Text = "Group";
             // 
-            // cmbUser
+            // btnLookupGroup
             // 
-            this.cmbUser.Location = new System.Drawing.Point(1051, 46);
-            this.cmbUser.Name = "cmbUser";
-            this.cmbUser.Size = new System.Drawing.Size(80, 21);
-            this.cmbUser.TabIndex = 11;
+            this.btnLookupGroup.Location = new System.Drawing.Point(137, 90);
+            this.btnLookupGroup.Name = "btnLookupGroup";
+            this.btnLookupGroup.Size = new System.Drawing.Size(24, 18);
+            this.btnLookupGroup.TabIndex = 38;
+            this.btnLookupGroup.Text = "...";
+            this.btnLookupGroup.UseVisualStyleBackColor = true;
+            this.btnLookupGroup.Click += new System.EventHandler(this.btnLookupGroup_Click);
+            // 
+            // txtUser
+            // 
+            this.txtUser.Location = new System.Drawing.Point(916, 46);
+            this.txtUser.Name = "txtUser";
+            this.txtUser.ReadOnly = true;
+            this.txtUser.Size = new System.Drawing.Size(80, 20);
+            this.txtUser.TabIndex = 11;
             // 
             // lblUser
             // 
             this.lblUser.AutoSize = true;
-            this.lblUser.Location = new System.Drawing.Point(1015, 50);
+            this.lblUser.Location = new System.Drawing.Point(880, 50);
             this.lblUser.Name = "lblUser";
             this.lblUser.Size = new System.Drawing.Size(29, 13);
             this.lblUser.TabIndex = 10;
             this.lblUser.Text = "User";
             // 
-            // cmbSalesman
+            // btnLookupUser
             // 
-            this.cmbSalesman.Location = new System.Drawing.Point(839, 46);
-            this.cmbSalesman.Name = "cmbSalesman";
-            this.cmbSalesman.Size = new System.Drawing.Size(155, 21);
-            this.cmbSalesman.TabIndex = 9;
+            this.btnLookupUser.Location = new System.Drawing.Point(971, 47);
+            this.btnLookupUser.Name = "btnLookupUser";
+            this.btnLookupUser.Size = new System.Drawing.Size(24, 18);
+            this.btnLookupUser.TabIndex = 43;
+            this.btnLookupUser.Text = "...";
+            this.btnLookupUser.UseVisualStyleBackColor = true;
+            this.btnLookupUser.Click += new System.EventHandler(this.btnLookupUser_Click);
+            // 
+            // txtSalesman
+            // 
+            this.txtSalesman.Location = new System.Drawing.Point(704, 46);
+            this.txtSalesman.Name = "txtSalesman";
+            this.txtSalesman.ReadOnly = true;
+            this.txtSalesman.Size = new System.Drawing.Size(126, 20);
+            this.txtSalesman.TabIndex = 9;
             // 
             // lblSalesman
             // 
             this.lblSalesman.AutoSize = true;
-            this.lblSalesman.Location = new System.Drawing.Point(771, 50);
+            this.lblSalesman.Location = new System.Drawing.Point(636, 50);
             this.lblSalesman.Name = "lblSalesman";
-            this.lblSalesman.Size = new System.Drawing.Size(58, 13);
+            this.lblSalesman.Size = new System.Drawing.Size(53, 13);
             this.lblSalesman.TabIndex = 8;
             this.lblSalesman.Text = "Salesman";
             // 
-            // cmbBranch
+            // btnLookupSalesman
             // 
-            this.cmbBranch.Location = new System.Drawing.Point(606, 46);
-            this.cmbBranch.Name = "cmbBranch";
-            this.cmbBranch.Size = new System.Drawing.Size(145, 21);
-            this.cmbBranch.TabIndex = 7;
-            // 
-            // lblBranch
-            // 
-            this.lblBranch.AutoSize = true;
-            this.lblBranch.Location = new System.Drawing.Point(558, 50);
-            this.lblBranch.Name = "lblBranch";
-            this.lblBranch.Size = new System.Drawing.Size(41, 13);
-            this.lblBranch.TabIndex = 6;
-            this.lblBranch.Text = "Branch";
+            this.btnLookupSalesman.Location = new System.Drawing.Point(805, 47);
+            this.btnLookupSalesman.Name = "btnLookupSalesman";
+            this.btnLookupSalesman.Size = new System.Drawing.Size(24, 18);
+            this.btnLookupSalesman.TabIndex = 37;
+            this.btnLookupSalesman.Text = "...";
+            this.btnLookupSalesman.UseVisualStyleBackColor = true;
+            this.btnLookupSalesman.Click += new System.EventHandler(this.btnLookupSalesman_Click);
             // 
             // cmbDatePreset
             // 
-            this.cmbDatePreset.Location = new System.Drawing.Point(393, 46);
+            this.cmbDatePreset.Location = new System.Drawing.Point(453, 46);
             this.cmbDatePreset.Name = "cmbDatePreset";
             this.cmbDatePreset.Size = new System.Drawing.Size(145, 21);
             this.cmbDatePreset.TabIndex = 5;
@@ -441,9 +512,9 @@ namespace PosBranch_Win.Reports.SalesReports
             // lblDatePreset
             // 
             this.lblDatePreset.AutoSize = true;
-            this.lblDatePreset.Location = new System.Drawing.Point(313, 50);
+            this.lblDatePreset.Location = new System.Drawing.Point(386, 52);
             this.lblDatePreset.Name = "lblDatePreset";
-            this.lblDatePreset.Size = new System.Drawing.Size(63, 13);
+            this.lblDatePreset.Size = new System.Drawing.Size(61, 13);
             this.lblDatePreset.TabIndex = 4;
             this.lblDatePreset.Text = "Quick Date";
             // 
@@ -457,7 +528,7 @@ namespace PosBranch_Win.Reports.SalesReports
             // lblToDate
             // 
             this.lblToDate.AutoSize = true;
-            this.lblToDate.Location = new System.Drawing.Point(146, 50);
+            this.lblToDate.Location = new System.Drawing.Point(170, 50);
             this.lblToDate.Name = "lblToDate";
             this.lblToDate.Size = new System.Drawing.Size(20, 13);
             this.lblToDate.TabIndex = 2;
@@ -510,17 +581,11 @@ namespace PosBranch_Win.Reports.SalesReports
             this.pnlSelection.ResumeLayout(false);
             this.pnlSelection.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numIncentivePercent)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cmbVendor)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cmbBrand)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cmbCategory)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cmbGroup)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cmbUser)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cmbSalesman)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cmbBranch)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.cmbDatePreset)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dtToDate)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dtFromDate)).EndInit();
             this.ResumeLayout(false);
+
         }
 
         private Infragistics.Win.Misc.UltraPanel pnlMain;
@@ -540,18 +605,22 @@ namespace PosBranch_Win.Reports.SalesReports
         private Infragistics.Win.UltraWinEditors.UltraDateTimeEditor dtFromDate;
         private Infragistics.Win.UltraWinEditors.UltraDateTimeEditor dtToDate;
         private Infragistics.Win.UltraWinEditors.UltraComboEditor cmbDatePreset;
-        private Infragistics.Win.UltraWinEditors.UltraComboEditor cmbBranch;
-        private Infragistics.Win.UltraWinEditors.UltraComboEditor cmbSalesman;
-        private Infragistics.Win.UltraWinEditors.UltraComboEditor cmbUser;
-        private Infragistics.Win.UltraWinEditors.UltraComboEditor cmbGroup;
-        private Infragistics.Win.UltraWinEditors.UltraComboEditor cmbCategory;
-        private Infragistics.Win.UltraWinEditors.UltraComboEditor cmbBrand;
-        private Infragistics.Win.UltraWinEditors.UltraComboEditor cmbVendor;
+        private System.Windows.Forms.TextBox txtSalesman;
+        private System.Windows.Forms.TextBox txtUser;
+        private System.Windows.Forms.TextBox txtGroup;
+        private System.Windows.Forms.TextBox txtCategory;
+        private System.Windows.Forms.TextBox txtBrand;
+        private System.Windows.Forms.TextBox txtVendor;
+        private System.Windows.Forms.Button btnLookupSalesman;
+        private System.Windows.Forms.Button btnLookupUser;
+        private System.Windows.Forms.Button btnLookupGroup;
+        private System.Windows.Forms.Button btnLookupCategory;
+        private System.Windows.Forms.Button btnLookupBrand;
+        private System.Windows.Forms.Button btnLookupVendor;
         private Infragistics.Win.UltraWinEditors.UltraNumericEditor numIncentivePercent;
         private System.Windows.Forms.Label lblFromDate;
         private System.Windows.Forms.Label lblToDate;
         private System.Windows.Forms.Label lblDatePreset;
-        private System.Windows.Forms.Label lblBranch;
         private System.Windows.Forms.Label lblSalesman;
         private System.Windows.Forms.Label lblUser;
         private System.Windows.Forms.Label lblGroup;

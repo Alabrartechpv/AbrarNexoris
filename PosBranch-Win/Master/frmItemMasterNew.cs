@@ -451,6 +451,94 @@ namespace PosBranch_Win.Master
             public bool BlockPurchase { get; set; }
         }
 
+        private const string ItemMasterOperationEnsureStatusStorage = "ENSURESTATUSSTORAGE";
+        private const string ItemMasterOperationGetStatus = "GETSTATUS";
+        private const string ItemMasterOperationSaveStatus = "SAVESTATUS";
+        private const string ItemMasterOperationGetNextItemNo = "GETNEXTITEMNO";
+        private const string ItemMasterOperationNavigate = "NAVIGATE";
+        private const string PurchaseOperationGetPidByPurchaseNo = "GETPIDBYPURCHASENO";
+
+        private static SqlParameter CreateSqlParameter(string name, object value)
+        {
+            return new SqlParameter(name, value ?? DBNull.Value);
+        }
+
+        private object ExecuteStoredProcedureScalar(string storedProcedure, params SqlParameter[] parameters)
+        {
+            using (BaseRepostitory repo = new BaseRepostitory())
+            {
+                SqlConnection connection = repo.DataConnection as SqlConnection;
+                if (connection == null)
+                {
+                    return null;
+                }
+
+                if (connection.State != ConnectionState.Open)
+                {
+                    connection.Open();
+                }
+
+                using (SqlCommand cmd = new SqlCommand(storedProcedure, connection))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    if (parameters != null && parameters.Length > 0)
+                    {
+                        cmd.Parameters.AddRange(parameters);
+                    }
+
+                    return cmd.ExecuteScalar();
+                }
+            }
+        }
+
+        private int ExecuteStoredProcedureIntScalar(string storedProcedure, params SqlParameter[] parameters)
+        {
+            object result = ExecuteStoredProcedureScalar(storedProcedure, parameters);
+            return result == null || result == DBNull.Value ? 0 : Convert.ToInt32(result);
+        }
+
+        private DataTable ExecuteStoredProcedureTable(string storedProcedure, params SqlParameter[] parameters)
+        {
+            using (BaseRepostitory repo = new BaseRepostitory())
+            {
+                SqlConnection connection = repo.DataConnection as SqlConnection;
+                if (connection == null)
+                {
+                    return new DataTable();
+                }
+
+                using (SqlCommand cmd = new SqlCommand(storedProcedure, connection))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    if (parameters != null && parameters.Length > 0)
+                    {
+                        cmd.Parameters.AddRange(parameters);
+                    }
+
+                    using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+                    {
+                        DataTable table = new DataTable();
+                        adapter.Fill(table);
+                        return table;
+                    }
+                }
+            }
+        }
+
+        private UnitMaster GetUnitByNameFromStoredProcedure(string unitName)
+        {
+            if (string.IsNullOrWhiteSpace(unitName))
+            {
+                return null;
+            }
+
+            using (UnitMasterRepository unitRepository = new UnitMasterRepository())
+            {
+                int unitId = unitRepository.GetUnitIdByName(unitName);
+                return unitId > 0 ? unitRepository.GetByIdUnit(unitId) : null;
+            }
+        }
+
         private static readonly string[] uomPriceColumnKeys = new[]
         {
                 "Cost",
@@ -790,69 +878,9 @@ namespace PosBranch_Win.Master
 
             try
             {
-                using (BaseRepostitory repo = new BaseRepostitory())
-                {
-                    SqlConnection connection = repo.DataConnection as SqlConnection;
-                    if (connection == null)
-                    {
-                        return false;
-                    }
-
-                    if (connection.State != ConnectionState.Open)
-                    {
-                        connection.Open();
-                    }
-
-                    string sql = $@"
-IF OBJECT_ID(N'dbo.{ItemStatusTableName}', N'U') IS NULL
-BEGIN
-    CREATE TABLE dbo.{ItemStatusTableName}
-    (
-        ItemId INT NOT NULL PRIMARY KEY,
-        CompanyId INT NULL,
-        BranchId INT NULL,
-        StatusName NVARCHAR(50) NOT NULL,
-        StatusReason NVARCHAR(500) NULL,
-        StatusDate DATETIME NULL,
-        BlockSale BIT NOT NULL CONSTRAINT DF_{ItemStatusTableName}_BlockSale DEFAULT(0),
-        BlockPurchase BIT NOT NULL CONSTRAINT DF_{ItemStatusTableName}_BlockPurchase DEFAULT(0),
-        CreatedOn DATETIME NOT NULL CONSTRAINT DF_{ItemStatusTableName}_CreatedOn DEFAULT(GETDATE()),
-        ModifiedOn DATETIME NOT NULL CONSTRAINT DF_{ItemStatusTableName}_ModifiedOn DEFAULT(GETDATE())
-    );
-END;
-
-IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'CompanyId') IS NULL
-    ALTER TABLE dbo.{ItemStatusTableName} ADD CompanyId INT NULL;
-
-IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'BranchId') IS NULL
-    ALTER TABLE dbo.{ItemStatusTableName} ADD BranchId INT NULL;
-
-IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'StatusName') IS NULL
-    ALTER TABLE dbo.{ItemStatusTableName} ADD StatusName NVARCHAR(50) NOT NULL CONSTRAINT DF_{ItemStatusTableName}_StatusName DEFAULT(N'{ItemStatusActive}') WITH VALUES;
-
-IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'StatusReason') IS NULL
-    ALTER TABLE dbo.{ItemStatusTableName} ADD StatusReason NVARCHAR(500) NULL;
-
-IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'StatusDate') IS NULL
-    ALTER TABLE dbo.{ItemStatusTableName} ADD StatusDate DATETIME NULL;
-
-IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'BlockSale') IS NULL
-    ALTER TABLE dbo.{ItemStatusTableName} ADD BlockSale BIT NOT NULL CONSTRAINT DF_{ItemStatusTableName}_BlockSale_Alt DEFAULT(0) WITH VALUES;
-
-IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'BlockPurchase') IS NULL
-    ALTER TABLE dbo.{ItemStatusTableName} ADD BlockPurchase BIT NOT NULL CONSTRAINT DF_{ItemStatusTableName}_BlockPurchase_Alt DEFAULT(0) WITH VALUES;
-
-IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'CreatedOn') IS NULL
-    ALTER TABLE dbo.{ItemStatusTableName} ADD CreatedOn DATETIME NOT NULL CONSTRAINT DF_{ItemStatusTableName}_CreatedOn_Alt DEFAULT(GETDATE()) WITH VALUES;
-
-IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'ModifiedOn') IS NULL
-    ALTER TABLE dbo.{ItemStatusTableName} ADD ModifiedOn DATETIME NOT NULL CONSTRAINT DF_{ItemStatusTableName}_ModifiedOn_Alt DEFAULT(GETDATE()) WITH VALUES;";
-
-                    using (SqlCommand cmd = new SqlCommand(sql, connection))
-                    {
-                        cmd.ExecuteNonQuery();
-                    }
-                }
+                ExecuteStoredProcedureScalar(
+                    STOREDPROCEDURE.POS_ItemMaster,
+                    CreateSqlParameter("@_Operation", ItemMasterOperationEnsureStatusStorage));
 
                 itemStatusTableEnsured = true;
                 return true;
@@ -882,47 +910,27 @@ IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'ModifiedOn') IS NULL
 
             try
             {
-                using (BaseRepostitory repo = new BaseRepostitory())
+                DataTable statusTable = ExecuteStoredProcedureTable(
+                    STOREDPROCEDURE.POS_ItemMaster,
+                    CreateSqlParameter("@_Operation", ItemMasterOperationGetStatus),
+                    CreateSqlParameter("@ItemId", itemId));
+
+                if (statusTable.Rows.Count > 0)
                 {
-                    SqlConnection connection = repo.DataConnection as SqlConnection;
-                    if (connection == null)
+                    DataRow row = statusTable.Rows[0];
+                    ItemStatusRuleSnapshot snapshot = new ItemStatusRuleSnapshot
                     {
-                        ResetItemStatusEditor();
-                        return;
-                    }
+                        StatusName = row["StatusName"]?.ToString(),
+                        Reason = row["StatusReason"] == DBNull.Value ? string.Empty : row["StatusReason"].ToString(),
+                        StatusDate = row["StatusDate"] == DBNull.Value
+                            ? DateTime.Today
+                            : Convert.ToDateTime(row["StatusDate"]),
+                        BlockSale = row["BlockSale"] != DBNull.Value && Convert.ToBoolean(row["BlockSale"]),
+                        BlockPurchase = row["BlockPurchase"] != DBNull.Value && Convert.ToBoolean(row["BlockPurchase"])
+                    };
 
-                    if (connection.State != ConnectionState.Open)
-                    {
-                        connection.Open();
-                    }
-
-                    string sql = $@"SELECT TOP 1 StatusName, StatusReason, StatusDate, BlockSale, BlockPurchase
-                                    FROM dbo.{ItemStatusTableName}
-                                    WHERE ItemId = @ItemId";
-
-                    using (SqlCommand cmd = new SqlCommand(sql, connection))
-                    {
-                        cmd.Parameters.AddWithValue("@ItemId", itemId);
-                        using (SqlDataReader reader = cmd.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                ItemStatusRuleSnapshot snapshot = new ItemStatusRuleSnapshot
-                                {
-                                    StatusName = reader["StatusName"]?.ToString(),
-                                    Reason = reader["StatusReason"] == DBNull.Value ? string.Empty : reader["StatusReason"].ToString(),
-                                    StatusDate = reader["StatusDate"] == DBNull.Value
-                                        ? DateTime.Today
-                                        : Convert.ToDateTime(reader["StatusDate"]),
-                                    BlockSale = reader["BlockSale"] != DBNull.Value && Convert.ToBoolean(reader["BlockSale"]),
-                                    BlockPurchase = reader["BlockPurchase"] != DBNull.Value && Convert.ToBoolean(reader["BlockPurchase"])
-                                };
-
-                                ApplyItemStatusSnapshot(snapshot);
-                                return;
-                            }
-                        }
-                    }
+                    ApplyItemStatusSnapshot(snapshot);
+                    return;
                 }
             }
             catch (Exception ex)
@@ -951,51 +959,17 @@ IF COL_LENGTH(N'dbo.{ItemStatusTableName}', N'ModifiedOn') IS NULL
             try
             {
                 ItemStatusRuleSnapshot snapshot = GetCurrentItemStatusRuleSnapshot();
-                using (BaseRepostitory repo = new BaseRepostitory())
-                {
-                    SqlConnection connection = repo.DataConnection as SqlConnection;
-                    if (connection == null)
-                    {
-                        errorMessage = "Unable to open item status storage connection.";
-                        return false;
-                    }
-
-                    if (connection.State != ConnectionState.Open)
-                    {
-                        connection.Open();
-                    }
-
-                    string sql = $@"
-MERGE dbo.{ItemStatusTableName} AS target
-USING (SELECT @ItemId AS ItemId) AS source
-    ON target.ItemId = source.ItemId
-WHEN MATCHED THEN
-    UPDATE SET
-        CompanyId = @CompanyId,
-        BranchId = @BranchId,
-        StatusName = @StatusName,
-        StatusReason = @StatusReason,
-        StatusDate = @StatusDate,
-        BlockSale = @BlockSale,
-        BlockPurchase = @BlockPurchase,
-        ModifiedOn = GETDATE()
-WHEN NOT MATCHED THEN
-    INSERT (ItemId, CompanyId, BranchId, StatusName, StatusReason, StatusDate, BlockSale, BlockPurchase, CreatedOn, ModifiedOn)
-    VALUES (@ItemId, @CompanyId, @BranchId, @StatusName, @StatusReason, @StatusDate, @BlockSale, @BlockPurchase, GETDATE(), GETDATE());";
-
-                    using (SqlCommand cmd = new SqlCommand(sql, connection))
-                    {
-                        cmd.Parameters.AddWithValue("@ItemId", itemId);
-                        cmd.Parameters.AddWithValue("@CompanyId", Convert.ToInt32(ModelClass.DataBase.CompanyId));
-                        cmd.Parameters.AddWithValue("@BranchId", Convert.ToInt32(ModelClass.DataBase.BranchId));
-                        cmd.Parameters.AddWithValue("@StatusName", snapshot.StatusName);
-                        cmd.Parameters.AddWithValue("@StatusReason", string.IsNullOrWhiteSpace(snapshot.Reason) ? (object)DBNull.Value : snapshot.Reason);
-                        cmd.Parameters.AddWithValue("@StatusDate", snapshot.StatusDate);
-                        cmd.Parameters.AddWithValue("@BlockSale", snapshot.BlockSale);
-                        cmd.Parameters.AddWithValue("@BlockPurchase", snapshot.BlockPurchase);
-                        cmd.ExecuteNonQuery();
-                    }
-                }
+                ExecuteStoredProcedureScalar(
+                    STOREDPROCEDURE.POS_ItemMaster,
+                    CreateSqlParameter("@_Operation", ItemMasterOperationSaveStatus),
+                    CreateSqlParameter("@ItemId", itemId),
+                    CreateSqlParameter("@CompanyId", Convert.ToInt32(ModelClass.DataBase.CompanyId)),
+                    CreateSqlParameter("@BranchId", Convert.ToInt32(ModelClass.DataBase.BranchId)),
+                    CreateSqlParameter("@StatusName", snapshot.StatusName),
+                    CreateSqlParameter("@StatusReason", string.IsNullOrWhiteSpace(snapshot.Reason) ? (object)DBNull.Value : snapshot.Reason),
+                    CreateSqlParameter("@StatusDate", snapshot.StatusDate),
+                    CreateSqlParameter("@BlockSale", snapshot.BlockSale),
+                    CreateSqlParameter("@BlockPurchase", snapshot.BlockPurchase));
 
                 return true;
             }
@@ -3048,23 +3022,11 @@ WHEN NOT MATCHED THEN
 
         private int GetNextItemNumber()
         {
-            BaseRepostitory con = new BaseRepostitory();
-            int newItemNumber = 1;
+            int newItemNumber = ExecuteStoredProcedureIntScalar(
+                STOREDPROCEDURE.POS_ItemMaster,
+                CreateSqlParameter("@_Operation", ItemMasterOperationGetNextItemNo));
 
-            using (SqlCommand cmd = new SqlCommand("SELECT ISNULL(MAX(CAST(ItemNo AS INT)), 0) + 1 AS NextItemNo FROM ItemMaster", (SqlConnection)con.DataConnection))
-            {
-                con.DataConnection.Open();
-                object result = cmd.ExecuteScalar();
-
-                if (result != null && result != DBNull.Value)
-                {
-                    newItemNumber = Convert.ToInt32(result);
-                }
-
-                con.DataConnection.Close();
-            }
-
-            return newItemNumber;
+            return newItemNumber > 0 ? newItemNumber : 1;
         }
 
         private void GenerateNextItemNumberOnly()
@@ -3449,20 +3411,8 @@ WHEN NOT MATCHED THEN
                     return;
                 }
 
-                // Get unit ID from the database
-                BaseRepostitory conGetId = new BaseRepostitory();
-                string queryGetId = "SELECT UnitID FROM UnitMaster WHERE UnitName = @UnitName";
-                using (SqlCommand cmd = new SqlCommand(queryGetId, (SqlConnection)conGetId.DataConnection))
-                {
-                    cmd.Parameters.AddWithValue("@UnitName", selectedUnitName);
-                    conGetId.DataConnection.Open();
-                    object result = cmd.ExecuteScalar();
-                    if (result != null && result != DBNull.Value)
-                    {
-                        selectedUnitId = Convert.ToInt32(result);
-                    }
-                    conGetId.DataConnection.Close();
-                }
+                UnitMaster selectedUnit = GetUnitByNameFromStoredProcedure(selectedUnitName);
+                selectedUnitId = selectedUnit?.UnitID ?? 0;
 
                 if (selectedUnitId <= 0)
                 {
@@ -3470,21 +3420,8 @@ WHEN NOT MATCHED THEN
                     return;
                 }
 
-                // Get unit details from repository
-                BaseRepostitory con = new BaseRepostitory();
-                string query = "SELECT UnitID, UnitName, Packing FROM UnitMaster WHERE UnitID = @UnitID";
-
-                using (SqlCommand cmd = new SqlCommand(query, (SqlConnection)con.DataConnection))
-                {
-                    cmd.Parameters.AddWithValue("@UnitID", selectedUnitId);
-
-                    con.DataConnection.Open();
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            string unitName = reader["UnitName"].ToString();
-                            float packing = Convert.ToSingle(reader["Packing"]);
+                string unitName = selectedUnit.UnitName;
+                float packing = Convert.ToSingle(selectedUnit.Packing);
 
                             // Clear existing data in ultraGrid1
                             DataTable dtUom = ultraGrid1.DataSource as DataTable;
@@ -3612,10 +3549,6 @@ WHEN NOT MATCHED THEN
                                 System.Diagnostics.Debug.WriteLine($"Base unit (1 UNIT) values: Cost={baseCost}, MRP={baseMRP}, Walking={baseWalkingPrice}, Retail={baseRetailPrice}");
                                 System.Diagnostics.Debug.WriteLine($"Calculated values for {unitName}: Cost={baseCost * packing}, MRP={baseMRP * packing}, Walking={baseWalkingPrice * packing}");
                             }
-                        }
-                    }
-                    con.DataConnection.Close();
-                }
             }
             catch (Exception ex)
             {
@@ -4477,88 +4410,44 @@ WHEN NOT MATCHED THEN
             try
             {
                 int currentItemNo = 0;
-                // Parse current item number if present
                 if (!string.IsNullOrEmpty(txt_ItemNo.Text))
                 {
                     int.TryParse(txt_ItemNo.Text, out currentItemNo);
                 }
 
-                BaseRepostitory con = new BaseRepostitory();
-                string query = "";
-
-                // Build the query based on navigation type
-                switch (navigationType)
+                if ((navigationType == "PREVIOUS" || navigationType == "NEXT") && currentItemNo <= 0)
                 {
-                    case "FIRST":
-                        // Get the item with the lowest item number
-                        // Use CAST to ensure numeric ordering instead of string ordering
-                        query = "SELECT TOP 1 ItemId FROM ItemMaster ORDER BY CAST(ItemNo AS INT) ASC";
-                        break;
-
-                    case "PREVIOUS":
-                        if (currentItemNo <= 0) return;
-                        // Get the item with the highest item number that is less than the current one
-                        // Use CAST to ensure numeric comparison instead of string comparison
-                        query = $"SELECT TOP 1 ItemId FROM ItemMaster WHERE CAST(ItemNo AS INT) < {currentItemNo} ORDER BY CAST(ItemNo AS INT) DESC";
-                        break;
-
-                    case "NEXT":
-                        if (currentItemNo <= 0) return;
-                        // Get the next sequential item number greater than the current one
-                        // Use CAST to ensure numeric comparison instead of string comparison
-                        query = $"SELECT TOP 1 ItemId FROM ItemMaster WHERE CAST(ItemNo AS INT) > {currentItemNo} ORDER BY CAST(ItemNo AS INT) ASC";
-                        break;
-
-                    case "LAST":
-                        // Get the item with the highest item number (but not greater than 9998)
-                        // Use CAST to ensure numeric ordering instead of string ordering
-                        query = "SELECT TOP 1 ItemId FROM ItemMaster ORDER BY CAST(ItemNo AS INT) DESC";
-                        break;
-
-                    default:
-                        return;
+                    return;
                 }
 
-                // Execute the query
-                int itemId = 0;
+                int itemId = ExecuteStoredProcedureIntScalar(
+                    STOREDPROCEDURE.POS_ItemMaster,
+                    CreateSqlParameter("@_Operation", ItemMasterOperationNavigate),
+                    CreateSqlParameter("@NavigationType", navigationType),
+                    CreateSqlParameter("@CurrentItemNo", currentItemNo));
 
-                try
+                if (itemId <= 0)
                 {
-                    con.DataConnection.Open();
-                    using (SqlCommand cmd = new SqlCommand(query, (SqlConnection)con.DataConnection))
+                    if (navigationType == "NEXT")
                     {
-                        var result = cmd.ExecuteScalar();
-                        if (result != null && result != DBNull.Value)
-                        {
-                            itemId = Convert.ToInt32(result);
-                        }
-                        else
-                        {
-                            // No more items found in the requested direction
-                            if (navigationType == "NEXT")
-                            {
-                                MessageBox.Show("This is the last available item.", "End of Items",
-                                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            }
-                            else if (navigationType == "PREVIOUS")
-                            {
-                                MessageBox.Show("This is the first available item.", "Start of Items",
-                                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            }
-                        }
+                        MessageBox.Show("This is the last available item.", "End of Items",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
-                }
-                finally
-                {
-                    if (con.DataConnection.State == ConnectionState.Open)
-                        con.DataConnection.Close();
+                    else if (navigationType == "PREVIOUS")
+                    {
+                        MessageBox.Show("This is the first available item.", "Start of Items",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show("No items found.", "No Items",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+
+                    return;
                 }
 
-                // If we found an item, load it
-                if (itemId > 0)
-                {
-                    LoadItemById(itemId);
-                }
+                LoadItemById(itemId);
             }
             catch (Exception ex)
             {
@@ -5227,47 +5116,28 @@ WHEN NOT MATCHED THEN
             if (purchasePidCache.TryGetValue(purchaseNo, out int cachedPid))
                 return cachedPid;
 
-            BaseRepostitory repo = null;
-            SqlConnection sqlConnection = null;
             try
             {
-                repo = new BaseRepostitory();
-                sqlConnection = repo.DataConnection as SqlConnection;
-                if (sqlConnection == null)
-                    return 0;
+                int branchId;
+                int.TryParse(DataBase.BranchId, out branchId);
 
-                if (sqlConnection.State != ConnectionState.Open)
-                    sqlConnection.Open();
+                int companyId;
+                int.TryParse(DataBase.CompanyId, out companyId);
 
-                using (SqlCommand cmd = new SqlCommand(
-                    "SELECT TOP 1 Pid FROM PMaster WHERE PurchaseNo = @PurchaseNo AND (@BranchId = 0 OR BranchId = @BranchId) AND (@CompanyId = 0 OR CompanyId = @CompanyId) ORDER BY Pid DESC",
-                    sqlConnection))
-                {
-                    cmd.Parameters.AddWithValue("@PurchaseNo", purchaseNo);
+                int pid = ExecuteStoredProcedureIntScalar(
+                    STOREDPROCEDURE.POS_Purchase,
+                    CreateSqlParameter("@_Operation", PurchaseOperationGetPidByPurchaseNo),
+                    CreateSqlParameter("@PurchaseNo", purchaseNo),
+                    CreateSqlParameter("@BranchId", branchId),
+                    CreateSqlParameter("@CompanyId", companyId));
 
-                    int branchId;
-                    int.TryParse(DataBase.BranchId, out branchId);
-                    cmd.Parameters.AddWithValue("@BranchId", branchId);
-
-                    int companyId;
-                    int.TryParse(DataBase.CompanyId, out companyId);
-                    cmd.Parameters.AddWithValue("@CompanyId", companyId);
-
-                    object result = cmd.ExecuteScalar();
-                    int pid = (result == null || result == DBNull.Value) ? 0 : Convert.ToInt32(result);
-                    purchasePidCache[purchaseNo] = pid;
-                    return pid;
-                }
+                purchasePidCache[purchaseNo] = pid;
+                return pid;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error resolving Pid for PurchaseNo {purchaseNo}: {ex.Message}");
                 return 0;
-            }
-            finally
-            {
-                if (sqlConnection != null && sqlConnection.State == ConnectionState.Open)
-                    sqlConnection.Close();
             }
         }
 
@@ -9272,22 +9142,12 @@ WHEN NOT MATCHED THEN
                 // Get the selected base unit information
                 string selectedUnitName = txt_BaseUnit.Text.Trim();
 
-                // Get unit details from repository
-                BaseRepostitory con = new BaseRepostitory();
-                string query = "SELECT UnitID, UnitName, Packing FROM UnitMaster WHERE UnitName = @UnitName";
-
-                using (SqlCommand cmd = new SqlCommand(query, (SqlConnection)con.DataConnection))
+                UnitMaster selectedUnit = GetUnitByNameFromStoredProcedure(selectedUnitName);
+                if (selectedUnit != null)
                 {
-                    cmd.Parameters.AddWithValue("@UnitName", selectedUnitName);
-
-                    con.DataConnection.Open();
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            int unitId = Convert.ToInt32(reader["UnitID"]);
-                            string unitName = reader["UnitName"].ToString();
-                            float packing = Convert.ToSingle(reader["Packing"]);
+                            int unitId = selectedUnit.UnitID;
+                            string unitName = selectedUnit.UnitName;
+                            float packing = Convert.ToSingle(selectedUnit.Packing);
 
                             // Clear existing data in ultraGrid1
                             ClearUomGrid();
@@ -9312,9 +9172,6 @@ WHEN NOT MATCHED THEN
                             UpdateOtherUnitsInGrid(unitName);
 
                             System.Diagnostics.Debug.WriteLine($"Successfully synchronized base unit '{unitName}' with ultraGrid1");
-                        }
-                    }
-                    con.DataConnection.Close();
                 }
 
                 // Hide specified columns after synchronizing
@@ -9364,22 +9221,12 @@ WHEN NOT MATCHED THEN
                     // If base unit doesn't exist in grid, add it
                     if (!baseUnitExists)
                     {
-                        // Get base unit details and add it
-                        BaseRepostitory con = new BaseRepostitory();
-                        string query = "SELECT UnitID, UnitName, Packing FROM UnitMaster WHERE UnitName = @UnitName";
-
-                        using (SqlCommand cmd = new SqlCommand(query, (SqlConnection)con.DataConnection))
+                        UnitMaster baseUnit = GetUnitByNameFromStoredProcedure(baseUnitName);
+                        if (baseUnit != null)
                         {
-                            cmd.Parameters.AddWithValue("@UnitName", baseUnitName);
-
-                            con.DataConnection.Open();
-                            using (SqlDataReader reader = cmd.ExecuteReader())
-                            {
-                                if (reader.Read())
-                                {
-                                    int unitId = Convert.ToInt32(reader["UnitID"]);
-                                    string unitName = reader["UnitName"].ToString();
-                                    float packing = Convert.ToSingle(reader["Packing"]);
+                                    int unitId = baseUnit.UnitID;
+                                    string unitName = baseUnit.UnitName;
+                                    float packing = Convert.ToSingle(baseUnit.Packing);
 
                                     // Add base unit with packing = 1
                                     string currentBarcode = string.Empty;
@@ -9395,9 +9242,6 @@ WHEN NOT MATCHED THEN
 
                                     // Update price grid
                                     UpdatePriceGridForBaseUnit(unitName, 1.0f);
-                                }
-                            }
-                            con.DataConnection.Close();
                         }
                     }
                 }
@@ -9735,7 +9579,7 @@ WHEN NOT MATCHED THEN
             try
             {
                 BaseRepostitory con = new BaseRepostitory();
-                using (SqlCommand cmd = new SqlCommand("_POS_ItemMaster", (SqlConnection)con.DataConnection))
+                using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_ItemMaster, (SqlConnection)con.DataConnection))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     // Try a common GETBYID operation first

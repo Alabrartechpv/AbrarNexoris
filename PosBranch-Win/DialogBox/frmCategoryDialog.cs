@@ -19,6 +19,9 @@ namespace PosBranch_Win.DialogBox
     {
         Dropdowns drop = new Dropdowns();
         frmItemMasterNew ItemMaster = new frmItemMasterNew();
+        public TextBox TargetTextBox { get; set; }
+        public int SelectedCategoryId { get; private set; }
+        public string SelectedCategoryName { get; private set; }
         string formname;
         FrmStockAdjustment stockadj = new FrmStockAdjustment();
         // Add fields for search/filter controls
@@ -1661,17 +1664,26 @@ namespace PosBranch_Win.DialogBox
             {
                 var id = ultraGrid1.ActiveRow.Cells["Id"].Value.ToString();
                 var name = ultraGrid1.ActiveRow.Cells["CategoryName"].Value.ToString();
-                if (formname == "frmItemMasterNew")
+                SelectedCategoryName = name;
+                SelectedCategoryId = int.TryParse(id, out int parsedId) ? parsedId : 0;
+
+                if (TargetTextBox != null)
+                {
+                    TargetTextBox.Text = name;
+                    this.DialogResult = DialogResult.OK;
+                }
+                else if (formname == "frmItemMasterNew")
                 {
                     ItemMaster = (frmItemMasterNew)Application.OpenForms["frmItemMasterNew"];
                     ItemMaster.txt_Category.Text = name;
-
+                    this.DialogResult = DialogResult.OK;
                 }
                 else if (formname == "FrmStockAdjustment")
                 {
                     stockadj = (FrmStockAdjustment)Application.OpenForms["FrmStockAdjustment"];
                     stockadj.txtb_category.Text = name;
                     stockadj.ultlbl_catid.Text = id;
+                    this.DialogResult = DialogResult.OK;
                 }
                 this.Close();
             }

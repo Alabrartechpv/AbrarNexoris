@@ -19,6 +19,9 @@ namespace PosBranch_Win.DialogBox
     {
         Dropdowns drop = new Dropdowns();
         frmItemMasterNew ItemMaster = new frmItemMasterNew();
+        public TextBox TargetTextBox { get; set; }
+        public int SelectedGroupId { get; private set; }
+        public string SelectedGroupName { get; private set; }
 
         // Add debounce timer and tracking for textBox3
         private System.Windows.Forms.Timer textBox3DebounceTimer;
@@ -176,16 +179,7 @@ namespace PosBranch_Win.DialogBox
                 // Reuse existing grid Enter key logic
                 if (this.dgv_Grop.ActiveRow != null)
                 {
-                    ItemMaster = Application.OpenForms.OfType<frmItemMasterNew>().FirstOrDefault();
-                    if (ItemMaster != null)
-                    {
-                        UltraGridCell GroupName = this.dgv_Grop.ActiveRow.Cells["GroupName"];
-                        if (GroupName != null)
-                        {
-                            ItemMaster.txt_Group.Text = Convert.ToString(GroupName.Value);
-                        }
-                    }
-                    this.Close();
+                    ApplyGroupSelection(this.dgv_Grop.ActiveRow);
                 }
                 else if (this.dgv_Grop.Rows != null && this.dgv_Grop.Rows.Count > 0)
                 {
@@ -239,32 +233,7 @@ namespace PosBranch_Win.DialogBox
                 this.dgv_Grop.Selected.Rows.Clear();
                 this.dgv_Grop.Selected.Rows.Add(e.Row);
 
-                // Find the open Item Master form safely
-                ItemMaster = Application.OpenForms
-                    .OfType<frmItemMasterNew>()
-                    .FirstOrDefault();
-
-                if (ItemMaster == null)
-                {
-                    // No target form is open; just close the dialog quietly
-                    this.Close();
-                    return;
-                }
-
-                // Safely get cells
-                UltraGridCell GroupName = null;
-                if (e.Row.Cells.Exists("GroupName")) GroupName = e.Row.Cells["GroupName"];
-
-                if (GroupName == null)
-                    return;
-
-                // Write back to target controls if available
-                if (ItemMaster.txt_Group != null)
-                {
-                    ItemMaster.txt_Group.Text = Convert.ToString(GroupName.Value);
-                }
-
-                this.Close();
+                ApplyGroupSelection(e.Row);
             }
             catch (Exception ex)
             {
@@ -280,38 +249,11 @@ namespace PosBranch_Win.DialogBox
 
             try
             {
-                // Find the open Item Master form safely
-                ItemMaster = Application.OpenForms
-                    .OfType<frmItemMasterNew>()
-                    .FirstOrDefault();
-
-                if (ItemMaster == null)
-                {
-                    // No target form is open; just close the dialog quietly
-                    this.Close();
-                    return;
-                }
-
                 var row = this.dgv_Grop.ActiveRow;
                 if (row == null || row.IsGroupByRow)
                     return;
 
-                // Safely get cells
-                UltraGridCell GroupName = null;
-                UltraGridCell Id = null;
-                if (row.Cells.Exists("GroupName")) GroupName = row.Cells["GroupName"];
-                if (row.Cells.Exists("Id")) Id = row.Cells["Id"];
-
-                if (GroupName == null)
-                    return;
-
-                // Write back to target controls if available
-                if (ItemMaster.txt_Group != null)
-                {
-                    ItemMaster.txt_Group.Text = Convert.ToString(GroupName.Value);
-                }
-
-                this.Close();
+                ApplyGroupSelection(row);
             }
             catch
             {
@@ -460,6 +402,40 @@ namespace PosBranch_Win.DialogBox
             catch { }
         }
 
+        private void ApplyGroupSelection(UltraGridRow row)
+        {
+            if (row == null || row.IsGroupByRow)
+            {
+                return;
+            }
+
+            UltraGridCell groupNameCell = row.Cells.Exists("GroupName") ? row.Cells["GroupName"] : null;
+            UltraGridCell groupIdCell = row.Cells.Exists("Id") ? row.Cells["Id"] : null;
+            if (groupNameCell == null)
+            {
+                return;
+            }
+
+            SelectedGroupName = Convert.ToString(groupNameCell.Value);
+            SelectedGroupId = groupIdCell != null ? Convert.ToInt32(groupIdCell.Value) : 0;
+
+            if (TargetTextBox != null)
+            {
+                TargetTextBox.Text = SelectedGroupName;
+            }
+            else
+            {
+                ItemMaster = Application.OpenForms.OfType<frmItemMasterNew>().FirstOrDefault();
+                if (ItemMaster?.txt_Group != null)
+                {
+                    ItemMaster.txt_Group.Text = SelectedGroupName;
+                }
+            }
+
+            DialogResult = DialogResult.OK;
+            Close();
+        }
+
         // Ensure column headers adopt the themed colors/fonts after the data binds
         private void dgv_Grop_InitializeLayout(object sender, InitializeLayoutEventArgs e)
         {
@@ -582,14 +558,7 @@ namespace PosBranch_Win.DialogBox
                         // Select the active row (same as pressing Enter on grid)
                         if (this.dgv_Grop.ActiveRow != null && !this.dgv_Grop.ActiveRow.Hidden)
                         {
-                            // Reuse grid KeyPress logic: set text and close
-                            ItemMaster = Application.OpenForms
-                                .OfType<frmItemMasterNew>()
-                                .FirstOrDefault();
-                            UltraGridCell GroupName = this.dgv_Grop.ActiveRow.Cells["GroupName"];
-                            if (ItemMaster != null && GroupName != null)
-                                ItemMaster.txt_Group.Text = Convert.ToString(GroupName.Value);
-                            this.Close();
+                            ApplyGroupSelection(this.dgv_Grop.ActiveRow);
                         }
                     }
 

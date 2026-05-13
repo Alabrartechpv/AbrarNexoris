@@ -1421,6 +1421,9 @@
     <EmbeddedResource Include="Reports\SalesReports\frmSalesDetailsReport.resx">
       <DependentUpon>frmSalesDetailsReport.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Reports\SalesReports\frmSalesmanIncentiveReport.resx">
+      <DependentUpon>frmSalesmanIncentiveReport.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Reports\SalesReports\frmSales_RPT.resx">
       <DependentUpon>frmSales_RPT.cs</DependentUpon>
     </EmbeddedResource>

@@ -20,6 +20,9 @@ namespace PosBranch_Win.DialogBox
     {
         Dropdowns drop = new Dropdowns();
         frmItemMasterNew ItemMaster = new frmItemMasterNew();
+        public TextBox TargetTextBox { get; set; }
+        public int SelectedBrandId { get; private set; }
+        public string SelectedBrandName { get; private set; }
 
         // Add debounce timer and tracking for textBox3
         private System.Windows.Forms.Timer textBox3DebounceTimer;
@@ -190,22 +193,7 @@ namespace PosBranch_Win.DialogBox
                 if (row == null || row.IsGroupByRow)
                     return;
 
-                // Safely get cells
-                UltraGridCell BrandName = null;
-                UltraGridCell Id = null;
-                if (row.Cells.Exists("BrandName")) BrandName = row.Cells["BrandName"];
-                if (row.Cells.Exists("Id")) Id = row.Cells["Id"];
-
-                if (BrandName == null)
-                    return;
-
-                // Write back to target controls if available
-                if (ItemMaster.txt_Brand != null)
-                {
-                    ItemMaster.txt_Brand.Text = Convert.ToString(BrandName.Value);
-                }
-
-                this.Close();
+                SelectBrandFromRow(row);
             }
             catch
             {
@@ -228,28 +216,31 @@ namespace PosBranch_Win.DialogBox
                 if (row == null || row.IsGroupByRow)
                     return;
 
-                // Find the open Item Master form safely
-                ItemMaster = Application.OpenForms
-                    .OfType<frmItemMasterNew>()
-                    .FirstOrDefault();
-
-                if (ItemMaster == null)
-                {
-                    // No target form is open; just close the dialog quietly
-                    this.Close();
-                    return;
-                }
-
-                UltraGridCell BrandName = null;
-                if (row.Cells.Exists("BrandName")) BrandName = row.Cells["BrandName"];
-                if (BrandName == null)
+                UltraGridCell brandNameCell = row.Cells.Exists("BrandName") ? row.Cells["BrandName"] : null;
+                UltraGridCell brandIdCell = row.Cells.Exists("Id") ? row.Cells["Id"] : null;
+                if (brandNameCell == null)
                     return;
 
-                if (ItemMaster.txt_Brand != null)
+                SelectedBrandName = Convert.ToString(brandNameCell.Value);
+                SelectedBrandId = brandIdCell != null ? Convert.ToInt32(brandIdCell.Value) : 0;
+
+                if (TargetTextBox != null)
                 {
-                    ItemMaster.txt_Brand.Text = Convert.ToString(BrandName.Value);
+                    TargetTextBox.Text = SelectedBrandName;
+                }
+                else
+                {
+                    ItemMaster = Application.OpenForms
+                        .OfType<frmItemMasterNew>()
+                        .FirstOrDefault();
+
+                    if (ItemMaster?.txt_Brand != null)
+                    {
+                        ItemMaster.txt_Brand.Text = SelectedBrandName;
+                    }
                 }
 
+                this.DialogResult = DialogResult.OK;
                 this.Close();
             }
             catch { }
