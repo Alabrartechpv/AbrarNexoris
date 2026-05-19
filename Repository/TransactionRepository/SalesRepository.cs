@@ -786,11 +786,11 @@ namespace Repository.TransactionRepository
                         }
                     }
                 }
-                catch (SqlException sqlEx)
+                catch (SqlException)
                 {
                     throw;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     throw;
                 }

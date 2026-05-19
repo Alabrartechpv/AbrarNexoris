@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -29,9 +29,9 @@ namespace Repository.Accounts
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@_Operation", "GETALL");
-
-                    if (branchId > 0)
-                        cmd.Parameters.AddWithValue("@BranchID", branchId);
+                    // Always pass @BranchID so the SP always filters by branch.
+                    // Pass 0 only if the caller explicitly wants all branches (admin use).
+                    cmd.Parameters.AddWithValue("@BranchID", branchId == 0 ? (object)DBNull.Value : branchId);
 
                     using (SqlDataAdapter adapt = new SqlDataAdapter(cmd))
                     {
@@ -87,8 +87,8 @@ namespace Repository.Accounts
                     cmd.Parameters.AddWithValue("@MaintainBillWiseDetails", ledger.MaintainBillWiseDetails ?? false);
                     cmd.Parameters.AddWithValue("@PriceLevelApplicable", ledger.PriceLevelApplicable ?? false);
 
-                    int rowsAffected = cmd.ExecuteNonQuery();
-                    result = (rowsAffected > 0);
+                    object scalar = cmd.ExecuteScalar();
+                    result = scalar != null && Convert.ToInt32(scalar) > 0;
                 }
             }
             catch (Exception ex)
@@ -139,8 +139,8 @@ namespace Repository.Accounts
                     cmd.Parameters.AddWithValue("@MaintainBillWiseDetails", ledger.MaintainBillWiseDetails ?? false);
                     cmd.Parameters.AddWithValue("@PriceLevelApplicable", ledger.PriceLevelApplicable ?? false);
 
-                    int rowsAffected = cmd.ExecuteNonQuery();
-                    result = (rowsAffected > 0);
+                    object scalar = cmd.ExecuteScalar();
+                    result = scalar != null && Convert.ToInt32(scalar) > 0;
                 }
             }
             catch (Exception ex)
@@ -176,8 +176,8 @@ namespace Repository.Accounts
                     cmd.Parameters.AddWithValue("@_Operation", "DELETE");
                     cmd.Parameters.AddWithValue("@LedgerID", ledgerId);
 
-                    int rowsAffected = cmd.ExecuteNonQuery();
-                    result = (rowsAffected > 0);
+                    object scalar = cmd.ExecuteScalar();
+                    result = scalar != null && Convert.ToInt32(scalar) > 0;
                 }
             }
             catch (Exception ex)
@@ -294,6 +294,87 @@ namespace Repository.Accounts
             }
 
             return dtResult.Rows.Count > 0 ? dtResult.Rows[0] : null;
+        }
+
+        // Method to check if a ledger name already exists
+        public bool IsLedgerNameExists(string ledgerName, int branchId, int excludeLedgerId = 0)
+        {
+            bool exists = false;
+
+            if (DataConnection.State == ConnectionState.Open)
+            {
+                DataConnection.Close();
+            }
+
+            DataConnection.Open();
+
+            try
+            {
+                string query = "SELECT COUNT(1) FROM LedgerMaster WHERE LedgerName = @LedgerName AND BranchID = @BranchID AND LedgerID != @ExcludeLedgerID";
+                using (SqlCommand cmd = new SqlCommand(query, (SqlConnection)DataConnection))
+                {
+                    cmd.Parameters.AddWithValue("@LedgerName", ledgerName);
+                    cmd.Parameters.AddWithValue("@BranchID", branchId);
+                    cmd.Parameters.AddWithValue("@ExcludeLedgerID", excludeLedgerId);
+
+                    object result = cmd.ExecuteScalar();
+                    exists = (result != null && Convert.ToInt32(result) > 0);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in IsLedgerNameExists: {ex.Message}");
+                throw ex;
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                    DataConnection.Close();
+            }
+
+            return exists;
+        }
+
+        // Method to check if an alias already exists (ignoring empty aliases)
+        public bool IsLedgerAliasExists(string alias, int branchId, int excludeLedgerId = 0)
+        {
+            if (string.IsNullOrWhiteSpace(alias))
+                return false;
+
+            bool exists = false;
+
+            if (DataConnection.State == ConnectionState.Open)
+            {
+                DataConnection.Close();
+            }
+
+            DataConnection.Open();
+
+            try
+            {
+                string query = "SELECT COUNT(1) FROM LedgerMaster WHERE Alias = @Alias AND BranchID = @BranchID AND LedgerID != @ExcludeLedgerID";
+                using (SqlCommand cmd = new SqlCommand(query, (SqlConnection)DataConnection))
+                {
+                    cmd.Parameters.AddWithValue("@Alias", alias);
+                    cmd.Parameters.AddWithValue("@BranchID", branchId);
+                    cmd.Parameters.AddWithValue("@ExcludeLedgerID", excludeLedgerId);
+
+                    object result = cmd.ExecuteScalar();
+                    exists = (result != null && Convert.ToInt32(result) > 0);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in IsLedgerAliasExists: {ex.Message}");
+                throw ex;
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                    DataConnection.Close();
+            }
+
+            return exists;
         }
     }
 }
