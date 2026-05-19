@@ -329,6 +329,12 @@
     <Compile Include="DialogBox\FrmLedgerSearch.Designer.cs">
       <DependentUpon>FrmLedgerSearch.cs</DependentUpon>
     </Compile>
+    <Compile Include="DialogBox\FrmAccountGroupSearch.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DialogBox\FrmAccountGroupSearch.Designer.cs">
+      <DependentUpon>FrmAccountGroupSearch.cs</DependentUpon>
+    </Compile>
     <Compile Include="DialogBox\frmPurchaseOrderDig.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1207,6 +1213,9 @@
       <DependentUpon>Edit.cs</DependentUpon>
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Edit1.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DialogBox\FrmAccountGroupSearch.resx">
+      <DependentUpon>FrmAccountGroupSearch.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="DialogBox\frmBarcodeDialog.resx">
       <DependentUpon>frmBarcodeDialog.cs</DependentUpon>

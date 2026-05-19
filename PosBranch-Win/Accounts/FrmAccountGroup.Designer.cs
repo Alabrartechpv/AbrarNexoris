@@ -1,17 +1,9 @@
-﻿
 namespace PosBranch_Win.Accounts
 {
     partial class FrmAccountGroup
     {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -23,10 +15,6 @@ namespace PosBranch_Win.Accounts
 
         #region Windows Form Designer generated code
 
-        /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
-        /// </summary>
         private void InitializeComponent()
         {
             Infragistics.Win.Appearance appearance1 = new Infragistics.Win.Appearance();
@@ -34,352 +22,289 @@ namespace PosBranch_Win.Accounts
             Infragistics.Win.Appearance appearance3 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance4 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance5 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance6 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance7 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance8 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance9 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance10 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance11 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance12 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance13 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance14 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance15 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance16 = new Infragistics.Win.Appearance();
-            this.UltrapanelAccount = new Infragistics.Win.Misc.UltraPanel();
-            this.ultraPanelGrid = new Infragistics.Win.Misc.UltraPanel();
-            this.ultraGridAccount = new Infragistics.Win.UltraWinGrid.UltraGrid();
-            this.UltraPanelData = new Infragistics.Win.Misc.UltraPanel();
-            this.ultraDrpAccCategory = new System.Windows.Forms.ComboBox();
-            this.ultraDrpParentGroup = new System.Windows.Forms.ComboBox();
-            this.ultraDropDownBranch = new System.Windows.Forms.ComboBox();
-            this.ultratxtAccDescription = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
-            this.ultratxtAccName = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
-            this.ultratxtAccCode = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
-            this.ultralblBranchName = new Infragistics.Win.Misc.UltraLabel();
-            this.ultralblDescription = new Infragistics.Win.Misc.UltraLabel();
-            this.ultralblAccountCategory = new Infragistics.Win.Misc.UltraLabel();
-            this.ultralblAccountType = new Infragistics.Win.Misc.UltraLabel();
-            this.ultralblAccountName = new Infragistics.Win.Misc.UltraLabel();
+            this.pnlMain = new Infragistics.Win.Misc.UltraPanel();
+            this.tblMain = new System.Windows.Forms.TableLayoutPanel();
+            this.lblSectionAccountGroup = new Infragistics.Win.Misc.UltraLabel();
             this.ultralblAccountCode = new Infragistics.Win.Misc.UltraLabel();
-            this.UltraPanelButton = new Infragistics.Win.Misc.UltraPanel();
-            this.ultraBtnDelete = new Infragistics.Win.Misc.UltraButton();
-            this.ultraBtnCancel = new Infragistics.Win.Misc.UltraButton();
-            this.ultraBtnSave = new Infragistics.Win.Misc.UltraButton();
-            this.UltrapanelAccount.ClientArea.SuspendLayout();
-            this.UltrapanelAccount.SuspendLayout();
-            this.ultraPanelGrid.ClientArea.SuspendLayout();
-            this.ultraPanelGrid.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.ultraGridAccount)).BeginInit();
-            this.UltraPanelData.ClientArea.SuspendLayout();
-            this.UltraPanelData.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.ultratxtAccDescription)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.ultratxtAccName)).BeginInit();
+            this.ultratxtAccCode = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.btnSearchGroup = new Infragistics.Win.Misc.UltraButton();
+            this.ultralblAccountName = new Infragistics.Win.Misc.UltraLabel();
+            this.ultratxtAccName = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.ultralblAccountCategory = new Infragistics.Win.Misc.UltraLabel();
+            this.ultraDrpAccCategory = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
+            this.ultralblAccountType = new Infragistics.Win.Misc.UltraLabel();
+            this.ultraDrpParentGroup = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
+            this.ultralblDescription = new Infragistics.Win.Misc.UltraLabel();
+            this.ultratxtAccDescription = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.pnlMain.ClientArea.SuspendLayout();
+            this.pnlMain.SuspendLayout();
+            this.tblMain.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.ultratxtAccCode)).BeginInit();
-            this.UltraPanelButton.ClientArea.SuspendLayout();
-            this.UltraPanelButton.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.ultratxtAccName)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraDrpAccCategory)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraDrpParentGroup)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ultratxtAccDescription)).BeginInit();
             this.SuspendLayout();
             // 
-            // UltrapanelAccount
+            // pnlMain
             // 
-            appearance1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            appearance1.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            appearance1.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
-            this.UltrapanelAccount.Appearance = appearance1;
+            appearance1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(240)))), ((int)(((byte)(250)))));
+            this.pnlMain.Appearance = appearance1;
             // 
-            // UltrapanelAccount.ClientArea
+            // pnlMain.ClientArea
             // 
-            this.UltrapanelAccount.ClientArea.Controls.Add(this.ultraPanelGrid);
-            this.UltrapanelAccount.ClientArea.Controls.Add(this.UltraPanelData);
-            this.UltrapanelAccount.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.UltrapanelAccount.Location = new System.Drawing.Point(0, 0);
-            this.UltrapanelAccount.Name = "UltrapanelAccount";
-            this.UltrapanelAccount.Size = new System.Drawing.Size(1212, 525);
-            this.UltrapanelAccount.TabIndex = 0;
+            this.pnlMain.ClientArea.Controls.Add(this.tblMain);
+            this.pnlMain.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pnlMain.Location = new System.Drawing.Point(0, 0);
+            this.pnlMain.Name = "pnlMain";
+            this.pnlMain.Size = new System.Drawing.Size(1200, 700);
+            this.pnlMain.TabIndex = 0;
             // 
-            // ultraPanelGrid
+            // tblMain
             // 
-            appearance2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            this.ultraPanelGrid.Appearance = appearance2;
+            this.tblMain.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(238)))), ((int)(((byte)(248)))), ((int)(((byte)(253)))));
+            this.tblMain.ColumnCount = 4;
+            this.tblMain.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 14F));
+            this.tblMain.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 36F));
+            this.tblMain.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 14F));
+            this.tblMain.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 36F));
+            this.tblMain.Controls.Add(this.lblSectionAccountGroup, 0, 0);
+            this.tblMain.Controls.Add(this.ultralblAccountCode, 0, 1);
+            this.tblMain.Controls.Add(this.ultratxtAccCode, 1, 1);
+            this.tblMain.Controls.Add(this.btnSearchGroup, 3, 1);
+            this.tblMain.Controls.Add(this.ultralblAccountName, 0, 2);
+            this.tblMain.Controls.Add(this.ultratxtAccName, 1, 2);
+            this.tblMain.Controls.Add(this.ultralblAccountCategory, 2, 2);
+            this.tblMain.Controls.Add(this.ultraDrpAccCategory, 3, 2);
+            this.tblMain.Controls.Add(this.ultralblAccountType, 0, 3);
+            this.tblMain.Controls.Add(this.ultraDrpParentGroup, 1, 3);
+            this.tblMain.Controls.Add(this.ultralblDescription, 2, 3);
+            this.tblMain.Controls.Add(this.ultratxtAccDescription, 3, 3);
+            this.tblMain.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tblMain.Location = new System.Drawing.Point(0, 0);
+            this.tblMain.Margin = new System.Windows.Forms.Padding(0);
+            this.tblMain.Name = "tblMain";
+            this.tblMain.Padding = new System.Windows.Forms.Padding(30);
+            this.tblMain.RowCount = 5;
+            this.tblMain.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
+            this.tblMain.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
+            this.tblMain.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
+            this.tblMain.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
+            this.tblMain.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tblMain.Size = new System.Drawing.Size(1200, 700);
+            this.tblMain.TabIndex = 1;
             // 
-            // ultraPanelGrid.ClientArea
+            // lblSectionAccountGroup
             // 
-            this.ultraPanelGrid.ClientArea.Controls.Add(this.ultraGridAccount);
-            this.ultraPanelGrid.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ultraPanelGrid.Location = new System.Drawing.Point(624, 0);
-            this.ultraPanelGrid.Name = "ultraPanelGrid";
-            this.ultraPanelGrid.Size = new System.Drawing.Size(588, 525);
-            this.ultraPanelGrid.TabIndex = 1;
-            // 
-            // ultraGridAccount
-            // 
-            appearance3.BackColor = System.Drawing.SystemColors.Window;
-            appearance3.BorderColor = System.Drawing.SystemColors.InactiveCaption;
-            this.ultraGridAccount.DisplayLayout.Appearance = appearance3;
-            this.ultraGridAccount.DisplayLayout.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
-            this.ultraGridAccount.DisplayLayout.CaptionVisible = Infragistics.Win.DefaultableBoolean.False;
-            appearance4.BackColor = System.Drawing.SystemColors.ActiveBorder;
-            appearance4.BackColor2 = System.Drawing.SystemColors.ControlDark;
-            appearance4.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
-            appearance4.BorderColor = System.Drawing.SystemColors.Window;
-            this.ultraGridAccount.DisplayLayout.GroupByBox.Appearance = appearance4;
-            appearance5.ForeColor = System.Drawing.SystemColors.GrayText;
-            this.ultraGridAccount.DisplayLayout.GroupByBox.BandLabelAppearance = appearance5;
-            this.ultraGridAccount.DisplayLayout.GroupByBox.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
-            appearance6.BackColor = System.Drawing.SystemColors.ControlLightLight;
-            appearance6.BackColor2 = System.Drawing.SystemColors.Control;
-            appearance6.BackGradientStyle = Infragistics.Win.GradientStyle.Horizontal;
-            appearance6.ForeColor = System.Drawing.SystemColors.GrayText;
-            this.ultraGridAccount.DisplayLayout.GroupByBox.PromptAppearance = appearance6;
-            this.ultraGridAccount.DisplayLayout.MaxColScrollRegions = 1;
-            this.ultraGridAccount.DisplayLayout.MaxRowScrollRegions = 1;
-            appearance7.BackColor = System.Drawing.SystemColors.Window;
-            appearance7.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.ultraGridAccount.DisplayLayout.Override.ActiveCellAppearance = appearance7;
-            appearance8.BackColor = System.Drawing.SystemColors.Highlight;
-            appearance8.ForeColor = System.Drawing.SystemColors.HighlightText;
-            this.ultraGridAccount.DisplayLayout.Override.ActiveRowAppearance = appearance8;
-            this.ultraGridAccount.DisplayLayout.Override.BorderStyleCell = Infragistics.Win.UIElementBorderStyle.Dotted;
-            this.ultraGridAccount.DisplayLayout.Override.BorderStyleRow = Infragistics.Win.UIElementBorderStyle.Dotted;
-            appearance9.BackColor = System.Drawing.SystemColors.Window;
-            this.ultraGridAccount.DisplayLayout.Override.CardAreaAppearance = appearance9;
-            appearance10.BorderColor = System.Drawing.Color.Silver;
-            appearance10.TextTrimming = Infragistics.Win.TextTrimming.EllipsisCharacter;
-            this.ultraGridAccount.DisplayLayout.Override.CellAppearance = appearance10;
-            this.ultraGridAccount.DisplayLayout.Override.CellClickAction = Infragistics.Win.UltraWinGrid.CellClickAction.EditAndSelectText;
-            this.ultraGridAccount.DisplayLayout.Override.CellPadding = 0;
-            appearance11.BackColor = System.Drawing.SystemColors.Control;
-            appearance11.BackColor2 = System.Drawing.SystemColors.ControlDark;
-            appearance11.BackGradientAlignment = Infragistics.Win.GradientAlignment.Element;
-            appearance11.BackGradientStyle = Infragistics.Win.GradientStyle.Horizontal;
-            appearance11.BorderColor = System.Drawing.SystemColors.Window;
-            this.ultraGridAccount.DisplayLayout.Override.GroupByRowAppearance = appearance11;
-            appearance12.TextHAlignAsString = "Left";
-            this.ultraGridAccount.DisplayLayout.Override.HeaderAppearance = appearance12;
-            this.ultraGridAccount.DisplayLayout.Override.HeaderClickAction = Infragistics.Win.UltraWinGrid.HeaderClickAction.SortMulti;
-            this.ultraGridAccount.DisplayLayout.Override.HeaderStyle = Infragistics.Win.HeaderStyle.WindowsXPCommand;
-            appearance13.BackColor = System.Drawing.SystemColors.Window;
-            appearance13.BorderColor = System.Drawing.Color.Silver;
-            this.ultraGridAccount.DisplayLayout.Override.RowAppearance = appearance13;
-            this.ultraGridAccount.DisplayLayout.Override.RowSelectors = Infragistics.Win.DefaultableBoolean.False;
-            appearance14.BackColor = System.Drawing.SystemColors.ControlLight;
-            this.ultraGridAccount.DisplayLayout.Override.TemplateAddRowAppearance = appearance14;
-            this.ultraGridAccount.DisplayLayout.ScrollBounds = Infragistics.Win.UltraWinGrid.ScrollBounds.ScrollToFill;
-            this.ultraGridAccount.DisplayLayout.ScrollStyle = Infragistics.Win.UltraWinGrid.ScrollStyle.Immediate;
-            this.ultraGridAccount.DisplayLayout.ViewStyleBand = Infragistics.Win.UltraWinGrid.ViewStyleBand.OutlookGroupBy;
-            this.ultraGridAccount.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ultraGridAccount.Location = new System.Drawing.Point(0, 0);
-            this.ultraGridAccount.Name = "ultraGridAccount";
-            this.ultraGridAccount.Size = new System.Drawing.Size(588, 525);
-            this.ultraGridAccount.TabIndex = 0;
-            this.ultraGridAccount.Text = "ultraGrid1";
-            // 
-            // UltraPanelData
-            // 
-            appearance15.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            this.UltraPanelData.Appearance = appearance15;
-            // 
-            // UltraPanelData.ClientArea
-            // 
-            this.UltraPanelData.ClientArea.Controls.Add(this.ultraDrpAccCategory);
-            this.UltraPanelData.ClientArea.Controls.Add(this.ultraDrpParentGroup);
-            this.UltraPanelData.ClientArea.Controls.Add(this.ultraDropDownBranch);
-            this.UltraPanelData.ClientArea.Controls.Add(this.ultratxtAccDescription);
-            this.UltraPanelData.ClientArea.Controls.Add(this.ultratxtAccName);
-            this.UltraPanelData.ClientArea.Controls.Add(this.ultratxtAccCode);
-            this.UltraPanelData.ClientArea.Controls.Add(this.ultralblBranchName);
-            this.UltraPanelData.ClientArea.Controls.Add(this.ultralblDescription);
-            this.UltraPanelData.ClientArea.Controls.Add(this.ultralblAccountCategory);
-            this.UltraPanelData.ClientArea.Controls.Add(this.ultralblAccountType);
-            this.UltraPanelData.ClientArea.Controls.Add(this.ultralblAccountName);
-            this.UltraPanelData.ClientArea.Controls.Add(this.ultralblAccountCode);
-            this.UltraPanelData.ClientArea.Controls.Add(this.UltraPanelButton);
-            this.UltraPanelData.Dock = System.Windows.Forms.DockStyle.Left;
-            this.UltraPanelData.Location = new System.Drawing.Point(0, 0);
-            this.UltraPanelData.Name = "UltraPanelData";
-            this.UltraPanelData.Size = new System.Drawing.Size(624, 525);
-            this.UltraPanelData.TabIndex = 0;
-            // 
-            // ultraDrpAccCategory
-            // 
-            this.ultraDrpAccCategory.FormattingEnabled = true;
-            this.ultraDrpAccCategory.Location = new System.Drawing.Point(175, 154);
-            this.ultraDrpAccCategory.Name = "ultraDrpAccCategory";
-            this.ultraDrpAccCategory.Size = new System.Drawing.Size(291, 21);
-            this.ultraDrpAccCategory.TabIndex = 6;
-            // 
-            // ultraDrpParentGroup
-            // 
-            this.ultraDrpParentGroup.FormattingEnabled = true;
-            this.ultraDrpParentGroup.Location = new System.Drawing.Point(175, 198);
-            this.ultraDrpParentGroup.Name = "ultraDrpParentGroup";
-            this.ultraDrpParentGroup.Size = new System.Drawing.Size(291, 21);
-            this.ultraDrpParentGroup.TabIndex = 6;
-            // 
-            // ultraDropDownBranch
-            // 
-            this.ultraDropDownBranch.FormattingEnabled = true;
-            this.ultraDropDownBranch.Location = new System.Drawing.Point(175, 29);
-            this.ultraDropDownBranch.Name = "ultraDropDownBranch";
-            this.ultraDropDownBranch.Size = new System.Drawing.Size(291, 21);
-            this.ultraDropDownBranch.TabIndex = 6;
-            // 
-            // ultratxtAccDescription
-            // 
-            this.ultratxtAccDescription.Location = new System.Drawing.Point(175, 247);
-            this.ultratxtAccDescription.Name = "ultratxtAccDescription";
-            this.ultratxtAccDescription.Size = new System.Drawing.Size(291, 21);
-            this.ultratxtAccDescription.TabIndex = 4;
-            // 
-            // ultratxtAccName
-            // 
-            this.ultratxtAccName.Location = new System.Drawing.Point(175, 116);
-            this.ultratxtAccName.Name = "ultratxtAccName";
-            this.ultratxtAccName.Size = new System.Drawing.Size(291, 21);
-            this.ultratxtAccName.TabIndex = 4;
-            // 
-            // ultratxtAccCode
-            // 
-            this.ultratxtAccCode.Location = new System.Drawing.Point(175, 69);
-            this.ultratxtAccCode.Name = "ultratxtAccCode";
-            this.ultratxtAccCode.Size = new System.Drawing.Size(291, 21);
-            this.ultratxtAccCode.TabIndex = 4;
-            // 
-            // ultralblBranchName
-            // 
-            this.ultralblBranchName.Location = new System.Drawing.Point(70, 29);
-            this.ultralblBranchName.Name = "ultralblBranchName";
-            this.ultralblBranchName.Size = new System.Drawing.Size(79, 23);
-            this.ultralblBranchName.TabIndex = 3;
-            this.ultralblBranchName.Text = "Branch Name";
-            // 
-            // ultralblDescription
-            // 
-            this.ultralblDescription.Location = new System.Drawing.Point(70, 247);
-            this.ultralblDescription.Name = "ultralblDescription";
-            this.ultralblDescription.Size = new System.Drawing.Size(96, 23);
-            this.ultralblDescription.TabIndex = 3;
-            this.ultralblDescription.Text = "Group Description";
-            // 
-            // ultralblAccountCategory
-            // 
-            this.ultralblAccountCategory.Location = new System.Drawing.Point(70, 154);
-            this.ultralblAccountCategory.Name = "ultralblAccountCategory";
-            this.ultralblAccountCategory.Size = new System.Drawing.Size(100, 23);
-            this.ultralblAccountCategory.TabIndex = 3;
-            this.ultralblAccountCategory.Text = "Group Category";
-            // 
-            // ultralblAccountType
-            // 
-            this.ultralblAccountType.Location = new System.Drawing.Point(70, 198);
-            this.ultralblAccountType.Name = "ultralblAccountType";
-            this.ultralblAccountType.Size = new System.Drawing.Size(79, 23);
-            this.ultralblAccountType.TabIndex = 3;
-            this.ultralblAccountType.Text = "Parent Group";
-            // 
-            // ultralblAccountName
-            // 
-            this.ultralblAccountName.Location = new System.Drawing.Point(70, 116);
-            this.ultralblAccountName.Name = "ultralblAccountName";
-            this.ultralblAccountName.Size = new System.Drawing.Size(79, 23);
-            this.ultralblAccountName.TabIndex = 3;
-            this.ultralblAccountName.Text = "Grop Name";
+            this.lblSectionAccountGroup.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            appearance2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(199)))), ((int)(((byte)(225)))), ((int)(((byte)(242)))));
+            appearance2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(77)))), ((int)(((byte)(128)))));
+            appearance2.TextVAlignAsString = "Middle";
+            this.lblSectionAccountGroup.Appearance = appearance2;
+            this.tblMain.SetColumnSpan(this.lblSectionAccountGroup, 4);
+            this.lblSectionAccountGroup.Font = new System.Drawing.Font("Segoe UI Semibold", 10F, System.Drawing.FontStyle.Bold);
+            this.lblSectionAccountGroup.Location = new System.Drawing.Point(33, 33);
+            this.lblSectionAccountGroup.Name = "lblSectionAccountGroup";
+            this.lblSectionAccountGroup.Padding = new System.Drawing.Size(10, 0);
+            this.lblSectionAccountGroup.Size = new System.Drawing.Size(1134, 20);
+            this.lblSectionAccountGroup.TabIndex = 0;
+            this.lblSectionAccountGroup.Text = "Account Group Details";
             // 
             // ultralblAccountCode
             // 
-            this.ultralblAccountCode.Location = new System.Drawing.Point(70, 69);
+            appearance3.BackColor = System.Drawing.Color.Transparent;
+            appearance3.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(62)))), ((int)(((byte)(89)))));
+            appearance3.TextVAlignAsString = "Middle";
+            this.ultralblAccountCode.Appearance = appearance3;
+            this.ultralblAccountCode.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ultralblAccountCode.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            this.ultralblAccountCode.Location = new System.Drawing.Point(33, 63);
             this.ultralblAccountCode.Name = "ultralblAccountCode";
-            this.ultralblAccountCode.Size = new System.Drawing.Size(79, 23);
-            this.ultralblAccountCode.TabIndex = 3;
-            this.ultralblAccountCode.Text = "Group Id";
+            this.ultralblAccountCode.Size = new System.Drawing.Size(153, 36);
+            this.ultralblAccountCode.TabIndex = 1;
+            this.ultralblAccountCode.Text = "Group ID";
             // 
-            // UltraPanelButton
+            // ultratxtAccCode
             // 
-            appearance16.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
-            this.UltraPanelButton.Appearance = appearance16;
+            appearance4.BackColor = System.Drawing.Color.White;
+            appearance4.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(183)))), ((int)(((byte)(220)))));
+            appearance4.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(24)))), ((int)(((byte)(92)))), ((int)(((byte)(143)))));
+            this.ultratxtAccCode.Appearance = appearance4;
+            this.ultratxtAccCode.BackColor = System.Drawing.Color.White;
+            this.ultratxtAccCode.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
+            this.ultratxtAccCode.DisplayStyle = Infragistics.Win.EmbeddableElementDisplayStyle.Office2010;
+            this.ultratxtAccCode.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ultratxtAccCode.Font = new System.Drawing.Font("Segoe UI", 9.75F);
+            this.ultratxtAccCode.Location = new System.Drawing.Point(192, 66);
+            this.ultratxtAccCode.Margin = new System.Windows.Forms.Padding(3, 6, 18, 6);
+            this.ultratxtAccCode.Name = "ultratxtAccCode";
+            this.ultratxtAccCode.Size = new System.Drawing.Size(389, 24);
+            this.ultratxtAccCode.TabIndex = 2;
             // 
-            // UltraPanelButton.ClientArea
+            // btnSearchGroup
             // 
-            this.UltraPanelButton.ClientArea.Controls.Add(this.ultraBtnDelete);
-            this.UltraPanelButton.ClientArea.Controls.Add(this.ultraBtnCancel);
-            this.UltraPanelButton.ClientArea.Controls.Add(this.ultraBtnSave);
-            this.UltraPanelButton.Location = new System.Drawing.Point(97, 336);
-            this.UltraPanelButton.Name = "UltraPanelButton";
-            this.UltraPanelButton.Size = new System.Drawing.Size(433, 50);
-            this.UltraPanelButton.TabIndex = 2;
+            this.btnSearchGroup.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            appearance5.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(122)))), ((int)(((byte)(204)))));
+            appearance5.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(102)))), ((int)(((byte)(184)))));
+            appearance5.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
+            appearance5.FontData.BoldAsString = "True";
+            appearance5.ForeColor = System.Drawing.Color.White;
+            this.btnSearchGroup.Appearance = appearance5;
+            this.btnSearchGroup.ButtonStyle = Infragistics.Win.UIElementButtonStyle.Flat;
+            this.btnSearchGroup.Location = new System.Drawing.Point(761, 69);
+            this.btnSearchGroup.Name = "btnSearchGroup";
+            this.btnSearchGroup.Size = new System.Drawing.Size(150, 24);
+            this.btnSearchGroup.TabIndex = 3;
+            this.btnSearchGroup.Text = "Search Account Group";
+            this.btnSearchGroup.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             // 
-            // ultraBtnDelete
+            // ultralblAccountName
             // 
-            this.ultraBtnDelete.Location = new System.Drawing.Point(250, 8);
-            this.ultraBtnDelete.Name = "ultraBtnDelete";
-            this.ultraBtnDelete.Size = new System.Drawing.Size(75, 33);
-            this.ultraBtnDelete.TabIndex = 0;
-            this.ultraBtnDelete.Text = "Delete";
+            this.ultralblAccountName.Appearance = appearance3;
+            this.ultralblAccountName.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ultralblAccountName.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            this.ultralblAccountName.Location = new System.Drawing.Point(33, 105);
+            this.ultralblAccountName.Name = "ultralblAccountName";
+            this.ultralblAccountName.Size = new System.Drawing.Size(153, 36);
+            this.ultralblAccountName.TabIndex = 4;
+            this.ultralblAccountName.Text = "Group Name";
             // 
-            // ultraBtnCancel
+            // ultratxtAccName
             // 
-            this.ultraBtnCancel.Location = new System.Drawing.Point(152, 8);
-            this.ultraBtnCancel.Name = "ultraBtnCancel";
-            this.ultraBtnCancel.Size = new System.Drawing.Size(75, 33);
-            this.ultraBtnCancel.TabIndex = 0;
-            this.ultraBtnCancel.Text = "Clear";
+            this.ultratxtAccName.Appearance = appearance4;
+            this.ultratxtAccName.BackColor = System.Drawing.Color.White;
+            this.ultratxtAccName.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
+            this.ultratxtAccName.DisplayStyle = Infragistics.Win.EmbeddableElementDisplayStyle.Office2010;
+            this.ultratxtAccName.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ultratxtAccName.Font = new System.Drawing.Font("Segoe UI", 9.75F);
+            this.ultratxtAccName.Location = new System.Drawing.Point(192, 108);
+            this.ultratxtAccName.Margin = new System.Windows.Forms.Padding(3, 6, 18, 6);
+            this.ultratxtAccName.Name = "ultratxtAccName";
+            this.ultratxtAccName.Size = new System.Drawing.Size(389, 24);
+            this.ultratxtAccName.TabIndex = 5;
             // 
-            // ultraBtnSave
+            // ultralblAccountCategory
             // 
-            this.ultraBtnSave.Location = new System.Drawing.Point(60, 8);
-            this.ultraBtnSave.Name = "ultraBtnSave";
-            this.ultraBtnSave.Size = new System.Drawing.Size(75, 33);
-            this.ultraBtnSave.TabIndex = 0;
-            this.ultraBtnSave.Text = "Save";
-           
+            this.ultralblAccountCategory.Appearance = appearance3;
+            this.ultralblAccountCategory.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ultralblAccountCategory.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            this.ultralblAccountCategory.Location = new System.Drawing.Point(602, 105);
+            this.ultralblAccountCategory.Name = "ultralblAccountCategory";
+            this.ultralblAccountCategory.Size = new System.Drawing.Size(153, 36);
+            this.ultralblAccountCategory.TabIndex = 6;
+            this.ultralblAccountCategory.Text = "Category";
+            // 
+            // ultraDrpAccCategory
+            // 
+            this.ultraDrpAccCategory.Appearance = appearance4;
+            this.ultraDrpAccCategory.BackColor = System.Drawing.Color.White;
+            this.ultraDrpAccCategory.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
+            this.ultraDrpAccCategory.DisplayStyle = Infragistics.Win.EmbeddableElementDisplayStyle.Office2010;
+            this.ultraDrpAccCategory.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ultraDrpAccCategory.DropDownStyle = Infragistics.Win.DropDownStyle.DropDownList;
+            this.ultraDrpAccCategory.Font = new System.Drawing.Font("Segoe UI", 9.75F);
+            this.ultraDrpAccCategory.Location = new System.Drawing.Point(761, 108);
+            this.ultraDrpAccCategory.Margin = new System.Windows.Forms.Padding(3, 6, 18, 6);
+            this.ultraDrpAccCategory.Name = "ultraDrpAccCategory";
+            this.ultraDrpAccCategory.Size = new System.Drawing.Size(391, 24);
+            this.ultraDrpAccCategory.TabIndex = 7;
+            // 
+            // ultralblAccountType
+            // 
+            this.ultralblAccountType.Appearance = appearance3;
+            this.ultralblAccountType.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ultralblAccountType.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            this.ultralblAccountType.Location = new System.Drawing.Point(33, 147);
+            this.ultralblAccountType.Name = "ultralblAccountType";
+            this.ultralblAccountType.Size = new System.Drawing.Size(153, 36);
+            this.ultralblAccountType.TabIndex = 8;
+            this.ultralblAccountType.Text = "Parent Group";
+            // 
+            // ultraDrpParentGroup
+            // 
+            this.ultraDrpParentGroup.Appearance = appearance4;
+            this.ultraDrpParentGroup.BackColor = System.Drawing.Color.White;
+            this.ultraDrpParentGroup.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
+            this.ultraDrpParentGroup.DisplayStyle = Infragistics.Win.EmbeddableElementDisplayStyle.Office2010;
+            this.ultraDrpParentGroup.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ultraDrpParentGroup.DropDownStyle = Infragistics.Win.DropDownStyle.DropDownList;
+            this.ultraDrpParentGroup.Font = new System.Drawing.Font("Segoe UI", 9.75F);
+            this.ultraDrpParentGroup.Location = new System.Drawing.Point(192, 150);
+            this.ultraDrpParentGroup.Margin = new System.Windows.Forms.Padding(3, 6, 18, 6);
+            this.ultraDrpParentGroup.Name = "ultraDrpParentGroup";
+            this.ultraDrpParentGroup.Size = new System.Drawing.Size(389, 24);
+            this.ultraDrpParentGroup.TabIndex = 9;
+            // 
+            // ultralblDescription
+            // 
+            this.ultralblDescription.Appearance = appearance3;
+            this.ultralblDescription.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ultralblDescription.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            this.ultralblDescription.Location = new System.Drawing.Point(602, 147);
+            this.ultralblDescription.Name = "ultralblDescription";
+            this.ultralblDescription.Size = new System.Drawing.Size(153, 36);
+            this.ultralblDescription.TabIndex = 10;
+            this.ultralblDescription.Text = "Description";
+            // 
+            // ultratxtAccDescription
+            // 
+            this.ultratxtAccDescription.Appearance = appearance4;
+            this.ultratxtAccDescription.BackColor = System.Drawing.Color.White;
+            this.ultratxtAccDescription.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
+            this.ultratxtAccDescription.DisplayStyle = Infragistics.Win.EmbeddableElementDisplayStyle.Office2010;
+            this.ultratxtAccDescription.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ultratxtAccDescription.Font = new System.Drawing.Font("Segoe UI", 9.75F);
+            this.ultratxtAccDescription.Location = new System.Drawing.Point(761, 150);
+            this.ultratxtAccDescription.Margin = new System.Windows.Forms.Padding(3, 6, 18, 6);
+            this.ultratxtAccDescription.Name = "ultratxtAccDescription";
+            this.ultratxtAccDescription.Size = new System.Drawing.Size(391, 24);
+            this.ultratxtAccDescription.TabIndex = 11;
             // 
             // FrmAccountGroup
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1212, 525);
-            this.Controls.Add(this.UltrapanelAccount);
+            this.ClientSize = new System.Drawing.Size(1200, 700);
+            this.Controls.Add(this.pnlMain);
             this.Name = "FrmAccountGroup";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "FrmAccountGroup";
+            this.Text = "Account Group Master";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
-            this.UltrapanelAccount.ClientArea.ResumeLayout(false);
-            this.UltrapanelAccount.ResumeLayout(false);
-            this.ultraPanelGrid.ClientArea.ResumeLayout(false);
-            this.ultraPanelGrid.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.ultraGridAccount)).EndInit();
-            this.UltraPanelData.ClientArea.ResumeLayout(false);
-            this.UltraPanelData.ClientArea.PerformLayout();
-            this.UltraPanelData.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.ultratxtAccDescription)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.ultratxtAccName)).EndInit();
+            this.pnlMain.ClientArea.ResumeLayout(false);
+            this.pnlMain.ResumeLayout(false);
+            this.tblMain.ResumeLayout(false);
+            this.tblMain.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.ultratxtAccCode)).EndInit();
-            this.UltraPanelButton.ClientArea.ResumeLayout(false);
-            this.UltraPanelButton.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.ultratxtAccName)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraDrpAccCategory)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraDrpParentGroup)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ultratxtAccDescription)).EndInit();
             this.ResumeLayout(false);
 
         }
 
         #endregion
 
-        private Infragistics.Win.Misc.UltraPanel UltrapanelAccount;
-        private Infragistics.Win.Misc.UltraPanel ultraPanelGrid;
-        private Infragistics.Win.Misc.UltraPanel UltraPanelData;
-        private Infragistics.Win.Misc.UltraPanel UltraPanelButton;
-        private Infragistics.Win.UltraWinEditors.UltraTextEditor ultratxtAccDescription;
-        private Infragistics.Win.UltraWinEditors.UltraTextEditor ultratxtAccName;
-        private Infragistics.Win.UltraWinEditors.UltraTextEditor ultratxtAccCode;
-        private Infragistics.Win.Misc.UltraLabel ultralblBranchName;
-        private Infragistics.Win.Misc.UltraLabel ultralblDescription;
-        private Infragistics.Win.Misc.UltraLabel ultralblAccountCategory;
-        private Infragistics.Win.Misc.UltraLabel ultralblAccountType;
-        private Infragistics.Win.Misc.UltraLabel ultralblAccountName;
+        private Infragistics.Win.Misc.UltraPanel pnlMain;
+        private System.Windows.Forms.TableLayoutPanel tblMain;
+        
+        private Infragistics.Win.Misc.UltraLabel lblSectionAccountGroup;
+        
         private Infragistics.Win.Misc.UltraLabel ultralblAccountCode;
-        private Infragistics.Win.UltraWinGrid.UltraGrid ultraGridAccount;
-        private Infragistics.Win.Misc.UltraButton ultraBtnDelete;
-        private Infragistics.Win.Misc.UltraButton ultraBtnCancel;
-        private Infragistics.Win.Misc.UltraButton ultraBtnSave;
-        private System.Windows.Forms.ComboBox ultraDrpAccCategory;
-        private System.Windows.Forms.ComboBox ultraDrpParentGroup;
-        private System.Windows.Forms.ComboBox ultraDropDownBranch;
+        private Infragistics.Win.UltraWinEditors.UltraTextEditor ultratxtAccCode;
+        private Infragistics.Win.Misc.UltraButton btnSearchGroup;
+        
+        private Infragistics.Win.Misc.UltraLabel ultralblAccountName;
+        private Infragistics.Win.UltraWinEditors.UltraTextEditor ultratxtAccName;
+        
+        private Infragistics.Win.Misc.UltraLabel ultralblAccountCategory;
+        private Infragistics.Win.UltraWinEditors.UltraComboEditor ultraDrpAccCategory;
+        
+        private Infragistics.Win.Misc.UltraLabel ultralblAccountType;
+        private Infragistics.Win.UltraWinEditors.UltraComboEditor ultraDrpParentGroup;
+        
+        private Infragistics.Win.Misc.UltraLabel ultralblDescription;
+        private Infragistics.Win.UltraWinEditors.UltraTextEditor ultratxtAccDescription;
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -213,6 +213,46 @@ namespace Repository.Accounts
             return result;
         }
 
+        // Method to check if an account group name already exists
+        public bool IsAccountGroupNameExists(string groupName, int branchId, int excludeGroupId = 0)
+        {
+            bool exists = false;
+
+            if (DataConnection.State == ConnectionState.Open)
+            {
+                DataConnection.Close();
+            }
+
+            DataConnection.Open();
+
+            try
+            {
+                // Using direct SQL query as we did for ledger duplicate check
+                string query = "SELECT COUNT(1) FROM AccountGroupMaster WHERE GroupName = @GroupName AND BranchID = @BranchID AND GroupID != @ExcludeGroupID";
+                using (SqlCommand cmd = new SqlCommand(query, (SqlConnection)DataConnection))
+                {
+                    cmd.Parameters.AddWithValue("@GroupName", groupName);
+                    cmd.Parameters.AddWithValue("@BranchID", branchId);
+                    cmd.Parameters.AddWithValue("@ExcludeGroupID", excludeGroupId);
+
+                    object result = cmd.ExecuteScalar();
+                    exists = (result != null && Convert.ToInt32(result) > 0);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in IsAccountGroupNameExists: {ex.Message}");
+                throw ex;
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                    DataConnection.Close();
+            }
+
+            return exists;
+        }
+
         // Methods for handling AccountGroups
         public DataTable GetAllAccountGroups()
         {
@@ -277,11 +317,10 @@ namespace Repository.Accounts
                     cmd.Parameters.AddWithValue("@_ParentGroupId", accountGroup.ParentGroupId);
                     cmd.Parameters.AddWithValue("@_GroupUnder", accountGroup.GroupUnder);
 
-                    int newId = Convert.ToInt32(cmd.ExecuteScalar());
-                    result = (newId > 0);
-
-                    if (result)
-                        accountGroup.GroupID = newId;
+                    // Since GroupID is manually generated, SCOPE_IDENTITY() in the SP will return NULL.
+                    // We just execute it; if it violates duplicates, it will throw a SqlException via RAISERROR.
+                    cmd.ExecuteNonQuery();
+                    result = true;
                 }
             }
             catch (Exception Ex)

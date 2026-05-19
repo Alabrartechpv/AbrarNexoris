@@ -1,4 +1,4 @@
-﻿using ModelClass;
+using ModelClass;
 using ModelClass.Settings;
 using Repository;
 using Repository.MasterRepositry;

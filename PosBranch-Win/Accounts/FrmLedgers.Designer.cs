@@ -451,7 +451,7 @@ namespace PosBranch_Win.Accounts
             this.btnSearchLedger.Appearance = appearance19;
             this.btnSearchLedger.ButtonStyle = Infragistics.Win.UIElementButtonStyle.Office2010Button;
             this.btnSearchLedger.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
-            this.btnSearchLedger.Location = new System.Drawing.Point(602, 67);
+            this.btnSearchLedger.Location = new System.Drawing.Point(1049, 67);
             this.btnSearchLedger.Margin = new System.Windows.Forms.Padding(3, 1, 18, 1);
             this.btnSearchLedger.Name = "btnSearchLedger";
             this.btnSearchLedger.ShowFocusRect = false;
