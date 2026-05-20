@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -32,7 +32,10 @@ namespace PosBranch_Win.ChartOfAccount
         private TextBox txtName;
         private TextBox txtDescription;
         private TextBox txtType;
-        private TextBox txtBalance;
+        private TextBox txtParentGroup;
+        private TextBox txtLedgerCount;
+        private Label txtBalance;
+        private Label lblBreadcrumb;
         private Label lblDetailsTitle;
         private TextBox txtSearchBox;
         private Button btnSearch;
@@ -52,6 +55,29 @@ namespace PosBranch_Win.ChartOfAccount
             accountGroupRepo = new AccountGroupRepository();
             ledgerRepo = new LedgerRepository();
 
+            // Set clean fonts and sizes on standard components
+            ultraTree1.Font = new Font("Segoe UI", 9.75F);
+            ultraTree1.Override.ItemHeight = 24;
+            ultraTree1.Indent = 20;
+            ultraTree1.Override.ActiveNodeAppearance.BackColor = Color.FromArgb(239, 246, 255); // Soft blue-50
+            ultraTree1.Override.ActiveNodeAppearance.ForeColor = Color.FromArgb(30, 41, 59);    // Slate-800
+            ultraTree1.Override.SelectedNodeAppearance.BackColor = Color.FromArgb(219, 234, 254); // Soft blue-100
+            ultraTree1.Override.SelectedNodeAppearance.ForeColor = Color.FromArgb(30, 41, 59);
+
+            // Style bottom buttons
+            foreach (var btn in new[] { btnRefresh, btnExpandAll, btnCollapseAll })
+            {
+                btn.Appearance.BackColor = Color.FromArgb(15, 77, 128);
+                btn.Appearance.BackColor2 = Color.FromArgb(10, 60, 105);
+                btn.Appearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
+                btn.Appearance.FontData.BoldAsString = "True";
+                btn.Appearance.FontData.Name = "Segoe UI";
+                btn.Appearance.FontData.SizeInPoints = 9F;
+                btn.Appearance.ForeColor = Color.White;
+                btn.ButtonStyle = Infragistics.Win.UIElementButtonStyle.Flat;
+                btn.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+            }
+
             // Register event handlers
             this.Load += FrmChartOfAcc_Load;
             ultraTree1.AfterSelect += UltraTree1_AfterSelect;
@@ -63,16 +89,15 @@ namespace PosBranch_Win.ChartOfAccount
             btnExpandAll.Click += BtnExpandAll_Click;
             btnCollapseAll.Click += BtnCollapseAll_Click;
 
-            // Load icons
+            // Load custom modern vector-drawn icons
             try
             {
-                // Fallback to default icons if resources aren't available
-                groupIcon = SystemIcons.Application.ToBitmap();
-                ledgerIcon = SystemIcons.Information.ToBitmap();
+                groupIcon = CreateFolderIcon();
+                ledgerIcon = CreateLedgerIcon();
             }
             catch
             {
-                // Use default icons if loading fails
+                // Fallback to default icons if drawing fails
                 groupIcon = SystemIcons.Application.ToBitmap();
                 ledgerIcon = SystemIcons.Information.ToBitmap();
             }
@@ -336,104 +361,332 @@ namespace PosBranch_Win.ChartOfAccount
             }
         }
 
+        private Bitmap CreateFolderIcon()
+        {
+            Bitmap bmp = new Bitmap(16, 16);
+            using (Graphics g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                g.Clear(Color.Transparent);
+
+                // Draw a modern folder icon in Slate/Amber
+                Color folderColor = Color.FromArgb(234, 179, 8); // Amber-500
+                Color folderBorderColor = Color.FromArgb(202, 138, 4); // Amber-600
+                
+                // Folder tab path points
+                PointF[] points = {
+                    new PointF(1, 13),
+                    new PointF(1, 4),
+                    new PointF(5, 4),
+                    new PointF(7, 6),
+                    new PointF(14, 6),
+                    new PointF(14, 13)
+                };
+                
+                using (Brush brush = new SolidBrush(folderColor))
+                {
+                    g.FillPolygon(brush, points);
+                }
+                using (Pen pen = new Pen(folderBorderColor, 1.2f))
+                {
+                    g.DrawPolygon(pen, points);
+                }
+                // Light accent line
+                using (Pen pen = new Pen(Color.FromArgb(254, 240, 138), 1f))
+                {
+                    g.DrawLine(pen, 2, 7, 13, 7);
+                }
+            }
+            return bmp;
+        }
+
+        private Bitmap CreateLedgerIcon()
+        {
+            Bitmap bmp = new Bitmap(16, 16);
+            using (Graphics g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                g.Clear(Color.Transparent);
+
+                // Draw a modern ledger sheet/document icon (Teal-blue color)
+                Color docColor = Color.FromArgb(248, 250, 252); // White/Slate-50
+                Color docBorder = Color.FromArgb(14, 116, 144); // Teal-700
+                
+                Rectangle rect = new Rectangle(2, 1, 11, 13);
+                using (Brush brush = new SolidBrush(docColor))
+                {
+                    g.FillRectangle(brush, rect);
+                }
+                using (Pen pen = new Pen(docBorder, 1.2f))
+                {
+                    g.DrawRectangle(pen, rect);
+                }
+                
+                // Draw internal lines representing transaction entries
+                using (Pen pen = new Pen(Color.FromArgb(148, 163, 184), 1f))
+                {
+                    g.DrawLine(pen, 4, 4, 11, 4);
+                    g.DrawLine(pen, 4, 7, 11, 7);
+                    g.DrawLine(pen, 4, 10, 9, 10);
+                }
+            }
+            return bmp;
+        }
+
         private void InitializeDetailPanel()
         {
             // Create and add the details panel controls
             ultraPanelDataEntri.ClientArea.Controls.Clear();
+            ultraPanelDataEntri.Appearance.BackColor = Color.FromArgb(241, 245, 249); // Slate-100 background
 
-            // Title label
-            lblDetailsTitle = new Label();
-            lblDetailsTitle.Location = new Point(10, 10);
-            lblDetailsTitle.AutoSize = true;
-            lblDetailsTitle.Font = new Font("Microsoft Sans Serif", 12, FontStyle.Bold);
-            lblDetailsTitle.Text = "Account Details";
-            ultraPanelDataEntri.ClientArea.Controls.Add(lblDetailsTitle);
+            // Font & Color palette definitions
+            Font headerFont = new Font("Segoe UI Semibold", 13, FontStyle.Bold);
+            Font cardTitleFont = new Font("Segoe UI Semibold", 10.5F, FontStyle.Bold);
+            Font labelFont = new Font("Segoe UI Semibold", 9F);
+            Font inputFont = new Font("Segoe UI", 9.5F);
+            Font balanceFont = new Font("Segoe UI", 20F, FontStyle.Bold);
+            Font breadcrumbFont = new Font("Segoe UI", 9F, FontStyle.Italic);
+            Font buttonFont = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
 
-            // Search Box
+            Color headerColor = Color.FromArgb(30, 41, 59);       // Slate-800
+            Color labelColor = Color.FromArgb(71, 85, 105);       // Slate-600
+            Color inputForeColor = Color.FromArgb(15, 23, 42);    // Slate-900
+            Color inputBgColor = Color.FromArgb(248, 250, 252);   // Slate-50
+            Color buttonBgColor = Color.FromArgb(15, 77, 128);    // Deep Navy
+            Color searchBtnColor = Color.FromArgb(15, 77, 128);   // Deep Navy
+
+            // CARD 1: Search & Quick Actions Card
+            Panel searchCard = new Panel();
+            searchCard.Location = new Point(15, 15);
+            searchCard.Width = ultraPanelDataEntri.ClientArea.Width - 30;
+            searchCard.Height = 55;
+            searchCard.BackColor = Color.White;
+            searchCard.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            searchCard.Paint += (s, pe) => {
+                using (Pen pen = new Pen(Color.FromArgb(226, 232, 240), 1))
+                {
+                    pe.Graphics.DrawRectangle(pen, 0, 0, searchCard.Width - 1, searchCard.Height - 1);
+                }
+            };
+            ultraPanelDataEntri.ClientArea.Controls.Add(searchCard);
+
             Label lblSearch = new Label();
-            lblSearch.Location = new Point(10, 40);
+            lblSearch.Location = new Point(15, 20);
             lblSearch.AutoSize = true;
-            lblSearch.Text = "Search:";
-            ultraPanelDataEntri.ClientArea.Controls.Add(lblSearch);
+            lblSearch.Font = labelFont;
+            lblSearch.ForeColor = labelColor;
+            lblSearch.Text = "Search Account:";
+            searchCard.Controls.Add(lblSearch);
 
             txtSearchBox = new TextBox();
-            txtSearchBox.Location = new Point(80, 40);
-            txtSearchBox.Width = 200;
+            txtSearchBox.Location = new Point(110, 16);
+            txtSearchBox.Width = searchCard.Width - 215;
+            txtSearchBox.Font = inputFont;
+            txtSearchBox.ForeColor = inputForeColor;
+            txtSearchBox.BackColor = Color.White;
+            txtSearchBox.BorderStyle = BorderStyle.FixedSingle;
+            txtSearchBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             txtSearchBox.KeyDown += TxtSearchBox_KeyDown;
-            ultraPanelDataEntri.ClientArea.Controls.Add(txtSearchBox);
+            searchCard.Controls.Add(txtSearchBox);
 
             btnSearch = new Button();
-            btnSearch.Location = new Point(290, 38);
-            btnSearch.Text = "Search";
+            btnSearch.Location = new Point(searchCard.Width - 95, 13);
+            btnSearch.Width = 80;
+            btnSearch.Height = 28;
+            btnSearch.Text = "Find";
+            btnSearch.FlatStyle = FlatStyle.Flat;
+            btnSearch.BackColor = searchBtnColor;
+            btnSearch.ForeColor = Color.White;
+            btnSearch.FlatAppearance.BorderSize = 0;
+            btnSearch.Font = buttonFont;
+            btnSearch.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnSearch.Cursor = Cursors.Hand;
             btnSearch.Click += BtnSearch_Click;
-            ultraPanelDataEntri.ClientArea.Controls.Add(btnSearch);
+            searchCard.Controls.Add(btnSearch);
 
-            // Detail fields
-            Panel detailsPanel = new Panel();
-            detailsPanel.Location = new Point(10, 70); // Adjusted position after removing branch filter
-            detailsPanel.Width = ultraPanelDataEntri.Width - 30;
-            detailsPanel.Height = 200;
-            detailsPanel.BorderStyle = BorderStyle.FixedSingle;
-            ultraPanelDataEntri.ClientArea.Controls.Add(detailsPanel);
+            // CARD 2: Account Details Card
+            Panel detailsCard = new Panel();
+            detailsCard.Location = new Point(15, 85);
+            detailsCard.Width = ultraPanelDataEntri.ClientArea.Width - 30;
+            detailsCard.Height = 260;
+            detailsCard.BackColor = Color.White;
+            detailsCard.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            detailsCard.Paint += (s, pe) => {
+                using (Pen pen = new Pen(Color.FromArgb(226, 232, 240), 1))
+                {
+                    pe.Graphics.DrawRectangle(pen, 0, 0, detailsCard.Width - 1, detailsCard.Height - 1);
+                }
+            };
+            ultraPanelDataEntri.ClientArea.Controls.Add(detailsCard);
 
+            lblDetailsTitle = new Label();
+            lblDetailsTitle.Location = new Point(15, 15);
+            lblDetailsTitle.AutoSize = true;
+            lblDetailsTitle.Font = cardTitleFont;
+            lblDetailsTitle.ForeColor = Color.FromArgb(30, 66, 114); // Deep Navy Accent
+            lblDetailsTitle.Text = "Account Details";
+            detailsCard.Controls.Add(lblDetailsTitle);
+
+            // Setup Details Card fields
+            // Field 1: Name
             Label lblName = new Label();
-            lblName.Location = new Point(10, 10);
+            lblName.Location = new Point(15, 48);
             lblName.AutoSize = true;
+            lblName.Font = labelFont;
+            lblName.ForeColor = labelColor;
             lblName.Text = "Name:";
-            detailsPanel.Controls.Add(lblName);
+            detailsCard.Controls.Add(lblName);
 
             txtName = new TextBox();
-            txtName.Location = new Point(100, 10);
-            txtName.Width = 250;
+            txtName.Location = new Point(110, 45);
+            txtName.Width = detailsCard.Width - 125;
+            txtName.Font = inputFont;
+            txtName.ForeColor = inputForeColor;
+            txtName.BackColor = inputBgColor;
+            txtName.BorderStyle = BorderStyle.FixedSingle;
             txtName.ReadOnly = true;
-            detailsPanel.Controls.Add(txtName);
+            txtName.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            detailsCard.Controls.Add(txtName);
 
+            // Field 2: Type
             Label lblType = new Label();
-            lblType.Location = new Point(10, 40);
+            lblType.Location = new Point(15, 83);
             lblType.AutoSize = true;
+            lblType.Font = labelFont;
+            lblType.ForeColor = labelColor;
             lblType.Text = "Type:";
-            detailsPanel.Controls.Add(lblType);
+            detailsCard.Controls.Add(lblType);
 
             txtType = new TextBox();
-            txtType.Location = new Point(100, 40);
-            txtType.Width = 250;
+            txtType.Location = new Point(110, 80);
+            txtType.Width = detailsCard.Width - 125;
+            txtType.Font = inputFont;
+            txtType.ForeColor = inputForeColor;
+            txtType.BackColor = inputBgColor;
+            txtType.BorderStyle = BorderStyle.FixedSingle;
             txtType.ReadOnly = true;
-            detailsPanel.Controls.Add(txtType);
+            txtType.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            detailsCard.Controls.Add(txtType);
 
+            // Field 3: Parent Group
+            Label lblParentGroup = new Label();
+            lblParentGroup.Location = new Point(15, 118);
+            lblParentGroup.AutoSize = true;
+            lblParentGroup.Font = labelFont;
+            lblParentGroup.ForeColor = labelColor;
+            lblParentGroup.Text = "Parent:";
+            detailsCard.Controls.Add(lblParentGroup);
+
+            txtParentGroup = new TextBox();
+            txtParentGroup.Location = new Point(110, 115);
+            txtParentGroup.Width = detailsCard.Width - 125;
+            txtParentGroup.Font = inputFont;
+            txtParentGroup.ForeColor = inputForeColor;
+            txtParentGroup.BackColor = inputBgColor;
+            txtParentGroup.BorderStyle = BorderStyle.FixedSingle;
+            txtParentGroup.ReadOnly = true;
+            txtParentGroup.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            detailsCard.Controls.Add(txtParentGroup);
+
+            // Field 4: Ledger Count
+            Label lblLedgerCount = new Label();
+            lblLedgerCount.Location = new Point(15, 153);
+            lblLedgerCount.AutoSize = true;
+            lblLedgerCount.Font = labelFont;
+            lblLedgerCount.ForeColor = labelColor;
+            lblLedgerCount.Text = "Ledgers:";
+            detailsCard.Controls.Add(lblLedgerCount);
+
+            txtLedgerCount = new TextBox();
+            txtLedgerCount.Location = new Point(110, 150);
+            txtLedgerCount.Width = detailsCard.Width - 125;
+            txtLedgerCount.Font = inputFont;
+            txtLedgerCount.ForeColor = inputForeColor;
+            txtLedgerCount.BackColor = inputBgColor;
+            txtLedgerCount.BorderStyle = BorderStyle.FixedSingle;
+            txtLedgerCount.ReadOnly = true;
+            txtLedgerCount.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            detailsCard.Controls.Add(txtLedgerCount);
+
+            // Field 5: Description
             Label lblDescription = new Label();
-            lblDescription.Location = new Point(10, 70);
+            lblDescription.Location = new Point(15, 188);
             lblDescription.AutoSize = true;
+            lblDescription.Font = labelFont;
+            lblDescription.ForeColor = labelColor;
             lblDescription.Text = "Description:";
-            detailsPanel.Controls.Add(lblDescription);
+            detailsCard.Controls.Add(lblDescription);
 
             txtDescription = new TextBox();
-            txtDescription.Location = new Point(100, 70);
-            txtDescription.Width = 250;
-            txtDescription.Multiline = true;
-            txtDescription.Height = 60;
+            txtDescription.Location = new Point(110, 185);
+            txtDescription.Width = detailsCard.Width - 125;
+            txtDescription.Font = inputFont;
+            txtDescription.ForeColor = inputForeColor;
+            txtDescription.BackColor = inputBgColor;
+            txtDescription.BorderStyle = BorderStyle.FixedSingle;
             txtDescription.ReadOnly = true;
-            detailsPanel.Controls.Add(txtDescription);
+            txtDescription.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            detailsCard.Controls.Add(txtDescription);
 
-            Label lblBalance = new Label();
-            lblBalance.Location = new Point(10, 140);
-            lblBalance.AutoSize = true;
-            lblBalance.Text = "Balance:";
-            detailsPanel.Controls.Add(lblBalance);
-
-            txtBalance = new TextBox();
-            txtBalance.Location = new Point(100, 140);
-            txtBalance.Width = 250;
-            txtBalance.ReadOnly = true;
-            txtBalance.TextAlign = HorizontalAlignment.Right;
-            detailsPanel.Controls.Add(txtBalance);
-
-            // Add edit button
+            // Edit Button inside Details Card
             Button btnEdit = new Button();
-            btnEdit.Location = new Point(100, 170);
-            btnEdit.Width = 120;
-            btnEdit.Text = "Edit";
+            btnEdit.Location = new Point(detailsCard.Width - 105, 220);
+            btnEdit.Width = 90;
+            btnEdit.Height = 28;
+            btnEdit.Text = "Edit Account";
+            btnEdit.FlatStyle = FlatStyle.Flat;
+            btnEdit.BackColor = buttonBgColor;
+            btnEdit.ForeColor = Color.White;
+            btnEdit.FlatAppearance.BorderSize = 0;
+            btnEdit.Font = buttonFont;
+            btnEdit.Cursor = Cursors.Hand;
+            btnEdit.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             btnEdit.Click += BtnEdit_Click;
-            detailsPanel.Controls.Add(btnEdit);
+            detailsCard.Controls.Add(btnEdit);
+
+            // CARD 3: Balance & Statistics Card
+            Panel balanceCard = new Panel();
+            balanceCard.Location = new Point(15, 360);
+            balanceCard.Width = ultraPanelDataEntri.ClientArea.Width - 30;
+            balanceCard.Height = 140;
+            balanceCard.BackColor = Color.White;
+            balanceCard.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            balanceCard.Paint += (s, pe) => {
+                using (Pen pen = new Pen(Color.FromArgb(226, 232, 240), 1))
+                {
+                    pe.Graphics.DrawRectangle(pen, 0, 0, balanceCard.Width - 1, balanceCard.Height - 1);
+                }
+            };
+            ultraPanelDataEntri.ClientArea.Controls.Add(balanceCard);
+
+            Label lblBalanceTitle = new Label();
+            lblBalanceTitle.Location = new Point(15, 12);
+            lblBalanceTitle.AutoSize = true;
+            lblBalanceTitle.Font = cardTitleFont;
+            lblBalanceTitle.ForeColor = Color.FromArgb(30, 66, 114);
+            lblBalanceTitle.Text = "Account Balance";
+            balanceCard.Controls.Add(lblBalanceTitle);
+
+            txtBalance = new Label();
+            txtBalance.Location = new Point(15, 35);
+            txtBalance.Width = balanceCard.Width - 30;
+            txtBalance.Height = 40;
+            txtBalance.Font = balanceFont;
+            txtBalance.ForeColor = Color.FromArgb(14, 116, 144); // Teal-700
+            txtBalance.TextAlign = ContentAlignment.MiddleLeft;
+            txtBalance.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            balanceCard.Controls.Add(txtBalance);
+
+            // Breadcrumb path label
+            lblBreadcrumb = new Label();
+            lblBreadcrumb.Location = new Point(15, 85);
+            lblBreadcrumb.Width = balanceCard.Width - 30;
+            lblBreadcrumb.Height = 45;
+            lblBreadcrumb.Font = breadcrumbFont;
+            lblBreadcrumb.ForeColor = Color.FromArgb(100, 116, 139); // Slate-500
+            lblBreadcrumb.TextAlign = ContentAlignment.TopLeft;
+            lblBreadcrumb.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            balanceCard.Controls.Add(lblBreadcrumb);
         }
 
         private void FrmChartOfAcc_Load(object sender, EventArgs e)
@@ -478,7 +731,7 @@ namespace PosBranch_Win.ChartOfAccount
                     categoryNode.Tag = catName; // Store category type for later reference if needed
                     categoryNode.Override.NodeAppearance.Image = groupIcon; // Use group icon or a specific category icon
                     categoryNode.Override.NodeAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
-                    categoryNode.Override.NodeAppearance.ForeColor = Color.Black;
+                    categoryNode.Override.NodeAppearance.ForeColor = Color.FromArgb(15, 23, 42); // Slate-900
                     categories[catName.ToUpper()] = categoryNode;
                     ultraTree1.Nodes.Add(categoryNode);
                 }
@@ -508,7 +761,7 @@ namespace PosBranch_Win.ChartOfAccount
                     node.Tag = row;
                     node.Override.NodeAppearance.Image = groupIcon;
                     node.Override.NodeAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.False; // Sub-groups not necessarily bold initially
-                    node.Override.NodeAppearance.ForeColor = Color.DarkBlue;
+                    node.Override.NodeAppearance.ForeColor = Color.FromArgb(71, 85, 105); // Slate-600
                     groupNodes[groupId] = node;
                 }
 
@@ -578,32 +831,25 @@ namespace PosBranch_Win.ChartOfAccount
                         var groupLedgers = ledgersTable.AsEnumerable()
                             .Where(r => r["GroupID"] != DBNull.Value && Convert.ToInt32(r["GroupID"]) == actualGroupId);
 
-                        decimal groupBalance = 0;
-
                         foreach (var ledgerRow in groupLedgers)
                         {
                             string ledgerName = ledgerRow["LedgerName"].ToString();
-                            decimal balance = ledgerRow["Balance"] != DBNull.Value ? Convert.ToDecimal(ledgerRow["Balance"]) : 0;
 
                             Infragistics.Win.UltraWinTree.UltraTreeNode ledgerNode = new Infragistics.Win.UltraWinTree.UltraTreeNode();
                             ledgerNode.Text = ledgerName;
                             ledgerNode.Tag = ledgerRow;
                             ledgerNode.Override.NodeAppearance.Image = ledgerIcon;
-                            ledgerNode.Override.NodeAppearance.ForeColor = Color.DarkGreen;
+                            ledgerNode.Override.NodeAppearance.ForeColor = Color.FromArgb(14, 116, 144); // Teal-700
 
                             groupNode.Nodes.Add(ledgerNode);
-                            groupBalance += balance;
-                        }
-
-                        if (groupNode.Nodes.Count > 0 && groupBalance != 0) // Only add balance if there are ledgers and balance is not zero
-                        {
-                            groupNode.Text = $"{groupDataRow["GroupName"]} [Balance: {groupBalance:C2}]";
-                        }
-                        else
-                        {
-                            groupNode.Text = groupDataRow["GroupName"].ToString(); // Ensure original name if no balance to show
                         }
                     }
+                }
+
+                // Fourth pass: Format rolled-up balances recursively for the entire tree
+                foreach (Infragistics.Win.UltraWinTree.UltraTreeNode rootNode in ultraTree1.Nodes)
+                {
+                    FormatNodeBalancesRecursive(rootNode);
                 }
 
                 ultraTree1.ExpandAll();
@@ -620,21 +866,14 @@ namespace PosBranch_Win.ChartOfAccount
             if (ultraTree1.SelectedNodes.Count > 0)
             {
                 var selectedNode = ultraTree1.SelectedNodes[0];
-                if (selectedNode != null && selectedNode.Tag != null)
+                if (selectedNode != null)
                 {
-                    // Display details in the right panel based on selected node
-                    DataRow row = selectedNode.Tag as DataRow;
-
-                    if (row != null)
-                    {
-                        // Update details panel
-                        UpdateDetailsPanel(row);
-                    }
+                    UpdateDetailsPanel(selectedNode);
                 }
             }
         }
 
-        private void UpdateDetailsPanel(DataRow row)
+        private void UpdateDetailsPanel(Infragistics.Win.UltraWinTree.UltraTreeNode selectedNode)
         {
             try
             {
@@ -642,54 +881,188 @@ namespace PosBranch_Win.ChartOfAccount
                 txtName.Text = string.Empty;
                 txtDescription.Text = string.Empty;
                 txtType.Text = string.Empty;
-                txtBalance.Text = string.Empty;
+                txtParentGroup.Text = string.Empty;
+                txtLedgerCount.Text = "0";
+                txtBalance.Text = "$0.00";
+                lblBreadcrumb.Text = string.Empty;
 
-                // Determine type and set values accordingly
-                if (row.Table.Columns.Contains("GroupName"))
+                if (selectedNode == null) return;
+
+                // 1. Calculate recursive stats (balance and ledger count)
+                decimal totalBalance;
+                int ledgerCount;
+                CalculateNodeStats(selectedNode, out totalBalance, out ledgerCount);
+
+                // 2. Format breadcrumb path
+                lblBreadcrumb.Text = GetNodeBreadcrumbPath(selectedNode);
+
+                // 3. Determine the type of node selected
+                // Case A: Root category node (string tag)
+                if (selectedNode.Tag is string catName)
                 {
-                    // This is an account group
-                    lblDetailsTitle.Text = "Account Group Details";
-                    txtType.Text = "Group";
-                    txtName.Text = row["GroupName"].ToString();
-                    txtDescription.Text = row["Description"] != DBNull.Value ? row["Description"].ToString() : string.Empty;
-
-                    // Get balance by summing child ledgers
-                    decimal balance = 0;
-                    if (row.Table.Columns.Contains("Balance") && row["Balance"] != DBNull.Value)
-                    {
-                        balance = Convert.ToDecimal(row["Balance"]);
-                    }
-
-                    txtBalance.Text = balance.ToString("C2");
+                    lblDetailsTitle.Text = "Category Details";
+                    txtType.Text = "Category";
+                    txtName.Text = catName;
+                    txtParentGroup.Text = "None (Root)";
+                    txtLedgerCount.Text = ledgerCount.ToString();
+                    txtDescription.Text = $"System account classification for {catName}.";
+                    txtBalance.Text = totalBalance.ToString("C2");
                 }
-                else if (row.Table.Columns.Contains("LedgerName"))
+                // Case B: Group or Ledger node (DataRow tag)
+                else if (selectedNode.Tag is DataRow row)
                 {
-                    // This is a ledger
-                    lblDetailsTitle.Text = "Ledger Details";
-                    txtType.Text = "Ledger";
-                    txtName.Text = row["LedgerName"].ToString();
-                    txtDescription.Text = row["Description"] != DBNull.Value ? row["Description"].ToString() : string.Empty;
-
-                    // Get balance
-                    decimal balance = 0;
-                    if (row.Table.Columns.Contains("Balance") && row["Balance"] != DBNull.Value)
+                    if (row.Table.Columns.Contains("LedgerName"))
                     {
-                        balance = Convert.ToDecimal(row["Balance"]);
-                    }
-                    else if (row.Table.Columns.Contains("OpnDebit") && row.Table.Columns.Contains("OpnCredit"))
-                    {
-                        decimal opnDebit = row["OpnDebit"] != DBNull.Value ? Convert.ToDecimal(row["OpnDebit"]) : 0;
-                        decimal opnCredit = row["OpnCredit"] != DBNull.Value ? Convert.ToDecimal(row["OpnCredit"]) : 0;
-                        balance = opnDebit - opnCredit;
-                    }
+                        lblDetailsTitle.Text = "Ledger Details";
+                        txtType.Text = "Ledger";
+                        txtName.Text = row["LedgerName"].ToString();
+                        txtDescription.Text = row["Description"] != DBNull.Value ? row["Description"].ToString() : string.Empty;
+                        txtLedgerCount.Text = "1"; // Ledger is a leaf node
 
-                    txtBalance.Text = balance.ToString("C2");
+                        // Parent group name
+                        if (selectedNode.Parent != null && selectedNode.Parent.Tag is DataRow parentRow && parentRow.Table.Columns.Contains("GroupName"))
+                        {
+                            txtParentGroup.Text = parentRow["GroupName"].ToString();
+                        }
+                        else
+                        {
+                            txtParentGroup.Text = "Unknown Group";
+                        }
+
+                        txtBalance.Text = totalBalance.ToString("C2");
+                    }
+                    else if (row.Table.Columns.Contains("GroupName"))
+                    {
+                        lblDetailsTitle.Text = "Account Group Details";
+                        txtType.Text = "Group";
+                        txtName.Text = row["GroupName"].ToString();
+                        txtDescription.Text = row["Description"] != DBNull.Value ? row["Description"].ToString() : string.Empty;
+                        txtLedgerCount.Text = ledgerCount.ToString();
+
+                        // Get parent group name
+                        if (selectedNode.Parent != null)
+                        {
+                            if (selectedNode.Parent.Tag is DataRow parentRow && parentRow.Table.Columns.Contains("GroupName"))
+                            {
+                                txtParentGroup.Text = parentRow["GroupName"].ToString();
+                            }
+                            else if (selectedNode.Parent.Tag is string cat)
+                            {
+                                txtParentGroup.Text = cat;
+                            }
+                        }
+                        else
+                        {
+                            txtParentGroup.Text = "None";
+                        }
+
+                        txtBalance.Text = totalBalance.ToString("C2");
+                    }
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error updating details panel: {ex.Message}");
             }
+        }
+
+        private void CalculateNodeStats(Infragistics.Win.UltraWinTree.UltraTreeNode node, out decimal totalBalance, out int ledgerCount)
+        {
+            totalBalance = 0;
+            ledgerCount = 0;
+
+            if (node == null) return;
+
+            // If it is a ledger node (leaf)
+            if (node.Tag is DataRow row && row.Table.Columns.Contains("LedgerName"))
+            {
+                totalBalance = row["Balance"] != DBNull.Value ? Convert.ToDecimal(row["Balance"]) : 0;
+                ledgerCount = 1;
+                return;
+            }
+
+            // For groups and root categories, accumulate from child nodes recursively
+            foreach (Infragistics.Win.UltraWinTree.UltraTreeNode childNode in node.Nodes)
+            {
+                decimal childBalance;
+                int childLedgerCount;
+                CalculateNodeStats(childNode, out childBalance, out childLedgerCount);
+                totalBalance += childBalance;
+                ledgerCount += childLedgerCount;
+            }
+        }
+
+        private string GetNodeBreadcrumbPath(Infragistics.Win.UltraWinTree.UltraTreeNode node)
+        {
+            if (node == null) return string.Empty;
+
+            List<string> pathParts = new List<string>();
+            var current = node;
+            while (current != null)
+            {
+                if (current.Tag is DataRow row)
+                {
+                    if (row.Table.Columns.Contains("LedgerName"))
+                        pathParts.Insert(0, row["LedgerName"].ToString());
+                    else if (row.Table.Columns.Contains("GroupName"))
+                        pathParts.Insert(0, row["GroupName"].ToString());
+                }
+                else if (current.Tag is string catName)
+                {
+                    pathParts.Insert(0, catName);
+                }
+                else
+                {
+                    pathParts.Insert(0, current.Text);
+                }
+                current = current.Parent;
+            }
+            return string.Join("  >  ", pathParts);
+        }
+
+        private decimal FormatNodeBalancesRecursive(Infragistics.Win.UltraWinTree.UltraTreeNode node)
+        {
+            if (node == null) return 0;
+
+            // If it's a ledger, just return its balance
+            if (node.Tag is DataRow row && row.Table.Columns.Contains("LedgerName"))
+            {
+                return row["Balance"] != DBNull.Value ? Convert.ToDecimal(row["Balance"]) : 0;
+            }
+
+            // Sum child balances
+            decimal totalBalance = 0;
+            foreach (Infragistics.Win.UltraWinTree.UltraTreeNode childNode in node.Nodes)
+            {
+                totalBalance += FormatNodeBalancesRecursive(childNode);
+            }
+
+            // Set node text
+            if (node.Tag is DataRow groupRow && groupRow.Table.Columns.Contains("GroupName"))
+            {
+                string groupName = groupRow["GroupName"].ToString();
+                if (totalBalance != 0)
+                {
+                    node.Text = $"{groupName} [Balance: {totalBalance:C2}]";
+                }
+                else
+                {
+                    node.Text = groupName;
+                }
+            }
+            else if (node.Tag is string catName && catName != "UNCATEGORIZED_TAG")
+            {
+                if (totalBalance != 0)
+                {
+                    node.Text = $"{catName} [Balance: {totalBalance:C2}]";
+                }
+                else
+                {
+                    node.Text = catName;
+                }
+            }
+
+            return totalBalance;
         }
 
         private void UltraTree1_DoubleClick(object sender, EventArgs e)
@@ -704,17 +1077,17 @@ namespace PosBranch_Win.ChartOfAccount
                     if (row != null)
                     {
                         // Check if it's a group or ledger
-                        if (row.Table.Columns.Contains("GroupName"))
-                        {
-                            // This is an account group - open the group form
-                            int groupId = Convert.ToInt32(row["GroupID"]);
-                            OpenAccountGroupForm(groupId);
-                        }
-                        else if (row.Table.Columns.Contains("LedgerName"))
+                        if (row.Table.Columns.Contains("LedgerName"))
                         {
                             // This is a ledger - open the ledger form
                             int ledgerId = Convert.ToInt32(row["LedgerID"]);
                             OpenLedgerForm(ledgerId);
+                        }
+                        else if (row.Table.Columns.Contains("GroupName"))
+                        {
+                            // This is an account group - open the group form
+                            int groupId = Convert.ToInt32(row["GroupID"]);
+                            OpenAccountGroupForm(groupId);
                         }
                     }
                 }
@@ -801,17 +1174,17 @@ namespace PosBranch_Win.ChartOfAccount
                     if (row != null)
                     {
                         // Check if it's a group or ledger
-                        if (row.Table.Columns.Contains("GroupName"))
-                        {
-                            // This is an account group - open the group form
-                            int groupId = Convert.ToInt32(row["GroupID"]);
-                            OpenAccountGroupForm(groupId);
-                        }
-                        else if (row.Table.Columns.Contains("LedgerName"))
+                        if (row.Table.Columns.Contains("LedgerName"))
                         {
                             // This is a ledger - open the ledger form
                             int ledgerId = Convert.ToInt32(row["LedgerID"]);
                             OpenLedgerForm(ledgerId);
+                        }
+                        else if (row.Table.Columns.Contains("GroupName"))
+                        {
+                            // This is an account group - open the group form
+                            int groupId = Convert.ToInt32(row["GroupID"]);
+                            OpenAccountGroupForm(groupId);
                         }
                     }
                 }

@@ -1,4 +1,4 @@
-﻿namespace PosBranch_Win.ChartOfAccount
+namespace PosBranch_Win.ChartOfAccount
 {
     partial class FrmChartOfAcc
     {
@@ -53,12 +53,11 @@
             // 
             // ultraPanelTreeViewAcc
             // 
-            appearance1.BackColor = System.Drawing.Color.Aqua;
+            appearance1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(241)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.ultraPanelTreeViewAcc.Appearance = appearance1;
             // 
             // ultraPanelTreeViewAcc.ClientArea
             // 
-            this.ultraPanelTreeViewAcc.ClientArea.Controls.Add(this.ultrPanelBtn);
             this.ultraPanelTreeViewAcc.ClientArea.Controls.Add(this.ultraPanelDataEntri);
             this.ultraPanelTreeViewAcc.ClientArea.Controls.Add(this.UltraPanelTreeView);
             this.ultraPanelTreeViewAcc.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -69,7 +68,7 @@
             // 
             // ultrPanelBtn
             // 
-            appearance2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            appearance2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(250)))), ((int)(((byte)(252)))));
             this.ultrPanelBtn.Appearance = appearance2;
             // 
             // ultrPanelBtn.ClientArea
@@ -78,38 +77,38 @@
             this.ultrPanelBtn.ClientArea.Controls.Add(this.btnExpandAll);
             this.ultrPanelBtn.ClientArea.Controls.Add(this.btnCollapseAll);
             this.ultrPanelBtn.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.ultrPanelBtn.Location = new System.Drawing.Point(371, 496);
+            this.ultrPanelBtn.Location = new System.Drawing.Point(0, 493);
             this.ultrPanelBtn.Name = "ultrPanelBtn";
-            this.ultrPanelBtn.Size = new System.Drawing.Size(829, 37);
+            this.ultrPanelBtn.Size = new System.Drawing.Size(371, 40);
             this.ultrPanelBtn.TabIndex = 2;
             // 
             // btnRefresh
             // 
-            this.btnRefresh.Location = new System.Drawing.Point(15, 6);
+            this.btnRefresh.Location = new System.Drawing.Point(12, 8);
             this.btnRefresh.Name = "btnRefresh";
-            this.btnRefresh.Size = new System.Drawing.Size(101, 23);
+            this.btnRefresh.Size = new System.Drawing.Size(101, 24);
             this.btnRefresh.TabIndex = 0;
             this.btnRefresh.Text = "Refresh";
             // 
             // btnExpandAll
             // 
-            this.btnExpandAll.Location = new System.Drawing.Point(131, 6);
+            this.btnExpandAll.Location = new System.Drawing.Point(125, 8);
             this.btnExpandAll.Name = "btnExpandAll";
-            this.btnExpandAll.Size = new System.Drawing.Size(101, 23);
+            this.btnExpandAll.Size = new System.Drawing.Size(101, 24);
             this.btnExpandAll.TabIndex = 1;
             this.btnExpandAll.Text = "Expand All";
             // 
             // btnCollapseAll
             // 
-            this.btnCollapseAll.Location = new System.Drawing.Point(247, 6);
+            this.btnCollapseAll.Location = new System.Drawing.Point(238, 8);
             this.btnCollapseAll.Name = "btnCollapseAll";
-            this.btnCollapseAll.Size = new System.Drawing.Size(101, 23);
+            this.btnCollapseAll.Size = new System.Drawing.Size(101, 24);
             this.btnCollapseAll.TabIndex = 2;
             this.btnCollapseAll.Text = "Collapse All";
             // 
             // ultraPanelDataEntri
             // 
-            appearance3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
+            appearance3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(250)))), ((int)(((byte)(252)))));
             this.ultraPanelDataEntri.Appearance = appearance3;
             this.ultraPanelDataEntri.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ultraPanelDataEntri.Location = new System.Drawing.Point(371, 0);
@@ -119,11 +118,12 @@
             // 
             // UltraPanelTreeView
             // 
-            appearance4.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(128)))));
+            appearance4.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(250)))), ((int)(((byte)(252)))));
             this.UltraPanelTreeView.Appearance = appearance4;
             // 
             // UltraPanelTreeView.ClientArea
             // 
+            this.UltraPanelTreeView.ClientArea.Controls.Add(this.ultrPanelBtn);
             this.UltraPanelTreeView.ClientArea.Controls.Add(this.ultraTree1);
             this.UltraPanelTreeView.ClientArea.Controls.Add(this.label1);
             this.UltraPanelTreeView.Dock = System.Windows.Forms.DockStyle.Left;
@@ -134,18 +134,22 @@
             // 
             // ultraTree1
             // 
-            this.ultraTree1.Location = new System.Drawing.Point(12, 40);
+            this.ultraTree1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.ultraTree1.Location = new System.Drawing.Point(12, 45);
             this.ultraTree1.Name = "ultraTree1";
-            this.ultraTree1.Size = new System.Drawing.Size(334, 470);
+            this.ultraTree1.Size = new System.Drawing.Size(347, 435);
             this.ultraTree1.TabIndex = 0;
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Font = new System.Drawing.Font("Segoe UI Semibold", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(77)))), ((int)(((byte)(128)))));
             this.label1.Location = new System.Drawing.Point(12, 15);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(137, 17);
+            this.label1.Size = new System.Drawing.Size(137, 21);
             this.label1.TabIndex = 0;
             this.label1.Text = "Chart of Accounts";
             // 
