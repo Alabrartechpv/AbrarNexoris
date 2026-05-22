@@ -1011,12 +1011,13 @@ namespace Repository.TransactionRepository
                 {
                     try
                     {
-                        using (SqlCommand deleteVoucherCmd = new SqlCommand("DELETE FROM Vouchers WHERE VoucherID = @VoucherID", (SqlConnection)DataConnection, (SqlTransaction)trans))
-                        {
-                            deleteVoucherCmd.Parameters.AddWithValue("@VoucherID", sales.VoucherID);
-
-                            int rowsDeleted = deleteVoucherCmd.ExecuteNonQuery();
-                        }
+                        voucher._Operation = OPERATION_UPDATE;
+                        voucher.CompanyID = SessionContext.CompanyId;
+                        voucher.BranchID = SessionContext.BranchId;
+                        voucher.FinYearID = sales.FinYearId;
+                        voucher.VoucherID = sales.VoucherID;
+                        voucher.VoucherType = VOUCHER_TYPE_SALES;
+                        DataConnection.Query<Voucher>(STOREDPROCEDURE.POS_Vouchers, voucher, trans, commandType: CommandType.StoredProcedure).ToList();
                     }
                     catch (Exception ex)
                     {

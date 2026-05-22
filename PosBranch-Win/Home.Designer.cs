@@ -111,6 +111,7 @@ namespace PosBranch_Win
             Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup19 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("FinancialReports");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolTradingPL_Instance = new Infragistics.Win.UltraWinToolbars.ButtonTool("TradingPLAccount");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolBalanceSheet_Instance = new Infragistics.Win.UltraWinToolbars.ButtonTool("BalanceSheet");
+            Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolTrialBalance_Instance = new Infragistics.Win.UltraWinToolbars.ButtonTool("TrialBalance");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolCashBank_Instance = new Infragistics.Win.UltraWinToolbars.ButtonTool("CashBankBook");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolDayBook_Instance = new Infragistics.Win.UltraWinToolbars.ButtonTool("DayBook");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolCustomerOutstanding_Instance = new Infragistics.Win.UltraWinToolbars.ButtonTool("CustomerOutstandingReport");
@@ -290,6 +291,8 @@ namespace PosBranch_Win
             Infragistics.Win.Appearance appearance69 = new Infragistics.Win.Appearance();
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolBalanceSheet_Tool = new Infragistics.Win.UltraWinToolbars.ButtonTool("BalanceSheet");
             Infragistics.Win.Appearance appearance70 = new Infragistics.Win.Appearance();
+            Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolTrialBalance_Tool = new Infragistics.Win.UltraWinToolbars.ButtonTool("TrialBalance");
+            Infragistics.Win.Appearance appearanceTrialBalance = new Infragistics.Win.Appearance();
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolCashBank_Tool = new Infragistics.Win.UltraWinToolbars.ButtonTool("CashBankBook");
             Infragistics.Win.Appearance appearance71 = new Infragistics.Win.Appearance();
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolDayBook_Tool = new Infragistics.Win.UltraWinToolbars.ButtonTool("DayBook");
@@ -619,6 +622,7 @@ namespace PosBranch_Win
             ribbonGroup19.Caption = "Financial Reports";
             buttonToolTradingPL_Instance.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonToolBalanceSheet_Instance.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
+            buttonToolTrialBalance_Instance.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonToolCashBank_Instance.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonToolDayBook_Instance.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonToolCustomerOutstanding_Instance.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
@@ -626,6 +630,7 @@ namespace PosBranch_Win
             ribbonGroup19.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonToolTradingPL_Instance,
             buttonToolBalanceSheet_Instance,
+            buttonToolTrialBalance_Instance,
             buttonToolCashBank_Instance,
             buttonToolDayBook_Instance,
             buttonToolCustomerOutstanding_Instance,
@@ -946,6 +951,11 @@ namespace PosBranch_Win
             buttonToolBalanceSheet_Tool.SharedPropsInternal.Caption = "Balance Sheet";
             buttonToolBalanceSheet_Tool.SharedPropsInternal.DisplayStyle = Infragistics.Win.UltraWinToolbars.ToolDisplayStyle.ImageAndText;
             buttonToolBalanceSheet_Tool.SharedPropsInternal.ToolTipTitle = "Balance Sheet";
+            appearanceTrialBalance.Image = global::PosBranch_Win.Properties.Resources.balance;
+            buttonToolTrialBalance_Tool.SharedPropsInternal.AppearancesLarge.Appearance = appearanceTrialBalance;
+            buttonToolTrialBalance_Tool.SharedPropsInternal.Caption = "Trial Balance";
+            buttonToolTrialBalance_Tool.SharedPropsInternal.DisplayStyle = Infragistics.Win.UltraWinToolbars.ToolDisplayStyle.ImageAndText;
+            buttonToolTrialBalance_Tool.SharedPropsInternal.ToolTipTitle = "Trial Balance";
             appearance71.Image = global::PosBranch_Win.Properties.Resources.book;
             buttonToolCashBank_Tool.SharedPropsInternal.AppearancesLarge.Appearance = appearance71;
             buttonToolCashBank_Tool.SharedPropsInternal.AppearancesSmall.Appearance = appearance12;
@@ -1066,6 +1076,7 @@ namespace PosBranch_Win
             buttonToolLastBill_Tool,
             buttonToolTradingPL_Tool,
             buttonToolBalanceSheet_Tool,
+            buttonToolTrialBalance_Tool,
             buttonToolCashBank_Tool,
             buttonToolDayBook_Tool,
             buttonToolManualPB_Tool,

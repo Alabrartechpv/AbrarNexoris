@@ -1015,6 +1015,12 @@
     <Compile Include="Reports\FinancialReports\FrmBalanceSheet.Designer.cs">
       <DependentUpon>FrmBalanceSheet.cs</DependentUpon>
     </Compile>
+    <Compile Include="Reports\FinancialReports\FrmTrialBalance.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reports\FinancialReports\FrmTrialBalance.Designer.cs">
+      <DependentUpon>FrmTrialBalance.cs</DependentUpon>
+    </Compile>
     <Compile Include="Reports\FinancialReports\FrmCashBankBook.cs">
       <SubType>Form</SubType>
     </Compile>

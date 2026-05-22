@@ -34,6 +34,8 @@ namespace Repository.Accounts
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@_Operation", "GETALLPARENTGROUPS");
+                    int branchId = GetContextValue(SessionContext.BranchId, DataBase.BranchId);
+                    cmd.Parameters.AddWithValue("@_BranchID", branchId > 0 ? (object)branchId : DBNull.Value);
 
                     using (SqlDataAdapter adapt = new SqlDataAdapter(cmd))
                     {
@@ -254,7 +256,7 @@ namespace Repository.Accounts
         }
 
         // Methods for handling AccountGroups
-        public DataTable GetAllAccountGroups()
+        public DataTable GetAllAccountGroups(int branchId = 0)
         {
             DataTable dtResult = new DataTable();
 
@@ -271,11 +273,21 @@ namespace Repository.Accounts
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@_Operation", "GETALL");
+                    if (branchId > 0)
+                    {
+                        cmd.Parameters.AddWithValue("@_BranchID", branchId);
+                    }
 
                     using (SqlDataAdapter adapt = new SqlDataAdapter(cmd))
                     {
                         adapt.Fill(dtResult);
                     }
+                }
+
+                if (branchId > 0 && dtResult.Columns.Contains("BranchID"))
+                {
+                    DataRow[] branchRows = dtResult.Select($"BranchID = {branchId}");
+                    dtResult = branchRows.Length > 0 ? branchRows.CopyToDataTable() : dtResult.Clone();
                 }
             }
             catch (Exception Ex)
@@ -397,6 +409,8 @@ namespace Repository.Accounts
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@_Operation", "DELETE");
                     cmd.Parameters.AddWithValue("@GroupID", accountGroupId);
+                    int branchId = GetContextValue(SessionContext.BranchId, DataBase.BranchId);
+                    cmd.Parameters.AddWithValue("@_BranchID", branchId > 0 ? (object)branchId : DBNull.Value);
 
                     int rowsAffected = cmd.ExecuteNonQuery();
                     result = (rowsAffected > 0);
@@ -505,6 +519,8 @@ namespace Repository.Accounts
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@_Operation", "GETBYID");
                     cmd.Parameters.AddWithValue("@GroupID", groupId);
+                    int branchId = GetContextValue(SessionContext.BranchId, DataBase.BranchId);
+                    cmd.Parameters.AddWithValue("@_BranchID", branchId > 0 ? (object)branchId : DBNull.Value);
 
                     using (SqlDataAdapter adapt = new SqlDataAdapter(cmd))
                     {
@@ -523,6 +539,17 @@ namespace Repository.Accounts
             }
 
             return dtResult.Rows.Count > 0 ? dtResult.Rows[0] : null;
+        }
+
+        private int GetContextValue(int sessionValue, string legacyValue)
+        {
+            if (sessionValue > 0)
+            {
+                return sessionValue;
+            }
+
+            int parsedValue;
+            return int.TryParse(legacyValue, out parsedValue) ? parsedValue : 0;
         }
     }
 }

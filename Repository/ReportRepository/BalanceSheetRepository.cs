@@ -20,6 +20,15 @@ namespace Repository.ReportRepository
             BalanceSheetReport report = new BalanceSheetReport();
             report.FromDate = fromDate;
             report.ToDate = toDate;
+            int companyId = GetContextValue(SessionContext.CompanyId, DataBase.CompanyId);
+            int branchId = GetContextValue(SessionContext.BranchId, DataBase.BranchId);
+            int finYearId = GetContextValue(SessionContext.FinYearId, DataBase.FinyearId);
+
+            if (companyId <= 0 || branchId <= 0 || finYearId <= 0)
+            {
+                throw new InvalidOperationException(
+                    $"Balance Sheet cannot be loaded because session values are missing. CompanyId={companyId}, BranchId={branchId}, FinYearId={finYearId}.");
+            }
 
             if (DataConnection.State == ConnectionState.Open)
             {
@@ -34,9 +43,9 @@ namespace Repository.ReportRepository
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.CommandTimeout = 60;
-                    cmd.Parameters.AddWithValue("@CompanyId", SessionContext.CompanyId);
-                    cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
-                    cmd.Parameters.AddWithValue("@FinYearId", SessionContext.FinYearId);
+                    cmd.Parameters.AddWithValue("@CompanyId", companyId);
+                    cmd.Parameters.AddWithValue("@BranchId", branchId);
+                    cmd.Parameters.AddWithValue("@FinYearId", finYearId);
                     cmd.Parameters.AddWithValue("@FromDate", fromDate);
                     cmd.Parameters.AddWithValue("@ToDate", toDate);
 
@@ -107,6 +116,17 @@ namespace Repository.ReportRepository
             }
 
             return report;
+        }
+
+        private int GetContextValue(int sessionValue, string legacyValue)
+        {
+            if (sessionValue > 0)
+            {
+                return sessionValue;
+            }
+
+            int parsedValue;
+            return int.TryParse(legacyValue, out parsedValue) ? parsedValue : 0;
         }
     }
 }

@@ -52,6 +52,77 @@ namespace Repository.Accounts
             return dtResult;
         }
 
+        public Dictionary<int, decimal> GetLedgerBalances(int companyId, int branchId, int finYearId, DateTime toDate)
+        {
+            Dictionary<int, decimal> balances = new Dictionary<int, decimal>();
+
+            if (DataConnection.State == ConnectionState.Open)
+            {
+                DataConnection.Close();
+            }
+
+            DataConnection.Open();
+
+            try
+            {
+                string query = @"
+SELECT
+    l.LedgerID,
+    CASE
+        WHEN ag.GroupType IN ('LIABILITIES', 'INCOME')
+            OR ag.GroupID IN (1, 2, 3, 8, 11, 13, 17, 20, 23, 24, 25, 26, 27, 28, 29)
+            THEN
+                (ISNULL(l.OpnCredit, 0) + ISNULL(SUM(vd.Credit), 0))
+                - (ISNULL(l.OpnDebit, 0) + ISNULL(SUM(vd.Debit), 0))
+        ELSE
+                (ISNULL(l.OpnDebit, 0) + ISNULL(SUM(vd.Debit), 0))
+                - (ISNULL(l.OpnCredit, 0) + ISNULL(SUM(vd.Credit), 0))
+    END AS Balance
+FROM LedgerMaster l
+INNER JOIN AccountGroupMaster ag
+    ON l.GroupID = ag.GroupID
+    AND ag.BranchID = l.BranchID
+LEFT JOIN Vouchers vd
+    ON l.LedgerID = vd.LedgerID
+    AND vd.CompanyID = @CompanyId
+    AND vd.BranchID = @BranchId
+    AND vd.FinYearID = @FinYearId
+    AND vd.VoucherDate <= @ToDate
+    AND ISNULL(vd.CancelFlag, 0) = 0
+WHERE l.BranchID = @BranchId
+GROUP BY l.LedgerID, ag.GroupType, ag.GroupID, l.OpnDebit, l.OpnCredit;";
+
+                using (SqlCommand cmd = new SqlCommand(query, (SqlConnection)DataConnection))
+                {
+                    cmd.Parameters.AddWithValue("@CompanyId", companyId);
+                    cmd.Parameters.AddWithValue("@BranchId", branchId);
+                    cmd.Parameters.AddWithValue("@FinYearId", finYearId);
+                    cmd.Parameters.AddWithValue("@ToDate", toDate);
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            int ledgerId = Convert.ToInt32(reader["LedgerID"]);
+                            decimal balance = reader["Balance"] != DBNull.Value ? Convert.ToDecimal(reader["Balance"]) : 0;
+                            balances[ledgerId] = balance;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                    DataConnection.Close();
+            }
+
+            return balances;
+        }
+
         // Method to create a new ledger
         public bool CreateLedger(Ledger ledger)
         {

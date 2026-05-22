@@ -294,11 +294,18 @@ namespace Repository.Accounts
                                 }
                             }
 
+                            int legacyCompanyId;
+                            int companyId = SessionContext.CompanyId > 0
+                                ? SessionContext.CompanyId
+                                : int.TryParse(DataBase.CompanyId, out legacyCompanyId) && legacyCompanyId > 0
+                                    ? legacyCompanyId
+                                    : master.BranchId;
+
                             // 2. Insert into CustomerReceiptMaster
                             using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE._CustomerReceiptMaster, conn, transaction))
                             {
                                 cmd.CommandType = CommandType.StoredProcedure;
-                                cmd.Parameters.AddWithValue("@CompanyId", master.BranchId);
+                                cmd.Parameters.AddWithValue("@CompanyId", companyId);
                                 cmd.Parameters.AddWithValue("@BranchId", master.BranchId);
                                 cmd.Parameters.AddWithValue("@VoucherId", master.VoucherId);
                                 cmd.Parameters.AddWithValue("@VoucherDate", master.ReceiptDate);
@@ -387,7 +394,7 @@ namespace Repository.Accounts
                             using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_Vouchers, conn, transaction))
                             {
                                 cmd.CommandType = CommandType.StoredProcedure;
-                                cmd.Parameters.AddWithValue("@CompanyID", master.BranchId);
+                                cmd.Parameters.AddWithValue("@CompanyID", companyId);
                                 cmd.Parameters.AddWithValue("@BranchID", master.BranchId);
                                 cmd.Parameters.AddWithValue("@VoucherID", master.VoucherId);
                                 cmd.Parameters.AddWithValue("@VoucherSeriesID", 0);
@@ -422,7 +429,7 @@ namespace Repository.Accounts
                             using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_Vouchers, conn, transaction))
                             {
                                 cmd.CommandType = CommandType.StoredProcedure;
-                                cmd.Parameters.AddWithValue("@CompanyID", master.BranchId);
+                                cmd.Parameters.AddWithValue("@CompanyID", companyId);
                                 cmd.Parameters.AddWithValue("@BranchID", master.BranchId);
                                 cmd.Parameters.AddWithValue("@VoucherID", master.VoucherId);
                                 cmd.Parameters.AddWithValue("@VoucherSeriesID", 0);

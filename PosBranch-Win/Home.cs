@@ -73,6 +73,7 @@ namespace PosBranch_Win
             new ReportNavigatorDefinition("Vendor", "DN/payment", "VendorDNPaymentReport"),
             new ReportNavigatorDefinition("Analysis", "Trading & P/L Account", "TradingPLAccount"),
             new ReportNavigatorDefinition("Analysis", "Balance Sheet", "BalanceSheet"),
+            new ReportNavigatorDefinition("Analysis", "Trial Balance", "TrialBalance"),
             new ReportNavigatorDefinition("Analysis", "Cash & Bank Book", "CashBankBook"),
             new ReportNavigatorDefinition("Analysis", "Day Book", "DayBook"),
             new ReportNavigatorDefinition("Others", "Manual Party Balance Report", "ManualPartyBalanceReport"),
@@ -1823,6 +1824,11 @@ namespace PosBranch_Win
             {
                 PosBranch_Win.Reports.FinancialReports.FrmBalanceSheet bsReport = new PosBranch_Win.Reports.FinancialReports.FrmBalanceSheet();
                 OpenFormInTab(bsReport, "Balance Sheet");
+            }
+            if (e.Tool.Key == "TrialBalance")
+            {
+                PosBranch_Win.Reports.FinancialReports.FrmTrialBalance tbReport = new PosBranch_Win.Reports.FinancialReports.FrmTrialBalance();
+                OpenFormInTab(tbReport, "Trial Balance");
             }
             if (e.Tool.Key == "CashBankBook")
             {

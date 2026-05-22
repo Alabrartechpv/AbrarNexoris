@@ -722,7 +722,7 @@ namespace PosBranch_Win.ChartOfAccount
                 var categories = new Dictionary<string, Infragistics.Win.UltraWinTree.UltraTreeNode>();
                 // Assuming you have a way to get these categories, e.g., from a dedicated table or enum
                 // For now, let's hardcode them based on typical accounting structures.
-                string[] mainCategories = { "ASSETS", "LIABILITIES", "INCOME", "EXPENSES", "EQUITY" }; // Made them plural and uppercase for consistency
+                string[] mainCategories = { "ASSETS", "LIABILITIES", "INCOME", "EXPENSES" };
 
                 foreach (string catName in mainCategories)
                 {
@@ -736,8 +736,17 @@ namespace PosBranch_Win.ChartOfAccount
                     ultraTree1.Nodes.Add(categoryNode);
                 }
 
-                // Load account groups from repository
-                var accountGroupsTable = accountGroupRepo.GetAllAccountGroups();
+                int companyId = GetContextValue(SessionContext.CompanyId, DataBase.CompanyId);
+                int branchId = GetContextValue(SessionContext.BranchId, DataBase.BranchId);
+                int finYearId = GetContextValue(SessionContext.FinYearId, DataBase.FinyearId);
+
+                if (branchId <= 0)
+                {
+                    throw new InvalidOperationException("Chart of Accounts cannot be loaded because BranchId is missing.");
+                }
+
+                // Load only current branch account groups.
+                var accountGroupsTable = accountGroupRepo.GetAllAccountGroups(branchId);
 
                 if (accountGroupsTable == null || accountGroupsTable.Rows.Count == 0)
                 {
@@ -770,21 +779,7 @@ namespace PosBranch_Win.ChartOfAccount
                 {
                     int groupId = Convert.ToInt32(row["GroupID"]);
                     int parentGroupId = row["ParentGroupId"] != DBNull.Value ? Convert.ToInt32(row["ParentGroupId"]) : 0;
-                    // Determine the category of the group. This relies on your AccountGroupMaster having a field like 'GroupType' or 'AccountCategory'
-                    // that maps to one of the mainCategories defined above.
-                    string groupCategoryKey = "UNCATEGORIZED"; // Default
-                    if (row.Table.Columns.Contains("GroupType") && row["GroupType"] != DBNull.Value)
-                    {
-                        groupCategoryKey = row["GroupType"].ToString().ToUpper().Trim();
-                    }
-                    else if (row.Table.Columns.Contains("AccountCategory") && row["AccountCategory"] != DBNull.Value)
-                    {
-                        groupCategoryKey = row["AccountCategory"].ToString().ToUpper().Trim();
-                    }
-                    // Make sure pluralization matches if your data uses singular like "ASSET"
-                    if (groupCategoryKey == "ASSET") groupCategoryKey = "ASSETS";
-                    if (groupCategoryKey == "LIABILITY") groupCategoryKey = "LIABILITIES";
-                    if (groupCategoryKey == "EXPENSE") groupCategoryKey = "EXPENSES";
+                    string groupCategoryKey = ResolveAccountCategory(row);
 
                     Infragistics.Win.UltraWinTree.UltraTreeNode node = groupNodes[groupId];
 
@@ -819,7 +814,8 @@ namespace PosBranch_Win.ChartOfAccount
                 }
 
                 // Third pass: Add ledgers under their groups
-                var ledgersTable = ledgerRepo.GetAllLedgers();
+                var ledgersTable = ledgerRepo.GetAllLedgers(branchId);
+                ApplyDynamicLedgerBalances(ledgersTable, companyId, branchId, finYearId);
                 if (ledgersTable != null)
                 {
                     foreach (int groupIdInDict in groupNodes.Keys) // Iterate over groups already placed in the tree
@@ -859,6 +855,93 @@ namespace PosBranch_Win.ChartOfAccount
                 MessageBox.Show("Error loading chart of accounts: " + ex.Message + "\nStackTrace: " + ex.StackTrace, "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void ApplyDynamicLedgerBalances(DataTable ledgersTable, int companyId, int branchId, int finYearId)
+        {
+            if (ledgersTable == null || companyId <= 0 || branchId <= 0 || finYearId <= 0)
+            {
+                return;
+            }
+
+            if (!ledgersTable.Columns.Contains("Balance"))
+            {
+                ledgersTable.Columns.Add("Balance", typeof(decimal));
+            }
+
+            DateTime toDate = DateTime.Today.AddDays(1).AddSeconds(-1);
+            var balances = ledgerRepo.GetLedgerBalances(companyId, branchId, finYearId, toDate);
+            foreach (DataRow row in ledgersTable.Rows)
+            {
+                if (row["LedgerID"] == DBNull.Value)
+                {
+                    continue;
+                }
+
+                int ledgerId = Convert.ToInt32(row["LedgerID"]);
+                decimal balance;
+                row["Balance"] = balances.TryGetValue(ledgerId, out balance) ? balance : 0;
+            }
+        }
+
+        private int GetContextValue(int sessionValue, string legacyValue)
+        {
+            if (sessionValue > 0)
+            {
+                return sessionValue;
+            }
+
+            int parsedValue;
+            return int.TryParse(legacyValue, out parsedValue) ? parsedValue : 0;
+        }
+
+        private string ResolveAccountCategory(DataRow row)
+        {
+            int groupId = row.Table.Columns.Contains("GroupID") && row["GroupID"] != DBNull.Value
+                ? Convert.ToInt32(row["GroupID"])
+                : 0;
+
+            if (IsAssetGroup(groupId)) return "ASSETS";
+            if (IsLiabilityGroup(groupId)) return "LIABILITIES";
+            if (IsIncomeGroup(groupId)) return "INCOME";
+            if (IsExpenseGroup(groupId)) return "EXPENSES";
+
+            string groupCategoryKey = string.Empty;
+            if (row.Table.Columns.Contains("GroupType") && row["GroupType"] != DBNull.Value)
+            {
+                groupCategoryKey = row["GroupType"].ToString().ToUpper().Trim();
+            }
+            else if (row.Table.Columns.Contains("AccountCategory") && row["AccountCategory"] != DBNull.Value)
+            {
+                groupCategoryKey = row["AccountCategory"].ToString().ToUpper().Trim();
+            }
+
+            if (groupCategoryKey == "ASSET") return "ASSETS";
+            if (groupCategoryKey == "LIABILITY") return "LIABILITIES";
+            if (groupCategoryKey == "EXPENSE") return "EXPENSES";
+            if (groupCategoryKey == "EQUITY") return "LIABILITIES";
+
+            return string.IsNullOrWhiteSpace(groupCategoryKey) ? "UNCATEGORIZED" : groupCategoryKey;
+        }
+
+        private bool IsAssetGroup(int groupId)
+        {
+            return new[] { 4, 5, 6, 7, 14, 15, 16, 18, 19, 21, 22 }.Contains(groupId);
+        }
+
+        private bool IsLiabilityGroup(int groupId)
+        {
+            return new[] { 1, 2, 3, 17, 20, 23, 24, 25, 26, 27, 28, 29 }.Contains(groupId);
+        }
+
+        private bool IsIncomeGroup(int groupId)
+        {
+            return new[] { 8, 11, 13 }.Contains(groupId);
+        }
+
+        private bool IsExpenseGroup(int groupId)
+        {
+            return new[] { 9, 10, 12 }.Contains(groupId);
         }
 
         private void UltraTree1_AfterSelect(object sender, EventArgs e)
@@ -1024,10 +1107,16 @@ namespace PosBranch_Win.ChartOfAccount
         {
             if (node == null) return 0;
 
-            // If it's a ledger, just return its balance
+            // If it's a ledger, show its balance directly in the tree and return it for parent totals.
             if (node.Tag is DataRow row && row.Table.Columns.Contains("LedgerName"))
             {
-                return row["Balance"] != DBNull.Value ? Convert.ToDecimal(row["Balance"]) : 0;
+                string ledgerName = row["LedgerName"].ToString();
+                decimal ledgerBalance = row["Balance"] != DBNull.Value ? Convert.ToDecimal(row["Balance"]) : 0;
+                node.Text = ledgerBalance != 0
+                    ? $"{ledgerName} [Balance: {ledgerBalance:C2}]"
+                    : ledgerName;
+
+                return ledgerBalance;
             }
 
             // Sum child balances
