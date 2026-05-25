@@ -4,6 +4,7 @@ using System.IO;
 using System.Windows.Forms;
 using Infragistics.Win;
 using Infragistics.Win.UltraWinGrid;
+using ModelClass.Report;
 using Repository.ReportRepository;
 
 namespace PosBranch_Win.Reports.FinancialReports
@@ -15,6 +16,7 @@ namespace PosBranch_Win.Reports.FinancialReports
         private static readonly Color ReceiptColor = Color.FromArgb(46, 125, 50); // Green
         private static readonly Color PaymentColor = Color.FromArgb(198, 40, 40); // Red
         private static readonly Color SelectedRowColor = Color.FromArgb(227, 242, 253);
+        private DayBookResponse _currentReportData = new DayBookResponse();
 
         public FrmDayBook()
         {
@@ -253,6 +255,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             if (string.IsNullOrEmpty(filterText))
             {
                 ultraGridTransactions.DisplayLayout.Bands[0].ColumnFilters.ClearAllFilters();
+                UpdateSummaryForSearch(string.Empty);
                 return;
             }
 
@@ -264,6 +267,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             if (band.Columns.Exists("Narration")) band.ColumnFilters["Narration"].FilterConditions.Add(FilterComparisionOperator.Contains, filterText);
             if (band.Columns.Exists("VoucherTypeName")) band.ColumnFilters["VoucherTypeName"].FilterConditions.Add(FilterComparisionOperator.Contains, filterText);
             if (band.Columns.Exists("VoucherID")) band.ColumnFilters["VoucherID"].FilterConditions.Add(FilterComparisionOperator.Contains, filterText);
+            UpdateSummaryForSearch(filterText);
         }
 
         private void UltraGridTransactions_DoubleClickRow(object sender, DoubleClickRowEventArgs e)
@@ -310,10 +314,12 @@ namespace PosBranch_Win.Reports.FinancialReports
             // Total Debits — soft green
             StyleSinglePanel(panelReceipts, lblTotalReceiptsTitle, lblTotalReceiptsValue, 
                 Color.FromArgb(232, 245, 233), Color.FromArgb(46, 125, 50));
+            lblTotalReceiptsTitle.Text = "Visible Debits:";
             
             // Total Credits — soft pink
             StyleSinglePanel(panelPayments, lblTotalPaymentsTitle, lblTotalPaymentsValue, 
                 Color.FromArgb(252, 228, 236), Color.FromArgb(194, 24, 91));
+            lblTotalPaymentsTitle.Text = "Visible Credits:";
         }
 
         private void StyleSinglePanel(Infragistics.Win.Misc.UltraPanel panel, Infragistics.Win.Misc.UltraLabel lblTitle, Infragistics.Win.Misc.UltraLabel lblVal, Color bgColor, Color fgColor)
@@ -357,13 +363,12 @@ namespace PosBranch_Win.Reports.FinancialReports
                 Cursor.Current = Cursors.WaitCursor;
                 var repo = new DayBookRepository();
                 var reportData = repo.GetDayBook(dtFromDate.DateTime.Date, dtToDate.DateTime.Date);
+                _currentReportData = reportData;
 
                 ultraGridTransactions.DataSource = reportData.Transactions;
                 ultraGridTransactions.DataBind();
 
-                // Bind Summary
-                lblTotalReceiptsValue.Text = reportData.Summary.TotalDebits.ToString("N2");
-                lblTotalPaymentsValue.Text = reportData.Summary.TotalCredits.ToString("N2");
+                UpdateSummaryForSearch(txtSearch.Text.Trim().ToLower());
             }
             catch (Exception ex)
             {
@@ -454,6 +459,45 @@ namespace PosBranch_Win.Reports.FinancialReports
             {
                 MessageBox.Show("Error generating print preview: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void UpdateSummaryForSearch(string filterText)
+        {
+            decimal totalDebits = 0;
+            decimal totalCredits = 0;
+
+            foreach (var transaction in _currentReportData.Transactions)
+            {
+                if (!IsTransactionVisibleForSearch(transaction, filterText))
+                {
+                    continue;
+                }
+
+                totalDebits += transaction.DebitAmount;
+                totalCredits += transaction.CreditAmount;
+            }
+
+            lblTotalReceiptsValue.Text = totalDebits.ToString("N2");
+            lblTotalPaymentsValue.Text = totalCredits.ToString("N2");
+        }
+
+        private bool IsTransactionVisibleForSearch(DayBookTransaction transaction, string filterText)
+        {
+            if (string.IsNullOrWhiteSpace(filterText))
+            {
+                return true;
+            }
+
+            return ContainsSearchText(transaction.Particulars, filterText)
+                || ContainsSearchText(transaction.Narration, filterText)
+                || ContainsSearchText(transaction.VoucherTypeName, filterText)
+                || transaction.VoucherID.ToString().Contains(filterText);
+        }
+
+        private bool ContainsSearchText(string value, string filterText)
+        {
+            return !string.IsNullOrEmpty(value)
+                && value.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0;
         }
         #endregion
     }
