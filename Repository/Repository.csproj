@@ -82,6 +82,8 @@
     <Compile Include="ReportRepository\AuditTrailReportRepository.cs" />
     <Compile Include="ReportRepository\PurchaseReportRepository.cs" />
     <Compile Include="ReportRepository\PurchaseReturnReportRepositoty.cs" />
+    <Compile Include="ReportRepository\SalesAnalyticsRepository.cs" />
+    <Compile Include="ReportRepository\PurchaseAnalyticsRepository.cs" />
     <Compile Include="ReportRepository\SalesReportRepository.cs" />
     <Compile Include="ReportRepository\SalesmanIncentiveReportRepository.cs" />
     <Compile Include="ReportRepository\SalesReturnReportRepository.cs" />
@@ -92,6 +94,7 @@
     <Compile Include="ReportRepository\CombinedPartyBalanceReportRepository.cs" />
     <Compile Include="ReportRepository\CustomerOutstandingReportRepository.cs" />
     <Compile Include="ReportRepository\CustomerReceiptReportRepository.cs" />
+    <Compile Include="ReportRepository\DashboardOverviewRepository.cs" />
     <Compile Include="ReportRepository\DayBookRepository.cs" />
     <Compile Include="ReportRepository\StockReportAdvanceRepo.cs" />
     <Compile Include="ReportRepository\VendorPaymentReportRepository.cs" />

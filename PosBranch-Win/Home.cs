@@ -1330,7 +1330,7 @@ namespace PosBranch_Win
                 foreach (Infragistics.Win.UltraWinToolbars.ToolBase tool in ultraToolbarsManager1.Tools)
                 {
                     // Check if user has CanView permission for this tool
-                    bool hasPermission = SessionContext.CanView(tool.Key);
+                    bool hasPermission = tool.Key == "Overview" || SessionContext.CanView(tool.Key);
                     tool.SharedProps.Enabled = hasPermission;
 
                     System.Diagnostics.Debug.WriteLine($"Tool '{tool.Key}': Enabled={hasPermission}");
@@ -1436,6 +1436,13 @@ namespace PosBranch_Win
                         }
                     }
                 }
+                return;
+            }
+
+            if (e.Tool.Key == "Overview")
+            {
+                Dashboard.FrmDashboardOverview overview = new Dashboard.FrmDashboardOverview(OpenFormInTabSafe);
+                OpenFormInTabSafe(overview, "Overview");
                 return;
             }
 
