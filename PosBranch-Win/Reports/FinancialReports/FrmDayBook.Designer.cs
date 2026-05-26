@@ -137,6 +137,13 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.txtSearch.Location = new System.Drawing.Point(60, 56);
             this.txtSearch.NullText = "Search particulars/narration...";
 
+            this.chkGroupByVoucher = new Infragistics.Win.UltraWinEditors.UltraCheckEditor();
+            this.chkGroupByVoucher.Location = new System.Drawing.Point(280, 56);
+            this.chkGroupByVoucher.Name = "chkGroupByVoucher";
+            this.chkGroupByVoucher.Size = new System.Drawing.Size(150, 24);
+            this.chkGroupByVoucher.Text = "Group By Voucher";
+            this.chkGroupByVoucher.Checked = false;
+
             this.ultraGroupBox1.Controls.Add(this.ultraLabel3);
             this.ultraGroupBox1.Controls.Add(this.cmbDateQuickSelect);
             this.ultraGroupBox1.Controls.Add(this.ultraLabel1);
@@ -145,6 +152,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.ultraGroupBox1.Controls.Add(this.ultraLabel2);
             this.ultraGroupBox1.Controls.Add(lblSearch);
             this.ultraGroupBox1.Controls.Add(this.txtSearch);
+            this.ultraGroupBox1.Controls.Add(this.chkGroupByVoucher);
 
             // Buttons
             this.btnGenerate.Location = new System.Drawing.Point(510, 20);
@@ -293,6 +301,7 @@ namespace PosBranch_Win.Reports.FinancialReports
         private Infragistics.Win.Misc.UltraButton btnClose;
 
         private Infragistics.Win.UltraWinEditors.UltraTextEditor txtSearch;
+        private Infragistics.Win.UltraWinEditors.UltraCheckEditor chkGroupByVoucher;
 
         private Infragistics.Win.Misc.UltraPanel panelSummary;
         private Infragistics.Win.Misc.UltraPanel panelReceipts;

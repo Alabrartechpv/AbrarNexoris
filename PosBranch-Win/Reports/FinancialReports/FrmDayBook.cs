@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 using Infragistics.Win;
 using Infragistics.Win.UltraWinGrid;
@@ -17,6 +20,8 @@ namespace PosBranch_Win.Reports.FinancialReports
         private static readonly Color PaymentColor = Color.FromArgb(198, 40, 40); // Red
         private static readonly Color SelectedRowColor = Color.FromArgb(227, 242, 253);
         private DayBookResponse _currentReportData = new DayBookResponse();
+        private DataSet _dsDayBook;
+        private bool _gridGroupedMode;
 
         public FrmDayBook()
         {
@@ -34,6 +39,7 @@ namespace PosBranch_Win.Reports.FinancialReports
 
             cmbDateQuickSelect.ValueChanged += CmbDateQuickSelect_ValueChanged;
             txtSearch.ValueChanged += TxtSearch_ValueChanged;
+            chkGroupByVoucher.CheckedChanged += ChkGroupByVoucher_CheckedChanged;
 
             // UltraGrid events
             ultraGridTransactions.InitializeLayout += UltraGridTransactions_InitializeLayout;
@@ -124,17 +130,90 @@ namespace PosBranch_Win.Reports.FinancialReports
             displayLayout.Override.RowAppearance.BorderColor = Color.LightGray;
         }
 
+        private void SetupGroupedGrid()
+        {
+            var displayLayout = ultraGridTransactions.DisplayLayout;
+            displayLayout.ViewStyleBand = ViewStyleBand.Vertical;
+            displayLayout.GroupByBox.Hidden = true;
+            displayLayout.CaptionVisible = DefaultableBoolean.False;
+
+            displayLayout.Override.SelectTypeRow = SelectType.Single;
+            displayLayout.Override.CellClickAction = CellClickAction.RowSelect;
+            displayLayout.Override.SelectedRowAppearance.BackColor = SelectedRowColor;
+            displayLayout.Override.SelectedRowAppearance.ForeColor = Color.Black;
+            displayLayout.Override.ExpansionIndicator = ShowExpansionIndicator.CheckOnDisplay;
+            displayLayout.Override.RowSelectors = DefaultableBoolean.True;
+
+            var headerApp = displayLayout.Override.HeaderAppearance;
+            headerApp.BackColor = HeaderGradStart;
+            headerApp.BackColor2 = HeaderGradEnd;
+            headerApp.BackGradientStyle = GradientStyle.Vertical;
+            headerApp.ForeColor = Color.White;
+            headerApp.FontData.Bold = DefaultableBoolean.True;
+            headerApp.FontData.SizeInPoints = 9f;
+            headerApp.TextHAlign = HAlign.Center;
+
+            displayLayout.Override.BorderStyleCell = Infragistics.Win.UIElementBorderStyle.Solid;
+            displayLayout.Override.BorderStyleRow = Infragistics.Win.UIElementBorderStyle.Solid;
+            displayLayout.Override.RowAppearance.BorderColor = Color.LightGray;
+        }
+
         private void UltraGridTransactions_InitializeLayout(object sender, InitializeLayoutEventArgs e)
         {
-            var band = e.Layout.Bands[0];
+            if (_gridGroupedMode)
+            {
+                if (e.Layout.Bands.Count > 1)
+                {
+                    UltraGridBand masterBand = FindBand(e.Layout, "VoucherMaster", 0);
+                    UltraGridBand detailBand = FindBand(e.Layout, "VoucherLines", 1);
+                    if (masterBand != null)
+                    {
+                        ConfigureGroupedMasterBand(masterBand);
+                    }
+                    if (detailBand != null)
+                    {
+                        ConfigureGroupedDetailBand(detailBand);
+                    }
+                }
+                return;
+            }
 
-            // First hide all, then show only what we need
+            if (e.Layout.Bands.Count > 0)
+            {
+                ConfigureDetailedBand(e.Layout.Bands[0]);
+            }
+        }
+
+        private static UltraGridBand FindBand(UltraGridLayout layout, string preferredKey, int fallbackIndex)
+        {
+            if (layout == null || layout.Bands.Count == 0)
+            {
+                return null;
+            }
+
+            foreach (UltraGridBand band in layout.Bands)
+            {
+                if (string.Equals(band.Key, preferredKey, StringComparison.OrdinalIgnoreCase))
+                {
+                    return band;
+                }
+            }
+
+            if (fallbackIndex >= 0 && fallbackIndex < layout.Bands.Count)
+            {
+                return layout.Bands[fallbackIndex];
+            }
+
+            return null;
+        }
+
+        private void ConfigureDetailedBand(UltraGridBand band)
+        {
             foreach (UltraGridColumn col in band.Columns)
             {
                 col.Hidden = true;
             }
 
-            // ADD UNBOUND COLUMN FOR ICONS
             if (!band.Columns.Exists("IconCol"))
             {
                 var iconCol = band.Columns.Add("IconCol", "");
@@ -144,13 +223,13 @@ namespace PosBranch_Win.Reports.FinancialReports
                 iconCol.CellAppearance.TextHAlign = HAlign.Center;
             }
 
-            // Configure visible columns in order
             ConfigureColumn(band, "VoucherDate", "Date", 100, HAlign.Center);
             if (band.Columns.Exists("VoucherDate"))
+            {
                 band.Columns["VoucherDate"].Format = "dd-MMM-yyyy";
+            }
 
             ConfigureColumn(band, "VoucherID", "Voucher ID", 90, HAlign.Center);
-
             ConfigureColumn(band, "VoucherTypeName", "Type", 110, HAlign.Left);
             if (band.Columns.Exists("VoucherTypeName"))
             {
@@ -159,44 +238,93 @@ namespace PosBranch_Win.Reports.FinancialReports
             }
 
             ConfigureColumn(band, "Particulars", "Particulars", 250, HAlign.Left);
-
             ConfigureColumn(band, "Narration", "Narration", 300, HAlign.Left);
 
-            ConfigureColumn(band, "DebitAmount", "Debit (Dr) ₹", 130, HAlign.Right);
-            if (band.Columns.Exists("DebitAmount"))
-            {
-                band.Columns["DebitAmount"].Format = "N2";
-                band.Columns["DebitAmount"].CellAppearance.ForeColor = ReceiptColor;
-                band.Columns["DebitAmount"].CellAppearance.FontData.Bold = DefaultableBoolean.True;
-            }
+            ConfigureAmountColumn(band, "DebitAmount", "Debit (Dr) ₹", ReceiptColor);
+            ConfigureAmountColumn(band, "CreditAmount", "Credit (Cr) ₹", PaymentColor);
 
-            ConfigureColumn(band, "CreditAmount", "Credit (Cr) ₹", 130, HAlign.Right);
-            if (band.Columns.Exists("CreditAmount"))
-            {
-                band.Columns["CreditAmount"].Format = "N2";
-                band.Columns["CreditAmount"].CellAppearance.ForeColor = PaymentColor;
-                band.Columns["CreditAmount"].CellAppearance.FontData.Bold = DefaultableBoolean.True;
-            }
-
-            // Allow column resizing & auto-fit last column
             band.Override.AllowColSizing = AllowColSizing.Free;
-            e.Layout.AutoFitStyle = AutoFitStyle.ExtendLastColumn;
+            ultraGridTransactions.DisplayLayout.AutoFitStyle = AutoFitStyle.ExtendLastColumn;
+            AddBandSummaries(band, "DebitAmount", "CreditAmount", "TotalDebits", "TotalCredits");
+        }
 
-            // Footer summaries
+        private void ConfigureGroupedMasterBand(UltraGridBand band)
+        {
+            foreach (UltraGridColumn col in band.Columns)
+            {
+                col.Hidden = true;
+            }
+
+            ConfigureColumn(band, "VoucherDate", "Date", 100, HAlign.Center);
+            if (band.Columns.Exists("VoucherDate"))
+            {
+                band.Columns["VoucherDate"].Format = "dd-MMM-yyyy";
+            }
+
+            ConfigureColumn(band, "VoucherID", "Voucher ID", 90, HAlign.Center);
+            ConfigureColumn(band, "VoucherTypeName", "Type", 110, HAlign.Left);
+            ConfigureColumn(band, "Narration", "Narration", 300, HAlign.Left);
+            ConfigureAmountColumn(band, "DebitTotal", "Debit (Dr) ₹", ReceiptColor);
+            ConfigureAmountColumn(band, "CreditTotal", "Credit (Cr) ₹", PaymentColor);
+
+            band.Override.AllowColSizing = AllowColSizing.Free;
+            ultraGridTransactions.DisplayLayout.AutoFitStyle = AutoFitStyle.ExtendLastColumn;
+            AddBandSummaries(band, "DebitTotal", "CreditTotal", "GrpTotalDebits", "GrpTotalCredits");
+        }
+
+        private void ConfigureGroupedDetailBand(UltraGridBand band)
+        {
+            foreach (UltraGridColumn col in band.Columns)
+            {
+                col.Hidden = true;
+            }
+
+            if (band.Columns.Exists("VoucherID"))
+            {
+                band.Columns["VoucherID"].Hidden = true;
+            }
+            if (band.Columns.Exists("LineID"))
+            {
+                band.Columns["LineID"].Hidden = true;
+            }
+
+            ConfigureColumn(band, "Particulars", "Particulars", 280, HAlign.Left);
+            ConfigureAmountColumn(band, "DebitAmount", "Debit (Dr) ₹", ReceiptColor);
+            ConfigureAmountColumn(band, "CreditAmount", "Credit (Cr) ₹", PaymentColor);
+
+            band.Override.RowAppearance.BackColor = Color.FromArgb(252, 252, 255);
+            band.Override.HeaderAppearance.BackColor = Color.FromArgb(69, 90, 100);
+            band.Override.HeaderAppearance.ForeColor = Color.White;
+        }
+
+        private void ConfigureAmountColumn(UltraGridBand band, string key, string headerText, Color color)
+        {
+            ConfigureColumn(band, key, headerText, 130, HAlign.Right);
+            if (band.Columns.Exists(key))
+            {
+                band.Columns[key].Format = "N2";
+                band.Columns[key].CellAppearance.ForeColor = color;
+                band.Columns[key].CellAppearance.FontData.Bold = DefaultableBoolean.True;
+            }
+        }
+
+        private void AddBandSummaries(UltraGridBand band, string debitKey, string creditKey, string debitSummaryKey, string creditSummaryKey)
+        {
             band.Override.SummaryDisplayArea = SummaryDisplayAreas.BottomFixed;
             band.Override.SummaryFooterCaptionVisible = DefaultableBoolean.False;
 
-            if (band.Columns.Exists("DebitAmount") && !band.Summaries.Exists("TotalDebits"))
+            if (band.Columns.Exists(debitKey) && !band.Summaries.Exists(debitSummaryKey))
             {
-                var s = band.Summaries.Add("TotalDebits", SummaryType.Sum, band.Columns["DebitAmount"]);
+                var s = band.Summaries.Add(debitSummaryKey, SummaryType.Sum, band.Columns[debitKey]);
                 s.DisplayFormat = "₹ {0:N2}";
                 s.Appearance.TextHAlign = HAlign.Right;
                 s.Appearance.FontData.Bold = DefaultableBoolean.True;
                 s.Appearance.ForeColor = ReceiptColor;
             }
-            if (band.Columns.Exists("CreditAmount") && !band.Summaries.Exists("TotalCredits"))
+
+            if (band.Columns.Exists(creditKey) && !band.Summaries.Exists(creditSummaryKey))
             {
-                var s = band.Summaries.Add("TotalCredits", SummaryType.Sum, band.Columns["CreditAmount"]);
+                var s = band.Summaries.Add(creditSummaryKey, SummaryType.Sum, band.Columns[creditKey]);
                 s.DisplayFormat = "₹ {0:N2}";
                 s.Appearance.TextHAlign = HAlign.Right;
                 s.Appearance.FontData.Bold = DefaultableBoolean.True;
@@ -206,29 +334,94 @@ namespace PosBranch_Win.Reports.FinancialReports
 
         private void UltraGridTransactions_InitializeRow(object sender, InitializeRowEventArgs e)
         {
-            // Indicator Icons
-            if (e.Row.Cells.Exists("IconCol"))
+            if (!e.Row.IsDataRow || e.Row.Band == null)
             {
-                 bool isDebit = (Convert.ToDecimal(e.Row.Cells["DebitAmount"].Value ?? 0) > 0);
-                 bool isCredit = (Convert.ToDecimal(e.Row.Cells["CreditAmount"].Value ?? 0) > 0);
-                 
-                 if (isDebit && !isCredit) e.Row.Cells["IconCol"].Value = "💰"; // Debit only
-                 else if (isCredit && !isDebit) e.Row.Cells["IconCol"].Value = "💸"; // Credit only
-                 else if (isCredit && isDebit) e.Row.Cells["IconCol"].Value = "🔄"; // Both (e.g. Journal/Contra)
+                return;
             }
 
-            // Highlight zero amounts as light gray
-            if (e.Row.Cells.Exists("DebitAmount"))
+            if (IsVoucherMasterBand(e.Row.Band))
             {
-                var val = e.Row.Cells["DebitAmount"].Value;
-                if (val != null && val != DBNull.Value && Convert.ToDecimal(val) == 0)
-                    e.Row.Cells["DebitAmount"].Appearance.ForeColor = Color.LightGray;
+                StyleAmountCell(e.Row, "DebitTotal", ReceiptColor);
+                StyleAmountCell(e.Row, "CreditTotal", PaymentColor);
+                return;
             }
-            if (e.Row.Cells.Exists("CreditAmount"))
+
+            if (IsVoucherLinesBand(e.Row.Band))
             {
-                var val = e.Row.Cells["CreditAmount"].Value;
-                if (val != null && val != DBNull.Value && Convert.ToDecimal(val) == 0)
-                    e.Row.Cells["CreditAmount"].Appearance.ForeColor = Color.LightGray;
+                StyleAmountCell(e.Row, "DebitAmount", ReceiptColor);
+                StyleAmountCell(e.Row, "CreditAmount", PaymentColor);
+                return;
+            }
+
+            if (e.Row.Band.Columns.Exists("IconCol")
+                && e.Row.Band.Columns.Exists("DebitAmount")
+                && e.Row.Band.Columns.Exists("CreditAmount"))
+            {
+                decimal debit = GetCellDecimal(e.Row, "DebitAmount");
+                decimal credit = GetCellDecimal(e.Row, "CreditAmount");
+
+                if (debit > 0 && credit == 0)
+                {
+                    e.Row.Cells["IconCol"].Value = "💰";
+                }
+                else if (credit > 0 && debit == 0)
+                {
+                    e.Row.Cells["IconCol"].Value = "💸";
+                }
+                else if (debit > 0 && credit > 0)
+                {
+                    e.Row.Cells["IconCol"].Value = "🔄";
+                }
+            }
+
+            StyleAmountCell(e.Row, "DebitAmount", ReceiptColor);
+            StyleAmountCell(e.Row, "CreditAmount", PaymentColor);
+        }
+
+        private static bool IsVoucherMasterBand(UltraGridBand band)
+        {
+            return band != null && band.Columns.Exists("DebitTotal");
+        }
+
+        private static bool IsVoucherLinesBand(UltraGridBand band)
+        {
+            return band != null
+                && band.Columns.Exists("DebitAmount")
+                && band.Columns.Exists("Particulars")
+                && !band.Columns.Exists("DebitTotal");
+        }
+
+        private static decimal GetCellDecimal(UltraGridRow row, string columnKey)
+        {
+            if (row?.Band == null || !row.Band.Columns.Exists(columnKey))
+            {
+                return 0m;
+            }
+
+            var val = row.Cells[columnKey].Value;
+            if (val == null || val == DBNull.Value)
+            {
+                return 0m;
+            }
+
+            return Convert.ToDecimal(val);
+        }
+
+        private void StyleAmountCell(UltraGridRow row, string columnKey, Color activeColor)
+        {
+            if (row?.Band == null || !row.Band.Columns.Exists(columnKey))
+            {
+                return;
+            }
+
+            var val = row.Cells[columnKey].Value;
+            if (val != null && val != DBNull.Value && Convert.ToDecimal(val) == 0)
+            {
+                row.Cells[columnKey].Appearance.ForeColor = Color.LightGray;
+            }
+            else
+            {
+                row.Cells[columnKey].Appearance.ForeColor = activeColor;
             }
         }
 
@@ -246,27 +439,182 @@ namespace PosBranch_Win.Reports.FinancialReports
 
         #endregion
 
+        #region View Modes (Detailed / Group By Voucher)
+
+        private void ChkGroupByVoucher_CheckedChanged(object sender, EventArgs e)
+        {
+            ApplyGroupByVoucher();
+        }
+
+        private void EnsureDayBookDataSet()
+        {
+            if (_dsDayBook != null)
+            {
+                return;
+            }
+
+            _dsDayBook = new DataSet("DayBook");
+
+            var master = new DataTable("VoucherMaster");
+            master.Columns.Add("VoucherID", typeof(int));
+            master.Columns.Add("VoucherDate", typeof(DateTime));
+            master.Columns.Add("VoucherTypeName", typeof(string));
+            master.Columns.Add("Narration", typeof(string));
+            master.Columns.Add("DebitTotal", typeof(decimal));
+            master.Columns.Add("CreditTotal", typeof(decimal));
+            master.PrimaryKey = new[] { master.Columns["VoucherID"] };
+
+            var detail = new DataTable("VoucherLines");
+            detail.Columns.Add("LineID", typeof(int));
+            detail.Columns["LineID"].AutoIncrement = true;
+            detail.Columns["LineID"].AutoIncrementSeed = 1;
+            detail.Columns["LineID"].AutoIncrementStep = 1;
+            detail.Columns.Add("VoucherID", typeof(int));
+            detail.Columns.Add("Particulars", typeof(string));
+            detail.Columns.Add("DebitAmount", typeof(decimal));
+            detail.Columns.Add("CreditAmount", typeof(decimal));
+
+            _dsDayBook.Tables.Add(master);
+            _dsDayBook.Tables.Add(detail);
+            _dsDayBook.Relations.Add(
+                "VoucherLines",
+                master.Columns["VoucherID"],
+                detail.Columns["VoucherID"]);
+        }
+
+        private void PopulateDayBookDataSet(IEnumerable<DayBookTransaction> transactions)
+        {
+            EnsureDayBookDataSet();
+
+            // Child rows must be cleared before parent (FK: VoucherLines -> VoucherMaster)
+            _dsDayBook.Tables["VoucherLines"].Rows.Clear();
+            _dsDayBook.Tables["VoucherMaster"].Rows.Clear();
+
+            foreach (var grp in transactions
+                .GroupBy(t => t.VoucherID)
+                .OrderBy(g => g.Min(t => t.VoucherDate))
+                .ThenBy(g => g.Key))
+            {
+                var lines = grp.ToList();
+                var first = lines[0];
+
+                var masterRow = _dsDayBook.Tables["VoucherMaster"].NewRow();
+                masterRow["VoucherID"] = first.VoucherID;
+                masterRow["VoucherDate"] = first.VoucherDate;
+                masterRow["VoucherTypeName"] = first.VoucherTypeName ?? string.Empty;
+                masterRow["Narration"] = first.Narration ?? string.Empty;
+                masterRow["DebitTotal"] = lines.Sum(l => l.DebitAmount);
+                masterRow["CreditTotal"] = lines.Sum(l => l.CreditAmount);
+                _dsDayBook.Tables["VoucherMaster"].Rows.Add(masterRow);
+
+                foreach (var line in lines)
+                {
+                    var detailRow = _dsDayBook.Tables["VoucherLines"].NewRow();
+                    detailRow["VoucherID"] = line.VoucherID;
+                    detailRow["Particulars"] = line.Particulars ?? string.Empty;
+                    detailRow["DebitAmount"] = line.DebitAmount;
+                    detailRow["CreditAmount"] = line.CreditAmount;
+                    _dsDayBook.Tables["VoucherLines"].Rows.Add(detailRow);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Flat view: only matching lines. Grouped view: whole voucher if any line matches (ERP-style audit).
+        /// </summary>
+        private List<DayBookTransaction> GetFilteredTransactions()
+        {
+            string filterText = txtSearch.Text.Trim().ToLower();
+            if (string.IsNullOrEmpty(filterText))
+            {
+                return _currentReportData.Transactions.ToList();
+            }
+
+            if (_gridGroupedMode || chkGroupByVoucher.Checked)
+            {
+                var voucherIds = new HashSet<int>(
+                    _currentReportData.Transactions
+                        .Where(t => IsTransactionVisibleForSearch(t, filterText))
+                        .Select(t => t.VoucherID));
+
+                return _currentReportData.Transactions
+                    .Where(t => voucherIds.Contains(t.VoucherID))
+                    .ToList();
+            }
+
+            return _currentReportData.Transactions
+                .Where(t => IsTransactionVisibleForSearch(t, filterText))
+                .ToList();
+        }
+
+        private void ApplyGroupByVoucher()
+        {
+            bool groupByVoucher = chkGroupByVoucher.Checked;
+            if (groupByVoucher == _gridGroupedMode && ultraGridTransactions.DataSource != null)
+            {
+                if (groupByVoucher)
+                {
+                    PopulateDayBookDataSet(GetFilteredTransactions());
+                    ultraGridTransactions.DataBind();
+                }
+                return;
+            }
+
+            ultraGridTransactions.DisplayLayout.Reset();
+
+            if (groupByVoucher)
+            {
+                _gridGroupedMode = true;
+                SetupGroupedGrid();
+                PopulateDayBookDataSet(GetFilteredTransactions());
+                ultraGridTransactions.DataSource = _dsDayBook;
+                ultraGridTransactions.DataMember = "VoucherMaster";
+            }
+            else
+            {
+                _gridGroupedMode = false;
+                SetupGrid();
+                ultraGridTransactions.DataSource = _currentReportData.Transactions;
+                ultraGridTransactions.DataMember = string.Empty;
+            }
+
+            ultraGridTransactions.DataBind();
+        }
+
+        #endregion
+
         #region Extra Features (Search & Drill-Down)
 
         private void TxtSearch_ValueChanged(object sender, EventArgs e)
         {
             string filterText = txtSearch.Text.Trim().ToLower();
-            
-            if (string.IsNullOrEmpty(filterText))
+
+            if (_gridGroupedMode)
             {
-                ultraGridTransactions.DisplayLayout.Bands[0].ColumnFilters.ClearAllFilters();
-                UpdateSummaryForSearch(string.Empty);
+                PopulateDayBookDataSet(GetFilteredTransactions());
+                ultraGridTransactions.DataBind();
+                UpdateSummaryForSearch(filterText);
+                return;
+            }
+
+            if (ultraGridTransactions.DisplayLayout.Bands.Count == 0)
+            {
+                UpdateSummaryForSearch(filterText);
                 return;
             }
 
             var band = ultraGridTransactions.DisplayLayout.Bands[0];
             band.ColumnFilters.ClearAllFilters();
-            band.ColumnFilters.LogicalOperator = FilterLogicalOperator.Or;
-            
-            if (band.Columns.Exists("Particulars")) band.ColumnFilters["Particulars"].FilterConditions.Add(FilterComparisionOperator.Contains, filterText);
-            if (band.Columns.Exists("Narration")) band.ColumnFilters["Narration"].FilterConditions.Add(FilterComparisionOperator.Contains, filterText);
-            if (band.Columns.Exists("VoucherTypeName")) band.ColumnFilters["VoucherTypeName"].FilterConditions.Add(FilterComparisionOperator.Contains, filterText);
-            if (band.Columns.Exists("VoucherID")) band.ColumnFilters["VoucherID"].FilterConditions.Add(FilterComparisionOperator.Contains, filterText);
+
+            if (!string.IsNullOrEmpty(filterText))
+            {
+                band.ColumnFilters.LogicalOperator = FilterLogicalOperator.Or;
+                if (band.Columns.Exists("Particulars")) band.ColumnFilters["Particulars"].FilterConditions.Add(FilterComparisionOperator.Contains, filterText);
+                if (band.Columns.Exists("Narration")) band.ColumnFilters["Narration"].FilterConditions.Add(FilterComparisionOperator.Contains, filterText);
+                if (band.Columns.Exists("VoucherTypeName")) band.ColumnFilters["VoucherTypeName"].FilterConditions.Add(FilterComparisionOperator.Contains, filterText);
+                if (band.Columns.Exists("VoucherID")) band.ColumnFilters["VoucherID"].FilterConditions.Add(FilterComparisionOperator.Contains, filterText);
+            }
+
             UpdateSummaryForSearch(filterText);
         }
 
@@ -274,10 +622,27 @@ namespace PosBranch_Win.Reports.FinancialReports
         {
             if (e.Row == null || !e.Row.IsDataRow) return;
 
+            if (IsVoucherMasterBand(e.Row.Band))
+            {
+                e.Row.Expanded = !e.Row.Expanded;
+                return;
+            }
+
             try
             {
-                string voucherType = e.Row.Cells["VoucherTypeName"].Value?.ToString() ?? "";
-                int voucherId = Convert.ToInt32(e.Row.Cells["VoucherID"].Value ?? 0);
+                string voucherType;
+                int voucherId;
+
+                UltraGridRow voucherRow = IsVoucherLinesBand(e.Row.Band) && e.Row.ParentRow != null
+                    ? e.Row.ParentRow
+                    : e.Row;
+
+                voucherType = voucherRow.Band != null && voucherRow.Band.Columns.Exists("VoucherTypeName")
+                    ? voucherRow.Cells["VoucherTypeName"].Value?.ToString() ?? ""
+                    : "";
+                voucherId = voucherRow.Band != null && voucherRow.Band.Columns.Exists("VoucherID")
+                    ? Convert.ToInt32(voucherRow.Cells["VoucherID"].Value ?? 0)
+                    : 0;
 
                 if (voucherId == 0) return;
 
@@ -365,8 +730,8 @@ namespace PosBranch_Win.Reports.FinancialReports
                 var reportData = repo.GetDayBook(dtFromDate.DateTime.Date, dtToDate.DateTime.Date);
                 _currentReportData = reportData;
 
-                ultraGridTransactions.DataSource = reportData.Transactions;
-                ultraGridTransactions.DataBind();
+                _gridGroupedMode = !chkGroupByVoucher.Checked;
+                ApplyGroupByVoucher();
 
                 UpdateSummaryForSearch(txtSearch.Text.Trim().ToLower());
             }
@@ -405,21 +770,23 @@ namespace PosBranch_Win.Reports.FinancialReports
                             var headerLine = "Date,Voucher ID,Type,Particulars,Narration,Debit,Credit";
                             writer.WriteLine(headerLine);
 
-                            // Write Data
-                            foreach (var row in ultraGridTransactions.Rows)
+                            string filterText = txtSearch.Text.Trim().ToLower();
+                            foreach (var transaction in _currentReportData.Transactions)
                             {
-                                if (row.IsDataRow)
+                                if (!IsTransactionVisibleForSearch(transaction, filterText))
                                 {
-                                    var line = string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\"",
-                                        row.Cells["VoucherDate"].Text,
-                                        row.Cells["VoucherID"].Text,
-                                        row.Cells["VoucherTypeName"].Text,
-                                        row.Cells["Particulars"].Text?.Replace("\"", "\"\""),
-                                        row.Cells["Narration"].Text?.Replace("\"", "\"\""),
-                                        row.Cells["DebitAmount"].Value,
-                                        row.Cells["CreditAmount"].Value);
-                                    writer.WriteLine(line);
+                                    continue;
                                 }
+
+                                var line = string.Format("\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\"",
+                                    transaction.VoucherDate.ToString("dd-MMM-yyyy"),
+                                    transaction.VoucherID,
+                                    transaction.VoucherTypeName,
+                                    transaction.Particulars?.Replace("\"", "\"\""),
+                                    transaction.Narration?.Replace("\"", "\"\""),
+                                    transaction.DebitAmount,
+                                    transaction.CreditAmount);
+                                writer.WriteLine(line);
                             }
                         }
                         MessageBox.Show("Export successful!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -463,19 +830,12 @@ namespace PosBranch_Win.Reports.FinancialReports
 
         private void UpdateSummaryForSearch(string filterText)
         {
-            decimal totalDebits = 0;
-            decimal totalCredits = 0;
+            IEnumerable<DayBookTransaction> transactions = (_gridGroupedMode || chkGroupByVoucher.Checked)
+                ? GetFilteredTransactions()
+                : _currentReportData.Transactions.Where(t => IsTransactionVisibleForSearch(t, filterText));
 
-            foreach (var transaction in _currentReportData.Transactions)
-            {
-                if (!IsTransactionVisibleForSearch(transaction, filterText))
-                {
-                    continue;
-                }
-
-                totalDebits += transaction.DebitAmount;
-                totalCredits += transaction.CreditAmount;
-            }
+            decimal totalDebits = transactions.Sum(t => t.DebitAmount);
+            decimal totalCredits = transactions.Sum(t => t.CreditAmount);
 
             lblTotalReceiptsValue.Text = totalDebits.ToString("N2");
             lblTotalPaymentsValue.Text = totalCredits.ToString("N2");
