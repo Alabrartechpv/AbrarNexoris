@@ -29,8 +29,8 @@ namespace Repository.ReportRepository
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@FromDate", filter.FromDate.Date);
                     cmd.Parameters.AddWithValue("@ToDate", filter.ToDate.Date.AddDays(1));
-                    cmd.Parameters.AddWithValue("@CompanyId", filter.CompanyId);
-                    cmd.Parameters.AddWithValue("@BranchId", filter.BranchId);
+                    cmd.Parameters.AddWithValue("@CompanyId", filter.CompanyId > 0 ? (object)filter.CompanyId : DBNull.Value);
+                    cmd.Parameters.AddWithValue("@BranchId", filter.BranchId > 0 ? (object)filter.BranchId : DBNull.Value);
                     cmd.Parameters.AddWithValue("@Action", string.IsNullOrWhiteSpace(filter.Action) || string.Equals(filter.Action, "ALL", StringComparison.OrdinalIgnoreCase)
                         ? (object)DBNull.Value
                         : filter.Action);
@@ -41,7 +41,6 @@ namespace Repository.ReportRepository
                         adapter.Fill(table);
 
                         list = MapRows(table);
-                        ApplyItemBarcodes(list, filter);
                     }
                 }
 
@@ -69,8 +68,7 @@ namespace Repository.ReportRepository
                 string docNo = GetFirstString(row, "Doc No", "Doc No.", "DocNo");
                 string tableName = ResolveTableName(docNo);
                 string itemNo = GetFirstString(row, "Item No.", "Item No", "ItemNo");
-                int itemId;
-                int.TryParse(itemNo, out itemId);
+                int itemId = GetFirstInt(row, "ItemId", "RawItemId", "Item Id", "Item No.", "Item No", "ItemNo");
 
                 list.Add(new AuditTrailItem
                 {
@@ -98,92 +96,6 @@ namespace Repository.ReportRepository
             return list;
         }
 
-        private void ApplyItemBarcodes(List<AuditTrailItem> items, AuditTrailFilter filter)
-        {
-            if (items == null || items.Count == 0)
-            {
-                return;
-            }
-
-            Dictionary<int, string> barcodes = GetBarcodesByItemId(items, filter);
-            foreach (AuditTrailItem item in items)
-            {
-                string barcode;
-                if (item.ItemId > 0 &&
-                    barcodes.TryGetValue(item.ItemId, out barcode) &&
-                    !string.IsNullOrWhiteSpace(barcode))
-                {
-                    item.ItemNo = barcode;
-                }
-            }
-        }
-
-        private Dictionary<int, string> GetBarcodesByItemId(List<AuditTrailItem> items, AuditTrailFilter filter)
-        {
-            Dictionary<int, string> barcodes = new Dictionary<int, string>();
-            if (items == null || items.Count == 0)
-            {
-                return barcodes;
-            }
-
-            List<int> itemIds = new List<int>();
-            foreach (AuditTrailItem item in items)
-            {
-                if (item.ItemId > 0 && !itemIds.Contains(item.ItemId))
-                {
-                    itemIds.Add(item.ItemId);
-                }
-            }
-
-            if (itemIds.Count == 0)
-            {
-                return barcodes;
-            }
-
-            List<string> parameterNames = new List<string>();
-            using (SqlCommand cmd = new SqlCommand())
-            {
-                cmd.Connection = (SqlConnection)DataConnection;
-                cmd.CommandType = CommandType.Text;
-                cmd.Parameters.AddWithValue("@BranchId", filter != null && filter.BranchId > 0 ? (object)filter.BranchId : DBNull.Value);
-
-                for (int i = 0; i < itemIds.Count; i++)
-                {
-                    string parameterName = "@ItemId" + i;
-                    parameterNames.Add(parameterName);
-                    cmd.Parameters.AddWithValue(parameterName, itemIds[i]);
-                }
-
-                cmd.CommandText =
-                    @"SELECT im.ItemId,
-                             COALESCE(NULLIF(im.Barcode, ''), NULLIF(ps.BarCode, '')) AS Barcode
-                      FROM ItemMaster im
-                      LEFT JOIN (
-                          SELECT ItemId, MAX(BarCode) AS BarCode
-                          FROM PriceSettings
-                          WHERE (@BranchId IS NULL OR BranchId = @BranchId)
-                          GROUP BY ItemId
-                      ) ps ON ps.ItemId = im.ItemId
-                      WHERE im.ItemId IN (" + string.Join(", ", parameterNames.ToArray()) + ")";
-
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        int itemId = reader["ItemId"] != DBNull.Value ? Convert.ToInt32(reader["ItemId"]) : 0;
-                        string barcode = reader["Barcode"] != DBNull.Value ? Convert.ToString(reader["Barcode"]) : string.Empty;
-
-                        if (itemId > 0 && !string.IsNullOrWhiteSpace(barcode))
-                        {
-                            barcodes[itemId] = barcode.Trim();
-                        }
-                    }
-                }
-            }
-
-            return barcodes;
-        }
-
         private List<AuditTrailItem> ApplyClientFilters(List<AuditTrailItem> source, AuditTrailFilter filter)
         {
             if (source == null)
@@ -192,7 +104,8 @@ namespace Repository.ReportRepository
             string groupName = string.Empty;
             string categoryName = string.Empty;
             string userName = string.Empty;
-            HashSet<int> filteredItemIds = GetFilteredItemIds(filter);
+            bool canFilterBrand = filter.BrandId.HasValue && filter.BrandId.Value > 0 && HasReturnedValue(source, item => item.BrandId);
+            bool canFilterModel = filter.ModelId.HasValue && filter.ModelId.Value > 0 && HasReturnedValue(source, item => item.ModelId);
 
             if (filter.GroupId.HasValue && filter.GroupId.Value > 0)
             {
@@ -282,7 +195,12 @@ namespace Repository.ReportRepository
                     continue;
                 }
 
-                if (filteredItemIds != null && item.ItemId > 0 && !filteredItemIds.Contains(item.ItemId))
+                if (canFilterBrand && item.BrandId != filter.BrandId.Value)
+                {
+                    continue;
+                }
+
+                if (canFilterModel && item.ModelId != filter.ModelId.Value)
                 {
                     continue;
                 }
@@ -319,43 +237,20 @@ namespace Repository.ReportRepository
             return result;
         }
 
-        private HashSet<int> GetFilteredItemIds(AuditTrailFilter filter)
+        private static bool HasReturnedValue(List<AuditTrailItem> source, Func<AuditTrailItem, int> selector)
         {
-            if (filter == null || (!filter.BrandId.HasValue && !filter.ModelId.HasValue))
+            if (source == null || selector == null)
+                return false;
+
+            foreach (AuditTrailItem item in source)
             {
-                return null;
-            }
-
-            HashSet<int> itemIds = new HashSet<int>();
-
-            using (SqlCommand cmd = new SqlCommand(
-                @"SELECT ItemId
-                  FROM ItemMaster
-                  WHERE (@CompanyId IS NULL OR CompanyId = @CompanyId)
-                    AND (@BranchId IS NULL OR BranchId = @BranchId)
-                    AND (@BrandId IS NULL OR BrandId = @BrandId)
-                    AND (@ModelId IS NULL OR ItemTypeId = @ModelId)", (SqlConnection)DataConnection))
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.Parameters.AddWithValue("@CompanyId", filter.CompanyId > 0 ? (object)filter.CompanyId : DBNull.Value);
-                cmd.Parameters.AddWithValue("@BranchId", filter.BranchId > 0 ? (object)filter.BranchId : DBNull.Value);
-                cmd.Parameters.AddWithValue("@BrandId", filter.BrandId.HasValue && filter.BrandId.Value > 0 ? (object)filter.BrandId.Value : DBNull.Value);
-                cmd.Parameters.AddWithValue("@ModelId", filter.ModelId.HasValue && filter.ModelId.Value > 0 ? (object)filter.ModelId.Value : DBNull.Value);
-
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                if (item != null && selector(item) > 0)
                 {
-                    while (reader.Read())
-                    {
-                        int itemId;
-                        if (int.TryParse(Convert.ToString(reader["ItemId"]), out itemId) && itemId > 0)
-                        {
-                            itemIds.Add(itemId);
-                        }
-                    }
+                    return true;
                 }
             }
 
-            return itemIds;
+            return false;
         }
 
         private static bool Contains(string source, string needle)
@@ -371,6 +266,8 @@ namespace Repository.ReportRepository
                 return string.Empty;
 
             if (docNo.StartsWith("CS", StringComparison.OrdinalIgnoreCase))
+                return "INVOICEDTL";
+            if (docNo.StartsWith("IV", StringComparison.OrdinalIgnoreCase))
                 return "INVOICEDTL";
             if (docNo.StartsWith("SR", StringComparison.OrdinalIgnoreCase))
                 return "SRETURNDTL";
@@ -409,6 +306,25 @@ namespace Repository.ReportRepository
             }
 
             return string.Empty;
+        }
+
+        private static int GetFirstInt(DataRow row, params string[] columnNames)
+        {
+            if (columnNames == null || columnNames.Length == 0)
+            {
+                return 0;
+            }
+
+            for (int i = 0; i < columnNames.Length; i++)
+            {
+                int value = GetInt(row, columnNames[i]);
+                if (value > 0)
+                {
+                    return value;
+                }
+            }
+
+            return 0;
         }
 
         private static decimal GetDecimal(DataRow row, string columnName)
