@@ -241,6 +241,10 @@ namespace PosBranch_Win
                             DataBase.UserName = dt.Tables[0].Rows[0][4].ToString();
                             DataBase.UserLevel = dt.Tables[0].Rows[0][5].ToString();
                             DataBase.Message = dt.Tables[0].Rows[0][6].ToString();
+                            if (dt.Tables[0].Columns.Contains("FinYearID") && dt.Tables[0].Rows[0]["FinYearID"] != DBNull.Value)
+                            {
+                                DataBase.FinyearId = dt.Tables[0].Rows[0]["FinYearID"].ToString();
+                            }
 
                             // Initialize new SessionContext
                             try
@@ -251,8 +255,18 @@ namespace PosBranch_Win
                                 int userId = Convert.ToInt32(dt.Tables[0].Rows[0][3]);
                                 string userName = dt.Tables[0].Rows[0][4].ToString();
                                 string userLevel = dt.Tables[0].Rows[0][5].ToString();
+                                int counterId = ReadLocalCounterId();
+                                string counterName = GetCounterName(counterId);
 
-                                int finYearId = !string.IsNullOrEmpty(DataBase.FinyearId) ? SessionContext.FinYearId : 1;
+                                int finYearId = 1;
+                                if (dt.Tables[0].Columns.Contains("FinYearID") && dt.Tables[0].Rows[0]["FinYearID"] != DBNull.Value)
+                                {
+                                    int.TryParse(dt.Tables[0].Rows[0]["FinYearID"].ToString(), out finYearId);
+                                }
+                                if (finYearId <= 0)
+                                {
+                                    finYearId = 1;
+                                }
 
                                 SessionContext.InitializeFromLogin(
                                     companyId: companyId,
@@ -262,8 +276,32 @@ namespace PosBranch_Win
                                     userName: userName,
                                     userLevel: userLevel,
                                     emailId: emailId,
-                                    branchName: DataBase.Branch
+                                    branchName: DataBase.Branch,
+                                    counterId: counterId,
+                                    counterName: counterName
                                 );
+
+                                if (counterId <= 0)
+                                {
+                                    MessageBox.Show("Counter is not configured for this computer. Please add CounterId to C:\\Connection\\Config.txt before billing.",
+                                        "Counter Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                }
+                                else
+                                {
+                                    using (var sessionRepo = new ShiftSessionRepo())
+                                    {
+                                        if (!sessionRepo.StartOrResumeSession())
+                                        {
+                                            MessageBox.Show("Counter session could not be started. Please contact administrator.",
+                                                "Counter Session", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                        }
+                                        else if (SessionContext.RequiresClosing)
+                                        {
+                                            MessageBox.Show("This counter has a pending closing. Please complete closing before continuing transactions.",
+                                                "Counter Closing Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                        }
+                                    }
+                                }
 
                                 LoadRolePermissions(userLevel, userId);
                             }
@@ -378,6 +416,65 @@ namespace PosBranch_Win
                 }
             }
             catch (Exception) { }
+        }
+
+        private int ReadLocalCounterId()
+        {
+            const string configPath = @"C:\Connection\Config.txt";
+
+            try
+            {
+                if (!System.IO.File.Exists(configPath))
+                    return 0;
+
+                string config = System.IO.File.ReadLines(configPath).FirstOrDefault() ?? string.Empty;
+                string[] parts = config.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+
+                foreach (string part in parts)
+                {
+                    string[] keyValue = part.Split(new[] { '=' }, 2);
+                    if (keyValue.Length != 2)
+                        continue;
+
+                    if (keyValue[0].Trim().Equals("CounterId", StringComparison.OrdinalIgnoreCase) &&
+                        int.TryParse(keyValue[1].Trim(), out int counterId))
+                    {
+                        return counterId;
+                    }
+                }
+            }
+            catch
+            {
+                return 0;
+            }
+
+            return 0;
+        }
+
+        private string GetCounterName(int counterId)
+        {
+            if (counterId <= 0)
+                return string.Empty;
+
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand("SELECT CounterName FROM CounterMaster WHERE CounterID = @CounterID", (SqlConnection)con.DataConnection))
+                {
+                    cmd.Parameters.AddWithValue("@CounterID", counterId);
+                    if (con.DataConnection.State != ConnectionState.Open) con.DataConnection.Open();
+                    object result = cmd.ExecuteScalar();
+                    if (con.DataConnection.State == ConnectionState.Open) con.DataConnection.Close();
+
+                    if (result != null && result != DBNull.Value)
+                        return result.ToString();
+                }
+            }
+            catch
+            {
+                if (con.DataConnection.State == ConnectionState.Open) con.DataConnection.Close();
+            }
+
+            return $"COUNTER{counterId}";
         }
 
         private void LoadRolePermissions(string userLevel, int userId = 0)

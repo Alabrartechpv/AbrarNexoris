@@ -56,6 +56,7 @@ namespace Repository
                     cmd.Parameters.AddWithValue("@ClosingDate", closingDate.Date);
                     cmd.Parameters.AddWithValue("@UserId", SessionContext.UserId);
                     cmd.Parameters.AddWithValue("@Counter", counter);
+                    cmd.Parameters.AddWithValue("@CounterSessionId", SessionContext.CounterSessionId);
 
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
@@ -114,6 +115,7 @@ namespace Repository
                     cmd.Parameters.AddWithValue("@FinYearId", SessionContext.FinYearId);
                     cmd.Parameters.AddWithValue("@ClosingDate", closingDate.Date);
                     cmd.Parameters.AddWithValue("@UserId", SessionContext.UserId);
+                    cmd.Parameters.AddWithValue("@CounterSessionId", SessionContext.CounterSessionId);
 
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
@@ -194,6 +196,11 @@ namespace Repository
                 if (model.Status == "Closed")
                 {
                     CreateVoucherEntries(voucherId, model, transaction);
+                }
+
+                if (SessionContext.CounterSessionId > 0)
+                {
+                    CloseCounterSession(shiftClosingId, transaction);
                 }
 
                 transaction.Commit();
@@ -284,6 +291,23 @@ namespace Repository
             }
 
             return 0;
+        }
+
+        private void CloseCounterSession(int shiftClosingId, SqlTransaction transaction)
+        {
+            using (SqlCommand cmd = new SqlCommand(@"
+UPDATE dbo.CounterSessions
+SET Status = 'Closed',
+    CloseTime = GETDATE(),
+    ShiftClosingId = @ShiftClosingId,
+    ModifiedDate = GETDATE()
+WHERE SessionId = @SessionId
+  AND Status = 'Open';", (SqlConnection)DataConnection, transaction))
+            {
+                cmd.Parameters.AddWithValue("@ShiftClosingId", shiftClosingId);
+                cmd.Parameters.AddWithValue("@SessionId", SessionContext.CounterSessionId);
+                cmd.ExecuteNonQuery();
+            }
         }
 
         private bool SaveClosingDetails(int shiftClosingId, List<CashDetail> cashDetails, SqlTransaction transaction)

@@ -6,6 +6,7 @@ using PosBranch_Win.Reports.SalesReports;
 using PosBranch_Win.Transaction;
 using PosBranch_Win.Utilities;
 using PosBranch_Win.Settings;
+using Repository;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -30,6 +31,9 @@ namespace PosBranch_Win
         private int scrollDirection = 0; // 0 = none, -1 = left, 1 = right
         private string _lastActivatedToolKey = null; // Track which toolbar key opened the current form
         private bool _openingFromFavourite = false; // When true, allow duplicate form instances
+        private Timer closingAlertTimer = new Timer();
+        private bool closingAlertShown = false;
+        private bool closingRequiredAlertShown = false;
 
         // Report Navigator fields
         private Infragistics.Win.UltraWinExplorerBar.UltraExplorerBar ultraExplorerBarReportNavigator;
@@ -112,6 +116,9 @@ namespace PosBranch_Win
             // Set up the timer for smooth scrolling
             scrollTimer.Interval = 50;
             scrollTimer.Tick += ScrollTimer_Tick;
+
+            closingAlertTimer.Interval = 60000;
+            closingAlertTimer.Tick += ClosingAlertTimer_Tick;
 
             // Wire up context menu events
             closeTabToolStripMenuItem.Click += closeTabToolStripMenuItem_Click;
@@ -851,6 +858,7 @@ namespace PosBranch_Win
 
             // Initialize Report Navigator sidebar
             InitializeReportNavigator();
+            closingAlertTimer.Start();
 
             // Set ExplorerBar Style to Outlook Navigation Pane
             ultraExplorerBarSideMenu.Style = Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarStyle.OutlookNavigationPane;
@@ -1472,6 +1480,9 @@ namespace PosBranch_Win
                         return;
                     }
 
+                    if (!EnsureTransactionAllowed(activeForm))
+                        return;
+
                     bool saved = false;
 
                     // 1. FrmPurchase — has dedicated public SavePurchase() / UpdatePurchase() methods
@@ -1726,6 +1737,9 @@ namespace PosBranch_Win
                 }
                 return;
             }
+
+            if (!EnsureTransactionAllowed(e.Tool.Key))
+                return;
 
             if (e.Tool.Key == "Pos")
             {
@@ -3378,6 +3392,98 @@ namespace PosBranch_Win
             {
                 System.Diagnostics.Debug.WriteLine($"Error styling Report Navigator: {ex.Message}");
             }
+        }
+
+        private void ClosingAlertTimer_Tick(object sender, EventArgs e)
+        {
+            DateTime now = DateTime.Now;
+
+            if (SessionContext.IsInitialized && SessionContext.LoginTime != DateTime.MinValue &&
+                now.Date > SessionContext.LoginTime.Date)
+            {
+                SessionContext.RequiresClosing = true;
+
+                if (!closingRequiredAlertShown)
+                {
+                    closingRequiredAlertShown = true;
+                    MessageBox.Show("Please complete shift closing before continuing transactions.",
+                        "Shift Closing Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+
+                return;
+            }
+
+            if (!closingAlertShown && SessionContext.ShouldShowClosingAlert(now))
+            {
+                closingAlertShown = true;
+                MessageBox.Show("Please complete shift closing before day end.",
+                    "Shift Closing Reminder", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private bool IsBlockedTransactionTool(string toolKey)
+        {
+            if (string.IsNullOrWhiteSpace(toolKey))
+                return false;
+
+            string[] blockedTools =
+            {
+                "Pos",
+                "Sales",
+                "Sales Return",
+                "Receipt",
+                "Payment",
+                "DebitNote",
+                "CreditNote",
+                "Purchase",
+                "Purchase Order",
+                "Purchase R/n",
+                "stockadjustment",
+                "Goods Received"
+            };
+
+            return blockedTools.Any(key => key.Equals(toolKey, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private bool EnsureTransactionAllowed(string toolKey)
+        {
+            if (!IsBlockedTransactionTool(toolKey))
+                return true;
+
+            if (ShiftSessionGuard.CanDoTransaction(out string transactionError))
+                return true;
+
+            MessageBox.Show(transactionError, "Shift Closing Required",
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return false;
+        }
+
+        private bool IsTransactionForm(Form form)
+        {
+            return form is frmPos ||
+                   form is Transaction.frmSalesInvoice ||
+                   form is Transaction.frmSalesReturn ||
+                   form is Transaction.FrmPurchase ||
+                   form is Transaction.frmPurchaseOrder ||
+                   form is Transaction.frmPurchaseReturn ||
+                   form is Transaction.FrmStockAdjustment ||
+                   form is Accounts.FrmReceipt ||
+                   form is Accounts.FrmPayment ||
+                   form is Accounts.FrmDebitNote ||
+                   form is Accounts.FrmCreditNote;
+        }
+
+        private bool EnsureTransactionAllowed(Form form)
+        {
+            if (!IsTransactionForm(form))
+                return true;
+
+            if (ShiftSessionGuard.CanDoTransaction(out string transactionError))
+                return true;
+
+            MessageBox.Show(transactionError, "Shift Closing Required",
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return false;
         }
 
         private void ApplyReportNavigatorItemStyle(Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarItem item)

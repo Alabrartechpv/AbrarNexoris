@@ -19,6 +19,7 @@ namespace ModelClass
         private static int _counterId;
         private static string _systemMacId;
         private static bool _isInitialized;
+        private static DateTime _loginTime;
 
         #endregion
 
@@ -88,6 +89,39 @@ namespace ModelClass
                 OnSessionPropertyChanged?.Invoke(nameof(CounterId), value);
             }
         }
+
+        /// <summary>
+        /// Gets or sets the counter name assigned to the current workstation.
+        /// </summary>
+        public static string CounterName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the database session id for the current cashier/counter login.
+        /// </summary>
+        public static long CounterSessionId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the time this cashier session started.
+        /// </summary>
+        public static DateTime LoginTime
+        {
+            get => _loginTime;
+            set
+            {
+                _loginTime = value;
+                OnSessionPropertyChanged?.Invoke(nameof(LoginTime), value);
+            }
+        }
+
+        /// <summary>
+        /// Indicates that manual closing is required before more transactions are allowed.
+        /// </summary>
+        public static bool RequiresClosing { get; set; }
+
+        /// <summary>
+        /// Time of day when the system should start reminding the user to close.
+        /// </summary>
+        public static TimeSpan ClosingAlertTime { get; set; } = new TimeSpan(23, 30, 0);
 
         /// <summary>
         /// Gets or sets the System MAC ID for the current workstation.
@@ -305,6 +339,8 @@ namespace ModelClass
             UserId = userId;
             CounterId = counterId;
             SystemMacId = systemMacId;
+            LoginTime = DateTime.Now;
+            RequiresClosing = false;
 
             _isInitialized = true;
             OnSessionInitialized?.Invoke();
@@ -335,6 +371,7 @@ namespace ModelClass
             string branchName,
             string companyName = null,
             int counterId = 0,
+            string counterName = null,
             string systemMacId = null)
         {
             Initialize(companyId, branchId, finYearId, userId, counterId, systemMacId);
@@ -344,6 +381,7 @@ namespace ModelClass
             EmailId = emailId;
             BranchName = branchName;
             CompanyName = companyName;
+            CounterName = counterName;
         }
 
         /// <summary>
@@ -364,6 +402,10 @@ namespace ModelClass
             EmailId = null;
             BranchName = null;
             CompanyName = null;
+            CounterName = null;
+            CounterSessionId = 0;
+            LoginTime = DateTime.MinValue;
+            RequiresClosing = false;
             FinYearFrom = null;
             FinYearTo = null;
             FinYearStatus = null;
@@ -392,6 +434,42 @@ namespace ModelClass
                 throw new InvalidOperationException("Financial Year ID is not set.");
             if (UserId <= 0)
                 throw new InvalidOperationException("User ID is not set.");
+        }
+
+        public static bool CanDoTransaction(out string errorMessage)
+        {
+            if (!TryValidateSession(out errorMessage))
+                return false;
+
+            if (CounterId <= 0)
+            {
+                errorMessage = "Counter is not configured for this computer.";
+                return false;
+            }
+
+            if (LoginTime == DateTime.MinValue)
+                LoginTime = DateTime.Now;
+
+            if (RequiresClosing || DateTime.Now.Date > LoginTime.Date)
+            {
+                RequiresClosing = true;
+                errorMessage = "Please complete shift closing before continuing transactions.";
+                return false;
+            }
+
+            errorMessage = null;
+            return true;
+        }
+
+        public static bool ShouldShowClosingAlert(DateTime now)
+        {
+            if (!IsInitialized || RequiresClosing)
+                return false;
+
+            if (LoginTime == DateTime.MinValue)
+                LoginTime = now;
+
+            return now.Date == LoginTime.Date && now.TimeOfDay >= ClosingAlertTime;
         }
 
         /// <summary>
@@ -579,7 +657,10 @@ namespace ModelClass
                    $"  Financial Year ID: {FinYearId} ({FinYearFrom?.ToString("yyyy-MM-dd") ?? "N/A"} to {FinYearTo?.ToString("yyyy-MM-dd") ?? "N/A"})\n" +
                    $"  User ID: {UserId} ({UserName ?? "N/A"})\n" +
                    $"  User Level: {UserLevel ?? "N/A"}\n" +
-                   $"  Counter ID: {CounterId}\n" +
+                   $"  Counter ID: {CounterId} ({CounterName ?? "N/A"})\n" +
+                   $"  Counter Session ID: {CounterSessionId}\n" +
+                   $"  Login Time: {(LoginTime == DateTime.MinValue ? "N/A" : LoginTime.ToString("yyyy-MM-dd HH:mm:ss"))}\n" +
+                   $"  Requires Closing: {RequiresClosing}\n" +
                    $"  System MAC ID: {SystemMacId ?? "N/A"}\n" +
                    $"  Status: {Status}\n" +
                    $"  Initialized: {IsInitialized}\n" +

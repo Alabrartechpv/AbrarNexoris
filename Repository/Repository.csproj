@@ -112,6 +112,8 @@
     <Compile Include="TransactionRepository\SmartReorderRepository.cs" />
     <Compile Include="TransactionRepository\StockAdjustmentRepository.cs" />
     <Compile Include="SettingsRepo\POSSettingsRepository.cs" />
+    <Compile Include="ShiftSessionGuard.cs" />
+    <Compile Include="ShiftSessionRepo.cs" />
     <Compile Include="VendorRepository.cs" />
   </ItemGroup>
   <ItemGroup>

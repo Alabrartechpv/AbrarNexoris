@@ -3872,6 +3872,12 @@ namespace PosBranch_Win.Transaction
         {
             try
             {
+                if (!ShiftSessionGuard.CanDoTransaction(out string transactionError))
+                {
+                    MessageBox.Show(transactionError, "Shift Closing Required",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
 
                 // Track if we should refocus a cell after committing changes
                 UltraGridCell cellToFocus = null;

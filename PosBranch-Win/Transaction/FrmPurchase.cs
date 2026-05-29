@@ -5254,6 +5254,13 @@ namespace PosBranch_Win.Transaction
         {
             try
             {
+                if (!ShiftSessionGuard.CanDoTransaction(out string transactionError))
+                {
+                    MessageBox.Show(transactionError, "Shift Closing Required",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
                 if (ultraGrid1.Rows.Count == 0)
                 {
                     MessageBox.Show("Please add at least one item to purchase", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -6566,6 +6573,13 @@ namespace PosBranch_Win.Transaction
         {
             try
             {
+                if (!ShiftSessionGuard.CanDoTransaction(out string transactionError))
+                {
+                    MessageBox.Show(transactionError, "Shift Closing Required",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
                 if (ultraGrid1.Rows.Count == 0)
                 {
                     MessageBox.Show("Please add at least one item to purchase", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);

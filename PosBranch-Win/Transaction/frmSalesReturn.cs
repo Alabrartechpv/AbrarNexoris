@@ -4428,6 +4428,13 @@ namespace PosBranch_Win.Transaction
         {
             try
             {
+                if (!ShiftSessionGuard.CanDoTransaction(out string transactionError))
+                {
+                    MessageBox.Show(transactionError, "Shift Closing Required",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
                 // First make sure any active cell's value is committed
                 CommitActiveCell();
 
@@ -5376,6 +5383,13 @@ namespace PosBranch_Win.Transaction
         {
             try
             {
+                if (!ShiftSessionGuard.CanDoTransaction(out string transactionError))
+                {
+                    MessageBox.Show(transactionError, "Shift Closing Required",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
                 // First make sure any active cell's value is committed
                 CommitActiveCell();
 

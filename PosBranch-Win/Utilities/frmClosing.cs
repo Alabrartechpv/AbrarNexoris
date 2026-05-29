@@ -16,12 +16,16 @@ namespace PosBranch_Win.Utilities
         private ClosingRepo _repo;
         private List<CashDetail> _cashDetails;
         private ClosingModel _model;
+        private SalesDataSummary _salesData;
+        private CustomerReceiptSummary _receiptData;
 
         public frmClosing()
         {
             InitializeComponent();
             _repo = new ClosingRepo();
             _model = new ClosingModel();
+            ApplyModernLayout();
+            Resize += FrmClosing_Resize;
             LoadData();
         }
 
@@ -45,24 +49,25 @@ namespace PosBranch_Win.Utilities
             // Add closing history button click event
             btnClosingHistory.Click += BtnClosingHistory_Click;
 
-            // Add additional form controls if needed
-            AddAdditionalControls();
+            ApplyResponsiveLayout();
 
             // Set default values
             dtpDate.Value = DateTime.Now;
             cboReportSelection.Text = "Shift Collection";
 
             // Load counter from session
-            txtCounter.Text = SessionContext.UserName ?? "Counter-1";
+            txtCounter.Text = !string.IsNullOrWhiteSpace(SessionContext.CounterName)
+                ? SessionContext.CounterName
+                : (SessionContext.CounterId > 0 ? $"COUNTER{SessionContext.CounterId}" : "Counter-1");
 
             // Populate report selection dropdown
             PopulateReportSelection();
 
+            _salesData = null;
+            _receiptData = null;
+
             // Auto-focus on first quantity cell
-            if (gridCash.Rows.Count > 0)
-            {
-                gridCash.ActiveCell = gridCash.Rows[0].Cells["Quantity"];
-            }
+            BeginInvoke(new Action(() => FocusQuantityCell(0, true)));
         }
 
         private void PopulateReportSelection()
@@ -74,31 +79,70 @@ namespace PosBranch_Win.Utilities
             cboReportSelection.SelectedIndex = 0;
         }
 
-        private void AddAdditionalControls()
+        private void ApplyModernLayout()
         {
-            // Add "Clear" button
-            var btnClear = new Infragistics.Win.Misc.UltraButton
-            {
-                Name = "btnClear",
-                Text = "🔄 Clear",
-                Location = new Point(350, 22),
-                Size = new Size(120, 30),
-                UseOsThemes = Infragistics.Win.DefaultableBoolean.False
-            };
+            Font = new Font("Segoe UI", 9F);
+            Text = "Counter Closing";
+            BackColor = Color.FromArgb(246, 248, 251);
+            ultraPanel1.Appearance.BackColor = Color.FromArgb(246, 248, 251);
 
-            var clearAppearance = new Infragistics.Win.Appearance();
-            clearAppearance.BackColor = Color.FromArgb(108, 117, 125);
-            clearAppearance.BackColor2 = Color.FromArgb(90, 98, 104);
-            clearAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
-            clearAppearance.ForeColor = Color.White;
-            clearAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
-            btnClear.Appearance = clearAppearance;
-            btnClear.Click += BtnClear_Click;
+            txtPurchaseNo.Text = SessionContext.CounterSessionId > 0
+                ? SessionContext.CounterSessionId.ToString()
+                : string.Empty;
+            lblDocNo.Text = "Session:";
 
-            ultraPanel1.ClientArea.Controls.Add(btnClear);
+            StyleField(txtCounter);
+            StyleField(txtPurchaseNo);
+            StyleField(txtTotal);
+            cboReportSelection.DropDownStyle = Infragistics.Win.DropDownStyle.DropDownList;
+            dtpDate.Enabled = false;
+
+            lblTotal.Text = "Counted Cash:";
         }
 
-        private void BtnClear_Click(object sender, EventArgs e)
+        private void FrmClosing_Resize(object sender, EventArgs e)
+        {
+            ApplyResponsiveLayout();
+        }
+
+        private void ApplyResponsiveLayout()
+        {
+            if (ultraPanel1 == null || grpCashCalculation == null ||
+                lblTotal == null || txtTotal == null)
+                return;
+
+            int margin = 28;
+            int top = 118;
+            int bottomBarHeight = 58;
+            int availableWidth = Math.Max(900, ultraPanel1.ClientSize.Width - (margin * 2));
+            int availableHeight = Math.Max(300, ultraPanel1.ClientSize.Height - top - bottomBarHeight - 14);
+            int gridWidth = availableWidth;
+
+            grpCashCalculation.Location = new Point(margin, top);
+            grpCashCalculation.Size = new Size(gridWidth, availableHeight);
+            ResizeGridColumns();
+
+            int bottomY = top + availableHeight + 14;
+            lblTotal.Location = new Point(margin, bottomY + 8);
+            txtTotal.Location = new Point(margin + 150, bottomY);
+            txtTotal.Size = new Size(190, 35);
+
+        }
+
+        private void StyleField(Infragistics.Win.UltraWinEditors.UltraTextEditor editor)
+        {
+            editor.Appearance.BackColor = Color.White;
+            editor.Appearance.BorderColor = Color.FromArgb(203, 213, 225);
+            editor.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
+            editor.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+        }
+
+        public void Save()
+        {
+            btnSave_Click(this, EventArgs.Empty);
+        }
+
+        public void RibbonClear()
         {
             var result = MessageBox.Show("Are you sure you want to clear all data?",
                 "Confirm Clear", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
@@ -108,7 +152,6 @@ namespace PosBranch_Win.Utilities
                 ClearForm();
             }
         }
-
 
         private void ConfigureGrid()
         {
@@ -120,49 +163,51 @@ namespace PosBranch_Win.Utilities
             // Configure columns
             if (band.Columns.Exists("No"))
             {
-                band.Columns["No"].Width = 50;
+                band.Columns["No"].Width = 70;
                 band.Columns["No"].Header.Caption = "#";
                 band.Columns["No"].CellActivation = Activation.NoEdit;
-                band.Columns["No"].CellAppearance.BackColor = Color.FromArgb(240, 240, 240);
+                band.Columns["No"].CellAppearance.BackColor = Color.FromArgb(248, 250, 252);
+                band.Columns["No"].CellAppearance.ForeColor = Color.FromArgb(71, 85, 105);
                 band.Columns["No"].CellAppearance.TextHAlign = Infragistics.Win.HAlign.Center;
                 band.Columns["No"].CellAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
             }
 
             if (band.Columns.Exists("Denomination"))
             {
-                band.Columns["Denomination"].Width = 150;
+                band.Columns["Denomination"].Width = 230;
                 band.Columns["Denomination"].Header.Caption = "Denomination (₹)";
                 band.Columns["Denomination"].Format = "0.00";
                 band.Columns["Denomination"].CellActivation = Activation.NoEdit;
-                band.Columns["Denomination"].CellAppearance.BackColor = Color.FromArgb(240, 248, 255);
+                band.Columns["Denomination"].CellAppearance.BackColor = Color.FromArgb(241, 245, 249);
+                band.Columns["Denomination"].CellAppearance.ForeColor = Color.FromArgb(15, 23, 42);
                 band.Columns["Denomination"].CellAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
-                band.Columns["Denomination"].CellAppearance.FontData.SizeInPoints = 10;
+                band.Columns["Denomination"].CellAppearance.FontData.SizeInPoints = 11;
                 band.Columns["Denomination"].CellAppearance.TextHAlign = Infragistics.Win.HAlign.Right;
             }
 
             if (band.Columns.Exists("Quantity"))
             {
-                band.Columns["Quantity"].Width = 150;
+                band.Columns["Quantity"].Width = 260;
                 band.Columns["Quantity"].Header.Caption = "Quantity";
                 band.Columns["Quantity"].CellActivation = Activation.AllowEdit;
                 band.Columns["Quantity"].CellAppearance.BackColor = Color.White;
-                band.Columns["Quantity"].CellAppearance.ForeColor = Color.FromArgb(0, 123, 255);
+                band.Columns["Quantity"].CellAppearance.ForeColor = Color.FromArgb(37, 99, 235);
                 band.Columns["Quantity"].CellAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
-                band.Columns["Quantity"].CellAppearance.FontData.SizeInPoints = 10;
+                band.Columns["Quantity"].CellAppearance.FontData.SizeInPoints = 11;
                 band.Columns["Quantity"].CellAppearance.TextHAlign = Infragistics.Win.HAlign.Center;
                 band.Columns["Quantity"].Style = Infragistics.Win.UltraWinGrid.ColumnStyle.IntegerPositive;
             }
 
             if (band.Columns.Exists("Amount"))
             {
-                band.Columns["Amount"].Width = 180;
+                band.Columns["Amount"].Width = 280;
                 band.Columns["Amount"].Header.Caption = "Amount (₹)";
                 band.Columns["Amount"].Format = "#,##0.00";
                 band.Columns["Amount"].CellActivation = Activation.NoEdit;
-                band.Columns["Amount"].CellAppearance.BackColor = Color.FromArgb(255, 255, 220);
-                band.Columns["Amount"].CellAppearance.ForeColor = Color.FromArgb(0, 100, 0);
+                band.Columns["Amount"].CellAppearance.BackColor = Color.FromArgb(236, 253, 245);
+                band.Columns["Amount"].CellAppearance.ForeColor = Color.FromArgb(22, 101, 52);
                 band.Columns["Amount"].CellAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
-                band.Columns["Amount"].CellAppearance.FontData.SizeInPoints = 10;
+                band.Columns["Amount"].CellAppearance.FontData.SizeInPoints = 11;
                 band.Columns["Amount"].CellAppearance.TextHAlign = Infragistics.Win.HAlign.Right;
             }
 
@@ -175,17 +220,24 @@ namespace PosBranch_Win.Utilities
                 }
             }
 
-            // Grid styling - Improved design
-            gridCash.DisplayLayout.Override.HeaderAppearance.BackColor = Color.FromArgb(220, 230, 240);
-            gridCash.DisplayLayout.Override.HeaderAppearance.ForeColor = Color.Black;
+            // Grid styling - quiet, fast cashier-entry table
+            gridCash.DisplayLayout.AutoFitStyle = AutoFitStyle.ResizeAllColumns;
+            gridCash.DisplayLayout.Override.HeaderAppearance.BackColor = Color.FromArgb(226, 232, 240);
+            gridCash.DisplayLayout.Override.HeaderAppearance.ForeColor = Color.FromArgb(15, 23, 42);
             gridCash.DisplayLayout.Override.HeaderAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
-            gridCash.DisplayLayout.Override.HeaderAppearance.FontData.SizeInPoints = 10;
+            gridCash.DisplayLayout.Override.HeaderAppearance.FontData.SizeInPoints = 10.5F;
             gridCash.DisplayLayout.Override.HeaderAppearance.TextHAlign = Infragistics.Win.HAlign.Center;
-            gridCash.DisplayLayout.Override.RowAlternateAppearance.BackColor = Color.FromArgb(250, 252, 255);
-            gridCash.DisplayLayout.Override.ActiveRowAppearance.BackColor = Color.FromArgb(200, 230, 255);
-            gridCash.DisplayLayout.Override.CellPadding = 5;
-            gridCash.DisplayLayout.Override.RowSizing = Infragistics.Win.UltraWinGrid.RowSizing.AutoFree;
-            gridCash.DisplayLayout.Override.DefaultRowHeight = 30;
+            gridCash.DisplayLayout.Override.RowAlternateAppearance.BackColor = Color.FromArgb(248, 250, 252);
+            gridCash.DisplayLayout.Override.ActiveRowAppearance.BackColor = Color.FromArgb(219, 234, 254);
+            gridCash.DisplayLayout.Override.ActiveCellAppearance.BackColor = Color.FromArgb(191, 219, 254);
+            gridCash.DisplayLayout.Override.ActiveCellAppearance.ForeColor = Color.FromArgb(15, 23, 42);
+            gridCash.DisplayLayout.Override.CellPadding = 8;
+            gridCash.DisplayLayout.Override.RowSizing = RowSizing.Fixed;
+            gridCash.DisplayLayout.Override.DefaultRowHeight = 36;
+            gridCash.DisplayLayout.Override.CellClickAction = CellClickAction.EditAndSelectText;
+            gridCash.DisplayLayout.Override.SelectTypeRow = SelectType.Single;
+            gridCash.DisplayLayout.Override.AllowAddNew = AllowAddNew.No;
+            gridCash.DisplayLayout.Override.AllowDelete = Infragistics.Win.DefaultableBoolean.False;
 
             // Add grid lines for better visual separation
             gridCash.DisplayLayout.Override.BorderStyleCell = Infragistics.Win.UIElementBorderStyle.Solid;
@@ -197,6 +249,8 @@ namespace PosBranch_Win.Utilities
             {
                 band.Summaries.Clear();
             }
+
+            ResizeGridColumns();
         }
 
         private void GridCash_InitializeLayout(object sender, InitializeLayoutEventArgs e)
@@ -208,29 +262,126 @@ namespace PosBranch_Win.Utilities
             e.Layout.Override.CellClickAction = CellClickAction.EditAndSelectText;
         }
 
+        private void ResizeGridColumns()
+        {
+            if (gridCash.DisplayLayout.Bands.Count == 0)
+                return;
+
+            var band = gridCash.DisplayLayout.Bands[0];
+            int width = Math.Max(760, gridCash.ClientSize.Width - 24);
+
+            if (band.Columns.Exists("No"))
+                band.Columns["No"].Width = 70;
+            if (band.Columns.Exists("Denomination"))
+                band.Columns["Denomination"].Width = Math.Max(190, (int)(width * 0.27));
+            if (band.Columns.Exists("Quantity"))
+                band.Columns["Quantity"].Width = Math.Max(210, (int)(width * 0.30));
+            if (band.Columns.Exists("Amount"))
+                band.Columns["Amount"].Width = Math.Max(250, width - 70
+                    - (band.Columns.Exists("Denomination") ? band.Columns["Denomination"].Width : 0)
+                    - (band.Columns.Exists("Quantity") ? band.Columns["Quantity"].Width : 0));
+        }
+
+        private void CommitGridEdits()
+        {
+            try
+            {
+                gridCash.UpdateData();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error committing grid edits: {ex.Message}");
+            }
+        }
+
+        private void FocusQuantityCell(int rowIndex, bool enterEditMode)
+        {
+            if (gridCash.Rows.Count == 0)
+                return;
+
+            int targetIndex = Math.Max(0, Math.Min(rowIndex, gridCash.Rows.Count - 1));
+            var row = gridCash.Rows[targetIndex];
+            if (!row.Cells.Exists("Quantity"))
+                return;
+
+            gridCash.Focus();
+            row.Activate();
+            row.Cells["Quantity"].Activate();
+            gridCash.ActiveCell = row.Cells["Quantity"];
+
+            if (enterEditMode)
+            {
+                BeginInvoke(new Action(() =>
+                {
+                    try
+                    {
+                        gridCash.PerformAction(UltraGridAction.EnterEditMode);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error entering quantity edit mode: {ex.Message}");
+                    }
+                }));
+            }
+        }
+
+        private void MoveQuantityFocus(int delta)
+        {
+            CommitGridEdits();
+
+            var activeRow = gridCash.ActiveRow ?? gridCash.ActiveCell?.Row;
+            int currentIndex = activeRow != null ? activeRow.Index : 0;
+            int targetIndex = Math.Max(0, Math.Min(currentIndex + delta, gridCash.Rows.Count - 1));
+
+            if (activeRow != null)
+                UpdateRowAmount(activeRow);
+
+            FocusQuantityCell(targetIndex, true);
+        }
+
         private void GridCash_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Enter)
+            if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Down)
             {
                 e.Handled = true;
                 e.SuppressKeyPress = true;
-
-                var activeCell = gridCash.ActiveCell;
-                if (activeCell != null && activeCell.Column.Key == "Quantity")
-                {
-                    UpdateRowAmount(activeCell.Row);
-
-                    if (activeCell.Row.Index < gridCash.Rows.Count - 1)
-                    {
-                        var nextRow = gridCash.Rows[activeCell.Row.Index + 1];
-                        gridCash.ActiveCell = nextRow.Cells["Quantity"];
-                    }
-                    else
-                    {
-                        btnSave.Focus();
-                    }
-                }
+                MoveQuantityFocus(1);
             }
+            else if (e.KeyCode == Keys.Up)
+            {
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                MoveQuantityFocus(-1);
+            }
+            else if (e.KeyCode == Keys.Home)
+            {
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                FocusQuantityCell(0, true);
+            }
+            else if (e.KeyCode == Keys.End)
+            {
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                FocusQuantityCell(gridCash.Rows.Count - 1, true);
+            }
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.F8)
+            {
+                Save();
+                return true;
+            }
+
+            if (keyData == Keys.F1)
+            {
+                RibbonClear();
+                return true;
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
         }
 
         private void GridCash_AfterCellUpdate(object sender, CellEventArgs e)
@@ -281,10 +432,41 @@ namespace PosBranch_Win.Utilities
         {
             try
             {
-                // Load sales data from database FIRST (since preview button was removed)
                 DateTime closingDate = dtpDate.Value != null ? (DateTime)dtpDate.Value : DateTime.Now;
-                var salesData = _repo.GetSalesDataSummary(closingDate, txtCounter.Text);
-                var receiptData = _repo.GetCustomerReceiptSummary(closingDate);
+
+                // Validation
+                if (string.IsNullOrWhiteSpace(txtCounter.Text))
+                {
+                    MessageBox.Show("Please enter Counter name.", "Validation",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtCounter.Focus();
+                    return;
+                }
+
+                // Check if any cash counted
+                if (_cashDetails.Sum(x => x.Quantity) == 0)
+                {
+                    var result = MessageBox.Show("No cash denominations entered. Do you want to continue?",
+                        "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                    if (result == DialogResult.No)
+                        return;
+                }
+
+                // Set default reason (no variance check needed)
+                _model.DifferenceReason = "Closing completed";
+
+                // Confirmation before save
+                var confirmResult = MessageBox.Show("Do you want to save?", "Confirm",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                if (confirmResult == DialogResult.No)
+                    return;
+
+                Cursor = Cursors.WaitCursor;
+                var salesData = _repo.GetSalesDataSummary(closingDate, txtCounter.Text) ?? new SalesDataSummary();
+                var receiptData = _repo.GetCustomerReceiptSummary(closingDate) ?? new CustomerReceiptSummary();
+                _salesData = salesData;
+                _receiptData = receiptData;
 
                 // Populate model with sales data
                 _model.TotalGrossSales = salesData.TotalGrossSales;
@@ -302,43 +484,12 @@ namespace PosBranch_Win.Utilities
                 _model.CardBills = salesData.CardBills;
                 _model.UpiBills = salesData.UpiBills;
 
-                // Calculate System Expected Cash
+                // Calculate System Expected Cash internally after the cashier enters physical cash.
                 _model.SystemExpectedCash = _model.CashSale + _model.CustomerReceipt
                                            - _model.CashRefundAdjusted - _model.MidDayCashSkim;
 
-                // Calculate Physical Cash from user input
                 _model.PhysicalCashCounted = _cashDetails.Sum(x => x.Amount);
-
-                // Calculate Variance
                 _model.CashDifference = _model.PhysicalCashCounted - _model.SystemExpectedCash;
-
-                // Validation
-                if (string.IsNullOrWhiteSpace(txtCounter.Text))
-                {
-                    MessageBox.Show("⚠️ Please enter Counter name.", "Validation",
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    txtCounter.Focus();
-                    return;
-                }
-
-                // Check if any cash counted
-                if (_cashDetails.Sum(x => x.Quantity) == 0)
-                {
-                    var result = MessageBox.Show("⚠️ No cash denominations entered. Do you want to continue?",
-                        "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-                    if (result == DialogResult.No)
-                        return;
-                }
-
-                // Set default reason (no variance check needed)
-                _model.DifferenceReason = "Closing completed";
-
-                // Confirmation before save
-                var confirmResult = MessageBox.Show("Do you want to save?", "Confirm",
-                    MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                if (confirmResult == DialogResult.No)
-                    return;
 
                 // Populate model
                 _model.Counter = txtCounter.Text;
@@ -352,22 +503,24 @@ namespace PosBranch_Win.Utilities
                 _model.UserId = SessionContext.UserId;
 
                 // Save
-                Cursor = Cursors.WaitCursor;
                 bool success = _repo.SaveClosing(_model);
 
                 if (success)
                 {
-                    MessageBox.Show("✅ Saved Successfully!", "Success",
+                    MessageBox.Show("Saved Successfully!", "Success",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                     // Print the closing report
                     PrintClosingReport();
 
+                    SessionContext.CounterSessionId = 0;
+                    SessionContext.RequiresClosing = true;
+
                     ClearForm();
                 }
                 else
                 {
-                    MessageBox.Show("❌ Failed to save closing.\n\n" +
+                    MessageBox.Show("Failed to save closing.\n\n" +
                         "Possible reasons:\n" +
                         "• Shift already closed for today\n" +
                         "• Database connection error\n" +
@@ -378,7 +531,7 @@ namespace PosBranch_Win.Utilities
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"❌ Error saving closing:\n\n{ex.Message}", "Error",
+                MessageBox.Show($"Error saving closing:\n\n{ex.Message}", "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
@@ -402,10 +555,14 @@ namespace PosBranch_Win.Utilities
 
             CalculateTotal();
 
-            txtCounter.Text = SessionContext.UserName ?? "Counter-1";
+            txtCounter.Text = !string.IsNullOrWhiteSpace(SessionContext.CounterName)
+                ? SessionContext.CounterName
+                : (SessionContext.CounterId > 0 ? $"COUNTER{SessionContext.CounterId}" : "Counter-1");
             dtpDate.Value = DateTime.Now;
 
             _model = new ClosingModel();
+            _salesData = null;
+            _receiptData = null;
 
             // Focus on first quantity cell
             if (gridCash.Rows.Count > 0)
