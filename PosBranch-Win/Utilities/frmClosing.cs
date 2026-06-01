@@ -66,8 +66,12 @@ namespace PosBranch_Win.Utilities
             _salesData = null;
             _receiptData = null;
 
-            // Auto-focus on first quantity cell
-            BeginInvoke(new Action(() => FocusQuantityCell(0, true)));
+            Shown += FrmClosing_Shown;
+        }
+
+        private void FrmClosing_Shown(object sender, EventArgs e)
+        {
+            FocusQuantityCell(0, true);
         }
 
         private void PopulateReportSelection()
@@ -95,9 +99,24 @@ namespace PosBranch_Win.Utilities
             StyleField(txtPurchaseNo);
             StyleField(txtTotal);
             cboReportSelection.DropDownStyle = Infragistics.Win.DropDownStyle.DropDownList;
-            dtpDate.Enabled = false;
+            cboReportSelection.Appearance.BackColor = Color.White;
+            cboReportSelection.Appearance.ForeColor = Color.FromArgb(15, 23, 42);
+            dtpDate.Enabled = true;
+            dtpDate.ReadOnly = true;
+            dtpDate.TabStop = false;
+            dtpDate.Appearance.BackColor = Color.White;
+            dtpDate.Appearance.ForeColor = Color.FromArgb(15, 23, 42);
+            dtpDate.Appearance.BorderColor = Color.FromArgb(203, 213, 225);
+            dtpDate.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
+            dtpDate.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
 
             lblTotal.Text = "Counted Cash:";
+            lblTotal.Appearance.ForeColor = Color.FromArgb(15, 23, 42);
+            lblCounter.Appearance.ForeColor = Color.FromArgb(15, 23, 42);
+            lblDate.Appearance.ForeColor = Color.FromArgb(15, 23, 42);
+            lblReportSelection.Appearance.ForeColor = Color.FromArgb(15, 23, 42);
+            lblDocNo.Appearance.ForeColor = Color.FromArgb(15, 23, 42);
+            btnClosingHistory.Visible = CanViewClosingHistory();
         }
 
         private void FrmClosing_Resize(object sender, EventArgs e)
@@ -132,6 +151,7 @@ namespace PosBranch_Win.Utilities
         private void StyleField(Infragistics.Win.UltraWinEditors.UltraTextEditor editor)
         {
             editor.Appearance.BackColor = Color.White;
+            editor.Appearance.ForeColor = Color.FromArgb(15, 23, 42);
             editor.Appearance.BorderColor = Color.FromArgb(203, 213, 225);
             editor.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
             editor.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
@@ -153,6 +173,14 @@ namespace PosBranch_Win.Utilities
             }
         }
 
+        private bool CanViewClosingHistory()
+        {
+            string userLevel = SessionContext.UserLevel ?? string.Empty;
+            return userLevel.IndexOf("admin", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                   userLevel.IndexOf("manager", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                   userLevel.IndexOf("supervisor", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
         private void ConfigureGrid()
         {
             if (gridCash.DisplayLayout.Bands.Count == 0)
@@ -165,9 +193,10 @@ namespace PosBranch_Win.Utilities
             {
                 band.Columns["No"].Width = 70;
                 band.Columns["No"].Header.Caption = "#";
+                StyleGridHeader(band.Columns["No"]);
                 band.Columns["No"].CellActivation = Activation.NoEdit;
-                band.Columns["No"].CellAppearance.BackColor = Color.FromArgb(248, 250, 252);
-                band.Columns["No"].CellAppearance.ForeColor = Color.FromArgb(71, 85, 105);
+                band.Columns["No"].CellAppearance.BackColor = Color.FromArgb(241, 245, 249);
+                band.Columns["No"].CellAppearance.ForeColor = Color.FromArgb(51, 65, 85);
                 band.Columns["No"].CellAppearance.TextHAlign = Infragistics.Win.HAlign.Center;
                 band.Columns["No"].CellAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
             }
@@ -176,9 +205,10 @@ namespace PosBranch_Win.Utilities
             {
                 band.Columns["Denomination"].Width = 230;
                 band.Columns["Denomination"].Header.Caption = "Denomination (₹)";
+                StyleGridHeader(band.Columns["Denomination"]);
                 band.Columns["Denomination"].Format = "0.00";
                 band.Columns["Denomination"].CellActivation = Activation.NoEdit;
-                band.Columns["Denomination"].CellAppearance.BackColor = Color.FromArgb(241, 245, 249);
+                band.Columns["Denomination"].CellAppearance.BackColor = Color.FromArgb(248, 250, 252);
                 band.Columns["Denomination"].CellAppearance.ForeColor = Color.FromArgb(15, 23, 42);
                 band.Columns["Denomination"].CellAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
                 band.Columns["Denomination"].CellAppearance.FontData.SizeInPoints = 11;
@@ -189,9 +219,10 @@ namespace PosBranch_Win.Utilities
             {
                 band.Columns["Quantity"].Width = 260;
                 band.Columns["Quantity"].Header.Caption = "Quantity";
+                StyleGridHeader(band.Columns["Quantity"]);
                 band.Columns["Quantity"].CellActivation = Activation.AllowEdit;
-                band.Columns["Quantity"].CellAppearance.BackColor = Color.White;
-                band.Columns["Quantity"].CellAppearance.ForeColor = Color.FromArgb(37, 99, 235);
+                band.Columns["Quantity"].CellAppearance.BackColor = Color.FromArgb(255, 251, 235);
+                band.Columns["Quantity"].CellAppearance.ForeColor = Color.FromArgb(30, 64, 175);
                 band.Columns["Quantity"].CellAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
                 band.Columns["Quantity"].CellAppearance.FontData.SizeInPoints = 11;
                 band.Columns["Quantity"].CellAppearance.TextHAlign = Infragistics.Win.HAlign.Center;
@@ -202,10 +233,11 @@ namespace PosBranch_Win.Utilities
             {
                 band.Columns["Amount"].Width = 280;
                 band.Columns["Amount"].Header.Caption = "Amount (₹)";
+                StyleGridHeader(band.Columns["Amount"]);
                 band.Columns["Amount"].Format = "#,##0.00";
                 band.Columns["Amount"].CellActivation = Activation.NoEdit;
-                band.Columns["Amount"].CellAppearance.BackColor = Color.FromArgb(236, 253, 245);
-                band.Columns["Amount"].CellAppearance.ForeColor = Color.FromArgb(22, 101, 52);
+                band.Columns["Amount"].CellAppearance.BackColor = Color.FromArgb(220, 252, 231);
+                band.Columns["Amount"].CellAppearance.ForeColor = Color.FromArgb(20, 83, 45);
                 band.Columns["Amount"].CellAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
                 band.Columns["Amount"].CellAppearance.FontData.SizeInPoints = 11;
                 band.Columns["Amount"].CellAppearance.TextHAlign = Infragistics.Win.HAlign.Right;
@@ -222,15 +254,34 @@ namespace PosBranch_Win.Utilities
 
             // Grid styling - quiet, fast cashier-entry table
             gridCash.DisplayLayout.AutoFitStyle = AutoFitStyle.ResizeAllColumns;
-            gridCash.DisplayLayout.Override.HeaderAppearance.BackColor = Color.FromArgb(226, 232, 240);
+            gridCash.DisplayLayout.Appearance.BackColor = Color.White;
+            band.ColHeadersVisible = true;
+            band.HeaderVisible = false;
+            gridCash.DisplayLayout.Override.HeaderStyle = Infragistics.Win.HeaderStyle.WindowsXPCommand;
+            gridCash.DisplayLayout.Override.BorderStyleHeader = Infragistics.Win.UIElementBorderStyle.Solid;
+            gridCash.DisplayLayout.Override.HeaderAppearance.BackColor = Color.FromArgb(219, 234, 254);
+            gridCash.DisplayLayout.Override.HeaderAppearance.BackColor2 = Color.FromArgb(219, 234, 254);
+            gridCash.DisplayLayout.Override.HeaderAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.None;
             gridCash.DisplayLayout.Override.HeaderAppearance.ForeColor = Color.FromArgb(15, 23, 42);
             gridCash.DisplayLayout.Override.HeaderAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
-            gridCash.DisplayLayout.Override.HeaderAppearance.FontData.SizeInPoints = 10.5F;
+            gridCash.DisplayLayout.Override.HeaderAppearance.FontData.SizeInPoints = 10F;
             gridCash.DisplayLayout.Override.HeaderAppearance.TextHAlign = Infragistics.Win.HAlign.Center;
+            gridCash.DisplayLayout.Override.HeaderAppearance.TextVAlign = Infragistics.Win.VAlign.Middle;
+            gridCash.DisplayLayout.Override.HeaderAppearance.BorderColor = Color.FromArgb(96, 165, 250);
+            gridCash.DisplayLayout.Override.HeaderAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
+            gridCash.DisplayLayout.Override.RowSelectorHeaderStyle = RowSelectorHeaderStyle.Default;
+            gridCash.DisplayLayout.Override.HeaderClickAction = HeaderClickAction.Select;
+            gridCash.DisplayLayout.Override.RowAppearance.BackColor = Color.White;
+            gridCash.DisplayLayout.Override.RowAppearance.ForeColor = Color.FromArgb(15, 23, 42);
             gridCash.DisplayLayout.Override.RowAlternateAppearance.BackColor = Color.FromArgb(248, 250, 252);
-            gridCash.DisplayLayout.Override.ActiveRowAppearance.BackColor = Color.FromArgb(219, 234, 254);
-            gridCash.DisplayLayout.Override.ActiveCellAppearance.BackColor = Color.FromArgb(191, 219, 254);
-            gridCash.DisplayLayout.Override.ActiveCellAppearance.ForeColor = Color.FromArgb(15, 23, 42);
+            gridCash.DisplayLayout.Override.ActiveRowAppearance.BackColor = Color.FromArgb(238, 242, 255);
+            gridCash.DisplayLayout.Override.ActiveRowAppearance.ForeColor = Color.FromArgb(15, 23, 42);
+            gridCash.DisplayLayout.Override.ActiveCellAppearance.BackColor = Color.FromArgb(29, 78, 216);
+            gridCash.DisplayLayout.Override.ActiveCellAppearance.ForeColor = Color.White;
+            gridCash.DisplayLayout.Override.SelectedCellAppearance.BackColor = Color.FromArgb(29, 78, 216);
+            gridCash.DisplayLayout.Override.SelectedCellAppearance.ForeColor = Color.White;
+            gridCash.DisplayLayout.Override.SelectedRowAppearance.BackColor = Color.FromArgb(238, 242, 255);
+            gridCash.DisplayLayout.Override.SelectedRowAppearance.ForeColor = Color.FromArgb(15, 23, 42);
             gridCash.DisplayLayout.Override.CellPadding = 8;
             gridCash.DisplayLayout.Override.RowSizing = RowSizing.Fixed;
             gridCash.DisplayLayout.Override.DefaultRowHeight = 36;
@@ -242,6 +293,8 @@ namespace PosBranch_Win.Utilities
             // Add grid lines for better visual separation
             gridCash.DisplayLayout.Override.BorderStyleCell = Infragistics.Win.UIElementBorderStyle.Solid;
             gridCash.DisplayLayout.Override.BorderStyleRow = Infragistics.Win.UIElementBorderStyle.Solid;
+            gridCash.DisplayLayout.Override.CellAppearance.BorderColor = Color.FromArgb(148, 163, 184);
+            gridCash.DisplayLayout.Override.RowAppearance.BorderColor = Color.FromArgb(148, 163, 184);
             gridCash.DisplayLayout.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
 
             // Remove any existing summaries to keep the grid clean
@@ -251,6 +304,20 @@ namespace PosBranch_Win.Utilities
             }
 
             ResizeGridColumns();
+        }
+
+        private void StyleGridHeader(UltraGridColumn column)
+        {
+            column.Header.Appearance.BackColor = Color.FromArgb(219, 234, 254);
+            column.Header.Appearance.BackColor2 = Color.FromArgb(219, 234, 254);
+            column.Header.Appearance.BackGradientStyle = Infragistics.Win.GradientStyle.None;
+            column.Header.Appearance.ForeColor = Color.FromArgb(15, 23, 42);
+            column.Header.Appearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
+            column.Header.Appearance.FontData.SizeInPoints = 10F;
+            column.Header.Appearance.TextHAlign = Infragistics.Win.HAlign.Center;
+            column.Header.Appearance.TextVAlign = Infragistics.Win.VAlign.Middle;
+            column.Header.Appearance.BorderColor = Color.FromArgb(96, 165, 250);
+            column.Header.Appearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
         }
 
         private void GridCash_InitializeLayout(object sender, InitializeLayoutEventArgs e)
@@ -311,7 +378,7 @@ namespace PosBranch_Win.Utilities
 
             if (enterEditMode)
             {
-                BeginInvoke(new Action(() =>
+                Action enterEdit = () =>
                 {
                     try
                     {
@@ -321,7 +388,12 @@ namespace PosBranch_Win.Utilities
                     {
                         System.Diagnostics.Debug.WriteLine($"Error entering quantity edit mode: {ex.Message}");
                     }
-                }));
+                };
+
+                if (IsHandleCreated)
+                    BeginInvoke(enterEdit);
+                else
+                    enterEdit();
             }
         }
 
@@ -509,9 +581,6 @@ namespace PosBranch_Win.Utilities
                 {
                     MessageBox.Show("Saved Successfully!", "Success",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                    // Print the closing report
-                    PrintClosingReport();
 
                     SessionContext.CounterSessionId = 0;
                     SessionContext.RequiresClosing = true;
@@ -703,6 +772,13 @@ namespace PosBranch_Win.Utilities
         {
             try
             {
+                if (!CanViewClosingHistory())
+                {
+                    MessageBox.Show("Closing history is available only for admin or supervisor users.",
+                        "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
                 using (var historyForm = new frmClosingHistory())
                 {
                     historyForm.ShowDialog(this);

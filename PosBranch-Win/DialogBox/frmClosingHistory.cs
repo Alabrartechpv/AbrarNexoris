@@ -28,6 +28,7 @@ namespace PosBranch_Win.DialogBox
         private Point startPoint;
         private UltraGridColumn columnToMove = null;
         private bool isDraggingColumn = false;
+        private readonly bool showSensitiveCashDetails;
 
         public frmClosingHistory()
         {
@@ -35,6 +36,7 @@ namespace PosBranch_Win.DialogBox
             this.KeyPreview = true;
 
             _repo = new ClosingRepo();
+            showSensitiveCashDetails = CanViewSensitiveCashDetails();
 
             InitializeStatusLabel();
             SetupUltraGridStyle();
@@ -69,6 +71,11 @@ namespace PosBranch_Win.DialogBox
 
         private void frmClosingHistory_Load(object sender, EventArgs e)
         {
+            if (!showSensitiveCashDetails)
+            {
+                Text = "Closing History";
+            }
+
             ultraPanel4.Visible = false; // Hide New/Edit button for history
             LoadClosingHistory();
             this.BeginInvoke(new Action(() =>
@@ -103,6 +110,11 @@ namespace PosBranch_Win.DialogBox
                 UpdateStatus("Error loading closing history: " + ex.Message);
                 MessageBox.Show("Error loading closing history: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private bool CanViewSensitiveCashDetails()
+        {
+            return false;
         }
 
         private void InitializeSavedColumnWidths()
@@ -405,8 +417,9 @@ namespace PosBranch_Win.DialogBox
                 if (band.Columns.Exists("NetSales"))
                 {
                     var col = band.Columns["NetSales"];
-                    col.Hidden = false;
-                    col.Header.VisiblePosition = position++;
+                    col.Hidden = !showSensitiveCashDetails;
+                    if (showSensitiveCashDetails)
+                        col.Header.VisiblePosition = position++;
                     col.Header.Caption = "Net Sales";
                     col.CellAppearance.TextHAlign = HAlign.Right;
                     col.Format = "#,##0.00";
@@ -415,8 +428,9 @@ namespace PosBranch_Win.DialogBox
                 if (band.Columns.Exists("TotalCollection"))
                 {
                     var col = band.Columns["TotalCollection"];
-                    col.Hidden = false;
-                    col.Header.VisiblePosition = position++;
+                    col.Hidden = !showSensitiveCashDetails;
+                    if (showSensitiveCashDetails)
+                        col.Header.VisiblePosition = position++;
                     col.Header.Caption = "Total Collection";
                     col.CellAppearance.TextHAlign = HAlign.Right;
                     col.Format = "#,##0.00";
@@ -425,8 +439,9 @@ namespace PosBranch_Win.DialogBox
                 if (band.Columns.Exists("CashSale"))
                 {
                     var col = band.Columns["CashSale"];
-                    col.Hidden = false;
-                    col.Header.VisiblePosition = position++;
+                    col.Hidden = !showSensitiveCashDetails;
+                    if (showSensitiveCashDetails)
+                        col.Header.VisiblePosition = position++;
                     col.Header.Caption = "Cash";
                     col.CellAppearance.TextHAlign = HAlign.Right;
                     col.Format = "#,##0.00";
@@ -435,8 +450,9 @@ namespace PosBranch_Win.DialogBox
                 if (band.Columns.Exists("CardSale"))
                 {
                     var col = band.Columns["CardSale"];
-                    col.Hidden = false;
-                    col.Header.VisiblePosition = position++;
+                    col.Hidden = !showSensitiveCashDetails;
+                    if (showSensitiveCashDetails)
+                        col.Header.VisiblePosition = position++;
                     col.Header.Caption = "Card";
                     col.CellAppearance.TextHAlign = HAlign.Right;
                     col.Format = "#,##0.00";
@@ -445,8 +461,9 @@ namespace PosBranch_Win.DialogBox
                 if (band.Columns.Exists("UpiSale"))
                 {
                     var col = band.Columns["UpiSale"];
-                    col.Hidden = false;
-                    col.Header.VisiblePosition = position++;
+                    col.Hidden = !showSensitiveCashDetails;
+                    if (showSensitiveCashDetails)
+                        col.Header.VisiblePosition = position++;
                     col.Header.Caption = "UPI";
                     col.CellAppearance.TextHAlign = HAlign.Right;
                     col.Format = "#,##0.00";
@@ -455,8 +472,9 @@ namespace PosBranch_Win.DialogBox
                 if (band.Columns.Exists("PhysicalCashCounted"))
                 {
                     var col = band.Columns["PhysicalCashCounted"];
-                    col.Hidden = false;
-                    col.Header.VisiblePosition = position++;
+                    col.Hidden = !showSensitiveCashDetails;
+                    if (showSensitiveCashDetails)
+                        col.Header.VisiblePosition = position++;
                     col.Header.Caption = "Physical Cash";
                     col.CellAppearance.TextHAlign = HAlign.Right;
                     col.Format = "#,##0.00";
@@ -465,8 +483,9 @@ namespace PosBranch_Win.DialogBox
                 if (band.Columns.Exists("CashDifference"))
                 {
                     var col = band.Columns["CashDifference"];
-                    col.Hidden = false;
-                    col.Header.VisiblePosition = position++;
+                    col.Hidden = !showSensitiveCashDetails;
+                    if (showSensitiveCashDetails)
+                        col.Header.VisiblePosition = position++;
                     col.Header.Caption = "Difference";
                     col.CellAppearance.TextHAlign = HAlign.Right;
                     col.Format = "#,##0.00";
@@ -483,8 +502,10 @@ namespace PosBranch_Win.DialogBox
                 }
 
                 // Hide other columns that are not explicitly shown
-                string[] visibleColumns = { "DocNo", "TransactionDate", "NetSales", "TotalCollection",
-                    "CashSale", "CardSale", "UpiSale", "PhysicalCashCounted", "CashDifference", "Status" };
+                string[] visibleColumns = showSensitiveCashDetails
+                    ? new[] { "DocNo", "TransactionDate", "NetSales", "TotalCollection",
+                        "CashSale", "CardSale", "UpiSale", "PhysicalCashCounted", "CashDifference", "Status" }
+                    : new[] { "DocNo", "TransactionDate", "Status" };
                 foreach (UltraGridColumn col in band.Columns)
                 {
                     if (!visibleColumns.Contains(col.Key))
