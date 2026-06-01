@@ -46,6 +46,10 @@ END";
 
                 return true;
             }
+            catch (SqlException ex) when (ex.Number == 2601 || ex.Number == 2627)
+            {
+                throw new InvalidOperationException("This counter or user already has an open session. Please close the existing counter session first.", ex);
+            }
             finally
             {
                 if (DataConnection.State == ConnectionState.Open)

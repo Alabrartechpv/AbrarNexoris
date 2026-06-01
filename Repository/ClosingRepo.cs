@@ -62,20 +62,19 @@ namespace Repository
                     {
                         if (reader.Read())
                         {
-                            // Use safe casting to handle NULL or type mismatches
-                            summary.TotalGrossSales = Convert.ToDecimal(reader["TotalGrossSales"] ?? 0);
-                            summary.TotalDiscount = Convert.ToDecimal(reader["TotalDiscount"] ?? 0);
-                            summary.TotalReturn = Convert.ToDecimal(reader["TotalReturn"] ?? 0);
-                            summary.NetSales = Convert.ToDecimal(reader["NetSales"] ?? 0);
-                            summary.CashSale = Convert.ToDecimal(reader["CashSale"] ?? 0);
-                            summary.CardSale = Convert.ToDecimal(reader["CardSale"] ?? 0);
-                            summary.UpiSale = Convert.ToDecimal(reader["UpiSale"] ?? 0);
-                            summary.CreditSale = Convert.ToDecimal(reader["CreditSale"] ?? 0);
-                            summary.TotalCollection = Convert.ToDecimal(reader["TotalCollection"] ?? 0);
-                            summary.TotalBills = Convert.ToInt32(reader["TotalBills"] ?? 0);
-                            summary.CashBills = Convert.ToInt32(reader["CashBills"] ?? 0);
-                            summary.CardBills = Convert.ToInt32(reader["CardBills"] ?? 0);
-                            summary.UpiBills = Convert.ToInt32(reader["UpiBills"] ?? 0);
+                            summary.TotalGrossSales = GetDecimal(reader, "TotalGrossSales");
+                            summary.TotalDiscount = GetDecimal(reader, "TotalDiscount");
+                            summary.TotalReturn = GetDecimal(reader, "TotalReturn");
+                            summary.NetSales = GetDecimal(reader, "NetSales");
+                            summary.CashSale = GetDecimal(reader, "CashSale");
+                            summary.CardSale = GetDecimal(reader, "CardSale");
+                            summary.UpiSale = GetDecimal(reader, "UpiSale");
+                            summary.CreditSale = GetDecimal(reader, "CreditSale");
+                            summary.TotalCollection = GetDecimal(reader, "TotalCollection");
+                            summary.TotalBills = GetInt(reader, "TotalBills");
+                            summary.CashBills = GetInt(reader, "CashBills");
+                            summary.CardBills = GetInt(reader, "CardBills");
+                            summary.UpiBills = GetInt(reader, "UpiBills");
                         }
                     }
                 }
@@ -121,11 +120,10 @@ namespace Repository
                     {
                         if (reader.Read())
                         {
-                            // Use safe casting to handle NULL or type mismatches
-                            summary.CashReceipt = Convert.ToDecimal(reader["CashReceipt"] ?? 0);
-                            summary.CardReceipt = Convert.ToDecimal(reader["CardReceipt"] ?? 0);
-                            summary.UpiReceipt = Convert.ToDecimal(reader["UpiReceipt"] ?? 0);
-                            summary.TotalReceipt = Convert.ToDecimal(reader["TotalReceipt"] ?? 0);
+                            summary.CashReceipt = GetDecimal(reader, "CashReceipt");
+                            summary.CardReceipt = GetDecimal(reader, "CardReceipt");
+                            summary.UpiReceipt = GetDecimal(reader, "UpiReceipt");
+                            summary.TotalReceipt = GetDecimal(reader, "TotalReceipt");
                         }
                     }
                 }
@@ -142,6 +140,43 @@ namespace Repository
             }
 
             return summary;
+        }
+
+        private decimal GetDecimal(IDataRecord record, string columnName)
+        {
+            int ordinal = GetOrdinal(record, columnName);
+            if (ordinal < 0 || record.IsDBNull(ordinal))
+            {
+                return 0;
+            }
+
+            decimal value;
+            return decimal.TryParse(record.GetValue(ordinal).ToString(), out value) ? value : 0;
+        }
+
+        private int GetInt(IDataRecord record, string columnName)
+        {
+            int ordinal = GetOrdinal(record, columnName);
+            if (ordinal < 0 || record.IsDBNull(ordinal))
+            {
+                return 0;
+            }
+
+            int value;
+            return int.TryParse(record.GetValue(ordinal).ToString(), out value) ? value : 0;
+        }
+
+        private int GetOrdinal(IDataRecord record, string columnName)
+        {
+            for (int i = 0; i < record.FieldCount; i++)
+            {
+                if (string.Equals(record.GetName(i), columnName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         /// <summary>

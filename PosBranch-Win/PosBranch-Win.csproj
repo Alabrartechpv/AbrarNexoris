@@ -317,6 +317,18 @@
       <DependentUpon>FrmSettlementHistory.cs</DependentUpon>
     </Compile>
     <Compile Include="AIChatbotService.cs" />
+    <Compile Include="DialogBox\FrmContraHistory.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DialogBox\FrmContraHistory.Designer.cs">
+      <DependentUpon>FrmContraHistory.cs</DependentUpon>
+    </Compile>
+    <Compile Include="DialogBox\FrmJournalHistory.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DialogBox\FrmJournalHistory.Designer.cs">
+      <DependentUpon>FrmJournalHistory.cs</DependentUpon>
+    </Compile>
     <Compile Include="DialogBox\frmLastBillDig.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1268,6 +1280,9 @@
     <EmbeddedResource Include="DialogBox\frmCommonDialog.resx">
       <DependentUpon>frmCommonDialog.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="DialogBox\FrmContraHistory.resx">
+      <DependentUpon>FrmContraHistory.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="DialogBox\frmCreditNoteList.resx">
       <DependentUpon>frmCreditNoteList.cs</DependentUpon>
     </EmbeddedResource>
@@ -1297,6 +1312,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="DialogBox\frmItemTypeDialog.resx">
       <DependentUpon>frmItemTypeDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DialogBox\FrmJournalHistory.resx">
+      <DependentUpon>FrmJournalHistory.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="DialogBox\frmLastBillDig.resx">
       <DependentUpon>frmLastBillDig.cs</DependentUpon>

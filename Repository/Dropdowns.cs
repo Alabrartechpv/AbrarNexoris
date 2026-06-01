@@ -1288,14 +1288,16 @@ WHERE ItemId IN ({string.Join(", ", parameterNames)})";
         {
             UserDDlGrid grid = new UserDDlGrid();
             Users us = new Users();
+            int companyId = SessionContext.CompanyId;
+            int branchId = SessionContext.BranchId;
             try
             {
                 using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_User, (SqlConnection)DataConnection))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@UserID", us.UserID);
-                    cmd.Parameters.AddWithValue("@CompanyID", us.CompanyID);
-                    cmd.Parameters.AddWithValue("@BranchID", us.BranchID);
+                    cmd.Parameters.AddWithValue("@CompanyID", companyId);
+                    cmd.Parameters.AddWithValue("@BranchID", branchId);
                     cmd.Parameters.AddWithValue("@UserLevelID", us.UserLevelID);
                     cmd.Parameters.AddWithValue("@UserName", us.UserName);
                     cmd.Parameters.AddWithValue("@Password", us.Password);
