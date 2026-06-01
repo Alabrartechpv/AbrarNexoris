@@ -185,6 +185,7 @@ namespace Repository.TransactionRepository
 
                         // Set default values for required parameters that aren't in our C# model
                         cmd.Parameters.AddWithValue("CounterId", SessionContext.CounterId);
+                        cmd.Parameters.AddWithValue("CounterSessionId", SessionContext.CounterSessionId);
                         cmd.Parameters.AddWithValue("Freight", 0);
                         cmd.Parameters.AddWithValue("FreightProfit", 0);
                         cmd.Parameters.AddWithValue("PaymodeLedgerId", 0);
@@ -742,6 +743,7 @@ namespace Repository.TransactionRepository
 
                         // Set default values for required parameters that aren't in our C# model
                         cmd.Parameters.AddWithValue("CounterId", SessionContext.CounterId);
+                        cmd.Parameters.AddWithValue("CounterSessionId", SessionContext.CounterSessionId);
                         cmd.Parameters.AddWithValue("Freight", 0);
                         cmd.Parameters.AddWithValue("FreightProfit", 0);
                         cmd.Parameters.AddWithValue("PaymodeLedgerId", 0);
@@ -1240,6 +1242,7 @@ namespace Repository.TransactionRepository
 
                 // Add default values for parameters not in our model
                 parameters.Add("CounterId", SessionContext.CounterId);
+                parameters.Add("CounterSessionId", SessionContext.CounterSessionId);
                 parameters.Add("Freight", 0);
                 parameters.Add("FreightProfit", 0);
                 parameters.Add("PaymodeLedgerId", 0);
@@ -1602,6 +1605,7 @@ namespace Repository.TransactionRepository
                     cmd.Parameters.AddWithValue("@CompanyId", sales.CompanyId);
                     cmd.Parameters.AddWithValue("@BranchId", sales.BranchId);
                     cmd.Parameters.AddWithValue("@FinYearId", sales.FinYearId);
+                    cmd.Parameters.AddWithValue("@CounterSessionId", SessionContext.CounterSessionId);
                     cmd.Parameters.AddWithValue("@BillNo", sales.BillNo);
                     cmd.Parameters.AddWithValue("@VoucherID", sales.VoucherID);
                     cmd.Parameters.AddWithValue("@PaymodeId", sales.PaymodeId);

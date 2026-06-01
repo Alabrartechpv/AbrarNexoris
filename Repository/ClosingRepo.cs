@@ -234,6 +234,7 @@ namespace Repository
                     cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
                     cmd.Parameters.AddWithValue("@FinYearId", SessionContext.FinYearId);
                     cmd.Parameters.AddWithValue("@Counter", model.Counter ?? "");
+                    cmd.Parameters.AddWithValue("@CounterSessionId", SessionContext.CounterSessionId);
                     cmd.Parameters.AddWithValue("@UserId", SessionContext.UserId);
                     cmd.Parameters.AddWithValue("@ClosingDate", model.TransactionDate);
                     cmd.Parameters.AddWithValue("@ReportSelection", model.ReportSelection ?? "");
