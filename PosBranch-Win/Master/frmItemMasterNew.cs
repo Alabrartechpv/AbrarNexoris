@@ -1,4 +1,4 @@
-﻿
+
 using ModelClass;
 using ModelClass.Master;
 using PosBranch_Win.DialogBox;
@@ -420,6 +420,7 @@ namespace PosBranch_Win.Master
         private bool isEditingMdStaff = false; // track user typing in ultraTextEditor12 markdown field to avoid caret jumps
         private bool isEditingMdMin = false; // track user typing in ultraTextEditor11 markdown field to avoid caret jumps
         private bool hasGeneratedItemNumberForBarcode = false; // track if item number has been auto-generated for current barcode entry
+        private int lastLoadedItemNo = 0;
         private readonly Dictionary<int, int> purchasePidCache = new Dictionary<int, int>();
         private string loadedItemMainBarcode = string.Empty;
         private bool isInitializingItemStatusControls;
@@ -454,8 +455,6 @@ namespace PosBranch_Win.Master
         private const string ItemMasterOperationEnsureStatusStorage = "ENSURESTATUSSTORAGE";
         private const string ItemMasterOperationGetStatus = "GETSTATUS";
         private const string ItemMasterOperationSaveStatus = "SAVESTATUS";
-        private const string ItemMasterOperationGetNextItemNo = "GETNEXTITEMNO";
-        private const string ItemMasterOperationNavigate = "NAVIGATE";
         private const string PurchaseOperationGetPidByPurchaseNo = "GETPIDBYPURCHASENO";
 
         private static SqlParameter CreateSqlParameter(string name, object value)
@@ -879,7 +878,7 @@ namespace PosBranch_Win.Master
             try
             {
                 ExecuteStoredProcedureScalar(
-                    STOREDPROCEDURE.POS_ItemMaster,
+                    STOREDPROCEDURE.POS_ItemMasterStatusRules,
                     CreateSqlParameter("@_Operation", ItemMasterOperationEnsureStatusStorage));
 
                 itemStatusTableEnsured = true;
@@ -911,7 +910,7 @@ namespace PosBranch_Win.Master
             try
             {
                 DataTable statusTable = ExecuteStoredProcedureTable(
-                    STOREDPROCEDURE.POS_ItemMaster,
+                    STOREDPROCEDURE.POS_ItemMasterStatusRules,
                     CreateSqlParameter("@_Operation", ItemMasterOperationGetStatus),
                     CreateSqlParameter("@ItemId", itemId));
 
@@ -960,7 +959,7 @@ namespace PosBranch_Win.Master
             {
                 ItemStatusRuleSnapshot snapshot = GetCurrentItemStatusRuleSnapshot();
                 ExecuteStoredProcedureScalar(
-                    STOREDPROCEDURE.POS_ItemMaster,
+                    STOREDPROCEDURE.POS_ItemMasterStatusRules,
                     CreateSqlParameter("@_Operation", ItemMasterOperationSaveStatus),
                     CreateSqlParameter("@ItemId", itemId),
                     CreateSqlParameter("@CompanyId", Convert.ToInt32(ModelClass.DataBase.CompanyId)),
@@ -2995,11 +2994,13 @@ namespace PosBranch_Win.Master
         {
             try
             {
+                int fallbackBaseItemNo = GetCurrentItemNoForNextNumber();
+
                 // Clear all form fields first - use enhanced clear method
                 ClearAllFields();
 
 
-                GenerateNextItemNumberOnly();
+                GenerateNextItemNumberOnly(fallbackBaseItemNo);
 
                 // Load default unit (Unit 1)
                 LoadDefaultUnit();
@@ -3022,18 +3023,30 @@ namespace PosBranch_Win.Master
 
         private int GetNextItemNumber()
         {
-            int newItemNumber = ExecuteStoredProcedureIntScalar(
-                STOREDPROCEDURE.POS_ItemMaster,
-                CreateSqlParameter("@_Operation", ItemMasterOperationGetNextItemNo));
-
-            return newItemNumber > 0 ? newItemNumber : 1;
+            return ItemRepository.GetNextItemNumber();
         }
 
-        private void GenerateNextItemNumberOnly()
+        private int GetCurrentItemNoForNextNumber()
+        {
+            int currentItemNo;
+            if (txt_ItemNo != null && int.TryParse(txt_ItemNo.Text, out currentItemNo) && currentItemNo > 0)
+                return currentItemNo;
+
+            if (ItemMaster != null && ItemMaster.ItemNo > 0)
+                return ItemMaster.ItemNo;
+
+            return lastLoadedItemNo;
+        }
+
+        private void GenerateNextItemNumberOnly(int fallbackBaseItemNo = 0)
         {
             try
             {
-                txt_ItemNo.Text = GetNextItemNumber().ToString();
+                int nextItemNo = GetNextItemNumber();
+                if (fallbackBaseItemNo > 0 && nextItemNo <= 1)
+                    nextItemNo = fallbackBaseItemNo + 1;
+
+                txt_ItemNo.Text = nextItemNo.ToString();
             }
             catch (Exception ex)
             {
@@ -4420,11 +4433,7 @@ namespace PosBranch_Win.Master
                     return;
                 }
 
-                int itemId = ExecuteStoredProcedureIntScalar(
-                    STOREDPROCEDURE.POS_ItemMaster,
-                    CreateSqlParameter("@_Operation", ItemMasterOperationNavigate),
-                    CreateSqlParameter("@NavigationType", navigationType),
-                    CreateSqlParameter("@CurrentItemNo", currentItemNo));
+                int itemId = ItemRepository.NavigateItem(navigationType, currentItemNo);
 
                 if (itemId <= 0)
                 {
@@ -4506,6 +4515,9 @@ namespace PosBranch_Win.Master
 
                     // Set the item number in UI
                     txt_ItemNo.Text = getItem.ItemNo.ToString();
+                    int loadedItemNo;
+                    if (int.TryParse(getItem.ItemNo, out loadedItemNo) && loadedItemNo > 0)
+                        lastLoadedItemNo = loadedItemNo;
 
                     // Populate the form fields
 
@@ -11771,7 +11783,7 @@ namespace PosBranch_Win.Master
         {
             try
             {
-                GenerateNextItemNumberOnly();
+                GenerateNextItemNumberOnly(GetCurrentItemNoForNextNumber());
 
                 // Load default unit (Unit 1)
                 LoadDefaultUnit();
@@ -12424,6 +12436,3 @@ namespace PosBranch_Win.Master
 
     }
 }
-
-
-

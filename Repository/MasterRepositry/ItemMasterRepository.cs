@@ -1722,6 +1722,147 @@ WHERE ItemId = @ItemId";
             return results;
         }
 
+        /// <summary>
+        /// Returns the next available item number for the current company/branch.
+        /// </summary>
+        public int GetNextItemNumber()
+        {
+            int nextItemNoFromProcedure = GetNextItemNumberFromProcedure();
+            int nextItemNoFromLastItem = GetNextItemNumberFromLastItem();
+            int nextItemNoFromAllItems = GetNextItemNumberFromAllItems();
+            int nextItemNo = Math.Max(nextItemNoFromProcedure, Math.Max(nextItemNoFromLastItem, nextItemNoFromAllItems));
+
+            return nextItemNo > 0 ? nextItemNo : 1;
+        }
+
+        private int GetNextItemNumberFromProcedure()
+        {
+            int branchId = SessionContext.BranchId > 0 ? SessionContext.BranchId : ParseIntValue(DataBase.BranchId);
+            int companyId = SessionContext.CompanyId > 0 ? SessionContext.CompanyId : ParseIntValue(DataBase.CompanyId);
+            int finYearId = SessionContext.FinYearId > 0 ? SessionContext.FinYearId : ParseIntValue(DataBase.FinyearId);
+
+            bool wasClosed = DataConnection.State != ConnectionState.Open;
+
+            try
+            {
+                if (wasClosed)
+                    DataConnection.Open();
+
+                using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_ItemMaster, (SqlConnection)DataConnection))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@_Operation", "GETNEXTITEMNO");
+                    cmd.Parameters.AddWithValue("@CompanyId", companyId);
+                    cmd.Parameters.AddWithValue("@BranchId", branchId);
+                    cmd.Parameters.AddWithValue("@FinYearId", finYearId);
+
+                    object result = cmd.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)
+                    {
+                        int nextItemNo = Convert.ToInt32(result);
+                        if (nextItemNo > 0)
+                            return nextItemNo;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in GetNextItemNumber stored procedure lookup: {ex.Message}");
+            }
+            finally
+            {
+                if (wasClosed && DataConnection.State == ConnectionState.Open)
+                    DataConnection.Close();
+            }
+
+            return 0;
+        }
+
+        private int GetNextItemNumberFromLastItem()
+        {
+            try
+            {
+                int lastItemId = NavigateItem("LAST", 0);
+                if (lastItemId <= 0)
+                    return 0;
+
+                ItemGet lastItem = GetByIdItem(lastItemId);
+                int lastItemNo;
+                if (lastItem != null && int.TryParse(Convert.ToString(lastItem.ItemNo), out lastItemNo) && lastItemNo > 0)
+                    return lastItemNo + 1;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error getting next item number from last item: {ex.Message}");
+            }
+
+            return 0;
+        }
+
+        private int GetNextItemNumberFromAllItems()
+        {
+            try
+            {
+                List<Item> items = GetAllItems();
+                if (items == null || items.Count == 0)
+                    return 0;
+
+                int lastItemNo = items
+                    .Where(item => item != null && item.ItemNo > 0)
+                    .Select(item => item.ItemNo)
+                    .DefaultIfEmpty(0)
+                    .Max();
+
+                return lastItemNo > 0 ? lastItemNo + 1 : 0;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error getting next item number from all items: {ex.Message}");
+            }
+
+            return 0;
+        }
+
+        /// <summary>
+        /// Navigates to another item (FIRST, PREVIOUS, NEXT, LAST) and returns its ItemId, or 0 if none.
+        /// </summary>
+        public int NavigateItem(string navigationType, int currentItemNo)
+        {
+            int branchId = SessionContext.BranchId > 0 ? SessionContext.BranchId : ParseIntValue(DataBase.BranchId);
+            int companyId = SessionContext.CompanyId > 0 ? SessionContext.CompanyId : ParseIntValue(DataBase.CompanyId);
+            int finYearId = SessionContext.FinYearId > 0 ? SessionContext.FinYearId : ParseIntValue(DataBase.FinyearId);
+
+            bool wasClosed = DataConnection.State != ConnectionState.Open;
+
+            try
+            {
+                if (wasClosed)
+                    DataConnection.Open();
+
+                using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_ItemMaster, (SqlConnection)DataConnection))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@_Operation", "NAVIGATE");
+                    cmd.Parameters.AddWithValue("@NavigationType", navigationType ?? string.Empty);
+                    cmd.Parameters.AddWithValue("@CurrentItemNo", currentItemNo);
+                    cmd.Parameters.AddWithValue("@CompanyId", companyId);
+                    cmd.Parameters.AddWithValue("@BranchId", branchId);
+                    cmd.Parameters.AddWithValue("@FinYearId", finYearId);
+
+                    object result = cmd.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)
+                        return Convert.ToInt32(result);
+                }
+            }
+            finally
+            {
+                if (wasClosed && DataConnection.State == ConnectionState.Open)
+                    DataConnection.Close();
+            }
+
+            return 0;
+        }
+
     }
 
     /// <summary>

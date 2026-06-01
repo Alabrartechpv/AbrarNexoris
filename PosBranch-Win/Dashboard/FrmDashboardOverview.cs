@@ -30,7 +30,6 @@ namespace PosBranch_Win.Dashboard
         private DateTime _rangeFromDate = DateTime.Today;
         private DateTime _rangeToDate = DateTime.Today;
         private DashboardOverviewRangeKind _rangeKind = DashboardOverviewRangeKind.Day;
-        private ToolStripDropDown _dateDropDown;
         private readonly Action<Form, string> _openFormInTab;
         private readonly Timer _refreshTimer = new Timer();
         private readonly CultureInfo _culture = new CultureInfo("en-IN");
@@ -85,6 +84,7 @@ namespace PosBranch_Win.Dashboard
             StylePanel(vendorPanel);
             StylePanel(duePanel);
             ConfigureBottomCard(stockPanel, lblStockIcon, lblStockTitle, Color.FromArgb(86, 126, 188), DashboardBadgeKind.Box);
+            RegisterCardClick(stockPanel, CardStock_Click);
             ConfigureBottomCard(customerPanel, lblCustomerIcon, lblCustomerTitle, Color.FromArgb(77, 202, 72), DashboardBadgeKind.People);
             ConfigureBottomCard(vendorPanel, lblVendorIcon, lblVendorTitle, Color.FromArgb(64, 133, 238), DashboardBadgeKind.Truck);
             ConfigureBottomCard(duePanel, lblDueIcon, lblDueTitle, Color.FromArgb(245, 141, 35), DashboardBadgeKind.Wallet);
@@ -132,11 +132,10 @@ namespace PosBranch_Win.Dashboard
             dgvTopItems.RowTemplate.Height = 25;
             dgvTopItems.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 
-            ConfigureDashboardDateEditor(lblDate, true);
-            lblDate.Cursor = Cursors.Hand;
-            lblDate.MouseDown += LblDate_MouseDown;
-            lblDate.BackColor = CardBackColor;
-            lblDate.ForeColor = TextBlue;
+            ConfigureDashboardDateEditor(dtFrom, false);
+            ConfigureDashboardDateEditor(dtTo, false);
+            ConfigureQuickDateCombo();
+            btnApply.Click += BtnApply_Click;
             SetHeaderDateValue();
         }
 
@@ -148,6 +147,11 @@ namespace PosBranch_Win.Dashboard
         private void CardPurchase_Click(object sender, EventArgs e)
         {
             OpenPurchaseAnalytics();
+        }
+
+        private void CardStock_Click(object sender, EventArgs e)
+        {
+            OpenStockAnalytics();
         }
 
         private void OpenSalesAnalytics()
@@ -169,6 +173,19 @@ namespace PosBranch_Win.Dashboard
             if (_openFormInTab != null)
             {
                 _openFormInTab(analytics, "Purchase Analytics");
+                return;
+            }
+
+            analytics.StartPosition = FormStartPosition.CenterScreen;
+            analytics.Show();
+        }
+
+        private void OpenStockAnalytics()
+        {
+            FrmStockAnalytics analytics = new FrmStockAnalytics();
+            if (_openFormInTab != null)
+            {
+                _openFormInTab(analytics, "Stock Analytics");
                 return;
             }
 
@@ -294,287 +311,6 @@ namespace PosBranch_Win.Dashboard
             _refreshTimer.Stop();
             _refreshTimer.Tick -= RefreshTimer_Tick;
             _refreshTimer.Dispose();
-            DisposeDateDropDown();
-        }
-
-        private void LblDate_MouseDown(object sender, MouseEventArgs e)
-        {
-            if (e.Button != MouseButtons.Left)
-                return;
-
-            ShowDateRangePopup();
-        }
-
-        private void ShowDateRangePopup()
-        {
-            CloseDateDropDown(_dateDropDown, ToolStripDropDownCloseReason.CloseCalled);
-
-            Panel panel = new Panel
-            {
-                BackColor = Color.FromArgb(248, 252, 255),
-                Size = new Size(328, 336)
-            };
-
-            Label lblMode = CreateDropDownLabel("Range", 16, 16);
-            ComboBox cboMode = new ComboBox
-            {
-                DropDownStyle = ComboBoxStyle.DropDownList,
-                Location = new Point(92, 13),
-                Size = new Size(216, 24)
-            };
-            cboMode.Items.AddRange(new object[] { "Days", "Months", "Years" });
-            cboMode.SelectedIndex = _rangeKind == DashboardOverviewRangeKind.Month ? 1 : (_rangeKind == DashboardOverviewRangeKind.Year ? 2 : 0);
-
-            Label lblFrom = CreateDropDownLabel("From", 16, 54);
-            Button btnFrom = CreateDateSelectorButton(92, 50);
-            Label lblTo = CreateDropDownLabel("To", 16, 92);
-            Button btnTo = CreateDateSelectorButton(92, 88);
-            MonthCalendar calendar = new MonthCalendar
-            {
-                Location = new Point(92, 124),
-                MaxSelectionCount = 1,
-                ShowToday = true,
-                ShowTodayCircle = true
-            };
-            Button btnApply = new Button
-            {
-                Text = "Apply",
-                Location = new Point(152, 296),
-                Size = new Size(74, 28)
-            };
-            Button btnCancel = new Button
-            {
-                Text = "Cancel",
-                Location = new Point(234, 296),
-                Size = new Size(74, 28)
-            };
-            Button btnToday = new Button
-            {
-                Text = "Today",
-                Location = new Point(92, 296),
-                Size = new Size(54, 28)
-            };
-            Button btnYesterday = new Button
-            {
-                Text = "Yesterday",
-                Location = new Point(16, 296),
-                Size = new Size(70, 28)
-            };
-
-            DateTime selectedFrom = _rangeFromDate;
-            DateTime selectedTo = _rangeToDate;
-            bool editingFrom = true;
-            DashboardOverviewRangeKind selectedKind = (DashboardOverviewRangeKind)cboMode.SelectedIndex;
-            UpdateDateSelectorText(btnFrom, selectedFrom, selectedKind, true);
-            UpdateDateSelectorText(btnTo, selectedTo, selectedKind, false);
-            SetActiveDateSelector(btnFrom, btnTo, calendar, selectedFrom, true);
-
-            panel.Controls.Add(lblMode);
-            panel.Controls.Add(cboMode);
-            panel.Controls.Add(lblFrom);
-            panel.Controls.Add(btnFrom);
-            panel.Controls.Add(lblTo);
-            panel.Controls.Add(btnTo);
-            panel.Controls.Add(calendar);
-            panel.Controls.Add(btnToday);
-            panel.Controls.Add(btnYesterday);
-            panel.Controls.Add(btnApply);
-            panel.Controls.Add(btnCancel);
-
-            ToolStripControlHost host = new ToolStripControlHost(panel)
-            {
-                Margin = Padding.Empty,
-                Padding = Padding.Empty
-            };
-
-            ToolStripDropDown dropDown = new ToolStripDropDown
-            {
-                AutoClose = true,
-                Padding = Padding.Empty
-            };
-            _dateDropDown = dropDown;
-            dropDown.Items.Add(host);
-            dropDown.Closed += DateDropDown_Closed;
-            cboMode.SelectedIndexChanged += (s, args) =>
-            {
-                selectedKind = (DashboardOverviewRangeKind)cboMode.SelectedIndex;
-                UpdateDateSelectorText(btnFrom, selectedFrom, selectedKind, true);
-                UpdateDateSelectorText(btnTo, selectedTo, selectedKind, false);
-            };
-            btnFrom.Click += (s, args) =>
-            {
-                editingFrom = true;
-                SetActiveDateSelector(btnFrom, btnTo, calendar, selectedFrom, true);
-            };
-            btnTo.Click += (s, args) =>
-            {
-                editingFrom = false;
-                SetActiveDateSelector(btnFrom, btnTo, calendar, selectedTo, false);
-            };
-            calendar.DateSelected += (s, args) =>
-            {
-                if (editingFrom)
-                {
-                    selectedFrom = args.Start.Date;
-                    UpdateDateSelectorText(btnFrom, selectedFrom, selectedKind, true);
-                    SetActiveDateSelector(btnFrom, btnTo, calendar, selectedFrom, true);
-                }
-                else
-                {
-                    selectedTo = args.Start.Date;
-                    UpdateDateSelectorText(btnTo, selectedTo, selectedKind, false);
-                    SetActiveDateSelector(btnFrom, btnTo, calendar, selectedTo, false);
-                }
-            };
-            btnCancel.Click += (s, args) =>
-            {
-                CloseDateDropDown(dropDown, ToolStripDropDownCloseReason.CloseCalled);
-            };
-            btnToday.Click += (s, args) =>
-            {
-                ApplySelectedRange(dropDown, DateTime.Today, DateTime.Today, DashboardOverviewRangeKind.Day);
-            };
-            btnYesterday.Click += (s, args) =>
-            {
-                DateTime yesterday = DateTime.Today.AddDays(-1);
-                ApplySelectedRange(dropDown, yesterday, yesterday, DashboardOverviewRangeKind.Day);
-            };
-            btnApply.Click += (s, args) =>
-            {
-                DateTime normalizedFrom;
-                DateTime normalizedTo;
-                NormalizeSelectedRange(selectedFrom, selectedTo, selectedKind, out normalizedFrom, out normalizedTo);
-                ApplySelectedRange(dropDown, normalizedFrom, normalizedTo, selectedKind);
-            };
-
-            dropDown.Show(lblDate, new Point(0, lblDate.Height));
-        }
-
-        private void ApplySelectedRange(ToolStripDropDown dropDown, DateTime fromDate, DateTime toDate, DashboardOverviewRangeKind rangeKind)
-        {
-            _rangeKind = rangeKind;
-            _rangeFromDate = fromDate.Date;
-            _rangeToDate = toDate.Date;
-            _businessDate = _rangeFromDate;
-            SetHeaderDateValue();
-            CloseDateDropDown(dropDown, ToolStripDropDownCloseReason.ItemClicked);
-            BeginInvoke(new MethodInvoker(LoadDashboard));
-        }
-
-        private void DateDropDown_Closed(object sender, ToolStripDropDownClosedEventArgs e)
-        {
-            ToolStripDropDown dropDown = sender as ToolStripDropDown;
-            if (dropDown == null)
-                return;
-
-            if (ReferenceEquals(_dateDropDown, dropDown))
-                _dateDropDown = null;
-
-            dropDown.Closed -= DateDropDown_Closed;
-            if (IsDisposed || !IsHandleCreated)
-            {
-                if (!dropDown.IsDisposed)
-                    dropDown.Dispose();
-                return;
-            }
-
-            try
-            {
-                BeginInvoke(new MethodInvoker(delegate
-                {
-                    if (!dropDown.IsDisposed)
-                        dropDown.Dispose();
-                }));
-            }
-            catch (InvalidOperationException)
-            {
-                if (!dropDown.IsDisposed)
-                    dropDown.Dispose();
-            }
-        }
-
-        private void DisposeDateDropDown()
-        {
-            if (_dateDropDown == null)
-                return;
-
-            ToolStripDropDown dropDown = _dateDropDown;
-            _dateDropDown = null;
-            dropDown.Closed -= DateDropDown_Closed;
-            if (!dropDown.IsDisposed)
-                dropDown.Dispose();
-        }
-
-        private void CloseDateDropDown(ToolStripDropDown dropDown, ToolStripDropDownCloseReason reason)
-        {
-            if (dropDown == null || dropDown.IsDisposed)
-                return;
-
-            if (ReferenceEquals(_dateDropDown, dropDown))
-                _dateDropDown = null;
-
-            try
-            {
-                dropDown.Close(reason);
-            }
-            catch (ObjectDisposedException)
-            {
-            }
-        }
-
-        private Label CreateDropDownLabel(string text, int x, int y)
-        {
-            return new Label
-            {
-                Text = text,
-                Location = new Point(x, y),
-                Size = new Size(64, 22),
-                Font = new Font("Segoe UI", 8.75F),
-                ForeColor = Color.FromArgb(39, 73, 126),
-                TextAlign = ContentAlignment.MiddleLeft
-            };
-        }
-
-        private Button CreateDateSelectorButton(int x, int y)
-        {
-            return new Button
-            {
-                FlatStyle = FlatStyle.Flat,
-                Location = new Point(x, y),
-                Size = new Size(216, 26),
-                BackColor = Color.White,
-                ForeColor = TextBlue,
-                Font = new Font("Segoe UI Semibold", 8.75F, FontStyle.Bold),
-                TextAlign = ContentAlignment.MiddleCenter
-            };
-        }
-
-        private void UpdateDateSelectorText(Button button, DateTime value, DashboardOverviewRangeKind rangeKind, bool isFrom)
-        {
-            string format;
-            switch (rangeKind)
-            {
-                case DashboardOverviewRangeKind.Month:
-                    format = isFrom ? "MMM yyyy" : "dd-MM-yyyy";
-                    break;
-                case DashboardOverviewRangeKind.Year:
-                    format = isFrom ? "yyyy" : "dd-MM-yyyy";
-                    break;
-                default:
-                    format = "dd-MM-yyyy";
-                    break;
-            }
-
-            button.Text = value.ToString(format, CultureInfo.InvariantCulture);
-        }
-
-        private void SetActiveDateSelector(Button btnFrom, Button btnTo, MonthCalendar calendar, DateTime value, bool fromActive)
-        {
-            btnFrom.FlatAppearance.BorderColor = fromActive ? CardHoverBorderColor : CardBorderColor;
-            btnTo.FlatAppearance.BorderColor = fromActive ? CardBorderColor : CardHoverBorderColor;
-            btnFrom.FlatAppearance.BorderSize = fromActive ? 2 : 1;
-            btnTo.FlatAppearance.BorderSize = fromActive ? 1 : 2;
-            calendar.SetDate(value.Date);
         }
 
         private void ConfigureDashboardDateEditor(UltraDateTimeEditor editor, bool headerEditor)
@@ -597,10 +333,96 @@ namespace PosBranch_Win.Dashboard
                 editor.ReadOnly = true;
         }
 
+        private void ConfigureQuickDateCombo()
+        {
+            cmbQuickDate.UseAppStyling = false;
+            cmbQuickDate.UseOsThemes = DefaultableBoolean.False;
+            cmbQuickDate.DisplayStyle = EmbeddableElementDisplayStyle.Office2013;
+            cmbQuickDate.BorderStyle = UIElementBorderStyle.Solid;
+            cmbQuickDate.DropDownStyle = DropDownStyle.DropDownList;
+            cmbQuickDate.Appearance.BackColor = CardBackColor;
+            cmbQuickDate.Appearance.BorderColor = CardBorderColor;
+            cmbQuickDate.Appearance.ForeColor = TextBlue;
+            cmbQuickDate.Appearance.FontData.Name = "Segoe UI";
+            cmbQuickDate.Appearance.FontData.SizeInPoints = 8.75F;
+            cmbQuickDate.Items.Clear();
+            cmbQuickDate.Items.Add("Today");
+            cmbQuickDate.Items.Add("Yesterday");
+            cmbQuickDate.Items.Add("This Month");
+            cmbQuickDate.Items.Add("Previous Month");
+            cmbQuickDate.Items.Add("This Year");
+            cmbQuickDate.Items.Add("Previous Year");
+            cmbQuickDate.ValueChanged += CmbQuickDate_ValueChanged;
+        }
+
+        private void CmbQuickDate_ValueChanged(object sender, EventArgs e)
+        {
+            string selected = Convert.ToString(cmbQuickDate.Value ?? cmbQuickDate.Text);
+            DateTime today = DateTime.Today;
+            DateTime fromDate;
+            DateTime toDate;
+            DashboardOverviewRangeKind rangeKind;
+
+            switch (selected)
+            {
+                case "Yesterday":
+                    fromDate = today.AddDays(-1);
+                    toDate = fromDate;
+                    rangeKind = DashboardOverviewRangeKind.Day;
+                    break;
+                case "This Month":
+                    fromDate = new DateTime(today.Year, today.Month, 1);
+                    toDate = new DateTime(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month));
+                    rangeKind = DashboardOverviewRangeKind.Month;
+                    break;
+                case "Previous Month":
+                    DateTime previousMonth = new DateTime(today.Year, today.Month, 1).AddMonths(-1);
+                    fromDate = previousMonth;
+                    toDate = new DateTime(previousMonth.Year, previousMonth.Month, DateTime.DaysInMonth(previousMonth.Year, previousMonth.Month));
+                    rangeKind = DashboardOverviewRangeKind.Month;
+                    break;
+                case "This Year":
+                    fromDate = new DateTime(today.Year, 1, 1);
+                    toDate = new DateTime(today.Year, 12, 31);
+                    rangeKind = DashboardOverviewRangeKind.Year;
+                    break;
+                case "Previous Year":
+                    fromDate = new DateTime(today.Year - 1, 1, 1);
+                    toDate = new DateTime(today.Year - 1, 12, 31);
+                    rangeKind = DashboardOverviewRangeKind.Year;
+                    break;
+                default:
+                    fromDate = today;
+                    toDate = today;
+                    rangeKind = DashboardOverviewRangeKind.Day;
+                    break;
+            }
+
+            ApplySelectedRange(fromDate, toDate, rangeKind);
+        }
+
+        private void BtnApply_Click(object sender, EventArgs e)
+        {
+            DateTime fromDate;
+            DateTime toDate;
+            NormalizeSelectedRange(Convert.ToDateTime(dtFrom.Value), Convert.ToDateTime(dtTo.Value), DashboardOverviewRangeKind.Day, out fromDate, out toDate);
+            ApplySelectedRange(fromDate, toDate, DashboardOverviewRangeKind.Day);
+        }
+
+        private void ApplySelectedRange(DateTime fromDate, DateTime toDate, DashboardOverviewRangeKind rangeKind)
+        {
+            _rangeKind = rangeKind;
+            _rangeFromDate = fromDate.Date;
+            _rangeToDate = toDate.Date;
+            _businessDate = _rangeFromDate;
+            SetHeaderDateValue();
+            LoadDashboard();
+        }
+
         private void SetHeaderDateValue()
         {
-            lblDate.Value = _rangeFromDate;
-            lblDate.FormatString = "'" + FormatRangeLabel(_rangeFromDate, _rangeToDate, _rangeKind).Replace("'", "''") + "'";
+            dtFrom.Value = _rangeFromDate;
+            dtTo.Value = _rangeToDate;
         }
 
         private void NormalizeSelectedRange(DateTime fromValue, DateTime toValue, DashboardOverviewRangeKind rangeKind, out DateTime fromDate, out DateTime toDate)
