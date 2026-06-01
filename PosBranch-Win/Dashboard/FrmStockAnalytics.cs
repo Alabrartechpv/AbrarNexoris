@@ -47,11 +47,17 @@ namespace PosBranch_Win.Dashboard
             lblFastMoving.Paint += MovementTile_Paint;
             lblSlowMoving.Paint += MovementTile_Paint;
             lblDeadStock.Paint += MovementTile_Paint;
+            lblFastMoving.Click += MovementTile_Click;
+            lblSlowMoving.Click += MovementTile_Click;
+            lblDeadStock.Click += MovementTile_Click;
             gridTopItems.CellClick += GridTopItems_CellClick;
             gridLowStock.CellClick += GridLowStock_CellClick;
             gridOutStock.CellClick += GridOutStock_CellClick;
             trendCanvas.Click += TrendCanvas_Click;
             itemGraphCanvas.Click += ItemGraphCanvas_Click;
+            lblFastMoving.Cursor = Cursors.Hand;
+            lblSlowMoving.Cursor = Cursors.Hand;
+            lblDeadStock.Cursor = Cursors.Hand;
             gridTopItems.Cursor = Cursors.Hand;
             gridLowStock.Cursor = Cursors.Hand;
             gridOutStock.Cursor = Cursors.Hand;
@@ -217,7 +223,7 @@ namespace PosBranch_Win.Dashboard
                 Value = Money(x.StockValue)
             }).ToList();
 
-            return new StockAnalyticsOverview
+            StockAnalyticsOverview overview = new StockAnalyticsOverview
             {
                 FromDate = _fromDate,
                 ToDate = _toDate,
@@ -262,10 +268,15 @@ namespace PosBranch_Win.Dashboard
                     .Select(g => new StockCategoryMetric { Name = g.Key, Value = g.Sum(x => x.StockValue), Quantity = g.Sum(x => x.ClosingStock) })
                     .OrderByDescending(x => x.Value)
                     .ToList(),
-                FastMovingItems = items.Count(x => x.Sales > 20),
-                SlowMovingItems = items.Count(x => x.Sales > 0 && x.Sales <= 20),
-                DeadStockItems = items.Count(x => x.Sales <= 0 && x.ClosingStock > 0)
+                FastMoving = BuildMovementRows(items.Where(x => x.Sales > 20).OrderByDescending(x => x.Sales)),
+                SlowMoving = BuildMovementRows(items.Where(x => x.Sales > 0 && x.Sales <= 20).OrderBy(x => x.Sales)),
+                DeadStock = BuildMovementRows(items.Where(x => x.Sales <= 0 && x.ClosingStock > 0).OrderByDescending(x => x.ClosingStock))
             };
+
+            overview.FastMovingItems = overview.FastMoving.Count;
+            overview.SlowMovingItems = overview.SlowMoving.Count;
+            overview.DeadStockItems = overview.DeadStock.Count;
+            return overview;
         }
 
         private bool IsLowStock(StockReportItem item)
@@ -321,6 +332,9 @@ namespace PosBranch_Win.Dashboard
             lblFastMoving.Tag = new MovementTileInfo("Fast Moving", _analytics.FastMovingItems, "Good turnover", AccentGreen, Color.FromArgb(239, 252, 244), MovementTileKind.Fast);
             lblSlowMoving.Tag = new MovementTileInfo("Slow Moving", _analytics.SlowMovingItems, "Low turnover", AccentOrange, Color.FromArgb(255, 249, 239), MovementTileKind.Slow);
             lblDeadStock.Tag = new MovementTileInfo("Dead Stock", _analytics.DeadStockItems, "No movement", AccentRed, Color.FromArgb(255, 246, 246), MovementTileKind.Dead);
+            lblFastMoving.AccessibleDescription = "Click to view fast moving item details";
+            lblSlowMoving.AccessibleDescription = "Click to view slow moving item details";
+            lblDeadStock.AccessibleDescription = "Click to view dead stock item details";
             lblFastMoving.Invalidate();
             lblSlowMoving.Invalidate();
             lblDeadStock.Invalidate();
@@ -418,6 +432,27 @@ namespace PosBranch_Win.Dashboard
                 return;
 
             ShowGridPopup("All Stock Items", _analytics.AllStockItems);
+        }
+
+        private void MovementTile_Click(object sender, EventArgs e)
+        {
+            Label label = sender as Label;
+            MovementTileInfo info = label != null ? label.Tag as MovementTileInfo : null;
+            if (info == null)
+                return;
+
+            switch (info.Kind)
+            {
+                case MovementTileKind.Fast:
+                    ShowGridPopup("Fast Moving Items", _analytics.FastMoving);
+                    break;
+                case MovementTileKind.Slow:
+                    ShowGridPopup("Slow Moving Items", _analytics.SlowMoving);
+                    break;
+                default:
+                    ShowGridPopup("Dead Stock Items", _analytics.DeadStock);
+                    break;
+            }
         }
 
         private void DrawLineChart(Graphics g, Rectangle bounds, IList<StockTrendPoint> points)
@@ -1039,6 +1074,22 @@ namespace PosBranch_Win.Dashboard
             };
         }
 
+        private List<MovementStockRow> BuildMovementRows(IEnumerable<StockReportItem> items)
+        {
+            return (items ?? Enumerable.Empty<StockReportItem>()).Select((x, i) => new MovementStockRow
+            {
+                Rank = i + 1,
+                ItemName = ShortLabel(x.ItemName, 40),
+                Category = ShortLabel(x.CategoryName, 24),
+                OpeningStock = x.OpeningStock.ToString("N2", _culture),
+                SalesQty = x.Sales.ToString("N2", _culture),
+                TotalIn = x.TotalIn.ToString("N2", _culture),
+                TotalOut = x.TotalOut.ToString("N2", _culture),
+                ClosingStock = x.ClosingStock.ToString("N2", _culture),
+                StockValue = Money(x.StockValue)
+            }).ToList();
+        }
+
         private int GetCompanyId()
         {
             if (SessionContext.IsInitialized && SessionContext.CompanyId > 0)
@@ -1159,6 +1210,9 @@ namespace PosBranch_Win.Dashboard
             public List<StockItemRow> TopItems { get; set; } = new List<StockItemRow>();
             public List<LowStockRow> LowStock { get; set; } = new List<LowStockRow>();
             public List<OutStockRow> OutStock { get; set; } = new List<OutStockRow>();
+            public List<MovementStockRow> FastMoving { get; set; } = new List<MovementStockRow>();
+            public List<MovementStockRow> SlowMoving { get; set; } = new List<MovementStockRow>();
+            public List<MovementStockRow> DeadStock { get; set; } = new List<MovementStockRow>();
             public List<StockCategoryMetric> CategoryDistribution { get; set; } = new List<StockCategoryMetric>();
         }
 
@@ -1200,6 +1254,19 @@ namespace PosBranch_Win.Dashboard
             public string Category { get; set; }
             public string CurrentStock { get; set; }
             public string Status { get; set; }
+        }
+
+        private sealed class MovementStockRow
+        {
+            public int Rank { get; set; }
+            public string ItemName { get; set; }
+            public string Category { get; set; }
+            public string OpeningStock { get; set; }
+            public string SalesQty { get; set; }
+            public string TotalIn { get; set; }
+            public string TotalOut { get; set; }
+            public string ClosingStock { get; set; }
+            public string StockValue { get; set; }
         }
 
         private enum MovementTileKind
