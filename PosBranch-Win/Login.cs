@@ -285,6 +285,7 @@ namespace PosBranch_Win
                                 {
                                     MessageBox.Show("Counter is not configured for this computer. Please add CounterId to C:\\Connection\\Config.txt before billing.",
                                         "Counter Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                    return;
                                 }
                                 else
                                 {
@@ -294,6 +295,7 @@ namespace PosBranch_Win
                                         {
                                             MessageBox.Show("Counter session could not be started. Please contact administrator.",
                                                 "Counter Session", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                            return;
                                         }
                                         else if (SessionContext.RequiresClosing)
                                         {
@@ -309,6 +311,7 @@ namespace PosBranch_Win
                             {
                                 MessageBox.Show($"Warning: Failed to initialize session context: {ex.Message}",
                                     "Session Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                return;
                             }
 
                             LoadPOSSettings(Convert.ToInt32(DataBase.CompanyId), Convert.ToInt32(DataBase.BranchId));

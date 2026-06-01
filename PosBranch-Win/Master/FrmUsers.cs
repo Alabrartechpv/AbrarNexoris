@@ -14,6 +14,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Infragistics.Win.UltraWinGrid;
+using ModelClass;
 
 namespace PosBranch_Win.Master
 {
@@ -25,6 +26,7 @@ namespace PosBranch_Win.Master
         UsersRepository operations = new UsersRepository();
         EncryptionAndDecryptionHelper enc = new EncryptionAndDecryptionHelper();
         int Id;
+        private bool gridEventsConnected;
 
         // UltraGrid column configuration will be handled in FormatGrid method
 
@@ -200,11 +202,20 @@ namespace PosBranch_Win.Master
 
         private void ConnectGridEvents()
         {
-            // Add row activation event for better row selection
-            ultraGrid1.AfterRowActivate += UltraGrid1_AfterRowActivate;
+            if (gridEventsConnected)
+                return;
 
-            // Add keyboard navigation support
+            ultraGrid1.AfterRowActivate += UltraGrid1_AfterRowActivate;
+            ultraGrid1.MouseUp += UltraGrid1_MouseUp;
+
             ultraGrid1.KeyDown += UltraGrid1_KeyDown;
+            gridEventsConnected = true;
+        }
+
+        private void UltraGrid1_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (ultraGrid1.ActiveRow != null)
+                LoadUserDataFromRow(ultraGrid1.ActiveRow);
         }
 
         private void UltraGrid1_AfterRowActivate(object sender, EventArgs e)
@@ -254,11 +265,7 @@ namespace PosBranch_Win.Master
                             textEmail.Text = usr.Email ?? "";
                             textPassword.Text = usr.Password ?? "";
 
-                            // Set combo box values - handle null values safely
-                            if (usr.CompanyID > 0)
-                                cmbCompany.Value = usr.CompanyID;
-                            if (usr.BranchID > 0)
-                                cmbBranch.Value = usr.BranchID;
+                            SetCompanyBranchValues(usr.CompanyID, usr.BranchID);
                             // Set the UserLevel combo box by finding the Role with matching UserLevelID
                             // The combo uses RoleID as ValueMember, but user has UserLevelID stored
                             if (usr.UserLevelID > 0 && cmbUserLevel.DataSource is List<Role> roles)
@@ -296,10 +303,11 @@ namespace PosBranch_Win.Master
         private void FrmUsers_Load(object sender, EventArgs e)
         {
             KeyPreview = true;
-            this.FormatGrid();
             this.RefreshCompany();
             this.RefreshBranch();
             this.RefreshUserLevel();
+            ApplyCurrentCompanyBranch();
+            this.FormatGrid();
             btnSave.Visible = true;
             btnUpdate.Visible = false;
 
@@ -355,8 +363,51 @@ namespace PosBranch_Win.Master
                 MessageBox.Show("Error loading user roles. Please check the database connection.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
+        private int GetCurrentCompanyId()
+        {
+            if (SessionContext.CompanyId > 0)
+                return SessionContext.CompanyId;
+
+            int companyId;
+            return int.TryParse(DataBase.CompanyId, out companyId) ? companyId : 0;
+        }
+
+        private int GetCurrentBranchId()
+        {
+            if (SessionContext.BranchId > 0)
+                return SessionContext.BranchId;
+
+            int branchId;
+            return int.TryParse(DataBase.BranchId, out branchId) ? branchId : 0;
+        }
+
+        private void ApplyCurrentCompanyBranch()
+        {
+            SetCompanyBranchValues(GetCurrentCompanyId(), GetCurrentBranchId());
+            cmbCompany.Enabled = false;
+            cmbBranch.Enabled = false;
+            cmbCompany.Visible = false;
+            cmbBranch.Visible = false;
+            labelCompany.Visible = false;
+            labelBranch.Visible = false;
+            labelUserLevel.Location = new Point(20, 176);
+            cmbUserLevel.Location = new Point(103, 173);
+        }
+
+        private void SetCompanyBranchValues(int companyId, int branchId)
+        {
+            if (companyId > 0)
+                cmbCompany.Value = companyId;
+
+            if (branchId > 0)
+                cmbBranch.Value = branchId;
+        }
+
         private void SaveUser()
         {
+            ApplyCurrentCompanyBranch();
+
             // Validate required fields
             if (string.IsNullOrWhiteSpace(textUserName.Text))
             {
@@ -370,16 +421,16 @@ namespace PosBranch_Win.Master
                 textPassword.Focus();
                 return;
             }
-            if (cmbCompany.Value == null || Convert.ToInt32(cmbCompany.Value) == 0)
+            int companyId = GetCurrentCompanyId();
+            int branchId = GetCurrentBranchId();
+            if (companyId <= 0)
             {
-                MessageBox.Show("Please select a company.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                cmbCompany.Focus();
+                MessageBox.Show("Current company is not available. Please login again.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            if (cmbBranch.Value == null || Convert.ToInt32(cmbBranch.Value) == 0)
+            if (branchId <= 0)
             {
-                MessageBox.Show("Please select a branch.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                cmbBranch.Focus();
+                MessageBox.Show("Current branch is not available. Please login again.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
             // Check if a role is selected using SelectedIndex
@@ -418,8 +469,8 @@ namespace PosBranch_Win.Master
             }
 
             users.UserID = 0;
-            users.CompanyID = Convert.ToInt32(cmbCompany.Value ?? 0);
-            users.BranchID = Convert.ToInt32(cmbBranch.Value ?? 0);
+            users.CompanyID = companyId;
+            users.BranchID = branchId;
             users.UserLevelID = userLevelId;
             users.UserName = textUserName.Text.Trim();
             // Encrypt the password before saving to database
@@ -459,11 +510,7 @@ namespace PosBranch_Win.Master
             textPassword.Clear();
             textEmail.Clear();
 
-            // Reset combo boxes
-            if (cmbCompany.Items.Count > 0)
-                cmbCompany.SelectedIndex = -1;
-            if (cmbBranch.Items.Count > 0)
-                cmbBranch.SelectedIndex = -1;
+            ApplyCurrentCompanyBranch();
             if (cmbUserLevel.Items.Count > 0)
                 cmbUserLevel.SelectedIndex = -1;
 
@@ -486,59 +533,7 @@ namespace PosBranch_Win.Master
             {
                 if (e.Cell != null && e.Cell.Row != null)
                 {
-                    // Get the selected row
-                    UltraGridRow selectedRow = e.Cell.Row;
-
-                    // Check if the row has data
-                    if (selectedRow.Cells.Count > 0)
-                    {
-                        // Get UserID from the row
-                        object userIdValue = selectedRow.Cells["UserID"].Value;
-                        if (userIdValue != null && userIdValue != DBNull.Value)
-                        {
-                            int selectedId = Convert.ToInt32(userIdValue);
-
-                            // Fetch user data from database
-                            Users usr = operations.GetById(selectedId);
-
-                            if (usr != null)
-                            {
-                                // Bind the data to form controls
-                                Id = usr.UserID;
-                                textUserName.Text = usr.UserName ?? "";
-                                textEmail.Text = usr.Email ?? "";
-                                textPassword.Text = usr.Password ?? "";
-
-                                // Set combo box values - handle null values safely
-                                if (usr.CompanyID > 0)
-                                    cmbCompany.Value = usr.CompanyID;
-                                if (usr.BranchID > 0)
-                                    cmbBranch.Value = usr.BranchID;
-                                if (usr.UserLevelID > 0)
-                                    cmbUserLevel.Value = usr.UserLevelID;
-
-                                // Update button visibility
-                                btnSave.Visible = false;
-                                btnUpdate.Visible = true;
-
-                                // Optional: Show success message
-                                // MessageBox.Show($"User '{usr.UserName}' loaded successfully.", "Data Loaded", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            }
-                            else
-                            {
-                                MessageBox.Show("User data not found in database.", "Data Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                                ClearForm();
-                            }
-                        }
-                        else
-                        {
-                            MessageBox.Show("Invalid User ID in selected row.", "Selection Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("Selected row contains no data.", "Selection Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    }
+                    LoadUserDataFromRow(e.Cell.Row);
                 }
                 else
                 {
@@ -554,6 +549,8 @@ namespace PosBranch_Win.Master
 
         private void btnUpdate_Click(object sender, EventArgs e)
         {
+            ApplyCurrentCompanyBranch();
+
             // Validate required fields
             if (string.IsNullOrWhiteSpace(textUserName.Text))
             {
@@ -596,8 +593,8 @@ namespace PosBranch_Win.Master
             }
 
             users.UserID = Id;
-            users.CompanyID = Convert.ToInt32(cmbCompany.Value ?? 0);
-            users.BranchID = Convert.ToInt32(cmbBranch.Value ?? 0);
+            users.CompanyID = GetCurrentCompanyId();
+            users.BranchID = GetCurrentBranchId();
             users.UserLevelID = userLevelId;
             users.UserName = textUserName.Text.Trim();
             users.Email = textEmail.Text.Trim();

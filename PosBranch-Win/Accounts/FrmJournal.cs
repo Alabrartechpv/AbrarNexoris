@@ -22,6 +22,7 @@ namespace PosBranch_Win.Accounts
         private readonly JournalVoucherRepository journalRepository = new JournalVoucherRepository();
         private DataTable ledgerTable;
         private DataTable journalLineTable;
+        private UltraButton btnHistory;
         private long currentVoucherId;
         private bool isBinding;
 
@@ -29,6 +30,7 @@ namespace PosBranch_Win.Accounts
         {
             InitializeComponent();
             ConfigureGridDataSource();
+            ConfigureHistoryButton();
             ConfigureGridEvents();
             ApplyModernTheme();
         }
@@ -131,6 +133,7 @@ namespace PosBranch_Win.Accounts
             StyleTotalValue(lblTotalDebitValue);
             StyleTotalValue(lblTotalCreditValue);
             StyleTotalValue(lblDifferenceValue);
+            StyleHistoryButton();
 
             LayoutHeaderControls();
             LayoutNarrationControls();
@@ -169,6 +172,9 @@ namespace PosBranch_Win.Accounts
             lblBranch.Location = new Point(dtpVoucherDate.Right + gap, topLabel);
             CmboBranch.Location = new Point(dtpVoucherDate.Right + gap, topInput);
             CmboBranch.Size = new Size(260, 30);
+
+            btnHistory.Location = new Point(CmboBranch.Right + gap, topInput);
+            btnHistory.Size = new Size(110, 30);
         }
 
         private void LayoutNarrationControls()
@@ -238,6 +244,15 @@ namespace PosBranch_Win.Accounts
             label.Appearance.TextVAlign = VAlign.Middle;
         }
 
+        private void StyleHistoryButton()
+        {
+            btnHistory.Appearance.BackColor = Color.FromArgb(18, 65, 89);
+            btnHistory.Appearance.ForeColor = Color.White;
+            btnHistory.Appearance.FontData.Bold = DefaultableBoolean.True;
+            btnHistory.ButtonStyle = UIElementButtonStyle.FlatBorderless;
+            btnHistory.UseOsThemes = DefaultableBoolean.False;
+        }
+
         private void StyleGrid()
         {
             dgvJournal.Text = string.Empty;
@@ -270,6 +285,16 @@ namespace PosBranch_Win.Accounts
             dgvJournal.DisplayLayout.Override.RowSizing = RowSizing.AutoFree;
             dgvJournal.DisplayLayout.ScrollStyle = ScrollStyle.Immediate;
             dgvJournal.DisplayLayout.ScrollBounds = ScrollBounds.ScrollToFill;
+        }
+
+        private void ConfigureHistoryButton()
+        {
+            btnHistory = new UltraButton
+            {
+                Text = "History"
+            };
+            btnHistory.Click += btnHistory_Click;
+            headerPanel.ClientArea.Controls.Add(btnHistory);
         }
 
         private void dgvJournal_InitializeLayout(object sender, InitializeLayoutEventArgs e)
@@ -534,9 +559,10 @@ namespace PosBranch_Win.Accounts
 
                 JournalVoucher saved = journalRepository.Save(journal);
                 currentVoucherId = saved.VoucherID;
-                txtVoucherNo.Text = saved.VoucherNumber;
-                MessageBox.Show("Journal voucher saved successfully.", "Success",
+                string savedVoucherNumber = saved.VoucherNumber;
+                MessageBox.Show($"Journal voucher {savedVoucherNumber} saved successfully.", "Success",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ClearForm();
             }
             catch (Exception ex)
             {
@@ -715,6 +741,18 @@ namespace PosBranch_Win.Accounts
             if (!isBinding)
             {
                 BindLedgers();
+            }
+        }
+
+        private void btnHistory_Click(object sender, EventArgs e)
+        {
+            using (var historyForm = new global::PosBranch_Win.DialogBox.FrmJournalHistory(GetSelectedBranchId()))
+            {
+                if (historyForm.ShowDialog(this) == DialogResult.OK && historyForm.SelectedVoucherId > 0)
+                {
+                    txtVoucherNo.Text = historyForm.SelectedVoucherId.ToString();
+                    LoadJournal();
+                }
             }
         }
 

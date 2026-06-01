@@ -155,6 +155,61 @@ ORDER BY v.SlNo;";
             }
         }
 
+        public DataTable GetVoucherHistory(int branchId, int maxRows = 100)
+        {
+            int companyId = GetContextValue(SessionContext.CompanyId, DataBase.CompanyId);
+            int finYearId = GetContextValue(SessionContext.FinYearId, DataBase.FinyearId);
+            if (branchId <= 0)
+            {
+                branchId = GetContextValue(SessionContext.BranchId, DataBase.BranchId);
+            }
+
+            ApplyOpenConnection();
+
+            try
+            {
+                string sql = @"
+SELECT TOP (@MaxRows)
+       v.VoucherID,
+       ISNULL(NULLIF(MAX(v.VoucherNumber), ''), CAST(v.VoucherID AS varchar(30))) AS VoucherNumber,
+       CAST(MAX(v.VoucherDate) AS date) AS VoucherDate,
+       ISNULL(MAX(v.Narration), '') AS Narration,
+       SUM(ISNULL(v.Debit, 0)) AS TotalDebit,
+       SUM(ISNULL(v.Credit, 0)) AS TotalCredit
+FROM Vouchers v
+WHERE v.VoucherType = @VoucherType
+  AND v.CompanyID = @CompanyID
+  AND v.BranchID = @BranchID
+  AND v.FinYearID = @FinYearID
+  AND ISNULL(v.CancelFlag, 0) = 0
+GROUP BY v.VoucherID
+ORDER BY MAX(v.VoucherDate) DESC, v.VoucherID DESC;";
+
+                DataTable table = new DataTable();
+                using (var command = new SqlCommand(sql, (SqlConnection)DataConnection))
+                {
+                    command.Parameters.AddWithValue("@MaxRows", maxRows);
+                    command.Parameters.AddWithValue("@VoucherType", VoucherType);
+                    command.Parameters.AddWithValue("@CompanyID", companyId);
+                    command.Parameters.AddWithValue("@BranchID", branchId);
+                    command.Parameters.AddWithValue("@FinYearID", finYearId);
+                    using (var adapter = new SqlDataAdapter(command))
+                    {
+                        adapter.Fill(table);
+                    }
+                }
+
+                return table;
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                {
+                    DataConnection.Close();
+                }
+            }
+        }
+
         public void Delete(long voucherId)
         {
             if (voucherId <= 0)

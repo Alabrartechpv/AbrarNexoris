@@ -42,6 +42,7 @@ namespace PosBranch_Win.Utilities
             CalculateTotal();
 
             // Event handlers
+            gridCash.BeforeCellUpdate += GridCash_BeforeCellUpdate;
             gridCash.AfterCellUpdate += GridCash_AfterCellUpdate;
             gridCash.KeyDown += GridCash_KeyDown;
             gridCash.InitializeLayout += GridCash_InitializeLayout;
@@ -462,6 +463,41 @@ namespace PosBranch_Win.Utilities
             {
                 UpdateRowAmount(e.Cell.Row);
             }
+        }
+
+        private void GridCash_BeforeCellUpdate(object sender, BeforeCellUpdateEventArgs e)
+        {
+            if (e.Cell.Column.Key != "Quantity")
+            {
+                return;
+            }
+
+            if (e.NewValue == null || e.NewValue == DBNull.Value || string.IsNullOrWhiteSpace(e.NewValue.ToString()))
+            {
+                e.Cancel = true;
+                ResetQuantityCell(e.Cell);
+                return;
+            }
+
+            if (!int.TryParse(e.NewValue.ToString(), out int quantity) || quantity < 0)
+            {
+                e.Cancel = true;
+                ResetQuantityCell(e.Cell);
+            }
+        }
+
+        private void ResetQuantityCell(UltraGridCell cell)
+        {
+            if (cell == null)
+            {
+                return;
+            }
+
+            BeginInvoke(new Action(() =>
+            {
+                cell.Value = 0;
+                UpdateRowAmount(cell.Row);
+            }));
         }
 
         private void UpdateRowAmount(UltraGridRow row)

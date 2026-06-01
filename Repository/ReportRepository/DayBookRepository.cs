@@ -48,9 +48,9 @@ ORDER BY v.VoucherDate, v.VoucherID, v.SlNo;";
                 {
                     command.CommandType = CommandType.Text;
                     command.CommandTimeout = 60;
-                    command.Parameters.AddWithValue("@CompanyId", SessionContext.CompanyId);
-                    command.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
-                    command.Parameters.AddWithValue("@FinYearId", SessionContext.FinYearId);
+                    command.Parameters.AddWithValue("@CompanyId", GetContextValue(SessionContext.CompanyId, DataBase.CompanyId));
+                    command.Parameters.AddWithValue("@BranchId", GetContextValue(SessionContext.BranchId, DataBase.BranchId));
+                    command.Parameters.AddWithValue("@FinYearId", GetContextValue(SessionContext.FinYearId, DataBase.FinyearId));
                     command.Parameters.AddWithValue("@FromDate", fromDate);
                     command.Parameters.AddWithValue("@ToDate", GetEndOfDay(toDate));
 
@@ -95,6 +95,17 @@ ORDER BY v.VoucherDate, v.VoucherID, v.SlNo;";
         private DateTime GetEndOfDay(DateTime date)
         {
             return date.Date.AddDays(1).AddSeconds(-1);
+        }
+
+        private int GetContextValue(int sessionValue, string legacyValue)
+        {
+            if (sessionValue > 0)
+            {
+                return sessionValue;
+            }
+
+            int parsedValue;
+            return int.TryParse(legacyValue, out parsedValue) ? parsedValue : 0;
         }
     }
 }

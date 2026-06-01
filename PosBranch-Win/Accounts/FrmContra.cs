@@ -22,6 +22,7 @@ namespace PosBranch_Win.Accounts
         private readonly ContraVoucherRepository contraRepository = new ContraVoucherRepository();
         private DataTable ledgerTable;
         private DataTable contraLineTable;
+        private UltraButton btnHistory;
         private long currentVoucherId;
         private bool isBinding;
 
@@ -29,6 +30,7 @@ namespace PosBranch_Win.Accounts
         {
             InitializeComponent();
             ConfigureGridDataSource();
+            ConfigureHistoryButton();
             ConfigureGridEvents();
             ApplyModernTheme();
         }
@@ -132,6 +134,7 @@ namespace PosBranch_Win.Accounts
             StyleTotalValue(lblTotalDebitValue);
             StyleTotalValue(lblTotalCreditValue);
             StyleTotalValue(lblDifferenceValue);
+            StyleHistoryButton();
             LayoutControls();
             StyleGrid();
 
@@ -179,6 +182,25 @@ namespace PosBranch_Win.Accounts
             label.Appearance.TextHAlign = HAlign.Right;
         }
 
+        private void StyleHistoryButton()
+        {
+            btnHistory.Appearance.BackColor = Color.FromArgb(18, 65, 89);
+            btnHistory.Appearance.ForeColor = Color.White;
+            btnHistory.Appearance.FontData.Bold = DefaultableBoolean.True;
+            btnHistory.ButtonStyle = UIElementButtonStyle.FlatBorderless;
+            btnHistory.UseOsThemes = DefaultableBoolean.False;
+        }
+
+        private void ConfigureHistoryButton()
+        {
+            btnHistory = new UltraButton
+            {
+                Text = "History"
+            };
+            btnHistory.Click += btnHistory_Click;
+            headerPanel.ClientArea.Controls.Add(btnHistory);
+        }
+
         private void LayoutControls()
         {
             lblVocuherNo.Location = new Point(28, 14);
@@ -192,6 +214,9 @@ namespace PosBranch_Win.Accounts
             lblBranch.Location = new Point(dtpVoucherDate.Right + 24, 14);
             CmboBranch.Location = new Point(dtpVoucherDate.Right + 24, 39);
             CmboBranch.Size = new Size(260, 30);
+
+            btnHistory.Location = new Point(CmboBranch.Right + 24, 39);
+            btnHistory.Size = new Size(110, 30);
 
             lblNarration.Location = new Point(28, 10);
             txtNarration.Location = new Point(28, 33);
@@ -312,6 +337,11 @@ namespace PosBranch_Win.Accounts
         public void Delete()
         {
             DeleteContra();
+        }
+
+        public void LoadVoucher()
+        {
+            LoadContra();
         }
 
         private void ClearForm()
@@ -449,8 +479,9 @@ namespace PosBranch_Win.Accounts
 
                 JournalVoucher saved = contraRepository.Save(contra);
                 currentVoucherId = saved.VoucherID;
-                txtVoucherNo.Text = saved.VoucherNumber;
-                MessageBox.Show("Contra voucher saved successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                string savedVoucherNumber = saved.VoucherNumber;
+                MessageBox.Show($"Contra voucher {savedVoucherNumber} saved successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ClearForm();
             }
             catch (Exception ex)
             {
@@ -622,6 +653,18 @@ namespace PosBranch_Win.Accounts
             if (!isBinding)
             {
                 BindLedgers();
+            }
+        }
+
+        private void btnHistory_Click(object sender, EventArgs e)
+        {
+            using (var historyForm = new global::PosBranch_Win.DialogBox.FrmContraHistory(GetSelectedBranchId()))
+            {
+                if (historyForm.ShowDialog(this) == DialogResult.OK && historyForm.SelectedVoucherId > 0)
+                {
+                    txtVoucherNo.Text = historyForm.SelectedVoucherId.ToString();
+                    LoadContra();
+                }
             }
         }
 
