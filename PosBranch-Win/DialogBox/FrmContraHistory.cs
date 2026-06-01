@@ -1,6 +1,5 @@
 using System;
 using System.Data;
-using System.Drawing;
 using System.Windows.Forms;
 using Infragistics.Win;
 using Infragistics.Win.UltraWinGrid;
@@ -30,20 +29,6 @@ namespace PosBranch_Win.DialogBox
         private void ConfigureForm()
         {
             Text = "Contra History";
-            StartPosition = FormStartPosition.CenterParent;
-            Size = new Size(900, 560);
-            MinimumSize = new Size(760, 460);
-
-            ultPanelPurchaseDisplay.Dock = DockStyle.Fill;
-            ultraPanel2.Dock = DockStyle.Top;
-            ultraGrid1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            ultraPanel8.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            ultraPanel5.Anchor = AnchorStyles.Left | AnchorStyles.Bottom;
-            ultraPanel6.Anchor = AnchorStyles.Left | AnchorStyles.Bottom;
-            ultraPanel4.Visible = false;
-            ultraPanel3.Visible = false;
-            ultraPanel7.Visible = false;
-            textBox3.Visible = false;
             label1.Text = string.Empty;
 
             comboBox1.Items.Clear();
@@ -70,22 +55,6 @@ namespace PosBranch_Win.DialogBox
             ultraPictureBox2.Click += (sender, args) => Close();
 
             Load += (sender, args) => LoadHistory();
-            Resize += (sender, args) => LayoutControls();
-            LayoutControls();
-        }
-
-        private void LayoutControls()
-        {
-            int margin = 8;
-            textBoxsearch.Location = new Point(margin, ultraPanel2.Bottom + margin);
-            textBoxsearch.Width = Math.Max(240, ClientSize.Width - 190);
-            ultraGrid1.Location = new Point(margin, textBoxsearch.Bottom + margin);
-            ultraGrid1.Size = new Size(Math.Max(300, ClientSize.Width - 190), Math.Max(180, ClientSize.Height - 170));
-            ultraPanel8.Location = new Point(margin, ultraGrid1.Bottom);
-            ultraPanel8.Width = ultraGrid1.Width;
-            label1.Location = new Point(margin, ultraPanel8.Bottom + 6);
-            ultraPanel5.Location = new Point(margin, ClientSize.Height - 62);
-            ultraPanel6.Location = new Point(ultraPanel5.Right + 12, ClientSize.Height - 62);
         }
 
         private void LoadHistory()
