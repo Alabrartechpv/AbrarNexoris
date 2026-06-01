@@ -15,6 +15,9 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Printing;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
@@ -53,6 +56,13 @@ namespace PosBranch_Win.Transaction
         private PurchaseOrderRepository _purchaseOrderRepository;
         private bool _gridInitialized;
         private int _currentPurchaseOrderId;
+        private Button btnExportGrid;
+
+        private enum GridExportFormat
+        {
+            Excel,
+            Pdf
+        }
 
         public frmPurchaseOrder()
         {
@@ -202,6 +212,7 @@ namespace PosBranch_Win.Transaction
             lblTotal.Font = new Font("Tahoma", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
 
             InitializePanelButtons();
+            EnsureExportGridButton();
         }
 
         private void InitializeDefaults()
@@ -1162,6 +1173,270 @@ namespace PosBranch_Win.Transaction
             }
         }
 
+        private void EnsureExportGridButton()
+        {
+            if (btnExportGrid != null)
+                return;
+
+            btnExportGrid = new Button
+            {
+                Name = "btnExportGrid",
+                Text = "Export Grid",
+                Size = new Size(92, 27),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
+            };
+            btnExportGrid.Location = new Point(384, 232);
+            btnExportGrid.Click += btnExportGrid_Click;
+            StyleButton(btnExportGrid, "Export Grid");
+            ultraPanelHeader.ClientArea.Controls.Add(btnExportGrid);
+            btnExportGrid.BringToFront();
+        }
+
+        private void btnExportGrid_Click(object sender, EventArgs e)
+        {
+            ExportGrid();
+        }
+
+        private void ExportGrid()
+        {
+            if (gridReport == null || gridReport.DisplayLayout.Bands.Count == 0 || !GetVisibleDataRows().Any())
+            {
+                MessageBox.Show("There is no grid data to export.", "Export Grid",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            GridExportFormat? exportFormat = AskGridExportFormat();
+            if (!exportFormat.HasValue)
+                return;
+
+            using (SaveFileDialog dialog = new SaveFileDialog())
+            {
+                string documentNo = GetSafeFileName(txtDocNo.Text);
+                if (string.IsNullOrWhiteSpace(documentNo))
+                    documentNo = "New";
+
+                if (exportFormat.Value == GridExportFormat.Excel)
+                {
+                    dialog.Filter = "Excel files (*.xls)|*.xls";
+                    dialog.FileName = string.Format("PurchaseOrder_{0}_{1:yyyyMMdd_HHmmss}.xls", documentNo, DateTime.Now);
+                }
+                else
+                {
+                    dialog.Filter = "PDF files (*.pdf)|*.pdf";
+                    dialog.FileName = string.Format("PurchaseOrder_{0}_{1:yyyyMMdd_HHmmss}.pdf", documentNo, DateTime.Now);
+                }
+
+                if (dialog.ShowDialog(this) != DialogResult.OK)
+                    return;
+
+                Cursor previousCursor = Cursor;
+                Cursor = Cursors.WaitCursor;
+
+                try
+                {
+                    if (exportFormat.Value == GridExportFormat.Excel)
+                    {
+                        ExportGridToExcel(dialog.FileName);
+                    }
+                    else
+                    {
+                        ExportGridToPdf(dialog.FileName);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Grid export failed.\n\n" + ex.Message, "Export Grid",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                finally
+                {
+                    Cursor = previousCursor;
+                }
+            }
+        }
+
+        private GridExportFormat? AskGridExportFormat()
+        {
+            DialogResult result = MessageBox.Show(
+                "Export grid as Excel?\n\nYes = Excel\nNo = PDF\nCancel = Stop",
+                "Export Grid",
+                MessageBoxButtons.YesNoCancel,
+                MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+                return GridExportFormat.Excel;
+
+            if (result == DialogResult.No)
+                return GridExportFormat.Pdf;
+
+            return null;
+        }
+
+        private void ExportGridToExcel(string filePath)
+        {
+            List<UltraGridColumn> columns = GetExportColumns();
+            List<UltraGridRow> rows = GetVisibleDataRows().ToList();
+
+            using (StreamWriter writer = new StreamWriter(filePath, false, Encoding.UTF8))
+            {
+                writer.WriteLine("<?xml version=\"1.0\"?>");
+                writer.WriteLine("<?mso-application progid=\"Excel.Sheet\"?>");
+                writer.WriteLine("<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\">");
+                writer.WriteLine("<Styles>");
+                writer.WriteLine("<Style ss:ID=\"Title\"><Font ss:Bold=\"1\" ss:Size=\"14\"/></Style>");
+                writer.WriteLine("<Style ss:ID=\"Header\"><Font ss:Bold=\"1\"/><Interior ss:Color=\"#5D97D6\" ss:Pattern=\"Solid\"/><Font ss:Color=\"#FFFFFF\" ss:Bold=\"1\"/></Style>");
+                writer.WriteLine("</Styles>");
+                writer.WriteLine("<Worksheet ss:Name=\"Purchase Order\">");
+                writer.WriteLine("<Table>");
+
+                WriteExcelTextRow(writer, "Purchase Order Details", "Title", columns.Count);
+                WriteExcelTextRow(writer, "Doc No: " + GetControlText(txtDocNo) + "    Date: " + GetEditorDateText(dtpDate) + "    Vendor: " + GetControlText(txtNavigator), null, columns.Count);
+                WriteExcelTextRow(writer, "Expected Receive Date: " + GetEditorDateText(dtpExpectedDate) + "    Reference: " + GetControlText(txtReference), null, columns.Count);
+                writer.WriteLine("<Row/>");
+
+                writer.WriteLine("<Row>");
+                foreach (UltraGridColumn column in columns)
+                {
+                    WriteExcelCell(writer, column.Header.Caption, "Header");
+                }
+                writer.WriteLine("</Row>");
+
+                foreach (UltraGridRow row in rows)
+                {
+                    writer.WriteLine("<Row>");
+                    foreach (UltraGridColumn column in columns)
+                    {
+                        object value = row.Cells.Exists(column.Key) ? row.Cells[column.Key].Value : null;
+                        WriteExcelCell(writer, FormatGridExportValue(value, column), null);
+                    }
+                    writer.WriteLine("</Row>");
+                }
+
+                writer.WriteLine("</Table>");
+                writer.WriteLine("</Worksheet>");
+                writer.WriteLine("</Workbook>");
+            }
+
+            MessageBox.Show("Grid exported to Excel successfully.", "Export Grid",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void ExportGridToPdf(string filePath)
+        {
+            if (!PrinterSettings.InstalledPrinters.Cast<string>().Any(x => string.Equals(x, "Microsoft Print to PDF", StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new InvalidOperationException("Microsoft Print to PDF printer is not installed.");
+            }
+
+            UltraGridPrintDocument printDocument = new UltraGridPrintDocument();
+            ConfigureGridPrintDocument(printDocument);
+            printDocument.PrinterSettings.PrinterName = "Microsoft Print to PDF";
+            printDocument.PrinterSettings.PrintToFile = true;
+            printDocument.PrinterSettings.PrintFileName = filePath;
+            printDocument.Print();
+
+            MessageBox.Show("Grid exported to PDF successfully.", "Export Grid",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void ConfigureGridPrintDocument(UltraGridPrintDocument printDocument)
+        {
+            printDocument.Grid = gridReport;
+            printDocument.DefaultPageSettings.Landscape = true;
+            printDocument.DefaultPageSettings.Margins = new System.Drawing.Printing.Margins(35, 35, 55, 45);
+            printDocument.Header.TextCenter =
+                "Purchase Order Details" + Environment.NewLine +
+                "Doc No: " + GetControlText(txtDocNo) + "    Vendor: " + GetControlText(txtNavigator);
+            printDocument.Header.TextRight = "Exported: " + DateTime.Now.ToString("dd-MMM-yyyy hh:mm tt");
+            printDocument.Header.Appearance.FontData.Bold = DefaultableBoolean.True;
+            printDocument.Header.Appearance.FontData.SizeInPoints = 11;
+            printDocument.Header.Appearance.TextHAlign = HAlign.Center;
+            printDocument.Footer.TextCenter = "Page [Page #]";
+            printDocument.FitWidthToPages = 1;
+        }
+
+        private List<UltraGridColumn> GetExportColumns()
+        {
+            if (gridReport.DisplayLayout.Bands.Count == 0)
+                return new List<UltraGridColumn>();
+
+            return gridReport.DisplayLayout.Bands[0].Columns
+                .Cast<UltraGridColumn>()
+                .Where(column => !column.Hidden)
+                .OrderBy(column => column.Header.VisiblePosition)
+                .ToList();
+        }
+
+        private static void WriteExcelTextRow(StreamWriter writer, string text, string style, int columnCount)
+        {
+            writer.Write("<Row>");
+            string styleText = string.IsNullOrWhiteSpace(style) ? string.Empty : " ss:StyleID=\"" + style + "\"";
+            writer.Write("<Cell" + styleText + " ss:MergeAcross=\"" + Math.Max(0, columnCount - 1) + "\"><Data ss:Type=\"String\">" + EscapeXml(text) + "</Data></Cell>");
+            writer.WriteLine("</Row>");
+        }
+
+        private static void WriteExcelCell(StreamWriter writer, string value, string style)
+        {
+            string styleText = string.IsNullOrWhiteSpace(style) ? string.Empty : " ss:StyleID=\"" + style + "\"";
+            writer.Write("<Cell" + styleText + "><Data ss:Type=\"String\">" + EscapeXml(value) + "</Data></Cell>");
+        }
+
+        private string FormatGridExportValue(object value, UltraGridColumn column)
+        {
+            if (value == null || value == DBNull.Value)
+                return string.Empty;
+
+            DateTime dateValue;
+            if (DateTime.TryParse(Convert.ToString(value), out dateValue) && column != null && column.DataType == typeof(DateTime))
+                return dateValue.ToString("dd-MMM-yyyy", CultureInfo.InvariantCulture);
+
+            IFormattable formattableValue = value as IFormattable;
+            if (formattableValue != null && column != null && !string.IsNullOrWhiteSpace(column.Format))
+                return formattableValue.ToString(column.Format, CultureInfo.InvariantCulture);
+
+            return Convert.ToString(value);
+        }
+
+        private static string EscapeXml(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return string.Empty;
+
+            return value.Replace("&", "&amp;")
+                .Replace("<", "&lt;")
+                .Replace(">", "&gt;")
+                .Replace("\"", "&quot;")
+                .Replace("'", "&apos;");
+        }
+
+        private static string GetSafeFileName(string value)
+        {
+            string fileName = string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+            foreach (char invalidChar in Path.GetInvalidFileNameChars())
+            {
+                fileName = fileName.Replace(invalidChar, '_');
+            }
+
+            return fileName;
+        }
+
+        private static string GetControlText(Control control)
+        {
+            return control == null ? string.Empty : control.Text;
+        }
+
+        private static string GetEditorDateText(UltraDateTimeEditor editor)
+        {
+            if (editor == null || editor.Value == null)
+                return string.Empty;
+
+            DateTime dateValue;
+            return DateTime.TryParse(Convert.ToString(editor.Value), out dateValue)
+                ? dateValue.ToString("dd-MMM-yyyy", CultureInfo.InvariantCulture)
+                : Convert.ToString(editor.Value);
+        }
+
         private void OpenPurchaseOrderDialog()
         {
             using (frmPurchaseOrderDig dialog = new frmPurchaseOrderDig())
@@ -1183,8 +1458,14 @@ namespace PosBranch_Win.Transaction
                         ? vendorDialog.SelectedVendorId.ToString()
                         : string.Empty;
                     txtNavigator.Text = vendorDialog.SelectedVendorName ?? string.Empty;
+                    RefreshGridCostsFromLatestPurchases();
                 }
             }
+        }
+
+        private int GetSelectedVendorLedgerId()
+        {
+            return ParseInt(txtAccount.Text);
         }
 
         private void OpenItemDialog()
@@ -1207,6 +1488,13 @@ namespace PosBranch_Win.Transaction
             DataTable table = gridReport.DataSource as DataTable;
             if (table == null)
                 return;
+
+            if (GetSelectedVendorLedgerId() <= 0)
+            {
+                MessageBox.Show("Please select a vendor first so the cost can use that vendor's latest purchase price.", "Vendor Required",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
 
             string itemNo = GetString(itemData, "BarCode", "Barcode", "ItemNo", "ItemId");
             string description = GetString(itemData, "Description", "ItemName", "ProductName");
@@ -1479,6 +1767,10 @@ namespace PosBranch_Win.Transaction
         {
             int resolvedUnitId = unitId;
             decimal itemMasterCost = GetItemMasterUnitCost(itemId, unitId, unitName, fallbackCost);
+            int vendorLedgerId = GetSelectedVendorLedgerId();
+
+            if (vendorLedgerId <= 0)
+                return itemMasterCost;
 
             try
             {
@@ -1495,8 +1787,10 @@ namespace PosBranch_Win.Transaction
             decimal purchaseCost = GetPurchaseOrderRepository().GetLatestItemPurchaseCost(
                 itemId,
                 resolvedUnitId,
+                unitName,
                 GetCompanyId(),
-                GetBranchId());
+                GetBranchId(),
+                vendorLedgerId);
 
             return purchaseCost > 0 ? purchaseCost : itemMasterCost;
         }
@@ -1534,12 +1828,8 @@ namespace PosBranch_Win.Transaction
                 int itemId = ParseInt(Convert.ToString(row.Cells["ItemId"].Value));
                 int unitId = ParseInt(Convert.ToString(row.Cells["UnitId"].Value));
                 string unit = Convert.ToString(row.Cells["UOM"].Value);
-                decimal fallbackCost = GetNumericValue(row.Cells.Exists("Cost") ? row.Cells["Cost"].Value : null) ?? 0m;
-                decimal latestCost = GetLatestPurchaseItemUnitCost(itemId, unitId, unit, fallbackCost);
                 decimal itemMasterUnitCost = GetItemMasterUnitCost(itemId, unitId, unit, GetNumericValue(row.Cells.Exists("UPrice") ? row.Cells["UPrice"].Value : null) ?? 0m);
-
-                if (latestCost <= 0)
-                    continue;
+                decimal latestCost = GetLatestPurchaseItemUnitCost(itemId, unitId, unit, itemMasterUnitCost);
 
                 row.Cells["Cost"].Value = latestCost;
                 row.Cells["UPrice"].Value = itemMasterUnitCost;

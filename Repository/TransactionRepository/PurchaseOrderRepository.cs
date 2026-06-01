@@ -230,11 +230,34 @@ namespace Repository.TransactionRepository
             return SaveInternal(master, details, true);
         }
 
-        public decimal GetLatestItemPurchaseCost(int itemId, int unitId, int companyId, int branchId)
+        /// <summary>
+        /// Latest unit cost from purchase invoices (FrmPurchase / PMaster + PDetails) for the given vendor.
+        /// Matches Item Master vendor-tab history: same item, vendor (LedgerID), most recent purchase first.
+        /// </summary>
+        public decimal GetLatestItemPurchaseCost(int itemId, int unitId, string unitName, int companyId, int branchId, int ledgerId)
         {
-            if (itemId <= 0)
+            if (itemId <= 0 || ledgerId <= 0)
                 return 0m;
 
+            if (unitId > 0)
+            {
+                decimal costByUnitId = QueryLatestPurchaseCost(itemId, unitId, null, companyId, branchId, ledgerId);
+                if (costByUnitId > 0)
+                    return costByUnitId;
+            }
+
+            if (!string.IsNullOrWhiteSpace(unitName))
+            {
+                decimal costByUnitName = QueryLatestPurchaseCost(itemId, 0, unitName.Trim(), companyId, branchId, ledgerId);
+                if (costByUnitName > 0)
+                    return costByUnitName;
+            }
+
+            return QueryLatestPurchaseCost(itemId, 0, null, companyId, branchId, ledgerId);
+        }
+
+        private decimal QueryLatestPurchaseCost(int itemId, int unitId, string unitName, int companyId, int branchId, int ledgerId)
+        {
             bool wasClosed = DataConnection.State != ConnectionState.Open;
 
             try
@@ -250,10 +273,13 @@ INNER JOIN PMaster pm
     AND pm.FinYearId = pd.FinYearId
     AND pm.BranchId = pd.BranchID
 WHERE pd.ItemID = @ItemId
+    AND pm.LedgerID = @LedgerId
     AND (@UnitId <= 0 OR pd.UnitId = @UnitId)
-    AND (@CompanyId <= 0 OR pm.CompanyId = @CompanyId)
+    AND (@UnitName IS NULL OR LTRIM(RTRIM(pd.Unit)) = LTRIM(RTRIM(@UnitName)))
+    AND (@CompanyId <= 0 OR ISNULL(pm.CompanyId, @CompanyId) = @CompanyId)
     AND (@BranchId <= 0 OR pm.BranchId = @BranchId)
     AND ISNULL(pm.CancelFlag, 0) = 0
+    AND ISNULL(pd.Cost, 0) > 0
 ORDER BY pm.PurchaseDate DESC, pm.Pid DESC, pd.SlNo DESC";
 
                 using (SqlCommand cmd = new SqlCommand(sql, (SqlConnection)DataConnection))
@@ -261,8 +287,10 @@ ORDER BY pm.PurchaseDate DESC, pm.Pid DESC, pd.SlNo DESC";
                     cmd.CommandType = CommandType.Text;
                     cmd.Parameters.AddWithValue("@ItemId", itemId);
                     cmd.Parameters.AddWithValue("@UnitId", unitId);
+                    cmd.Parameters.AddWithValue("@UnitName", string.IsNullOrWhiteSpace(unitName) ? (object)DBNull.Value : unitName);
                     cmd.Parameters.AddWithValue("@CompanyId", companyId);
                     cmd.Parameters.AddWithValue("@BranchId", branchId);
+                    cmd.Parameters.AddWithValue("@LedgerId", ledgerId);
 
                     object result = cmd.ExecuteScalar();
                     if (result != null && result != DBNull.Value)

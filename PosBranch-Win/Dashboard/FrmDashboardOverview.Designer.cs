@@ -7,7 +7,10 @@ namespace PosBranch_Win.Dashboard
         private System.Windows.Forms.Panel headerPanel;
         private System.Windows.Forms.Label lblTitle;
         private System.Windows.Forms.Label lblSubTitle;
-        private Infragistics.Win.UltraWinEditors.UltraDateTimeEditor lblDate;
+        private Infragistics.Win.UltraWinEditors.UltraDateTimeEditor dtFrom;
+        private Infragistics.Win.UltraWinEditors.UltraDateTimeEditor dtTo;
+        private Infragistics.Win.UltraWinEditors.UltraComboEditor cmbQuickDate;
+        private System.Windows.Forms.Button btnApply;
         private System.Windows.Forms.TableLayoutPanel cardsLayout;
         private System.Windows.Forms.Panel cardSales;
         private System.Windows.Forms.Panel cardPurchase;
@@ -87,11 +90,16 @@ namespace PosBranch_Win.Dashboard
         private void InitializeComponent()
         {
             Infragistics.Win.Appearance appearance1 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance2 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance3 = new Infragistics.Win.Appearance();
             this.mainLayout = new System.Windows.Forms.TableLayoutPanel();
             this.headerPanel = new System.Windows.Forms.Panel();
             this.lblTitle = new System.Windows.Forms.Label();
             this.lblSubTitle = new System.Windows.Forms.Label();
-            this.lblDate = new Infragistics.Win.UltraWinEditors.UltraDateTimeEditor();
+            this.dtFrom = new Infragistics.Win.UltraWinEditors.UltraDateTimeEditor();
+            this.dtTo = new Infragistics.Win.UltraWinEditors.UltraDateTimeEditor();
+            this.cmbQuickDate = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
+            this.btnApply = new System.Windows.Forms.Button();
             this.cardsLayout = new System.Windows.Forms.TableLayoutPanel();
             this.cardSales = new System.Windows.Forms.Panel();
             this.lblSalesCardTitle = new System.Windows.Forms.Label();
@@ -160,7 +168,9 @@ namespace PosBranch_Win.Dashboard
             this.lblDueIcon = new System.Windows.Forms.Label();
             this.mainLayout.SuspendLayout();
             this.headerPanel.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.lblDate)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dtFrom)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dtTo)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.cmbQuickDate)).BeginInit();
             this.cardsLayout.SuspendLayout();
             this.cardSales.SuspendLayout();
             this.cardPurchase.SuspendLayout();
@@ -181,6 +191,9 @@ namespace PosBranch_Win.Dashboard
             // 
             // mainLayout
             // 
+            this.mainLayout.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.mainLayout.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(230)))), ((int)(((byte)(245)))), ((int)(((byte)(253)))));
             this.mainLayout.ColumnCount = 1;
             this.mainLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
@@ -188,9 +201,6 @@ namespace PosBranch_Win.Dashboard
             this.mainLayout.Controls.Add(this.cardsLayout, 0, 1);
             this.mainLayout.Controls.Add(this.middleLayout, 0, 2);
             this.mainLayout.Controls.Add(this.bottomLayout, 0, 3);
-            this.mainLayout.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.mainLayout.Location = new System.Drawing.Point(0, 0);
             this.mainLayout.Name = "mainLayout";
             this.mainLayout.Padding = new System.Windows.Forms.Padding(18, 12, 18, 12);
@@ -204,11 +214,14 @@ namespace PosBranch_Win.Dashboard
             // 
             // headerPanel
             // 
+            this.headerPanel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.headerPanel.Controls.Add(this.lblTitle);
             this.headerPanel.Controls.Add(this.lblSubTitle);
-            this.headerPanel.Controls.Add(this.lblDate);
-            this.headerPanel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.headerPanel.Controls.Add(this.dtFrom);
+            this.headerPanel.Controls.Add(this.dtTo);
+            this.headerPanel.Controls.Add(this.cmbQuickDate);
+            this.headerPanel.Controls.Add(this.btnApply);
             this.headerPanel.Location = new System.Drawing.Point(21, 15);
             this.headerPanel.Name = "headerPanel";
             this.headerPanel.Size = new System.Drawing.Size(1138, 52);
@@ -236,28 +249,89 @@ namespace PosBranch_Win.Dashboard
             this.lblSubTitle.TabIndex = 1;
             this.lblSubTitle.Text = "Here is what is happening in your business.";
             // 
-            // lblDate
+            // dtFrom
             // 
-            this.lblDate.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.dtFrom.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             appearance1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(250)))), ((int)(((byte)(253)))), ((int)(((byte)(255)))));
             appearance1.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(144)))), ((int)(((byte)(181)))), ((int)(((byte)(223)))));
             appearance1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(73)))), ((int)(((byte)(126)))));
             appearance1.TextHAlignAsString = "Center";
-            this.lblDate.Appearance = appearance1;
-            this.lblDate.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(250)))), ((int)(((byte)(253)))), ((int)(((byte)(255)))));
-            this.lblDate.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
-            this.lblDate.DisplayStyle = Infragistics.Win.EmbeddableElementDisplayStyle.Office2013;
-            this.lblDate.Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold);
-            this.lblDate.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(73)))), ((int)(((byte)(126)))));
-            this.lblDate.Location = new System.Drawing.Point(1017, 11);
-            this.lblDate.Name = "lblDate";
-            this.lblDate.Size = new System.Drawing.Size(115, 23);
-            this.lblDate.TabIndex = 2;
-            this.lblDate.UseAppStyling = false;
-            this.lblDate.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+            this.dtFrom.Appearance = appearance1;
+            this.dtFrom.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(250)))), ((int)(((byte)(253)))), ((int)(((byte)(255)))));
+            this.dtFrom.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
+            this.dtFrom.DateTime = new System.DateTime(2026, 5, 25, 0, 0, 0, 0);
+            this.dtFrom.DisplayStyle = Infragistics.Win.EmbeddableElementDisplayStyle.Office2013;
+            this.dtFrom.Font = new System.Drawing.Font("Segoe UI", 8.75F);
+            this.dtFrom.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(73)))), ((int)(((byte)(126)))));
+            this.dtFrom.Location = new System.Drawing.Point(642, 13);
+            this.dtFrom.Name = "dtFrom";
+            this.dtFrom.Size = new System.Drawing.Size(128, 23);
+            this.dtFrom.TabIndex = 2;
+            this.dtFrom.UseAppStyling = false;
+            this.dtFrom.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+            this.dtFrom.Value = new System.DateTime(2026, 5, 25, 0, 0, 0, 0);
+            // 
+            // dtTo
+            // 
+            this.dtTo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            appearance2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(250)))), ((int)(((byte)(253)))), ((int)(((byte)(255)))));
+            appearance2.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(144)))), ((int)(((byte)(181)))), ((int)(((byte)(223)))));
+            appearance2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(73)))), ((int)(((byte)(126)))));
+            appearance2.TextHAlignAsString = "Center";
+            this.dtTo.Appearance = appearance2;
+            this.dtTo.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(250)))), ((int)(((byte)(253)))), ((int)(((byte)(255)))));
+            this.dtTo.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
+            this.dtTo.DateTime = new System.DateTime(2026, 5, 25, 0, 0, 0, 0);
+            this.dtTo.DisplayStyle = Infragistics.Win.EmbeddableElementDisplayStyle.Office2013;
+            this.dtTo.Font = new System.Drawing.Font("Segoe UI", 8.75F);
+            this.dtTo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(73)))), ((int)(((byte)(126)))));
+            this.dtTo.Location = new System.Drawing.Point(780, 13);
+            this.dtTo.Name = "dtTo";
+            this.dtTo.Size = new System.Drawing.Size(128, 23);
+            this.dtTo.TabIndex = 3;
+            this.dtTo.UseAppStyling = false;
+            this.dtTo.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+            this.dtTo.Value = new System.DateTime(2026, 5, 25, 0, 0, 0, 0);
+            // 
+            // cmbQuickDate
+            // 
+            this.cmbQuickDate.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            appearance3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(250)))), ((int)(((byte)(253)))), ((int)(((byte)(255)))));
+            appearance3.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(144)))), ((int)(((byte)(181)))), ((int)(((byte)(223)))));
+            appearance3.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(73)))), ((int)(((byte)(126)))));
+            this.cmbQuickDate.Appearance = appearance3;
+            this.cmbQuickDate.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(250)))), ((int)(((byte)(253)))), ((int)(((byte)(255)))));
+            this.cmbQuickDate.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
+            this.cmbQuickDate.DisplayStyle = Infragistics.Win.EmbeddableElementDisplayStyle.Office2013;
+            this.cmbQuickDate.DropDownStyle = Infragistics.Win.DropDownStyle.DropDownList;
+            this.cmbQuickDate.Font = new System.Drawing.Font("Segoe UI", 8.75F);
+            this.cmbQuickDate.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(73)))), ((int)(((byte)(126)))));
+            this.cmbQuickDate.Location = new System.Drawing.Point(918, 13);
+            this.cmbQuickDate.Name = "cmbQuickDate";
+            this.cmbQuickDate.Size = new System.Drawing.Size(124, 23);
+            this.cmbQuickDate.TabIndex = 4;
+            this.cmbQuickDate.UseAppStyling = false;
+            this.cmbQuickDate.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+            // 
+            // btnApply
+            // 
+            this.btnApply.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnApply.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(54)))), ((int)(((byte)(126)))), ((int)(((byte)(235)))));
+            this.btnApply.FlatAppearance.BorderSize = 0;
+            this.btnApply.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnApply.Font = new System.Drawing.Font("Segoe UI Semibold", 8.75F, System.Drawing.FontStyle.Bold);
+            this.btnApply.ForeColor = System.Drawing.Color.White;
+            this.btnApply.Location = new System.Drawing.Point(1052, 10);
+            this.btnApply.Name = "btnApply";
+            this.btnApply.Size = new System.Drawing.Size(80, 28);
+            this.btnApply.TabIndex = 5;
+            this.btnApply.Text = "Apply";
+            this.btnApply.UseVisualStyleBackColor = false;
             // 
             // cardsLayout
             // 
+            this.cardsLayout.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.cardsLayout.ColumnCount = 6;
             this.cardsLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 16.66667F));
             this.cardsLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 16.66667F));
@@ -271,8 +345,6 @@ namespace PosBranch_Win.Dashboard
             this.cardsLayout.Controls.Add(this.cardPurchaseReturn, 3, 0);
             this.cardsLayout.Controls.Add(this.cardReceipts, 4, 0);
             this.cardsLayout.Controls.Add(this.cardPayments, 5, 0);
-            this.cardsLayout.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.cardsLayout.Location = new System.Drawing.Point(18, 70);
             this.cardsLayout.Margin = new System.Windows.Forms.Padding(0);
             this.cardsLayout.Name = "cardsLayout";
@@ -283,13 +355,13 @@ namespace PosBranch_Win.Dashboard
             // 
             // cardSales
             // 
+            this.cardSales.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.cardSales.Controls.Add(this.lblSalesCardTitle);
             this.cardSales.Controls.Add(this.lblSalesIcon);
             this.cardSales.Controls.Add(this.lblSalesFooter);
             this.cardSales.Controls.Add(this.lblSalesValue);
-            this.cardSales.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.cardSales.Location = new System.Drawing.Point(3, 3);
             this.cardSales.Name = "cardSales";
             this.cardSales.Size = new System.Drawing.Size(184, 140);
@@ -341,13 +413,13 @@ namespace PosBranch_Win.Dashboard
             // 
             // cardPurchase
             // 
+            this.cardPurchase.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.cardPurchase.Controls.Add(this.lblPurchaseCardTitle);
             this.cardPurchase.Controls.Add(this.lblPurchaseIcon);
             this.cardPurchase.Controls.Add(this.lblPurchaseFooter);
             this.cardPurchase.Controls.Add(this.lblPurchaseValue);
-            this.cardPurchase.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.cardPurchase.Location = new System.Drawing.Point(193, 3);
             this.cardPurchase.Name = "cardPurchase";
             this.cardPurchase.Size = new System.Drawing.Size(184, 140);
@@ -399,13 +471,13 @@ namespace PosBranch_Win.Dashboard
             // 
             // cardSalesReturn
             // 
+            this.cardSalesReturn.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.cardSalesReturn.Controls.Add(this.lblSalesReturnCardTitle);
             this.cardSalesReturn.Controls.Add(this.lblSalesReturnIcon);
             this.cardSalesReturn.Controls.Add(this.lblSalesReturnFooter);
             this.cardSalesReturn.Controls.Add(this.lblSalesReturnValue);
-            this.cardSalesReturn.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.cardSalesReturn.Location = new System.Drawing.Point(383, 3);
             this.cardSalesReturn.Name = "cardSalesReturn";
             this.cardSalesReturn.Size = new System.Drawing.Size(184, 140);
@@ -457,13 +529,13 @@ namespace PosBranch_Win.Dashboard
             // 
             // cardPurchaseReturn
             // 
+            this.cardPurchaseReturn.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.cardPurchaseReturn.Controls.Add(this.lblPurchaseReturnCardTitle);
             this.cardPurchaseReturn.Controls.Add(this.lblPurchaseReturnIcon);
             this.cardPurchaseReturn.Controls.Add(this.lblPurchaseReturnFooter);
             this.cardPurchaseReturn.Controls.Add(this.lblPurchaseReturnValue);
-            this.cardPurchaseReturn.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.cardPurchaseReturn.Location = new System.Drawing.Point(573, 3);
             this.cardPurchaseReturn.Name = "cardPurchaseReturn";
             this.cardPurchaseReturn.Size = new System.Drawing.Size(184, 140);
@@ -515,13 +587,13 @@ namespace PosBranch_Win.Dashboard
             // 
             // cardReceipts
             // 
+            this.cardReceipts.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.cardReceipts.Controls.Add(this.lblReceiptsCardTitle);
             this.cardReceipts.Controls.Add(this.lblReceiptsIcon);
             this.cardReceipts.Controls.Add(this.lblReceiptsFooter);
             this.cardReceipts.Controls.Add(this.lblReceiptsValue);
-            this.cardReceipts.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.cardReceipts.Location = new System.Drawing.Point(763, 3);
             this.cardReceipts.Name = "cardReceipts";
             this.cardReceipts.Size = new System.Drawing.Size(184, 140);
@@ -573,13 +645,13 @@ namespace PosBranch_Win.Dashboard
             // 
             // cardPayments
             // 
+            this.cardPayments.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.cardPayments.Controls.Add(this.lblPaymentsCardTitle);
             this.cardPayments.Controls.Add(this.lblPaymentsIcon);
             this.cardPayments.Controls.Add(this.lblPaymentsFooter);
             this.cardPayments.Controls.Add(this.lblPaymentsValue);
-            this.cardPayments.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.cardPayments.Location = new System.Drawing.Point(953, 3);
             this.cardPayments.Name = "cardPayments";
             this.cardPayments.Size = new System.Drawing.Size(188, 140);
@@ -631,14 +703,14 @@ namespace PosBranch_Win.Dashboard
             // 
             // middleLayout
             // 
+            this.middleLayout.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.middleLayout.ColumnCount = 2;
             this.middleLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 58F));
             this.middleLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 42F));
             this.middleLayout.Controls.Add(this.chartPanelWrapper, 0, 0);
             this.middleLayout.Controls.Add(this.topItemsPanel, 1, 0);
-            this.middleLayout.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.middleLayout.Location = new System.Drawing.Point(18, 216);
             this.middleLayout.Margin = new System.Windows.Forms.Padding(0);
             this.middleLayout.Name = "middleLayout";
@@ -649,11 +721,11 @@ namespace PosBranch_Win.Dashboard
             // 
             // chartPanelWrapper
             // 
+            this.chartPanelWrapper.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.chartPanelWrapper.Controls.Add(this.pnlSalesTrend);
             this.chartPanelWrapper.Controls.Add(this.lblChartTitle);
-            this.chartPanelWrapper.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.chartPanelWrapper.Location = new System.Drawing.Point(3, 3);
             this.chartPanelWrapper.Name = "chartPanelWrapper";
             this.chartPanelWrapper.Padding = new System.Windows.Forms.Padding(14, 36, 14, 14);
@@ -662,8 +734,8 @@ namespace PosBranch_Win.Dashboard
             // 
             // pnlSalesTrend
             // 
-            this.pnlSalesTrend.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
+            this.pnlSalesTrend.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlSalesTrend.Location = new System.Drawing.Point(14, 36);
             this.pnlSalesTrend.Name = "pnlSalesTrend";
@@ -683,11 +755,11 @@ namespace PosBranch_Win.Dashboard
             // 
             // topItemsPanel
             // 
+            this.topItemsPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.topItemsPanel.Controls.Add(this.dgvTopItems);
             this.topItemsPanel.Controls.Add(this.lblTopItemsTitle);
-            this.topItemsPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.topItemsPanel.Location = new System.Drawing.Point(666, 3);
             this.topItemsPanel.Name = "topItemsPanel";
             this.topItemsPanel.Padding = new System.Windows.Forms.Padding(14, 36, 14, 14);
@@ -699,12 +771,12 @@ namespace PosBranch_Win.Dashboard
             this.dgvTopItems.AllowUserToAddRows = false;
             this.dgvTopItems.AllowUserToDeleteRows = false;
             this.dgvTopItems.AllowUserToResizeRows = false;
+            this.dgvTopItems.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvTopItems.BackgroundColor = System.Drawing.Color.White;
             this.dgvTopItems.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.dgvTopItems.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvTopItems.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvTopItems.Location = new System.Drawing.Point(14, 36);
             this.dgvTopItems.MultiSelect = false;
             this.dgvTopItems.Name = "dgvTopItems";
@@ -727,6 +799,8 @@ namespace PosBranch_Win.Dashboard
             // 
             // bottomLayout
             // 
+            this.bottomLayout.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.bottomLayout.ColumnCount = 4;
             this.bottomLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
             this.bottomLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
@@ -736,8 +810,6 @@ namespace PosBranch_Win.Dashboard
             this.bottomLayout.Controls.Add(this.customerPanel, 1, 0);
             this.bottomLayout.Controls.Add(this.vendorPanel, 2, 0);
             this.bottomLayout.Controls.Add(this.duePanel, 3, 0);
-            this.bottomLayout.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.bottomLayout.Location = new System.Drawing.Point(18, 486);
             this.bottomLayout.Margin = new System.Windows.Forms.Padding(0);
             this.bottomLayout.Name = "bottomLayout";
@@ -748,6 +820,9 @@ namespace PosBranch_Win.Dashboard
             // 
             // stockPanel
             // 
+            this.stockPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.stockPanel.Controls.Add(this.lblStockOutValue);
             this.stockPanel.Controls.Add(this.lblStockLowValue);
             this.stockPanel.Controls.Add(this.lblStockTotalValue);
@@ -760,9 +835,6 @@ namespace PosBranch_Win.Dashboard
             this.stockPanel.Controls.Add(this.lblStockSummary);
             this.stockPanel.Controls.Add(this.lblStockTitle);
             this.stockPanel.Controls.Add(this.lblStockIcon);
-            this.stockPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.stockPanel.Location = new System.Drawing.Point(3, 3);
             this.stockPanel.Name = "stockPanel";
             this.stockPanel.Size = new System.Drawing.Size(280, 106);
@@ -891,13 +963,13 @@ namespace PosBranch_Win.Dashboard
             // 
             // customerPanel
             // 
+            this.customerPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.customerPanel.Controls.Add(this.lblCustomerCaption);
             this.customerPanel.Controls.Add(this.lblCustomerValue);
             this.customerPanel.Controls.Add(this.lblCustomerTitle);
             this.customerPanel.Controls.Add(this.lblCustomerIcon);
-            this.customerPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.customerPanel.Location = new System.Drawing.Point(289, 3);
             this.customerPanel.Name = "customerPanel";
             this.customerPanel.Size = new System.Drawing.Size(280, 106);
@@ -948,13 +1020,13 @@ namespace PosBranch_Win.Dashboard
             // 
             // vendorPanel
             // 
+            this.vendorPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.vendorPanel.Controls.Add(this.lblVendorCaption);
             this.vendorPanel.Controls.Add(this.lblVendorValue);
             this.vendorPanel.Controls.Add(this.lblVendorTitle);
             this.vendorPanel.Controls.Add(this.lblVendorIcon);
-            this.vendorPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.vendorPanel.Location = new System.Drawing.Point(575, 3);
             this.vendorPanel.Name = "vendorPanel";
             this.vendorPanel.Size = new System.Drawing.Size(280, 106);
@@ -1005,12 +1077,12 @@ namespace PosBranch_Win.Dashboard
             // 
             // duePanel
             // 
+            this.duePanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.duePanel.Controls.Add(this.lblDueSummary);
             this.duePanel.Controls.Add(this.lblDueTitle);
             this.duePanel.Controls.Add(this.lblDueIcon);
-            this.duePanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.duePanel.Location = new System.Drawing.Point(861, 3);
             this.duePanel.Name = "duePanel";
             this.duePanel.Size = new System.Drawing.Size(280, 106);
@@ -1052,7 +1124,9 @@ namespace PosBranch_Win.Dashboard
             this.mainLayout.ResumeLayout(false);
             this.headerPanel.ResumeLayout(false);
             this.headerPanel.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.lblDate)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dtFrom)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dtTo)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.cmbQuickDate)).EndInit();
             this.cardsLayout.ResumeLayout(false);
             this.cardSales.ResumeLayout(false);
             this.cardPurchase.ResumeLayout(false);
