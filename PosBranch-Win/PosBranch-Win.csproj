@@ -353,6 +353,12 @@
     <Compile Include="DialogBox\frmPurchaseOrderDig.Designer.cs">
       <DependentUpon>frmPurchaseOrderDig.cs</DependentUpon>
     </Compile>
+    <Compile Include="DialogBox\FrmUsersList.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DialogBox\FrmUsersList.Designer.cs">
+      <DependentUpon>FrmUsersList.cs</DependentUpon>
+    </Compile>
     <Compile Include="Reports\AuditReport\frmAuditReport.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1381,6 +1387,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="DialogBox\frmUnitDialogItem.resx">
       <DependentUpon>frmUnitDialogItem.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DialogBox\FrmUsersList.resx">
+      <DependentUpon>FrmUsersList.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="DialogBox\FrmVendorDialog.resx">
       <DependentUpon>FrmVendorDialog.cs</DependentUpon>

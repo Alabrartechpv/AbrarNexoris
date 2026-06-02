@@ -2244,7 +2244,7 @@ namespace PosBranch_Win
                 OpenFormInTab(itemMaster, "Item Master");
                 e.Handled = true;
             }
-            else if (e.KeyCode == Keys.F3)
+            else if (e.KeyCode == Keys.F2)
             {
                 if (_isReportNavigatorVisible)
                     HideReportNavigator();

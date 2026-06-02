@@ -503,7 +503,7 @@ namespace PosBranch_Win
             ribbonGroup8.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonToolLastBill});
             ribbonGroup8.Visible = false;
-            ribbonGroup9.Caption = "F3";
+            ribbonGroup9.Caption = "F2";
             buttonToolReportInstance.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             ribbonGroup9.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonToolReportInstance});
@@ -1007,7 +1007,7 @@ namespace PosBranch_Win
             buttonToolReport_Tool.SharedPropsInternal.AppearancesLarge.Appearance = appearance78;
             buttonToolReport_Tool.SharedPropsInternal.Caption = "Report";
             buttonToolReport_Tool.SharedPropsInternal.DisplayStyle = Infragistics.Win.UltraWinToolbars.ToolDisplayStyle.ImageAndText;
-            buttonToolReport_Tool.SharedPropsInternal.ToolTipTitle = "Report Navigator (F3)";
+            buttonToolReport_Tool.SharedPropsInternal.ToolTipTitle = "Report Navigator (F2)";
             appearance79.Image = ((object)(resources.GetObject("appearance79.Image")));
             buttonTool130.SharedPropsInternal.AppearancesLarge.Appearance = appearance79;
             buttonTool130.SharedPropsInternal.Caption = "ReOrder";
