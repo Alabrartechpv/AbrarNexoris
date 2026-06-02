@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -40,6 +41,12 @@ namespace Repository.Accounts
                         DataTable dtGroups = new DataTable();
                         adapter.Fill(dtGroups);
 
+                        if (branchId > 0 && dtGroups.Columns.Contains("BranchID"))
+                        {
+                            DataRow[] branchRows = dtGroups.Select($"BranchID = {branchId}");
+                            dtGroups = branchRows.Length > 0 ? branchRows.CopyToDataTable() : dtGroups.Clone();
+                        }
+
                         foreach (DataRow row in dtGroups.Rows)
                         {
                             ChartOfAccount item = new ChartOfAccount
@@ -49,8 +56,8 @@ namespace Repository.Accounts
                                 Type = "Group",
                                 GroupId = Convert.ToInt32(row["GroupID"]),
                                 Description = row["Description"] != DBNull.Value ? row["Description"].ToString() : string.Empty,
-                                BranchId = row["BranchID"] != DBNull.Value ? Convert.ToInt32(row["BranchID"]) : 0,
-                                ParentId = row["ParentGroupId"] != DBNull.Value ? (int?)Convert.ToInt32(row["ParentGroupId"]) : null,
+                                BranchId = GetInt(row, "BranchID"),
+                                ParentId = row.Table.Columns.Contains("ParentGroupId") && row["ParentGroupId"] != DBNull.Value ? (int?)Convert.ToInt32(row["ParentGroupId"]) : null,
                                 GroupUnder = row["GroupUnder"] != DBNull.Value ? row["GroupUnder"].ToString() : string.Empty,
                                 Balance = 0 // Will be calculated if needed
                             };
@@ -110,7 +117,7 @@ namespace Repository.Accounts
                                 LedgerId = ledgerId,
                                 ParentId = groupId,
                                 Description = row["Description"] != DBNull.Value ? row["Description"].ToString() : string.Empty,
-                                BranchId = row["BranchID"] != DBNull.Value ? Convert.ToInt32(row["BranchID"]) : 0,
+                                BranchId = GetInt(row, "BranchID"),
                                 Balance = row["Balance"] != DBNull.Value ? Convert.ToDecimal(row["Balance"]) : 0
                             };
 
@@ -233,9 +240,9 @@ namespace Repository.Accounts
                                 GroupID = Convert.ToInt32(row["GroupID"]),
                                 GroupName = row["GroupName"].ToString(),
                                 Description = row["Description"] != DBNull.Value ? row["Description"].ToString() : string.Empty,
-                                BranchID = row["BranchID"] != DBNull.Value ? Convert.ToInt32(row["BranchID"]) : 0,
-                                GroupCategoryID = row["GroupCategoryID"] != DBNull.Value ? Convert.ToInt32(row["GroupCategoryID"]) : 0,
-                                ParentGroupId = row["ParentGroupId"] != DBNull.Value ? Convert.ToInt32(row["ParentGroupId"]) : 0,
+                                BranchID = GetInt(row, "BranchID"),
+                                GroupCategoryID = GetInt(row, "GroupCategoryID"),
+                                ParentGroupId = GetInt(row, "ParentGroupId"),
                                 GroupType = row["GroupType"] != DBNull.Value ? row["GroupType"].ToString() : string.Empty,
                                 GroupUnder = row["GroupUnder"] != DBNull.Value ? row["GroupUnder"].ToString() : string.Empty
                             };
@@ -315,6 +322,13 @@ namespace Repository.Accounts
             }
 
             return ledgers;
+        }
+
+        private int GetInt(DataRow row, string columnName)
+        {
+            return row.Table.Columns.Contains(columnName) && row[columnName] != DBNull.Value
+                ? Convert.ToInt32(row[columnName])
+                : 0;
         }
     }
 }

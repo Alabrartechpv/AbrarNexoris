@@ -1,17 +1,9 @@
-﻿
 namespace PosBranch_Win.Accounts
 {
     partial class FrmContra
     {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -22,443 +14,326 @@ namespace PosBranch_Win.Accounts
         }
 
         #region Windows Form Designer generated code
-
-        /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
-        /// </summary>
         private void InitializeComponent()
         {
             Infragistics.Win.Appearance appearance1 = new Infragistics.Win.Appearance();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmContra));
-            this.lblHeader = new System.Windows.Forms.Label();
-            this.ultraPanel1 = new Infragistics.Win.Misc.UltraPanel();
-            this.ultraPanel5 = new Infragistics.Win.Misc.UltraPanel();
-            this.lblNarration = new System.Windows.Forms.Label();
-            this.richTextBox1 = new System.Windows.Forms.RichTextBox();
-            this.ultraPanel4 = new Infragistics.Win.Misc.UltraPanel();
-            this.btnSave = new System.Windows.Forms.Button();
-            this.btnUpdate = new System.Windows.Forms.Button();
-            this.btnClose = new System.Windows.Forms.Button();
-            this.btnClear = new System.Windows.Forms.Button();
-            this.ultraPanel3 = new Infragistics.Win.Misc.UltraPanel();
-            this.textBox3 = new System.Windows.Forms.TextBox();
-            this.lblCredit = new System.Windows.Forms.Label();
-            this.btnPlus = new System.Windows.Forms.Button();
-            this.textBox2 = new System.Windows.Forms.TextBox();
-            this.textBox1 = new System.Windows.Forms.TextBox();
-            this.lblDebit = new System.Windows.Forms.Label();
-            this.lblCashorBank = new System.Windows.Forms.Label();
-            this.ultraPanel2 = new Infragistics.Win.Misc.UltraPanel();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.comboBox1 = new System.Windows.Forms.ComboBox();
-            this.lblBank = new System.Windows.Forms.Label();
-            this.CmboVendor = new System.Windows.Forms.ComboBox();
-            this.dtpPurchaseDate = new System.Windows.Forms.DateTimePicker();
-            this.lblBranch = new System.Windows.Forms.Label();
-            this.lblRecteptVoucherDate = new System.Windows.Forms.Label();
-            this.CmboBranch = new System.Windows.Forms.ComboBox();
-            this.lblVocuherNo = new System.Windows.Forms.Label();
-            this.lblTransactionType = new System.Windows.Forms.Label();
-            this.txtPurchaseNo = new System.Windows.Forms.TextBox();
-            this.ultraPanel1.ClientArea.SuspendLayout();
-            this.ultraPanel1.SuspendLayout();
-            this.ultraPanel5.ClientArea.SuspendLayout();
-            this.ultraPanel5.SuspendLayout();
-            this.ultraPanel4.ClientArea.SuspendLayout();
-            this.ultraPanel4.SuspendLayout();
-            this.ultraPanel3.ClientArea.SuspendLayout();
-            this.ultraPanel3.SuspendLayout();
-            this.ultraPanel2.ClientArea.SuspendLayout();
-            this.ultraPanel2.SuspendLayout();
-            this.groupBox1.SuspendLayout();
+            Infragistics.Win.Appearance appearance2 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance3 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance4 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance5 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance6 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance7 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance8 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance9 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance10 = new Infragistics.Win.Appearance();
+            this.lblHeader = new Infragistics.Win.Misc.UltraLabel();
+            this.headerPanel = new Infragistics.Win.Misc.UltraPanel();
+            this.dtpVoucherDate = new Infragistics.Win.UltraWinEditors.UltraDateTimeEditor();
+            this.lblBranch = new Infragistics.Win.Misc.UltraLabel();
+            this.lblVoucherDate = new Infragistics.Win.Misc.UltraLabel();
+            this.CmboBranch = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
+            this.lblVocuherNo = new Infragistics.Win.Misc.UltraLabel();
+            this.txtVoucherNo = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.gridContra = new Infragistics.Win.UltraWinGrid.UltraGrid();
+            this.footerPanel = new Infragistics.Win.Misc.UltraPanel();
+            this.lblDifferenceValue = new Infragistics.Win.Misc.UltraLabel();
+            this.lblDifference = new Infragistics.Win.Misc.UltraLabel();
+            this.lblTotalCreditValue = new Infragistics.Win.Misc.UltraLabel();
+            this.lblTotalCredit = new Infragistics.Win.Misc.UltraLabel();
+            this.lblTotalDebitValue = new Infragistics.Win.Misc.UltraLabel();
+            this.lblTotalDebit = new Infragistics.Win.Misc.UltraLabel();
+            this.narrationPanel = new Infragistics.Win.Misc.UltraPanel();
+            this.lblNarration = new Infragistics.Win.Misc.UltraLabel();
+            this.txtNarration = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.headerPanel.ClientArea.SuspendLayout();
+            this.headerPanel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dtpVoucherDate)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.CmboBranch)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtVoucherNo)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.gridContra)).BeginInit();
+            this.footerPanel.ClientArea.SuspendLayout();
+            this.footerPanel.SuspendLayout();
+            this.narrationPanel.ClientArea.SuspendLayout();
+            this.narrationPanel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.txtNarration)).BeginInit();
             this.SuspendLayout();
             // 
             // lblHeader
             // 
-            this.lblHeader.AutoSize = true;
-            this.lblHeader.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblHeader.Location = new System.Drawing.Point(532, 7);
+            appearance1.BackColor = System.Drawing.Color.FromArgb(205, 229, 236);
+            appearance1.FontData.BoldAsString = "True";
+            appearance1.FontData.SizeInPoints = 18F;
+            appearance1.ForeColor = System.Drawing.Color.FromArgb(8, 47, 73);
+            appearance1.TextHAlignAsString = "Left";
+            appearance1.TextVAlignAsString = "Middle";
+            this.lblHeader.Appearance = appearance1;
+            this.lblHeader.Dock = System.Windows.Forms.DockStyle.Top;
+            this.lblHeader.Location = new System.Drawing.Point(0, 0);
             this.lblHeader.Name = "lblHeader";
-            this.lblHeader.Size = new System.Drawing.Size(77, 25);
-            this.lblHeader.TabIndex = 2;
-            this.lblHeader.Text = "Contra";
+            this.lblHeader.Padding = new System.Drawing.Size(28, 0);
+            this.lblHeader.Size = new System.Drawing.Size(1215, 50);
+            this.lblHeader.TabIndex = 0;
+            this.lblHeader.Text = "Contra Voucher";
             // 
-            // ultraPanel1
+            // headerPanel
             // 
-            appearance1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            appearance1.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
-            appearance1.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
-            this.ultraPanel1.Appearance = appearance1;
+            appearance2.BackColor = System.Drawing.Color.FromArgb(248, 251, 252);
+            this.headerPanel.Appearance = appearance2;
             // 
-            // ultraPanel1.ClientArea
+            // headerPanel.ClientArea
             // 
-            this.ultraPanel1.ClientArea.Controls.Add(this.ultraPanel5);
-            this.ultraPanel1.ClientArea.Controls.Add(this.ultraPanel4);
-            this.ultraPanel1.ClientArea.Controls.Add(this.ultraPanel3);
-            this.ultraPanel1.ClientArea.Controls.Add(this.ultraPanel2);
-            this.ultraPanel1.ClientArea.Controls.Add(this.lblHeader);
-            this.ultraPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ultraPanel1.Location = new System.Drawing.Point(0, 0);
-            this.ultraPanel1.Name = "ultraPanel1";
-            this.ultraPanel1.Size = new System.Drawing.Size(1216, 517);
-            this.ultraPanel1.TabIndex = 3;
+            this.headerPanel.ClientArea.Controls.Add(this.dtpVoucherDate);
+            this.headerPanel.ClientArea.Controls.Add(this.lblBranch);
+            this.headerPanel.ClientArea.Controls.Add(this.lblVoucherDate);
+            this.headerPanel.ClientArea.Controls.Add(this.CmboBranch);
+            this.headerPanel.ClientArea.Controls.Add(this.lblVocuherNo);
+            this.headerPanel.ClientArea.Controls.Add(this.txtVoucherNo);
+            this.headerPanel.Dock = System.Windows.Forms.DockStyle.Top;
+            this.headerPanel.Location = new System.Drawing.Point(0, 50);
+            this.headerPanel.Name = "headerPanel";
+            this.headerPanel.Size = new System.Drawing.Size(1215, 92);
+            this.headerPanel.TabIndex = 1;
             // 
-            // ultraPanel5
+            // dtpVoucherDate
             // 
-            this.ultraPanel5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            // 
-            // ultraPanel5.ClientArea
-            // 
-            this.ultraPanel5.ClientArea.Controls.Add(this.lblNarration);
-            this.ultraPanel5.ClientArea.Controls.Add(this.richTextBox1);
-            this.ultraPanel5.Location = new System.Drawing.Point(548, 360);
-            this.ultraPanel5.Name = "ultraPanel5";
-            this.ultraPanel5.Size = new System.Drawing.Size(653, 126);
-            this.ultraPanel5.TabIndex = 6;
-            // 
-            // lblNarration
-            // 
-            this.lblNarration.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblNarration.AutoSize = true;
-            this.lblNarration.Location = new System.Drawing.Point(16, 9);
-            this.lblNarration.Name = "lblNarration";
-            this.lblNarration.Size = new System.Drawing.Size(50, 13);
-            this.lblNarration.TabIndex = 9;
-            this.lblNarration.Text = "Narration";
-            // 
-            // richTextBox1
-            // 
-            this.richTextBox1.Location = new System.Drawing.Point(13, 25);
-            this.richTextBox1.Name = "richTextBox1";
-            this.richTextBox1.Size = new System.Drawing.Size(621, 88);
-            this.richTextBox1.TabIndex = 0;
-            this.richTextBox1.Text = "";
-            // 
-            // ultraPanel4
-            // 
-            // 
-            // ultraPanel4.ClientArea
-            // 
-            this.ultraPanel4.ClientArea.Controls.Add(this.btnSave);
-            this.ultraPanel4.ClientArea.Controls.Add(this.btnUpdate);
-            this.ultraPanel4.ClientArea.Controls.Add(this.btnClose);
-            this.ultraPanel4.ClientArea.Controls.Add(this.btnClear);
-            this.ultraPanel4.Location = new System.Drawing.Point(18, 395);
-            this.ultraPanel4.Name = "ultraPanel4";
-            this.ultraPanel4.Size = new System.Drawing.Size(408, 71);
-            this.ultraPanel4.TabIndex = 5;
-            // 
-            // btnSave
-            // 
-            this.btnSave.BackColor = System.Drawing.SystemColors.HotTrack;
-            this.btnSave.ForeColor = System.Drawing.SystemColors.ControlLightLight;
-            this.btnSave.Location = new System.Drawing.Point(38, 20);
-            this.btnSave.Name = "btnSave";
-            this.btnSave.Size = new System.Drawing.Size(97, 34);
-            this.btnSave.TabIndex = 7;
-            this.btnSave.Text = "Save";
-            this.btnSave.UseVisualStyleBackColor = false;
-            // 
-            // btnUpdate
-            // 
-            this.btnUpdate.BackColor = System.Drawing.SystemColors.HotTrack;
-            this.btnUpdate.ForeColor = System.Drawing.SystemColors.ControlLightLight;
-            this.btnUpdate.Location = new System.Drawing.Point(34, 20);
-            this.btnUpdate.Name = "btnUpdate";
-            this.btnUpdate.Size = new System.Drawing.Size(97, 34);
-            this.btnUpdate.TabIndex = 6;
-            this.btnUpdate.Text = "Update";
-            this.btnUpdate.UseVisualStyleBackColor = false;
-            // 
-            // btnClose
-            // 
-            this.btnClose.BackColor = System.Drawing.SystemColors.HotTrack;
-            this.btnClose.ForeColor = System.Drawing.SystemColors.ControlLightLight;
-            this.btnClose.Location = new System.Drawing.Point(248, 19);
-            this.btnClose.Name = "btnClose";
-            this.btnClose.Size = new System.Drawing.Size(97, 34);
-            this.btnClose.TabIndex = 5;
-            this.btnClose.Text = "Close";
-            this.btnClose.UseVisualStyleBackColor = false;
-            // 
-            // btnClear
-            // 
-            this.btnClear.BackColor = System.Drawing.SystemColors.HotTrack;
-            this.btnClear.ForeColor = System.Drawing.SystemColors.ControlLightLight;
-            this.btnClear.Location = new System.Drawing.Point(141, 19);
-            this.btnClear.Name = "btnClear";
-            this.btnClear.Size = new System.Drawing.Size(97, 34);
-            this.btnClear.TabIndex = 4;
-            this.btnClear.Text = "Clear";
-            this.btnClear.UseVisualStyleBackColor = false;
-            // 
-            // ultraPanel3
-            // 
-            this.ultraPanel3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            // 
-            // ultraPanel3.ClientArea
-            // 
-            this.ultraPanel3.ClientArea.Controls.Add(this.textBox3);
-            this.ultraPanel3.ClientArea.Controls.Add(this.lblCredit);
-            this.ultraPanel3.ClientArea.Controls.Add(this.btnPlus);
-            this.ultraPanel3.ClientArea.Controls.Add(this.textBox2);
-            this.ultraPanel3.ClientArea.Controls.Add(this.textBox1);
-            this.ultraPanel3.ClientArea.Controls.Add(this.lblDebit);
-            this.ultraPanel3.ClientArea.Controls.Add(this.lblCashorBank);
-            this.ultraPanel3.Location = new System.Drawing.Point(15, 185);
-            this.ultraPanel3.Name = "ultraPanel3";
-            this.ultraPanel3.Size = new System.Drawing.Size(1186, 146);
-            this.ultraPanel3.TabIndex = 4;
-            // 
-            // textBox3
-            // 
-            this.textBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox3.Location = new System.Drawing.Point(704, 48);
-            this.textBox3.Name = "textBox3";
-            this.textBox3.Size = new System.Drawing.Size(178, 24);
-            this.textBox3.TabIndex = 16;
-            // 
-            // lblCredit
-            // 
-            this.lblCredit.AutoSize = true;
-            this.lblCredit.Location = new System.Drawing.Point(708, 30);
-            this.lblCredit.Name = "lblCredit";
-            this.lblCredit.Size = new System.Drawing.Size(34, 13);
-            this.lblCredit.TabIndex = 15;
-            this.lblCredit.Text = "Credit";
-            // 
-            // btnPlus
-            // 
-            this.btnPlus.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("btnPlus.BackgroundImage")));
-            this.btnPlus.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.btnPlus.Location = new System.Drawing.Point(887, 48);
-            this.btnPlus.Name = "btnPlus";
-            this.btnPlus.Size = new System.Drawing.Size(39, 23);
-            this.btnPlus.TabIndex = 14;
-            this.btnPlus.UseVisualStyleBackColor = true;
-            // 
-            // textBox2
-            // 
-            this.textBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox2.Location = new System.Drawing.Point(520, 48);
-            this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(178, 24);
-            this.textBox2.TabIndex = 13;
-            // 
-            // textBox1
-            // 
-            this.textBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox1.Location = new System.Drawing.Point(141, 48);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(373, 24);
-            this.textBox1.TabIndex = 12;
-            // 
-            // lblDebit
-            // 
-            this.lblDebit.AutoSize = true;
-            this.lblDebit.Location = new System.Drawing.Point(519, 32);
-            this.lblDebit.Name = "lblDebit";
-            this.lblDebit.Size = new System.Drawing.Size(32, 13);
-            this.lblDebit.TabIndex = 10;
-            this.lblDebit.Text = "Debit";
-            // 
-            // lblCashorBank
-            // 
-            this.lblCashorBank.AutoSize = true;
-            this.lblCashorBank.Location = new System.Drawing.Point(147, 19);
-            this.lblCashorBank.Name = "lblCashorBank";
-            this.lblCashorBank.Size = new System.Drawing.Size(61, 13);
-            this.lblCashorBank.TabIndex = 9;
-            this.lblCashorBank.Text = "Cash/Bank";
-            // 
-            // ultraPanel2
-            // 
-            this.ultraPanel2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            // 
-            // ultraPanel2.ClientArea
-            // 
-            this.ultraPanel2.ClientArea.Controls.Add(this.groupBox1);
-            this.ultraPanel2.Location = new System.Drawing.Point(15, 47);
-            this.ultraPanel2.Name = "ultraPanel2";
-            this.ultraPanel2.Size = new System.Drawing.Size(1189, 100);
-            this.ultraPanel2.TabIndex = 3;
-            // 
-            // groupBox1
-            // 
-            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox1.Controls.Add(this.comboBox1);
-            this.groupBox1.Controls.Add(this.lblBank);
-            this.groupBox1.Controls.Add(this.CmboVendor);
-            this.groupBox1.Controls.Add(this.dtpPurchaseDate);
-            this.groupBox1.Controls.Add(this.lblBranch);
-            this.groupBox1.Controls.Add(this.lblRecteptVoucherDate);
-            this.groupBox1.Controls.Add(this.CmboBranch);
-            this.groupBox1.Controls.Add(this.lblVocuherNo);
-            this.groupBox1.Controls.Add(this.lblTransactionType);
-            this.groupBox1.Controls.Add(this.txtPurchaseNo);
-            this.groupBox1.Location = new System.Drawing.Point(3, 3);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(1183, 94);
-            this.groupBox1.TabIndex = 0;
-            this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Main";
-            // 
-            // comboBox1
-            // 
-            this.comboBox1.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
-            this.comboBox1.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
-            this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(533, 49);
-            this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(252, 21);
-            this.comboBox1.TabIndex = 15;
-            // 
-            // lblBank
-            // 
-            this.lblBank.AutoSize = true;
-            this.lblBank.Location = new System.Drawing.Point(536, 26);
-            this.lblBank.Name = "lblBank";
-            this.lblBank.Size = new System.Drawing.Size(32, 13);
-            this.lblBank.TabIndex = 14;
-            this.lblBank.Text = "Bank";
-            // 
-            // CmboVendor
-            // 
-            this.CmboVendor.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
-            this.CmboVendor.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
-            this.CmboVendor.FormattingEnabled = true;
-            this.CmboVendor.Location = new System.Drawing.Point(266, 49);
-            this.CmboVendor.Name = "CmboVendor";
-            this.CmboVendor.Size = new System.Drawing.Size(252, 21);
-            this.CmboVendor.TabIndex = 9;
-            // 
-            // dtpPurchaseDate
-            // 
-            this.dtpPurchaseDate.Location = new System.Drawing.Point(992, 49);
-            this.dtpPurchaseDate.Name = "dtpPurchaseDate";
-            this.dtpPurchaseDate.Size = new System.Drawing.Size(172, 20);
-            this.dtpPurchaseDate.TabIndex = 13;
+            appearance3.BackColor = System.Drawing.Color.White;
+            appearance3.ForeColor = System.Drawing.Color.FromArgb(31, 42, 55);
+            this.dtpVoucherDate.Appearance = appearance3;
+            this.dtpVoucherDate.DateTime = new System.DateTime(2026, 5, 22, 0, 0, 0, 0);
+            this.dtpVoucherDate.Location = new System.Drawing.Point(362, 39);
+            this.dtpVoucherDate.Name = "dtpVoucherDate";
+            this.dtpVoucherDate.Size = new System.Drawing.Size(150, 21);
+            this.dtpVoucherDate.TabIndex = 3;
+            this.dtpVoucherDate.Value = new System.DateTime(2026, 5, 22, 0, 0, 0, 0);
             // 
             // lblBranch
             // 
             this.lblBranch.AutoSize = true;
-            this.lblBranch.Location = new System.Drawing.Point(17, 26);
+            this.lblBranch.Location = new System.Drawing.Point(536, 14);
             this.lblBranch.Name = "lblBranch";
-            this.lblBranch.Size = new System.Drawing.Size(41, 13);
-            this.lblBranch.TabIndex = 2;
+            this.lblBranch.Size = new System.Drawing.Size(44, 15);
+            this.lblBranch.TabIndex = 4;
             this.lblBranch.Text = "Branch";
             // 
-            // lblRecteptVoucherDate
+            // lblVoucherDate
             // 
-            this.lblRecteptVoucherDate.AutoSize = true;
-            this.lblRecteptVoucherDate.Location = new System.Drawing.Point(994, 26);
-            this.lblRecteptVoucherDate.Name = "lblRecteptVoucherDate";
-            this.lblRecteptVoucherDate.Size = new System.Drawing.Size(99, 13);
-            this.lblRecteptVoucherDate.TabIndex = 12;
-            this.lblRecteptVoucherDate.Text = "ReceptVocherDate";
+            this.lblVoucherDate.AutoSize = true;
+            this.lblVoucherDate.Location = new System.Drawing.Point(362, 14);
+            this.lblVoucherDate.Name = "lblVoucherDate";
+            this.lblVoucherDate.Size = new System.Drawing.Size(77, 15);
+            this.lblVoucherDate.TabIndex = 2;
+            this.lblVoucherDate.Text = "Voucher Date";
             // 
             // CmboBranch
             // 
-            this.CmboBranch.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
-            this.CmboBranch.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
-            this.CmboBranch.FormattingEnabled = true;
-            this.CmboBranch.Location = new System.Drawing.Point(17, 49);
+            appearance4.BackColor = System.Drawing.Color.White;
+            appearance4.ForeColor = System.Drawing.Color.FromArgb(31, 42, 55);
+            this.CmboBranch.Appearance = appearance4;
+            this.CmboBranch.AutoCompleteMode = Infragistics.Win.AutoCompleteMode.SuggestAppend;
+            this.CmboBranch.Location = new System.Drawing.Point(536, 39);
             this.CmboBranch.Name = "CmboBranch";
-            this.CmboBranch.Size = new System.Drawing.Size(215, 21);
-            this.CmboBranch.TabIndex = 3;
+            this.CmboBranch.Size = new System.Drawing.Size(260, 21);
+            this.CmboBranch.TabIndex = 4;
+            this.CmboBranch.ValueChanged += new System.EventHandler(this.CmboBranch_ValueChanged);
             // 
             // lblVocuherNo
             // 
             this.lblVocuherNo.AutoSize = true;
-            this.lblVocuherNo.Location = new System.Drawing.Point(797, 26);
+            this.lblVocuherNo.Location = new System.Drawing.Point(28, 14);
             this.lblVocuherNo.Name = "lblVocuherNo";
-            this.lblVocuherNo.Size = new System.Drawing.Size(61, 13);
-            this.lblVocuherNo.TabIndex = 10;
-            this.lblVocuherNo.Text = "VoucherNo";
+            this.lblVocuherNo.Size = new System.Drawing.Size(69, 15);
+            this.lblVocuherNo.TabIndex = 0;
+            this.lblVocuherNo.Text = "Voucher No.";
             // 
-            // lblTransactionType
+            // txtVoucherNo
             // 
-            this.lblTransactionType.AutoSize = true;
-            this.lblTransactionType.Location = new System.Drawing.Point(269, 26);
-            this.lblTransactionType.Name = "lblTransactionType";
-            this.lblTransactionType.Size = new System.Drawing.Size(87, 13);
-            this.lblTransactionType.TabIndex = 8;
-            this.lblTransactionType.Text = "TransactionType";
+            appearance5.BackColor = System.Drawing.Color.White;
+            appearance5.FontData.BoldAsString = "True";
+            appearance5.ForeColor = System.Drawing.Color.FromArgb(31, 42, 55);
+            this.txtVoucherNo.Appearance = appearance5;
+            this.txtVoucherNo.Location = new System.Drawing.Point(28, 39);
+            this.txtVoucherNo.Name = "txtVoucherNo";
+            this.txtVoucherNo.Size = new System.Drawing.Size(310, 21);
+            this.txtVoucherNo.TabIndex = 1;
             // 
-            // txtPurchaseNo
+            // gridContra
             // 
-            this.txtPurchaseNo.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtPurchaseNo.Location = new System.Drawing.Point(794, 49);
-            this.txtPurchaseNo.Name = "txtPurchaseNo";
-            this.txtPurchaseNo.Size = new System.Drawing.Size(178, 24);
-            this.txtPurchaseNo.TabIndex = 11;
+            appearance6.BackColor = System.Drawing.Color.White;
+            this.gridContra.DisplayLayout.Appearance = appearance6;
+            this.gridContra.DisplayLayout.AutoFitStyle = Infragistics.Win.UltraWinGrid.AutoFitStyle.ResizeAllColumns;
+            this.gridContra.DisplayLayout.CaptionVisible = Infragistics.Win.DefaultableBoolean.False;
+            this.gridContra.DisplayLayout.GroupByBox.Hidden = true;
+            this.gridContra.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.gridContra.Location = new System.Drawing.Point(0, 142);
+            this.gridContra.Name = "gridContra";
+            this.gridContra.Size = new System.Drawing.Size(1215, 253);
+            this.gridContra.TabIndex = 2;
+            this.gridContra.Text = "";
+            // 
+            // footerPanel
+            // 
+            appearance7.BackColor = System.Drawing.Color.FromArgb(248, 251, 252);
+            this.footerPanel.Appearance = appearance7;
+            // 
+            // footerPanel.ClientArea
+            // 
+            this.footerPanel.ClientArea.Controls.Add(this.lblDifferenceValue);
+            this.footerPanel.ClientArea.Controls.Add(this.lblDifference);
+            this.footerPanel.ClientArea.Controls.Add(this.lblTotalCreditValue);
+            this.footerPanel.ClientArea.Controls.Add(this.lblTotalCredit);
+            this.footerPanel.ClientArea.Controls.Add(this.lblTotalDebitValue);
+            this.footerPanel.ClientArea.Controls.Add(this.lblTotalDebit);
+            this.footerPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.footerPanel.Location = new System.Drawing.Point(0, 495);
+            this.footerPanel.Name = "footerPanel";
+            this.footerPanel.Size = new System.Drawing.Size(1215, 78);
+            this.footerPanel.TabIndex = 4;
+            // 
+            // lblDifferenceValue
+            // 
+            appearance8.FontData.BoldAsString = "True";
+            appearance8.FontData.SizeInPoints = 13F;
+            appearance8.ForeColor = System.Drawing.Color.FromArgb(46, 125, 50);
+            appearance8.TextHAlignAsString = "Right";
+            appearance8.TextVAlignAsString = "Middle";
+            this.lblDifferenceValue.Appearance = appearance8;
+            this.lblDifferenceValue.Location = new System.Drawing.Point(1017, 36);
+            this.lblDifferenceValue.Name = "lblDifferenceValue";
+            this.lblDifferenceValue.Size = new System.Drawing.Size(170, 30);
+            this.lblDifferenceValue.TabIndex = 10;
+            this.lblDifferenceValue.Text = "0.00";
+            // 
+            // lblDifference
+            // 
+            this.lblDifference.AutoSize = true;
+            this.lblDifference.Location = new System.Drawing.Point(1017, 14);
+            this.lblDifference.Name = "lblDifference";
+            this.lblDifference.Size = new System.Drawing.Size(60, 15);
+            this.lblDifference.TabIndex = 9;
+            this.lblDifference.Text = "Difference";
+            // 
+            // lblTotalCreditValue
+            // 
+            this.lblTotalCreditValue.Appearance = appearance8;
+            this.lblTotalCreditValue.Location = new System.Drawing.Point(813, 36);
+            this.lblTotalCreditValue.Name = "lblTotalCreditValue";
+            this.lblTotalCreditValue.Size = new System.Drawing.Size(170, 30);
+            this.lblTotalCreditValue.TabIndex = 7;
+            this.lblTotalCreditValue.Text = "0.00";
+            // 
+            // lblTotalCredit
+            // 
+            this.lblTotalCredit.AutoSize = true;
+            this.lblTotalCredit.Location = new System.Drawing.Point(813, 14);
+            this.lblTotalCredit.Name = "lblTotalCredit";
+            this.lblTotalCredit.Size = new System.Drawing.Size(66, 15);
+            this.lblTotalCredit.TabIndex = 6;
+            this.lblTotalCredit.Text = "Total Credit";
+            // 
+            // lblTotalDebitValue
+            // 
+            this.lblTotalDebitValue.Appearance = appearance8;
+            this.lblTotalDebitValue.Location = new System.Drawing.Point(609, 36);
+            this.lblTotalDebitValue.Name = "lblTotalDebitValue";
+            this.lblTotalDebitValue.Size = new System.Drawing.Size(170, 30);
+            this.lblTotalDebitValue.TabIndex = 5;
+            this.lblTotalDebitValue.Text = "0.00";
+            // 
+            // lblTotalDebit
+            // 
+            this.lblTotalDebit.AutoSize = true;
+            this.lblTotalDebit.Location = new System.Drawing.Point(609, 14);
+            this.lblTotalDebit.Name = "lblTotalDebit";
+            this.lblTotalDebit.Size = new System.Drawing.Size(65, 15);
+            this.lblTotalDebit.TabIndex = 4;
+            this.lblTotalDebit.Text = "Total Debit";
+            // 
+            // narrationPanel
+            // 
+            appearance9.BackColor = System.Drawing.Color.FromArgb(248, 251, 252);
+            this.narrationPanel.Appearance = appearance9;
+            // 
+            // narrationPanel.ClientArea
+            // 
+            this.narrationPanel.ClientArea.Controls.Add(this.lblNarration);
+            this.narrationPanel.ClientArea.Controls.Add(this.txtNarration);
+            this.narrationPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.narrationPanel.Location = new System.Drawing.Point(0, 395);
+            this.narrationPanel.Name = "narrationPanel";
+            this.narrationPanel.Size = new System.Drawing.Size(1215, 100);
+            this.narrationPanel.TabIndex = 3;
+            // 
+            // lblNarration
+            // 
+            this.lblNarration.AutoSize = true;
+            this.lblNarration.Location = new System.Drawing.Point(28, 10);
+            this.lblNarration.Name = "lblNarration";
+            this.lblNarration.Size = new System.Drawing.Size(80, 15);
+            this.lblNarration.TabIndex = 0;
+            this.lblNarration.Text = "Main Narration";
+            // 
+            // txtNarration
+            // 
+            appearance10.BackColor = System.Drawing.Color.White;
+            appearance10.ForeColor = System.Drawing.Color.FromArgb(31, 42, 55);
+            this.txtNarration.Appearance = appearance10;
+            this.txtNarration.Location = new System.Drawing.Point(28, 33);
+            this.txtNarration.Multiline = true;
+            this.txtNarration.Name = "txtNarration";
+            this.txtNarration.Size = new System.Drawing.Size(1159, 52);
+            this.txtNarration.TabIndex = 5;
             // 
             // FrmContra
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1216, 517);
-            this.Controls.Add(this.ultraPanel1);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+            this.BackColor = System.Drawing.Color.FromArgb(236, 244, 247);
+            this.ClientSize = new System.Drawing.Size(1215, 573);
+            this.Controls.Add(this.gridContra);
+            this.Controls.Add(this.narrationPanel);
+            this.Controls.Add(this.footerPanel);
+            this.Controls.Add(this.headerPanel);
+            this.Controls.Add(this.lblHeader);
             this.Name = "FrmContra";
-            this.Text = "Contra";
+            this.Text = "Contra Voucher";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Load += new System.EventHandler(this.FrmContra_Load);
-            this.ultraPanel1.ClientArea.ResumeLayout(false);
-            this.ultraPanel1.ClientArea.PerformLayout();
-            this.ultraPanel1.ResumeLayout(false);
-            this.ultraPanel5.ClientArea.ResumeLayout(false);
-            this.ultraPanel5.ClientArea.PerformLayout();
-            this.ultraPanel5.ResumeLayout(false);
-            this.ultraPanel4.ClientArea.ResumeLayout(false);
-            this.ultraPanel4.ResumeLayout(false);
-            this.ultraPanel3.ClientArea.ResumeLayout(false);
-            this.ultraPanel3.ClientArea.PerformLayout();
-            this.ultraPanel3.ResumeLayout(false);
-            this.ultraPanel2.ClientArea.ResumeLayout(false);
-            this.ultraPanel2.ResumeLayout(false);
-            this.groupBox1.ResumeLayout(false);
-            this.groupBox1.PerformLayout();
+            this.headerPanel.ClientArea.ResumeLayout(false);
+            this.headerPanel.ClientArea.PerformLayout();
+            this.headerPanel.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.dtpVoucherDate)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.CmboBranch)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtVoucherNo)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.gridContra)).EndInit();
+            this.footerPanel.ClientArea.ResumeLayout(false);
+            this.footerPanel.ClientArea.PerformLayout();
+            this.footerPanel.ResumeLayout(false);
+            this.narrationPanel.ClientArea.ResumeLayout(false);
+            this.narrationPanel.ClientArea.PerformLayout();
+            this.narrationPanel.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.txtNarration)).EndInit();
             this.ResumeLayout(false);
-
         }
-
         #endregion
 
-        private System.Windows.Forms.Label lblHeader;
-        private Infragistics.Win.Misc.UltraPanel ultraPanel1;
-        private Infragistics.Win.Misc.UltraPanel ultraPanel2;
-        private System.Windows.Forms.GroupBox groupBox1;
-        public System.Windows.Forms.ComboBox comboBox1;
-        private System.Windows.Forms.Label lblBank;
-        public System.Windows.Forms.ComboBox CmboVendor;
-        public System.Windows.Forms.DateTimePicker dtpPurchaseDate;
-        private System.Windows.Forms.Label lblBranch;
-        private System.Windows.Forms.Label lblRecteptVoucherDate;
-        public System.Windows.Forms.ComboBox CmboBranch;
-        private System.Windows.Forms.Label lblVocuherNo;
-        private System.Windows.Forms.Label lblTransactionType;
-        public System.Windows.Forms.TextBox txtPurchaseNo;
-        private Infragistics.Win.Misc.UltraPanel ultraPanel3;
-        public System.Windows.Forms.TextBox textBox3;
-        private System.Windows.Forms.Label lblCredit;
-        private System.Windows.Forms.Button btnPlus;
-        public System.Windows.Forms.TextBox textBox2;
-        public System.Windows.Forms.TextBox textBox1;
-        private System.Windows.Forms.Label lblDebit;
-        private System.Windows.Forms.Label lblCashorBank;
-        private Infragistics.Win.Misc.UltraPanel ultraPanel4;
-        public System.Windows.Forms.Button btnSave;
-        public System.Windows.Forms.Button btnUpdate;
-        private System.Windows.Forms.Button btnClose;
-        private System.Windows.Forms.Button btnClear;
-        private Infragistics.Win.Misc.UltraPanel ultraPanel5;
-        private System.Windows.Forms.Label lblNarration;
-        private System.Windows.Forms.RichTextBox richTextBox1;
+        private Infragistics.Win.Misc.UltraLabel lblHeader;
+        private Infragistics.Win.Misc.UltraPanel headerPanel;
+        public Infragistics.Win.UltraWinEditors.UltraDateTimeEditor dtpVoucherDate;
+        private Infragistics.Win.Misc.UltraLabel lblBranch;
+        private Infragistics.Win.Misc.UltraLabel lblVoucherDate;
+        public Infragistics.Win.UltraWinEditors.UltraComboEditor CmboBranch;
+        private Infragistics.Win.Misc.UltraLabel lblVocuherNo;
+        public Infragistics.Win.UltraWinEditors.UltraTextEditor txtVoucherNo;
+        private Infragistics.Win.UltraWinGrid.UltraGrid gridContra;
+        private Infragistics.Win.Misc.UltraPanel footerPanel;
+        private Infragistics.Win.Misc.UltraLabel lblDifferenceValue;
+        private Infragistics.Win.Misc.UltraLabel lblDifference;
+        private Infragistics.Win.Misc.UltraLabel lblTotalCreditValue;
+        private Infragistics.Win.Misc.UltraLabel lblTotalCredit;
+        private Infragistics.Win.Misc.UltraLabel lblTotalDebitValue;
+        private Infragistics.Win.Misc.UltraLabel lblTotalDebit;
+        private Infragistics.Win.Misc.UltraPanel narrationPanel;
+        private Infragistics.Win.Misc.UltraLabel lblNarration;
+        private Infragistics.Win.UltraWinEditors.UltraTextEditor txtNarration;
     }
 }

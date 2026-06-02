@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -34,6 +34,8 @@ namespace Repository.Accounts
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@_Operation", "GETALLPARENTGROUPS");
+                    int branchId = GetContextValue(SessionContext.BranchId, DataBase.BranchId);
+                    cmd.Parameters.AddWithValue("@_BranchID", branchId > 0 ? (object)branchId : DBNull.Value);
 
                     using (SqlDataAdapter adapt = new SqlDataAdapter(cmd))
                     {
@@ -213,8 +215,48 @@ namespace Repository.Accounts
             return result;
         }
 
+        // Method to check if an account group name already exists
+        public bool IsAccountGroupNameExists(string groupName, int branchId, int excludeGroupId = 0)
+        {
+            bool exists = false;
+
+            if (DataConnection.State == ConnectionState.Open)
+            {
+                DataConnection.Close();
+            }
+
+            DataConnection.Open();
+
+            try
+            {
+                // Using direct SQL query as we did for ledger duplicate check
+                string query = "SELECT COUNT(1) FROM AccountGroupMaster WHERE GroupName = @GroupName AND BranchID = @BranchID AND GroupID != @ExcludeGroupID";
+                using (SqlCommand cmd = new SqlCommand(query, (SqlConnection)DataConnection))
+                {
+                    cmd.Parameters.AddWithValue("@GroupName", groupName);
+                    cmd.Parameters.AddWithValue("@BranchID", branchId);
+                    cmd.Parameters.AddWithValue("@ExcludeGroupID", excludeGroupId);
+
+                    object result = cmd.ExecuteScalar();
+                    exists = (result != null && Convert.ToInt32(result) > 0);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in IsAccountGroupNameExists: {ex.Message}");
+                throw ex;
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                    DataConnection.Close();
+            }
+
+            return exists;
+        }
+
         // Methods for handling AccountGroups
-        public DataTable GetAllAccountGroups()
+        public DataTable GetAllAccountGroups(int branchId = 0)
         {
             DataTable dtResult = new DataTable();
 
@@ -231,11 +273,21 @@ namespace Repository.Accounts
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@_Operation", "GETALL");
+                    if (branchId > 0)
+                    {
+                        cmd.Parameters.AddWithValue("@_BranchID", branchId);
+                    }
 
                     using (SqlDataAdapter adapt = new SqlDataAdapter(cmd))
                     {
                         adapt.Fill(dtResult);
                     }
+                }
+
+                if (branchId > 0 && dtResult.Columns.Contains("BranchID"))
+                {
+                    DataRow[] branchRows = dtResult.Select($"BranchID = {branchId}");
+                    dtResult = branchRows.Length > 0 ? branchRows.CopyToDataTable() : dtResult.Clone();
                 }
             }
             catch (Exception Ex)
@@ -277,11 +329,10 @@ namespace Repository.Accounts
                     cmd.Parameters.AddWithValue("@_ParentGroupId", accountGroup.ParentGroupId);
                     cmd.Parameters.AddWithValue("@_GroupUnder", accountGroup.GroupUnder);
 
-                    int newId = Convert.ToInt32(cmd.ExecuteScalar());
-                    result = (newId > 0);
-
-                    if (result)
-                        accountGroup.GroupID = newId;
+                    // Since GroupID is manually generated, SCOPE_IDENTITY() in the SP will return NULL.
+                    // We just execute it; if it violates duplicates, it will throw a SqlException via RAISERROR.
+                    cmd.ExecuteNonQuery();
+                    result = true;
                 }
             }
             catch (Exception Ex)
@@ -358,6 +409,8 @@ namespace Repository.Accounts
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@_Operation", "DELETE");
                     cmd.Parameters.AddWithValue("@GroupID", accountGroupId);
+                    int branchId = GetContextValue(SessionContext.BranchId, DataBase.BranchId);
+                    cmd.Parameters.AddWithValue("@_BranchID", branchId > 0 ? (object)branchId : DBNull.Value);
 
                     int rowsAffected = cmd.ExecuteNonQuery();
                     result = (rowsAffected > 0);
@@ -466,6 +519,8 @@ namespace Repository.Accounts
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@_Operation", "GETBYID");
                     cmd.Parameters.AddWithValue("@GroupID", groupId);
+                    int branchId = GetContextValue(SessionContext.BranchId, DataBase.BranchId);
+                    cmd.Parameters.AddWithValue("@_BranchID", branchId > 0 ? (object)branchId : DBNull.Value);
 
                     using (SqlDataAdapter adapt = new SqlDataAdapter(cmd))
                     {
@@ -484,6 +539,17 @@ namespace Repository.Accounts
             }
 
             return dtResult.Rows.Count > 0 ? dtResult.Rows[0] : null;
+        }
+
+        private int GetContextValue(int sessionValue, string legacyValue)
+        {
+            if (sessionValue > 0)
+            {
+                return sessionValue;
+            }
+
+            int parsedValue;
+            return int.TryParse(legacyValue, out parsedValue) ? parsedValue : 0;
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using ModelClass;
 using ModelClass.Master;
 using System;
 using System.Collections.Generic;
@@ -48,14 +49,14 @@ namespace Repository.MasterRepositry
                 using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_User, (SqlConnection)DataConnection))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Parameters.AddWithValue("@UserID ", selectedId);
-                    cmd.Parameters.AddWithValue("@CompanyID ", 0);
-                    cmd.Parameters.AddWithValue("@BranchID  ", 0);
-                    cmd.Parameters.AddWithValue("@UserLevelID  ",0);
-                    cmd.Parameters.AddWithValue("@UserName  ", "");
-                    cmd.Parameters.AddWithValue("@Password  ", "");
-                    cmd.Parameters.AddWithValue("@Email  ", "");
-                    cmd.Parameters.AddWithValue("@IsDelete  ", 0);
+                    cmd.Parameters.AddWithValue("@UserID", selectedId);
+                    cmd.Parameters.AddWithValue("@CompanyID", 0);
+                    cmd.Parameters.AddWithValue("@BranchID", 0);
+                    cmd.Parameters.AddWithValue("@UserLevelID", 0);
+                    cmd.Parameters.AddWithValue("@UserName", "");
+                    cmd.Parameters.AddWithValue("@Password", "");
+                    cmd.Parameters.AddWithValue("@Email", "");
+                    cmd.Parameters.AddWithValue("@IsDelete", 0);
                     cmd.Parameters.AddWithValue("@_Operation", "GETBYID");
                     using (SqlDataAdapter adapt = new SqlDataAdapter(cmd))
                     {
@@ -133,14 +134,14 @@ namespace Repository.MasterRepositry
                 using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_User, (SqlConnection)DataConnection))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Parameters.AddWithValue("@UserID ", selectedId);
-                    cmd.Parameters.AddWithValue("@CompanyID ", 0);
-                    cmd.Parameters.AddWithValue("@BranchID  ", 0);
-                    cmd.Parameters.AddWithValue("@UserLevelID  ", 0);
-                    cmd.Parameters.AddWithValue("@UserName  ", "");
-                    cmd.Parameters.AddWithValue("@Password  ", "");
-                    cmd.Parameters.AddWithValue("@Email  ", "");
-                    cmd.Parameters.AddWithValue("@IsDelete  ", 0);
+                    cmd.Parameters.AddWithValue("@UserID", selectedId);
+                    cmd.Parameters.AddWithValue("@CompanyID", 0);
+                    cmd.Parameters.AddWithValue("@BranchID", 0);
+                    cmd.Parameters.AddWithValue("@UserLevelID", 0);
+                    cmd.Parameters.AddWithValue("@UserName", "");
+                    cmd.Parameters.AddWithValue("@Password", "");
+                    cmd.Parameters.AddWithValue("@Email", "");
+                    cmd.Parameters.AddWithValue("@IsDelete", 0);
                     cmd.Parameters.AddWithValue("@_Operation", "DELETE");
                     using (SqlDataAdapter adapt = new SqlDataAdapter(cmd))
                     {
@@ -174,6 +175,8 @@ namespace Repository.MasterRepositry
                 using(SqlCommand cmd =new SqlCommand(STOREDPROCEDURE.POS_User, (SqlConnection)DataConnection))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@CompanyID", SessionContext.CompanyId);
+                    cmd.Parameters.AddWithValue("@BranchID", SessionContext.BranchId);
                     cmd.Parameters.AddWithValue("@UserName", searchTerm);
                     cmd.Parameters.AddWithValue("@_Operation", "SEARCH");
                     using (SqlDataAdapter adapt = new SqlDataAdapter(cmd))

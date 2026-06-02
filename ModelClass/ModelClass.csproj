@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -87,6 +87,7 @@
     <Compile Include="Report\StockReportAdvanceModel.cs" />
     <Compile Include="Report\TradingPLModel.cs" />
     <Compile Include="Report\BalanceSheetModel.cs" />
+    <Compile Include="Report\TrialBalanceModel.cs" />
     <Compile Include="Report\CashBankBookModel.cs" />
     <Compile Include="Report\CombinedPartyBalanceReportModel.cs" />
     <Compile Include="Report\CustomerOutstandingReportModel.cs" />
@@ -98,6 +99,7 @@
     <Compile Include="Settings\POSSetting.cs" />
     <Compile Include="SessionContextExtensions.cs" />
     <Compile Include="TransactionModels\HoldItemDetails.cs" />
+    <Compile Include="TransactionModels\JournalVoucherModel.cs" />
     <Compile Include="TransactionModels\PurchaseModel.cs" />
     <Compile Include="TransactionModels\PurchaseOrderModel.cs" />
     <Compile Include="TransactionModels\PurchaseReturnModel.cs" />

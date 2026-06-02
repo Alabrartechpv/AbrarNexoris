@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -23,13 +23,12 @@ namespace PosBranch_Win.Accounts
         private Dropdowns drop = new Dropdowns();
         private AccountGroupRepository accountGroupRepo;
         private LedgerRepository ledgerRepo;
-        private DataTable dtLedgers;
-
         public FrmLedgers()
         {
             try
             {
                 InitializeComponent();
+                tblMain.Paint += TblMain_Paint;
 
                 // Initialize repositories
                 accountGroupRepo = new AccountGroupRepository();
@@ -37,15 +36,15 @@ namespace PosBranch_Win.Accounts
 
                 // Register event handlers
                 this.Load += FrmLedgers_Load;
-                ultraBtnSave.Click += UltraBtnSave_Click;
-                ultraBtnClear.Click += UltraBtnClear_Click;
-                ultraBtnDelete.Click += UltraBtnDelete_Click;
-                ultraGridLedger.DoubleClickRow += UltraGridLedger_DoubleClickRow;
+                btnSearchLedger.Click += BtnSearch_Click;
 
                 // Set up numeric validation for amount fields
-                ultratxtOpnDebit.KeyPress += NumericTextBox_KeyPress;
-                ultratxtOpnCredit.KeyPress += NumericTextBox_KeyPress;
+                ultratxtOpnBalance.KeyPress += NumericTextBox_KeyPress;
                 ultratxtBalance.KeyPress += NumericTextBox_KeyPress;
+
+                // Auto-calculate Balance when Debit or Credit changes
+                ultratxtOpnBalance.TextChanged += UpdateBalance;
+                ultraComboDrCr.ValueChanged += UpdateBalance;
             }
             catch (Exception ex)
             {
@@ -71,10 +70,7 @@ namespace PosBranch_Win.Accounts
                 LoadBranches();
                 LoadAccountGroups();
 
-                // Load existing ledgers
-                LoadLedgers();
-
-                // Set up UI elements
+                // Set up UI elements FIRST
                 SetupUI();
 
                 // Generate next ledger ID
@@ -106,8 +102,11 @@ namespace PosBranch_Win.Accounts
                     ultraDropDownBranch.ValueMember = "Id";
                     ultraDropDownBranch.Visible = true;
 
-                    // Select the first branch by default if available
-                    if (ultraDropDownBranch.Items.Count > 0)
+                    // Pre-select the logged-in branch from session
+                    ultraDropDownBranch.Value = SessionContext.BranchId;
+
+                    // Fallback: select first item if session branch not found
+                    if (ultraDropDownBranch.SelectedIndex == -1 && ultraDropDownBranch.Items.Count > 0)
                         ultraDropDownBranch.SelectedIndex = 0;
                 }
                 else
@@ -206,133 +205,6 @@ namespace PosBranch_Win.Accounts
             }
         }
 
-        private void LoadLedgers()
-        {
-            try
-            {
-                // Get selected branch ID
-                int branchId = 0;
-                if (ultraDropDownBranch.SelectedValue != null)
-                    branchId = Convert.ToInt32(ultraDropDownBranch.SelectedValue);
-
-                // Use the repository to get ledgers for the selected branch
-                dtLedgers = ledgerRepo.GetAllLedgers(branchId);
-
-                if (dtLedgers != null && dtLedgers.Rows.Count > 0)
-                {
-                    ultraGridLedger.DataSource = dtLedgers;
-                    FormatGrid();
-                }
-                else
-                {
-                    // Create an empty data table with the expected structure
-                    dtLedgers = new DataTable();
-                    dtLedgers.Columns.Add("LedgerID", typeof(int));
-                    dtLedgers.Columns.Add("LedgerName", typeof(string));
-                    dtLedgers.Columns.Add("Alias", typeof(string));
-                    dtLedgers.Columns.Add("GroupName", typeof(string));
-                    dtLedgers.Columns.Add("GroupID", typeof(int));
-                    dtLedgers.Columns.Add("Description", typeof(string));
-                    dtLedgers.Columns.Add("Notes", typeof(string));
-                    dtLedgers.Columns.Add("OpnDebit", typeof(decimal));
-                    dtLedgers.Columns.Add("OpnCredit", typeof(decimal));
-                    dtLedgers.Columns.Add("Balance", typeof(decimal));
-                    dtLedgers.Columns.Add("BranchName", typeof(string));
-                    dtLedgers.Columns.Add("BranchID", typeof(int));
-
-                    ultraGridLedger.DataSource = dtLedgers;
-                    FormatGrid();
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error loading ledgers: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
-                // Create a default empty data table
-                dtLedgers = new DataTable();
-                dtLedgers.Columns.Add("LedgerID", typeof(int));
-                dtLedgers.Columns.Add("LedgerName", typeof(string));
-                dtLedgers.Columns.Add("Alias", typeof(string));
-                dtLedgers.Columns.Add("GroupName", typeof(string));
-                dtLedgers.Columns.Add("GroupID", typeof(int));
-                dtLedgers.Columns.Add("Description", typeof(string));
-                dtLedgers.Columns.Add("Notes", typeof(string));
-                dtLedgers.Columns.Add("OpnDebit", typeof(decimal));
-                dtLedgers.Columns.Add("OpnCredit", typeof(decimal));
-                dtLedgers.Columns.Add("Balance", typeof(decimal));
-                dtLedgers.Columns.Add("BranchName", typeof(string));
-                dtLedgers.Columns.Add("BranchID", typeof(int));
-
-                ultraGridLedger.DataSource = dtLedgers;
-                FormatGrid();
-            }
-        }
-
-        private void FormatGrid()
-        {
-            try
-            {
-                // Set column headers and formatting
-                ultraGridLedger.DisplayLayout.AutoFitStyle = Infragistics.Win.UltraWinGrid.AutoFitStyle.ResizeAllColumns;
-
-                Infragistics.Win.UltraWinGrid.UltraGridBand band = ultraGridLedger.DisplayLayout.Bands[0];
-
-                // Hide the ID columns
-                if (band.Columns.Exists("LedgerID"))
-                    band.Columns["LedgerID"].Hidden = true;
-
-                if (band.Columns.Exists("GroupID"))
-                    band.Columns["GroupID"].Hidden = true;
-
-                if (band.Columns.Exists("BranchID"))
-                    band.Columns["BranchID"].Hidden = true;
-
-                // Set column headers
-                if (band.Columns.Exists("LedgerName"))
-                    band.Columns["LedgerName"].Header.Caption = "Ledger Name";
-
-                if (band.Columns.Exists("Alias"))
-                    band.Columns["Alias"].Header.Caption = "Alias";
-
-                if (band.Columns.Exists("GroupName"))
-                    band.Columns["GroupName"].Header.Caption = "Account Group";
-
-                if (band.Columns.Exists("Description"))
-                    band.Columns["Description"].Header.Caption = "Description";
-
-                if (band.Columns.Exists("Notes"))
-                    band.Columns["Notes"].Header.Caption = "Notes";
-
-                if (band.Columns.Exists("OpnDebit"))
-                {
-                    band.Columns["OpnDebit"].Header.Caption = "Open Debit";
-                    band.Columns["OpnDebit"].Format = "N2";
-                }
-
-                if (band.Columns.Exists("OpnCredit"))
-                {
-                    band.Columns["OpnCredit"].Header.Caption = "Open Credit";
-                    band.Columns["OpnCredit"].Format = "N2";
-                }
-
-                if (band.Columns.Exists("Balance"))
-                {
-                    band.Columns["Balance"].Header.Caption = "Balance";
-                    band.Columns["Balance"].Format = "N2";
-                }
-
-                if (band.Columns.Exists("BranchName"))
-                    band.Columns["BranchName"].Header.Caption = "Branch";
-
-                // Apply alternating row colors
-                ultraGridLedger.DisplayLayout.Override.RowAlternateAppearance.BackColor = Color.FromArgb(240, 240, 240);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error formatting grid: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
         #endregion
 
         #region Event Handlers
@@ -340,6 +212,16 @@ namespace PosBranch_Win.Accounts
         public void Save()
         {
             UltraBtnSave_Click(this, EventArgs.Empty);
+        }
+
+        public void Clear()
+        {
+            UltraBtnClear_Click(this, EventArgs.Empty);
+        }
+
+        public void Delete()
+        {
+            UltraBtnDelete_Click(this, EventArgs.Empty);
         }
 
         private void UltraBtnSave_Click(object sender, EventArgs e)
@@ -359,21 +241,31 @@ namespace PosBranch_Win.Accounts
 
                 // Get selected values from dropdowns
                 int branchId = 0;
-                if (ultraDropDownBranch.SelectedValue != null)
-                    branchId = Convert.ToInt32(ultraDropDownBranch.SelectedValue);
+                if (ultraDropDownBranch.Value != null)
+                    branchId = Convert.ToInt32(ultraDropDownBranch.Value);
+                if (branchId == 0)
+                    branchId = SessionContext.BranchId;
 
                 int groupId = 0;
-                if (ultraDrpParentGroup.SelectedValue != null)
-                    groupId = Convert.ToInt32(ultraDrpParentGroup.SelectedValue);
+                if (ultraDrpParentGroup.Value != null)
+                    groupId = Convert.ToInt32(ultraDrpParentGroup.Value);
 
                 // Parse decimal values
                 decimal openDebit = 0;
-                if (!string.IsNullOrEmpty(ultratxtOpnDebit.Text))
-                    decimal.TryParse(ultratxtOpnDebit.Text, out openDebit);
-
                 decimal openCredit = 0;
-                if (!string.IsNullOrEmpty(ultratxtOpnCredit.Text))
-                    decimal.TryParse(ultratxtOpnCredit.Text, out openCredit);
+                decimal openBalance = 0;
+
+                if (!string.IsNullOrEmpty(ultratxtOpnBalance.Text))
+                    decimal.TryParse(ultratxtOpnBalance.Text, out openBalance);
+
+                if (ultraComboDrCr.Value != null && ultraComboDrCr.Value.ToString() == "Dr")
+                {
+                    openDebit = openBalance;
+                }
+                else if (ultraComboDrCr.Value != null && ultraComboDrCr.Value.ToString() == "Cr")
+                {
+                    openCredit = openBalance;
+                }
 
                 // Create ledger object
                 ModelClass.Accounts.Ledger ledger = new ModelClass.Accounts.Ledger
@@ -401,6 +293,11 @@ namespace PosBranch_Win.Accounts
                 // Check if we're updating or creating
                 if (ultraTxtLedgerId.Tag != null)
                 {
+                    // Confirm update
+                    DialogResult result = MessageBox.Show("Are you sure you want to update this ledger?", "Confirm Update", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    if (result == DialogResult.No)
+                        return;
+
                     // Update existing ledger
                     bool success = ledgerRepo.UpdateLedger(ledger);
 
@@ -411,6 +308,11 @@ namespace PosBranch_Win.Accounts
                 }
                 else
                 {
+                    // Confirm save
+                    DialogResult result = MessageBox.Show("Are you sure you want to save this new ledger?", "Confirm Save", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    if (result == DialogResult.No)
+                        return;
+
                     // Create new ledger
                     bool success = ledgerRepo.CreateLedger(ledger);
 
@@ -419,9 +321,6 @@ namespace PosBranch_Win.Accounts
                     else
                         MessageBox.Show("Failed to create ledger.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-
-                // Refresh the grid
-                LoadLedgers();
 
                 // Clear the form
                 ClearForm();
@@ -463,8 +362,7 @@ namespace PosBranch_Win.Accounts
                 {
                     MessageBox.Show("Ledger deleted successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                    // Refresh the grid and clear the form
-                    LoadLedgers();
+                    // Clear the form
                     ClearForm();
                 }
                 else
@@ -476,66 +374,6 @@ namespace PosBranch_Win.Accounts
             catch (Exception ex)
             {
                 MessageBox.Show("Error deleting ledger: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private void UltraGridLedger_DoubleClickRow(object sender, Infragistics.Win.UltraWinGrid.DoubleClickRowEventArgs e)
-        {
-            try
-            {
-                if (e.Row != null && e.Row.IsDataRow)
-                {
-                    // Get the selected record
-                    int ledgerId = Convert.ToInt32(e.Row.Cells["LedgerID"].Value);
-
-                    // Populate the form with the selected row's data
-                    ultraTxtLedgerId.Text = ledgerId.ToString();
-                    ultraTxtLedgerName.Text = e.Row.Cells["LedgerName"].Value.ToString();
-
-                    if (e.Row.Cells["Alias"].Value != DBNull.Value)
-                        ultratxtAliasName.Text = e.Row.Cells["Alias"].Value.ToString();
-
-                    if (e.Row.Cells["Description"].Value != DBNull.Value)
-                        ultratxtDescription.Text = e.Row.Cells["Description"].Value.ToString();
-
-                    if (e.Row.Cells["Notes"].Value != DBNull.Value)
-                        ultratxtNotes.Text = e.Row.Cells["Notes"].Value.ToString();
-
-                    if (e.Row.Cells["OpnDebit"].Value != DBNull.Value)
-                        ultratxtOpnDebit.Text = Convert.ToDecimal(e.Row.Cells["OpnDebit"].Value).ToString("N2");
-
-                    if (e.Row.Cells["OpnCredit"].Value != DBNull.Value)
-                        ultratxtOpnCredit.Text = Convert.ToDecimal(e.Row.Cells["OpnCredit"].Value).ToString("N2");
-
-                    if (e.Row.Cells["Balance"].Value != DBNull.Value)
-                        ultratxtBalance.Text = Convert.ToDecimal(e.Row.Cells["Balance"].Value).ToString("N2");
-
-                    // Set branch and group dropdowns
-                    if (e.Row.Cells["BranchID"].Value != DBNull.Value)
-                    {
-                        int branchId = Convert.ToInt32(e.Row.Cells["BranchID"].Value);
-                        SelectComboBoxItemByValue(ultraDropDownBranch, branchId);
-                    }
-
-                    if (e.Row.Cells["GroupID"].Value != DBNull.Value)
-                    {
-                        int groupId = Convert.ToInt32(e.Row.Cells["GroupID"].Value);
-                        SelectComboBoxItemByValue(ultraDrpParentGroup, groupId);
-                    }
-
-                    // Make the ledger ID read-only
-                    ultraTxtLedgerId.ReadOnly = true;
-
-                    // Store the ledger ID in the tag property for update
-                    ultraTxtLedgerId.Tag = ledgerId;
-
-                    // Update button text
-                    ultraBtnSave.Text = "Update";
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error loading record: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -562,10 +400,32 @@ namespace PosBranch_Win.Accounts
         {
             try
             {
-                // Set balance field to read-only
-                ultratxtBalance.ReadOnly = true;
+                ApplyModernTheme();
 
-                // Set default focus
+                // Balance is always read-only (auto-calculated)
+                ultratxtBalance.ReadOnly = true;
+                ultratxtBalance.TabStop = false;
+
+                // Force ALL CAPS for text entry consistency
+                ultraTxtLedgerName.CharacterCasing = System.Windows.Forms.CharacterCasing.Upper;
+                ultratxtAliasName.CharacterCasing = System.Windows.Forms.CharacterCasing.Upper;
+                ultratxtDescription.CharacterCasing = System.Windows.Forms.CharacterCasing.Upper;
+                ultratxtNotes.CharacterCasing = System.Windows.Forms.CharacterCasing.Upper;
+
+                // Hover effects for the Search button
+                btnSearchLedger.ButtonStyle = Infragistics.Win.UIElementButtonStyle.Flat;
+                btnSearchLedger.HotTrackAppearance.BackColor = Color.FromArgb(206, 231, 247);
+                btnSearchLedger.HotTrackAppearance.ForeColor = Color.FromArgb(24, 92, 143);
+                btnSearchLedger.PressedAppearance.BackColor = Color.FromArgb(185, 218, 239);
+                btnSearchLedger.PressedAppearance.ForeColor = Color.FromArgb(24, 92, 143);
+
+                ultraComboDrCr.Items.Clear();
+                ultraComboDrCr.Items.Add("Dr", "Debit (Dr)");
+                ultraComboDrCr.Items.Add("Cr", "Credit (Cr)");
+                ultraComboDrCr.SelectedIndex = 0;
+                StyleCombo(ultraComboDrCr);
+
+                UpdateFormModeCaption(false);
                 ultraTxtLedgerName.Focus();
             }
             catch (Exception ex)
@@ -574,21 +434,123 @@ namespace PosBranch_Win.Accounts
             }
         }
 
+        private void ApplyModernTheme()
+        {
+            BackColor = Color.FromArgb(222, 240, 250);
+            pnlMain.Appearance.BackColor = Color.FromArgb(222, 240, 250);
+            tblMain.BackColor = Color.FromArgb(238, 248, 253);
+
+            var sectionBackColor = Color.FromArgb(199, 225, 242);
+            var sectionForeColor = Color.FromArgb(15, 77, 128);
+
+            StyleCombo(ultraDrpParentGroup);
+
+            StyleEditor(ultraTxtLedgerName);
+            StyleEditor(ultratxtAliasName);
+            StyleEditor(ultratxtDescription);
+            StyleEditor(ultratxtOpnBalance);
+            StyleEditor(ultratxtNotes);
+            StyleEditor(ultraTxtLedgerId, true);
+            StyleEditor(ultratxtBalance, true);
+
+            StyleSectionLabel(lblSectionLedger, sectionBackColor, sectionForeColor);
+            StyleSectionLabel(lblSectionFinancial, sectionBackColor, sectionForeColor);
+            StyleSectionLabel(lblSectionNotes, sectionBackColor, sectionForeColor);
+
+            StyleFieldLabel(ultraLblLedgerId);
+            StyleFieldLabel(ultralblLedgerName);
+            StyleFieldLabel(ultraLblAccGroup);
+            StyleFieldLabel(ultralblAlias);
+            StyleFieldLabel(ultraLblDescription);
+            StyleFieldLabel(ultraLblOpnBalance);
+            StyleFieldLabel(ultraLblBalace);
+        }
+
+        private void TblMain_Paint(object sender, PaintEventArgs e)
+        {
+            using (var pen = new Pen(Color.FromArgb(170, 208, 232)))
+            {
+                var rect = tblMain.ClientRectangle;
+                rect.Width -= 1;
+                rect.Height -= 1;
+                e.Graphics.DrawRectangle(pen, rect);
+            }
+        }
+
+        private void StyleSectionLabel(Infragistics.Win.Misc.UltraLabel label, Color backColor, Color foreColor)
+        {
+            label.Appearance = new Infragistics.Win.Appearance();
+            label.Appearance.BackColor = backColor;
+            label.Appearance.ForeColor = foreColor;
+            label.Appearance.TextVAlignAsString = "Middle";
+            label.Padding = new Size(12, 0);
+        }
+
+        private void StyleFieldLabel(Infragistics.Win.Misc.UltraLabel label)
+        {
+            label.Appearance = new Infragistics.Win.Appearance();
+            label.Appearance.BackColor = tblMain.BackColor;
+            label.Appearance.ForeColor = Color.FromArgb(40, 62, 89);
+            label.Appearance.TextVAlignAsString = "Middle";
+        }
+
+        private void StyleCombo(Infragistics.Win.UltraWinEditors.UltraComboEditor combo)
+        {
+            combo.BackColor = Color.White;
+            combo.ForeColor = Color.FromArgb(40, 62, 89);
+            combo.Appearance.BackColor = Color.White;
+            combo.Appearance.ForeColor = combo.ForeColor;
+            combo.Appearance.BorderColor = Color.FromArgb(110, 170, 210);
+            combo.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
+            combo.DisplayStyle = Infragistics.Win.EmbeddableElementDisplayStyle.Office2010;
+            combo.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+        }
+
+        private void StyleEditor(Infragistics.Win.UltraWinEditors.UltraTextEditor editor, bool readOnly = false)
+        {
+            Color editorBackColor = readOnly
+                ? Color.FromArgb(239, 245, 250)
+                : Color.White;
+
+            editor.BackColor = editorBackColor;
+            editor.ForeColor = Color.FromArgb(40, 62, 89);
+            editor.Appearance.BackColor = editorBackColor;
+            editor.Appearance.ForeColor = editor.ForeColor;
+            editor.Appearance.BorderColor = Color.FromArgb(110, 170, 210);
+            editor.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
+            editor.DisplayStyle = Infragistics.Win.EmbeddableElementDisplayStyle.Office2010;
+            editor.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+        }
+
+
+
+        private void BtnSearch_Click(object sender, EventArgs e)
+        {
+            using (var searchForm = new PosBranch_Win.DialogBox.FrmLedgerSearch())
+            {
+                if (searchForm.ShowDialog() == DialogResult.OK && searchForm.SelectedLedgerId > 0)
+                {
+                    LoadLedgerById(searchForm.SelectedLedgerId);
+                }
+            }
+        }
+
         private bool ValidateInput()
         {
             // Check branch selection
-            if (ultraDropDownBranch.SelectedIndex == -1)
+            if (false) // Branch validation removed
             {
                 MessageBox.Show("Please select a branch.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 ultraDropDownBranch.Focus();
                 return false;
             }
 
-            // Check ledger ID
+            // LedgerID is auto-generated — no manual entry check needed.
+            // If it is somehow empty (e.g. GetNextLedgerID failed), block save with a clear message.
             if (string.IsNullOrWhiteSpace(ultraTxtLedgerId.Text))
             {
-                MessageBox.Show("Please enter a ledger ID.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                ultraTxtLedgerId.Focus();
+                MessageBox.Show("Ledger ID could not be generated. Please refresh the form or contact support.",
+                    "ID Generation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
 
@@ -601,10 +563,33 @@ namespace PosBranch_Win.Accounts
             }
 
             // Check account group
-            if (ultraDrpParentGroup.SelectedIndex == -1)
+            if (ultraDrpParentGroup.SelectedIndex == -1 || 
+                ultraDrpParentGroup.Value == null || 
+                Convert.ToInt32(ultraDrpParentGroup.Value) <= 0)
             {
-                MessageBox.Show("Please select an account group.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Please select a valid Account Group.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 ultraDrpParentGroup.Focus();
+                return false;
+            }
+
+            // Check duplicate ledger name
+            string ledgerName = ultraTxtLedgerName.Text.Trim();
+            int branchId = SessionContext.BranchId;
+            int excludeId = ultraTxtLedgerId.Tag != null ? Convert.ToInt32(ultraTxtLedgerId.Tag) : 0;
+
+            if (ledgerRepo.IsLedgerNameExists(ledgerName, branchId, excludeId))
+            {
+                MessageBox.Show($"A Ledger with the name '{ledgerName}' already exists. Please choose a different name.", "Duplicate Name", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ultraTxtLedgerName.Focus();
+                return false;
+            }
+
+            // Check duplicate alias name
+            string aliasName = ultratxtAliasName.Text.Trim();
+            if (!string.IsNullOrWhiteSpace(aliasName) && ledgerRepo.IsLedgerAliasExists(aliasName, branchId, excludeId))
+            {
+                MessageBox.Show($"A Ledger with the alias '{aliasName}' already exists. Please choose a different alias.", "Duplicate Alias", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ultratxtAliasName.Focus();
                 return false;
             }
 
@@ -614,13 +599,12 @@ namespace PosBranch_Win.Accounts
         private void ClearForm()
         {
             // Clear all textboxes
-            ultraTxtLedgerId.Text = string.Empty;
             ultraTxtLedgerName.Text = string.Empty;
             ultratxtAliasName.Text = string.Empty;
             ultratxtDescription.Text = string.Empty;
             ultratxtNotes.Text = string.Empty;
-            ultratxtOpnDebit.Text = "0.00";
-            ultratxtOpnCredit.Text = "0.00";
+            ultratxtOpnBalance.Text = "0.00";
+            if (ultraComboDrCr.Items.Count > 0) ultraComboDrCr.SelectedIndex = 0;
             ultratxtBalance.Text = "0.00";
 
             // Reset dropdowns to first item if available
@@ -630,14 +614,11 @@ namespace PosBranch_Win.Accounts
             if (ultraDrpParentGroup.Items.Count > 0)
                 ultraDrpParentGroup.SelectedIndex = 0;
 
-            // Clear the tag and reset button text
+            // Clear the tag and reset the form mode
             ultraTxtLedgerId.Tag = null;
-            ultraBtnSave.Text = "Save";
+            UpdateFormModeCaption(false);
 
-            // Make the ledger ID editable
-            ultraTxtLedgerId.ReadOnly = false;
-
-            // Generate the next ledger ID
+            // GenerateNextLedgerID will set ReadOnly = true after populating the ID
             GenerateNextLedgerID();
 
             // Set focus to the ledger name field
@@ -651,40 +632,70 @@ namespace PosBranch_Win.Accounts
                 // Get the next available ID from the repository
                 int nextId = ledgerRepo.GetNextLedgerID();
 
-                // Set the ID to the textbox
-                ultraTxtLedgerId.Text = nextId.ToString();
-
-                // Make the field read-only to prevent manual changes
-                ultraTxtLedgerId.ReadOnly = true;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error generating next ledger ID: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private void SelectComboBoxItemByValue(ComboBox comboBox, object value)
-        {
-            try
-            {
-                if (comboBox == null || value == null || comboBox.Items.Count == 0)
-                    return;
-
-                string valueMember = comboBox.ValueMember;
-
-                for (int i = 0; i < comboBox.Items.Count; i++)
+                if (nextId > 0)
                 {
-                    DataRowView item = comboBox.Items[i] as DataRowView;
-                    if (item != null && item[valueMember] != null && item[valueMember].Equals(value))
-                    {
-                        comboBox.SelectedIndex = i;
-                        break;
-                    }
+                    ultraTxtLedgerId.Text = nextId.ToString();
+                    ultraTxtLedgerId.ReadOnly = true;
+                }
+                else
+                {
+                    // Fallback: leave field empty and editable so the user is aware
+                    ultraTxtLedgerId.Text = string.Empty;
+                    ultraTxtLedgerId.ReadOnly = false;
+                    MessageBox.Show("Could not auto-generate a Ledger ID. Please check the database connection.",
+                        "ID Generation Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("Error in SelectComboBoxItemByValue: " + ex.Message);
+                // On failure: clear and unlock so the problem is visible
+                ultraTxtLedgerId.Text = string.Empty;
+                ultraTxtLedgerId.ReadOnly = false;
+                MessageBox.Show("Error generating next ledger ID: " + ex.Message +
+                    "\nYou may enter the ID manually or refresh the form.",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Auto-calculates Balance = OpnDebit - OpnCredit whenever either field changes.
+        /// </summary>
+        private void UpdateBalance(object sender, EventArgs e)
+        {
+            try
+            {
+                decimal balance = 0;
+                decimal.TryParse(ultratxtOpnBalance.Text, out balance);
+                
+                if (ultraComboDrCr.Value != null && ultraComboDrCr.Value.ToString() == "Cr")
+                {
+                    ultratxtBalance.Text = (-balance).ToString("N2");
+                }
+                else
+                {
+                    ultratxtBalance.Text = balance.ToString("N2");
+                }
+            }
+            catch
+            {
+                // Ignore parse errors during typing
+            }
+        }
+
+        /// <summary>
+        /// Sets the selected value on an UltraComboEditor by its ValueMember.
+        /// </summary>
+        private void SelectUltraDropDownByValue(Infragistics.Win.UltraWinEditors.UltraComboEditor control, object value)
+        {
+            try
+            {
+                if (control == null || value == null)
+                    return;
+                control.Value = value;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Error in SelectUltraDropDownByValue: " + ex.Message);
             }
         }
 
@@ -714,11 +725,30 @@ namespace PosBranch_Win.Accounts
                     if (ledgerRow["Notes"] != DBNull.Value)
                         ultratxtNotes.Text = ledgerRow["Notes"].ToString();
 
+                    decimal opnDebit = 0;
+                    decimal opnCredit = 0;
+
                     if (ledgerRow["OpnDebit"] != DBNull.Value)
-                        ultratxtOpnDebit.Text = Convert.ToDecimal(ledgerRow["OpnDebit"]).ToString("N2");
+                        opnDebit = Convert.ToDecimal(ledgerRow["OpnDebit"]);
 
                     if (ledgerRow["OpnCredit"] != DBNull.Value)
-                        ultratxtOpnCredit.Text = Convert.ToDecimal(ledgerRow["OpnCredit"]).ToString("N2");
+                        opnCredit = Convert.ToDecimal(ledgerRow["OpnCredit"]);
+
+                    if (opnDebit > 0)
+                    {
+                        ultratxtOpnBalance.Text = opnDebit.ToString("N2");
+                        SelectUltraDropDownByValue(ultraComboDrCr, "Dr");
+                    }
+                    else if (opnCredit > 0)
+                    {
+                        ultratxtOpnBalance.Text = opnCredit.ToString("N2");
+                        SelectUltraDropDownByValue(ultraComboDrCr, "Cr");
+                    }
+                    else
+                    {
+                        ultratxtOpnBalance.Text = "0.00";
+                        if (ultraComboDrCr.Items.Count > 0) SelectUltraDropDownByValue(ultraComboDrCr, "Dr");
+                    }
 
                     if (ledgerRow["Balance"] != DBNull.Value)
                         ultratxtBalance.Text = Convert.ToDecimal(ledgerRow["Balance"]).ToString("N2");
@@ -727,14 +757,14 @@ namespace PosBranch_Win.Accounts
                     if (ledgerRow["GroupID"] != DBNull.Value)
                     {
                         int groupId = Convert.ToInt32(ledgerRow["GroupID"]);
-                        SelectComboBoxItemByValue(ultraDrpParentGroup, groupId);
+                        SelectUltraDropDownByValue(ultraDrpParentGroup, groupId);
                     }
 
                     // Set branch dropdown if needed
                     if (ledgerRow["BranchID"] != DBNull.Value)
                     {
                         int branchId = Convert.ToInt32(ledgerRow["BranchID"]);
-                        SelectComboBoxItemByValue(ultraDropDownBranch, branchId);
+                        SelectUltraDropDownByValue(ultraDropDownBranch, branchId);
                     }
 
                     // Make the ledger ID read-only
@@ -743,8 +773,7 @@ namespace PosBranch_Win.Accounts
                     // Store the ledger ID in the tag property for update
                     ultraTxtLedgerId.Tag = ledgerId;
 
-                    // Update button text
-                    ultraBtnSave.Text = "Update";
+                    UpdateFormModeCaption(true);
                 }
                 else
                 {
@@ -756,6 +785,13 @@ namespace PosBranch_Win.Accounts
             {
                 MessageBox.Show("Error loading ledger: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+
+
+        private void UpdateFormModeCaption(bool isEditMode)
+        {
+            Text = isEditMode ? "Ledgers - Edit" : "Ledgers";
         }
 
         #endregion

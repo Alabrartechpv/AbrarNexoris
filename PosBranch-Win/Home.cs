@@ -6,6 +6,7 @@ using PosBranch_Win.Reports.SalesReports;
 using PosBranch_Win.Transaction;
 using PosBranch_Win.Utilities;
 using PosBranch_Win.Settings;
+using Repository;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -30,6 +31,9 @@ namespace PosBranch_Win
         private int scrollDirection = 0; // 0 = none, -1 = left, 1 = right
         private string _lastActivatedToolKey = null; // Track which toolbar key opened the current form
         private bool _openingFromFavourite = false; // When true, allow duplicate form instances
+        private Timer closingAlertTimer = new Timer();
+        private bool closingAlertShown = false;
+        private bool closingRequiredAlertShown = false;
 
         // Report Navigator fields
         private Infragistics.Win.UltraWinExplorerBar.UltraExplorerBar ultraExplorerBarReportNavigator;
@@ -37,6 +41,7 @@ namespace PosBranch_Win
         private bool _isReportNavigatorVisible = false;
         private bool _isReportNavigatorPinned = false;
         private Panel _reportNavigatorPinButton;
+        private string _activeReportNavigatorItemKey = null;
 
         private sealed class ReportNavigatorDefinition
         {
@@ -73,6 +78,7 @@ namespace PosBranch_Win
             new ReportNavigatorDefinition("Vendor", "DN/payment", "VendorDNPaymentReport"),
             new ReportNavigatorDefinition("Analysis", "Trading & P/L Account", "TradingPLAccount"),
             new ReportNavigatorDefinition("Analysis", "Balance Sheet", "BalanceSheet"),
+            new ReportNavigatorDefinition("Analysis", "Trial Balance", "TrialBalance"),
             new ReportNavigatorDefinition("Analysis", "Cash & Bank Book", "CashBankBook"),
             new ReportNavigatorDefinition("Analysis", "Day Book", "DayBook"),
             new ReportNavigatorDefinition("Others", "Manual Party Balance Report", "ManualPartyBalanceReport"),
@@ -110,6 +116,9 @@ namespace PosBranch_Win
             // Set up the timer for smooth scrolling
             scrollTimer.Interval = 50;
             scrollTimer.Tick += ScrollTimer_Tick;
+
+            closingAlertTimer.Interval = 60000;
+            closingAlertTimer.Tick += ClosingAlertTimer_Tick;
 
             // Wire up context menu events
             closeTabToolStripMenuItem.Click += closeTabToolStripMenuItem_Click;
@@ -467,8 +476,8 @@ namespace PosBranch_Win
         {
             try
             {
-                // Auto-close Report Navigator when any form is opened (IRS POS behavior)
-                if (_isReportNavigatorVisible) HideReportNavigator();
+                // Auto-close Report Navigator when any form is opened, unless the user pinned it.
+                if (_isReportNavigatorVisible && !_isReportNavigatorPinned) HideReportNavigator();
                 // Check if tab already exists (skip when opening from favourites to allow multiple instances)
                 if (!_openingFromFavourite)
                 {
@@ -575,6 +584,7 @@ namespace PosBranch_Win
                         {
                             tabControlMain.Tabs.Remove(newTab);
                         }
+                        SyncReportNavigatorActiveItemWithOpenTabs();
                         UpdateHoldToolVisibility();
                     }
                     catch (Exception ex)
@@ -705,8 +715,8 @@ namespace PosBranch_Win
         {
             try
             {
-                // Auto-close Report Navigator when any form is opened (IRS POS behavior)
-                if (_isReportNavigatorVisible) HideReportNavigator();
+                // Auto-close Report Navigator when any form is opened, unless the user pinned it.
+                if (_isReportNavigatorVisible && !_isReportNavigatorPinned) HideReportNavigator();
                 // Check if tab already exists (skip when opening from favourites to allow multiple instances)
                 if (!_openingFromFavourite)
                 {
@@ -812,6 +822,7 @@ namespace PosBranch_Win
                             // Force garbage collection of the closed form sooner
                             GC.Collect();
                         }
+                        SyncReportNavigatorActiveItemWithOpenTabs();
                         UpdateHoldToolVisibility();
                     }
                     catch (Exception ex)
@@ -847,6 +858,7 @@ namespace PosBranch_Win
 
             // Initialize Report Navigator sidebar
             InitializeReportNavigator();
+            closingAlertTimer.Start();
 
             // Set ExplorerBar Style to Outlook Navigation Pane
             ultraExplorerBarSideMenu.Style = Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarStyle.OutlookNavigationPane;
@@ -1468,6 +1480,9 @@ namespace PosBranch_Win
                         return;
                     }
 
+                    if (!EnsureTransactionAllowed(activeForm))
+                        return;
+
                     bool saved = false;
 
                     // 1. FrmPurchase — has dedicated public SavePurchase() / UpdatePurchase() methods
@@ -1723,6 +1738,9 @@ namespace PosBranch_Win
                 return;
             }
 
+            if (!EnsureTransactionAllowed(e.Tool.Key))
+                return;
+
             if (e.Tool.Key == "Pos")
             {
                 frmPos frmPos = new frmPos();
@@ -1830,6 +1848,11 @@ namespace PosBranch_Win
             {
                 PosBranch_Win.Reports.FinancialReports.FrmBalanceSheet bsReport = new PosBranch_Win.Reports.FinancialReports.FrmBalanceSheet();
                 OpenFormInTab(bsReport, "Balance Sheet");
+            }
+            if (e.Tool.Key == "TrialBalance")
+            {
+                PosBranch_Win.Reports.FinancialReports.FrmTrialBalance tbReport = new PosBranch_Win.Reports.FinancialReports.FrmTrialBalance();
+                OpenFormInTab(tbReport, "Trial Balance");
             }
             if (e.Tool.Key == "CashBankBook")
             {
@@ -3113,7 +3136,7 @@ namespace PosBranch_Win
                 // 1. Create Wrapper Panel to host Header and ExplorerBar seamlessly
                 panelReportNavigatorWrapper = new Panel();
                 panelReportNavigatorWrapper.Dock = DockStyle.Left;
-                panelReportNavigatorWrapper.Width = 240;
+                panelReportNavigatorWrapper.Width = 260;
                 panelReportNavigatorWrapper.Name = "panelReportNavigatorWrapper";
                 panelReportNavigatorWrapper.Visible = false;
                 panelReportNavigatorWrapper.BackColor = Color.FromArgb(215, 236, 255); // soft office-blue background
@@ -3122,7 +3145,7 @@ namespace PosBranch_Win
                 // 2. Create standard IRS POS Report Navigator Header
                 Panel headerPanel = new Panel();
                 headerPanel.Dock = DockStyle.Top;
-                headerPanel.Height = 26;
+                headerPanel.Height = 28;
                 headerPanel.BackColor = Color.FromArgb(202, 224, 247); // softer, cleaner header tone
                 headerPanel.Margin = new Padding(0);
 
@@ -3137,7 +3160,7 @@ namespace PosBranch_Win
                     using (Font headerFont = new Font("Segoe UI", 8.5f, FontStyle.Bold))
                     using (SolidBrush headerBrush = new SolidBrush(Color.FromArgb(18, 64, 126)))
                     {
-                        e.Graphics.DrawString("Report Navigator", headerFont, headerBrush, new PointF(5, 5));
+                        e.Graphics.DrawString("Report Navigator", headerFont, headerBrush, new PointF(8, 6));
                         e.Graphics.DrawLine(borderPen, 0, headerPanel.Height - 1, headerPanel.Width, headerPanel.Height - 1);
                     }
                 };
@@ -3186,7 +3209,7 @@ namespace PosBranch_Win
                     group.Key = $"Grp_{category}";
                     group.Text = category;
                     group.Settings.ShowExpansionIndicator = Infragistics.Win.DefaultableBoolean.True;
-                    group.Expanded = string.Equals(category, "Item", StringComparison.OrdinalIgnoreCase); // Only expand first item by default like IRS
+                    group.Expanded = false;
                     ultraExplorerBarReportNavigator.Groups.Add(group);
                 }
 
@@ -3316,12 +3339,11 @@ namespace PosBranch_Win
                 // Setup overall background to match IRS perfectly 
                 ultraExplorerBarReportNavigator.Appearance.BackColor = Color.FromArgb(215, 236, 255);
                 
-                // Group spacing to 0 - tight like IRS POS
-                ultraExplorerBarReportNavigator.Margins.Top = 0;
-                ultraExplorerBarReportNavigator.Margins.Bottom = 0;
-                ultraExplorerBarReportNavigator.Margins.Left = 0;
-                ultraExplorerBarReportNavigator.Margins.Right = 0;
-                ultraExplorerBarReportNavigator.GroupSpacing = 1;
+                ultraExplorerBarReportNavigator.Margins.Top = 2;
+                ultraExplorerBarReportNavigator.Margins.Bottom = 2;
+                ultraExplorerBarReportNavigator.Margins.Left = 2;
+                ultraExplorerBarReportNavigator.Margins.Right = 2;
+                ultraExplorerBarReportNavigator.GroupSpacing = 3;
                 
                 foreach (var group in ultraExplorerBarReportNavigator.Groups)
                 {
@@ -3331,7 +3353,7 @@ namespace PosBranch_Win
                     group.Settings.AppearancesSmall.HeaderAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
                     group.Settings.AppearancesSmall.HeaderAppearance.ForeColor = Color.FromArgb(18, 64, 126);
                     group.Settings.AppearancesSmall.HeaderAppearance.FontData.Name = "Segoe UI";
-                    group.Settings.AppearancesSmall.HeaderAppearance.FontData.SizeInPoints = 8.5f;
+                    group.Settings.AppearancesSmall.HeaderAppearance.FontData.SizeInPoints = 9f;
                     group.Settings.AppearancesSmall.HeaderAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
                     group.Settings.AppearancesSmall.HeaderAppearance.BorderColor = Color.FromArgb(124, 170, 216);
 
@@ -3340,12 +3362,12 @@ namespace PosBranch_Win
                     group.Settings.AppearancesSmall.HeaderHotTrackAppearance.ForeColor = Color.FromArgb(18, 64, 126);
 
                     // Item area styling - seamless light blue like IRS POS
-                    group.Settings.AppearancesSmall.ItemAreaAppearance.BackColor = Color.FromArgb(215, 236, 255);
+                    group.Settings.AppearancesSmall.ItemAreaAppearance.BackColor = Color.FromArgb(224, 240, 255);
                     group.Settings.AppearancesSmall.ItemAreaAppearance.BorderColor = Color.FromArgb(170, 199, 229);
-                    group.Settings.ItemAreaInnerMargins.Left = 10;
-                    group.Settings.ItemAreaInnerMargins.Top = 5;
+                    group.Settings.ItemAreaInnerMargins.Left = 8;
+                    group.Settings.ItemAreaInnerMargins.Top = 6;
                     group.Settings.ItemAreaInnerMargins.Right = 8;
-                    group.Settings.ItemAreaInnerMargins.Bottom = 5;
+                    group.Settings.ItemAreaInnerMargins.Bottom = 6;
                     
                     // Set Group Header Icons to match IRS categories
                     try
@@ -3362,51 +3384,7 @@ namespace PosBranch_Win
 
                     foreach (Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarItem item in group.Items)
                     {
-                        // Match the favourite explorer bar's blue button look, but keep report entries text-only
-                        item.Settings.Style = Infragistics.Win.UltraWinExplorerBar.ItemStyle.Button;
-                        item.Settings.ReserveImageSpace = Infragistics.Win.DefaultableBoolean.False;
-                        item.Settings.Height = 28;
-                        item.Settings.MaxLines = 2;
-                        item.Settings.AppearancesSmall.Appearance.ForeColor = Color.White;
-                        item.Settings.AppearancesSmall.Appearance.FontData.SizeInPoints = 8.5f;
-                        item.Settings.AppearancesSmall.Appearance.FontData.Name = "Segoe UI";
-                        item.Settings.AppearancesSmall.Appearance.Cursor = Cursors.Hand;
-                        item.Settings.AppearancesSmall.Appearance.TextHAlignAsString = "Left";
-                        item.Settings.AppearancesSmall.Appearance.TextVAlignAsString = "Middle";
-                        item.Settings.AppearancesSmall.Appearance.BackColor = Color.FromArgb(28, 151, 234);
-                        item.Settings.AppearancesSmall.Appearance.BackColor2 = Color.FromArgb(10, 120, 200);
-                        item.Settings.AppearancesSmall.Appearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
-                        item.Settings.AppearancesSmall.Appearance.BorderAlpha = Infragistics.Win.Alpha.Transparent;
-                        item.Settings.AppearancesSmall.Appearance.Image = null;
-                        item.Settings.AppearancesLarge.Appearance.Image = null;
-                        item.Settings.AppearancesSmall.ActiveAppearance.Image = null;
-                        item.Settings.AppearancesLarge.ActiveAppearance.Image = null;
-                        item.Settings.AppearancesSmall.Appearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
-                        item.Settings.AppearancesSmall.HotTrackAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
-                        item.Settings.AppearancesSmall.ActiveAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
-                        item.Settings.AppearancesLarge.Appearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
-                        item.Settings.AppearancesLarge.HotTrackAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
-                        item.Settings.AppearancesLarge.ActiveAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
-                        item.Settings.AppearancesSmall.ActiveAppearance.BackColor = Color.FromArgb(50, 170, 250);
-                        item.Settings.AppearancesSmall.ActiveAppearance.BackColor2 = Color.FromArgb(20, 140, 220);
-                        item.Settings.AppearancesSmall.ActiveAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
-                        item.Settings.AppearancesSmall.ActiveAppearance.ForeColor = Color.White;
-                        item.Settings.AppearancesSmall.ActiveAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
-                        item.Settings.AppearancesSmall.ActiveAppearance.TextHAlignAsString = "Left";
-                        item.Settings.AppearancesSmall.ActiveAppearance.TextVAlignAsString = "Middle";
-                        
-                        // Hover: subtle highlight with a gentle fill for clarity
-                        item.Settings.AppearancesSmall.HotTrackAppearance.BackColor = Color.FromArgb(50, 170, 250);
-                        item.Settings.AppearancesSmall.HotTrackAppearance.BackColor2 = Color.FromArgb(20, 140, 220);
-                        item.Settings.AppearancesSmall.HotTrackAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
-                        item.Settings.AppearancesSmall.HotTrackAppearance.ForeColor = Color.White;
-                        item.Settings.AppearancesSmall.HotTrackAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
-                        item.Settings.AppearancesSmall.HotTrackAppearance.FontData.SizeInPoints = 8.5f;
-                        item.Settings.AppearancesSmall.HotTrackAppearance.FontData.Name = "Segoe UI";
-                        item.Settings.AppearancesSmall.HotTrackAppearance.TextHAlignAsString = "Left";
-                        item.Settings.AppearancesSmall.HotTrackAppearance.TextVAlignAsString = "Middle";
-                        item.Settings.AppearancesSmall.HotTrackAppearance.Image = null;
-                        item.Settings.AppearancesLarge.HotTrackAppearance.Image = null;
+                        ApplyReportNavigatorItemStyle(item);
                     }
                 }
             }
@@ -3414,6 +3392,199 @@ namespace PosBranch_Win
             {
                 System.Diagnostics.Debug.WriteLine($"Error styling Report Navigator: {ex.Message}");
             }
+        }
+
+        private void ClosingAlertTimer_Tick(object sender, EventArgs e)
+        {
+            DateTime now = DateTime.Now;
+
+            if (SessionContext.IsInitialized && SessionContext.LoginTime != DateTime.MinValue &&
+                now.Date > SessionContext.LoginTime.Date)
+            {
+                SessionContext.RequiresClosing = true;
+
+                if (!closingRequiredAlertShown)
+                {
+                    closingRequiredAlertShown = true;
+                    MessageBox.Show("Please complete shift closing before continuing transactions.",
+                        "Shift Closing Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+
+                return;
+            }
+
+            if (!closingAlertShown && SessionContext.ShouldShowClosingAlert(now))
+            {
+                closingAlertShown = true;
+                MessageBox.Show("Please complete shift closing before day end.",
+                    "Shift Closing Reminder", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private bool IsBlockedTransactionTool(string toolKey)
+        {
+            if (string.IsNullOrWhiteSpace(toolKey))
+                return false;
+
+            string[] blockedTools =
+            {
+                "Pos",
+                "Sales",
+                "Sales Return",
+                "Receipt",
+                "Payment",
+                "DebitNote",
+                "CreditNote",
+                "Purchase",
+                "Purchase Order",
+                "Purchase R/n",
+                "stockadjustment",
+                "Goods Received"
+            };
+
+            return blockedTools.Any(key => key.Equals(toolKey, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private bool EnsureTransactionAllowed(string toolKey)
+        {
+            if (!IsBlockedTransactionTool(toolKey))
+                return true;
+
+            if (ShiftSessionGuard.CanDoTransaction(out string transactionError))
+                return true;
+
+            MessageBox.Show(transactionError, "Shift Closing Required",
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return false;
+        }
+
+        private bool IsTransactionForm(Form form)
+        {
+            return form is frmPos ||
+                   form is Transaction.frmSalesInvoice ||
+                   form is Transaction.frmSalesReturn ||
+                   form is Transaction.FrmPurchase ||
+                   form is Transaction.frmPurchaseOrder ||
+                   form is Transaction.frmPurchaseReturn ||
+                   form is Transaction.FrmStockAdjustment ||
+                   form is Accounts.FrmReceipt ||
+                   form is Accounts.FrmPayment ||
+                   form is Accounts.FrmDebitNote ||
+                   form is Accounts.FrmCreditNote;
+        }
+
+        private bool EnsureTransactionAllowed(Form form)
+        {
+            if (!IsTransactionForm(form))
+                return true;
+
+            if (ShiftSessionGuard.CanDoTransaction(out string transactionError))
+                return true;
+
+            MessageBox.Show(transactionError, "Shift Closing Required",
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return false;
+        }
+
+        private void ApplyReportNavigatorItemStyle(Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarItem item)
+        {
+            item.Settings.Style = Infragistics.Win.UltraWinExplorerBar.ItemStyle.Button;
+            item.Settings.ReserveImageSpace = Infragistics.Win.DefaultableBoolean.False;
+            item.Settings.Height = 30;
+            item.Settings.MaxLines = 2;
+
+            item.Settings.AppearancesSmall.Appearance.ForeColor = Color.FromArgb(22, 69, 124);
+            item.Settings.AppearancesSmall.Appearance.FontData.SizeInPoints = 8.5f;
+            item.Settings.AppearancesSmall.Appearance.FontData.Name = "Segoe UI";
+            item.Settings.AppearancesSmall.Appearance.Cursor = Cursors.Hand;
+            item.Settings.AppearancesSmall.Appearance.TextHAlignAsString = "Left";
+            item.Settings.AppearancesSmall.Appearance.TextVAlignAsString = "Middle";
+            item.Settings.AppearancesSmall.Appearance.BackColor = Color.FromArgb(248, 252, 255);
+            item.Settings.AppearancesSmall.Appearance.BackColor2 = Color.FromArgb(227, 242, 255);
+            item.Settings.AppearancesSmall.Appearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
+            item.Settings.AppearancesSmall.Appearance.BorderColor = Color.FromArgb(174, 205, 235);
+            item.Settings.AppearancesSmall.Appearance.Image = null;
+            item.Settings.AppearancesLarge.Appearance.Image = null;
+            item.Settings.AppearancesSmall.ActiveAppearance.Image = null;
+            item.Settings.AppearancesLarge.ActiveAppearance.Image = null;
+            item.Settings.AppearancesSmall.HotTrackAppearance.Image = null;
+            item.Settings.AppearancesLarge.HotTrackAppearance.Image = null;
+
+            item.Settings.AppearancesSmall.Appearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
+            item.Settings.AppearancesSmall.HotTrackAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
+            item.Settings.AppearancesSmall.ActiveAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
+            item.Settings.AppearancesLarge.Appearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
+            item.Settings.AppearancesLarge.HotTrackAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
+            item.Settings.AppearancesLarge.ActiveAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
+
+            item.Settings.AppearancesSmall.ActiveAppearance.BackColor = Color.FromArgb(40, 155, 235);
+            item.Settings.AppearancesSmall.ActiveAppearance.BackColor2 = Color.FromArgb(10, 119, 202);
+            item.Settings.AppearancesSmall.ActiveAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
+            item.Settings.AppearancesSmall.ActiveAppearance.BorderColor = Color.FromArgb(8, 91, 171);
+            item.Settings.AppearancesSmall.ActiveAppearance.ForeColor = Color.White;
+            item.Settings.AppearancesSmall.ActiveAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
+            item.Settings.AppearancesSmall.ActiveAppearance.TextHAlignAsString = "Left";
+            item.Settings.AppearancesSmall.ActiveAppearance.TextVAlignAsString = "Middle";
+
+            item.Settings.AppearancesSmall.HotTrackAppearance.BackColor = Color.FromArgb(255, 248, 224);
+            item.Settings.AppearancesSmall.HotTrackAppearance.BackColor2 = Color.FromArgb(255, 221, 151);
+            item.Settings.AppearancesSmall.HotTrackAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
+            item.Settings.AppearancesSmall.HotTrackAppearance.BorderColor = Color.FromArgb(226, 158, 55);
+            item.Settings.AppearancesSmall.HotTrackAppearance.ForeColor = Color.FromArgb(70, 57, 22);
+            item.Settings.AppearancesSmall.HotTrackAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
+            item.Settings.AppearancesSmall.HotTrackAppearance.FontData.SizeInPoints = 8.5f;
+            item.Settings.AppearancesSmall.HotTrackAppearance.FontData.Name = "Segoe UI";
+            item.Settings.AppearancesSmall.HotTrackAppearance.TextHAlignAsString = "Left";
+            item.Settings.AppearancesSmall.HotTrackAppearance.TextVAlignAsString = "Middle";
+        }
+
+        private void SetActiveReportNavigatorItem(Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarItem activeItem)
+        {
+            if (activeItem == null)
+                return;
+
+            _activeReportNavigatorItemKey = activeItem.Key;
+            try
+            {
+                ultraExplorerBarReportNavigator.ActiveItem = activeItem;
+            }
+            catch
+            {
+            }
+        }
+
+        private void ClearActiveReportNavigatorItem()
+        {
+            _activeReportNavigatorItemKey = null;
+            try
+            {
+                if (ultraExplorerBarReportNavigator != null)
+                {
+                    ultraExplorerBarReportNavigator.ActiveItem = null;
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        private void SyncReportNavigatorActiveItemWithOpenTabs()
+        {
+            if (string.IsNullOrEmpty(_activeReportNavigatorItemKey) || ultraExplorerBarReportNavigator == null)
+                return;
+
+            string actionKey = ResolveReportNavigatorActionKey(_activeReportNavigatorItemKey);
+
+            foreach (Infragistics.Win.UltraWinTabControl.UltraTab tab in tabControlMain.Tabs)
+            {
+                string tabToolKey = tab.Tag as string;
+                if (string.Equals(tabToolKey, actionKey, StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+            }
+
+            ClearActiveReportNavigatorItem();
         }
 
         private void ShowReportNavigator()
@@ -3474,6 +3645,8 @@ namespace PosBranch_Win
         {
             try
             {
+                SetActiveReportNavigatorItem(e.Item);
+
                 // Standard report items use ToolClick handler mechanisms already built
                 string keyToExecute = ResolveReportNavigatorActionKey(e.Item.Key);
                 

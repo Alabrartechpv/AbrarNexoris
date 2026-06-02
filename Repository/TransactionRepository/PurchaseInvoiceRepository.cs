@@ -274,7 +274,7 @@ namespace Repository.TransactionRepository
                         catch (Exception ex)
                         {
                             System.Diagnostics.Debug.WriteLine("Error processing row " + i + ": " + ex.Message);
-                            continue;
+                            throw new Exception("Failed to save purchase item row " + (i + 1) + ". Transaction rolled back.", ex);
                         }
                     }
                 }
@@ -629,7 +629,7 @@ namespace Repository.TransactionRepository
                         catch (Exception ex)
                         {
                             System.Diagnostics.Debug.WriteLine("Error processing row " + i + ": " + ex.Message);
-                            continue;
+                            throw new Exception("Failed to update purchase item row " + (i + 1) + ". Transaction rolled back.", ex);
                         }
                     }
                 }

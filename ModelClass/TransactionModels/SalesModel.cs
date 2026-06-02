@@ -12,6 +12,7 @@ namespace ModelClass.TransactionModels
         public int BranchId { get; set; }
         public int FinYearId { get; set; }
         public int CounterId { get; set; }
+        public long CounterSessionId { get; set; }
         public Int64 BillNo { get; set; }
         public DateTime BillDate { get; set; }
         public Int64 LedgerID { get; set; }

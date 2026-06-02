@@ -15,6 +15,7 @@ namespace ModelClass
         public int BranchId { get; set; }
         public int FinYearId { get; set; }
         public string Counter { get; set; }
+        public long CounterSessionId { get; set; }
         public int UserId { get; set; }
         public DateTime TransactionDate { get; set; }
         public string ReportSelection { get; set; }
