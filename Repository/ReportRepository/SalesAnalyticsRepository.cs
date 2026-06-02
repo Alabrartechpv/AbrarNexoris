@@ -203,7 +203,7 @@ ELSE
 IF OBJECT_ID('SDetails', 'U') IS NULL OR OBJECT_ID('SMaster', 'U') IS NULL
     SELECT TOP 0 CAST('' AS nvarchar(200)) AS ItemName, CAST(0 AS decimal(18,2)) AS QtySold, CAST(0 AS decimal(18,2)) AS Amount, CAST(0 AS decimal(18,2)) AS Profit
 ELSE
-    SELECT TOP 12
+    SELECT
         ISNULL(NULLIF(sd.ItemName, ''), 'Unknown Item') AS ItemName,
         ISNULL(SUM(ISNULL(sd.Qty, 0)), 0) AS QtySold,
         ISNULL(SUM(ISNULL(sd.TotalAmount, 0)), 0) AS Amount,
