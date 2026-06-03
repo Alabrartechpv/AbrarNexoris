@@ -9,6 +9,7 @@ namespace PosBranch_Win.Dashboard
         private System.Windows.Forms.Label lblSubTitle;
         private System.Windows.Forms.DateTimePicker dtFrom;
         private System.Windows.Forms.DateTimePicker dtTo;
+        private System.Windows.Forms.ComboBox cmbQuickDate;
         private System.Windows.Forms.Button btnApply;
         private System.Windows.Forms.TableLayoutPanel metricsLayout;
         private System.Windows.Forms.Panel cardTotalSales;
@@ -82,6 +83,7 @@ namespace PosBranch_Win.Dashboard
             this.headerPanel = new System.Windows.Forms.Panel();
             this.lblTitle = new System.Windows.Forms.Label();
             this.lblSubTitle = new System.Windows.Forms.Label();
+            this.cmbQuickDate = new System.Windows.Forms.ComboBox();
             this.dtFrom = new System.Windows.Forms.DateTimePicker();
             this.dtTo = new System.Windows.Forms.DateTimePicker();
             this.btnApply = new System.Windows.Forms.Button();
@@ -180,6 +182,7 @@ namespace PosBranch_Win.Dashboard
             this.headerPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(230)))), ((int)(((byte)(245)))), ((int)(((byte)(253)))));
             this.headerPanel.Controls.Add(this.lblTitle);
             this.headerPanel.Controls.Add(this.lblSubTitle);
+            this.headerPanel.Controls.Add(this.cmbQuickDate);
             this.headerPanel.Controls.Add(this.dtFrom);
             this.headerPanel.Controls.Add(this.dtTo);
             this.headerPanel.Controls.Add(this.btnApply);
@@ -211,6 +214,17 @@ namespace PosBranch_Win.Dashboard
             this.lblSubTitle.TabIndex = 1;
             this.lblSubTitle.Text = "Summary of sales performance, item movement, customer activity, and payment mix.";
             // 
+            // cmbQuickDate
+            // 
+            this.cmbQuickDate.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.cmbQuickDate.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbQuickDate.Font = new System.Drawing.Font("Segoe UI", 8.75F);
+            this.cmbQuickDate.FormattingEnabled = true;
+            this.cmbQuickDate.Location = new System.Drawing.Point(637, 16);
+            this.cmbQuickDate.Name = "cmbQuickDate";
+            this.cmbQuickDate.Size = new System.Drawing.Size(104, 23);
+            this.cmbQuickDate.TabIndex = 2;
+            // 
             // dtFrom
             // 
             this.dtFrom.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -220,7 +234,7 @@ namespace PosBranch_Win.Dashboard
             this.dtFrom.Location = new System.Drawing.Point(753, 16);
             this.dtFrom.Name = "dtFrom";
             this.dtFrom.Size = new System.Drawing.Size(128, 23);
-            this.dtFrom.TabIndex = 2;
+            this.dtFrom.TabIndex = 3;
             // 
             // dtTo
             // 
@@ -231,7 +245,7 @@ namespace PosBranch_Win.Dashboard
             this.dtTo.Location = new System.Drawing.Point(892, 16);
             this.dtTo.Name = "dtTo";
             this.dtTo.Size = new System.Drawing.Size(128, 23);
-            this.dtTo.TabIndex = 3;
+            this.dtTo.TabIndex = 4;
             // 
             // btnApply
             // 
@@ -244,7 +258,7 @@ namespace PosBranch_Win.Dashboard
             this.btnApply.Location = new System.Drawing.Point(1034, 13);
             this.btnApply.Name = "btnApply";
             this.btnApply.Size = new System.Drawing.Size(88, 28);
-            this.btnApply.TabIndex = 4;
+            this.btnApply.TabIndex = 5;
             this.btnApply.Text = "Apply";
             this.btnApply.UseVisualStyleBackColor = false;
             // 

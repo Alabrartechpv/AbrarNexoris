@@ -93,10 +93,17 @@ namespace PosBranch_Win.Dashboard
             BackColor = PageBackColor;
             dtFrom.Value = _fromDate;
             dtTo.Value = _toDate;
+            ConfigureQuickDateCombo();
             btnApply.Click += (s, e) =>
             {
                 _fromDate = dtFrom.Value.Date;
                 _toDate = dtTo.Value.Date;
+                if (_toDate < _fromDate)
+                {
+                    DateTime swap = _fromDate;
+                    _fromDate = _toDate;
+                    _toDate = swap;
+                }
                 LoadAnalytics();
             };
 
@@ -104,10 +111,22 @@ namespace PosBranch_Win.Dashboard
             trendCanvas.Paint += TrendCanvas_Paint;
             itemMapCanvas.Paint -= ItemMapCanvas_Paint;
             itemMapCanvas.Paint += ItemMapCanvas_Paint;
+            trendCanvas.Click -= TrendCanvas_Click;
+            trendCanvas.Click += TrendCanvas_Click;
+            itemMapCanvas.Click -= ItemMapCanvas_Click;
+            itemMapCanvas.Click += ItemMapCanvas_Click;
+            gridTopQty.CellClick -= GridTopQty_CellClick;
+            gridTopQty.CellClick += GridTopQty_CellClick;
+            gridTopAmount.CellClick -= GridTopAmount_CellClick;
+            gridTopAmount.CellClick += GridTopAmount_CellClick;
             paymentCanvas.Paint -= PaymentCanvas_Paint;
             paymentCanvas.Paint += PaymentCanvas_Paint;
             categoryCanvas.Paint -= CategoryCanvas_Paint;
             categoryCanvas.Paint += CategoryCanvas_Paint;
+            trendCanvas.Cursor = Cursors.Hand;
+            itemMapCanvas.Cursor = Cursors.Hand;
+            gridTopQty.Cursor = Cursors.Hand;
+            gridTopAmount.Cursor = Cursors.Hand;
             trendCanvas.AutoScroll = true;
             trendCanvas.Resize += (s, e) =>
             {
@@ -134,6 +153,67 @@ namespace PosBranch_Win.Dashboard
             RegisterMetricIcon(iconProfit, AccentOrange, MetricIconKind.Profit);
             RegisterMetricIcon(iconItems, AccentTeal, MetricIconKind.Box);
             ConfigureItemMapControls();
+        }
+
+        private void ConfigureQuickDateCombo()
+        {
+            cmbQuickDate.Items.Clear();
+            cmbQuickDate.Items.AddRange(new object[]
+            {
+                "Today",
+                "Yesterday",
+                "This Month",
+                "Previous Month",
+                "This Year",
+                "Previous Year"
+            });
+            cmbQuickDate.SelectedIndexChanged -= CmbQuickDate_SelectedIndexChanged;
+            cmbQuickDate.SelectedIndexChanged += CmbQuickDate_SelectedIndexChanged;
+            cmbQuickDate.SelectedIndex = 0;
+        }
+
+        private void CmbQuickDate_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string selected = Convert.ToString(cmbQuickDate.SelectedItem ?? cmbQuickDate.Text);
+            DateTime today = DateTime.Today;
+            DateTime fromDate;
+            DateTime toDate;
+
+            switch (selected)
+            {
+                case "Yesterday":
+                    fromDate = today.AddDays(-1);
+                    toDate = fromDate;
+                    break;
+                case "This Month":
+                    fromDate = new DateTime(today.Year, today.Month, 1);
+                    toDate = new DateTime(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month));
+                    break;
+                case "Previous Month":
+                    DateTime previousMonth = new DateTime(today.Year, today.Month, 1).AddMonths(-1);
+                    fromDate = previousMonth;
+                    toDate = new DateTime(previousMonth.Year, previousMonth.Month, DateTime.DaysInMonth(previousMonth.Year, previousMonth.Month));
+                    break;
+                case "This Year":
+                    fromDate = new DateTime(today.Year, 1, 1);
+                    toDate = new DateTime(today.Year, 12, 31);
+                    break;
+                case "Previous Year":
+                    fromDate = new DateTime(today.Year - 1, 1, 1);
+                    toDate = new DateTime(today.Year - 1, 12, 31);
+                    break;
+                default:
+                    fromDate = today;
+                    toDate = today;
+                    break;
+            }
+
+            _fromDate = fromDate;
+            _toDate = toDate;
+            dtFrom.Value = _fromDate;
+            dtTo.Value = _toDate;
+            if (IsHandleCreated && !IsDesignerHosted())
+                LoadAnalytics();
         }
 
         private void ConfigureItemMapControls()
@@ -312,6 +392,48 @@ namespace PosBranch_Win.Dashboard
             DrawBarChart(e.Graphics, itemMapCanvas.ClientRectangle, items, x => x.ItemName, x => _itemMapSortByAmount ? x.Amount : x.QtySold, AccentBlue);
         }
 
+        private void TrendCanvas_Click(object sender, EventArgs e)
+        {
+            IList<SalesTrendPoint> trend = GetSalesTrendForPaint();
+            ShowSalesChartPopup(
+                "Sales Trend - " + FormatDateRange(),
+                new BindingList<SalesTrendDetailRow>(BuildTrendDetails(trend)),
+                (g, chartPanel) => DrawLineChart(g, chartPanel, trend, x => x.Caption, x => x.Amount));
+        }
+
+        private void ItemMapCanvas_Click(object sender, EventArgs e)
+        {
+            IList<SalesItemMetric> items = GetItemSalesForPaint()
+                .OrderByDescending(x => _itemMapSortByAmount ? x.Amount : x.QtySold)
+                .ToList();
+            ShowSalesChartPopup(
+                "Item Sales - " + FormatDateRange(),
+                new BindingList<SalesItemDetailRow>(BuildItemSalesRows(items)),
+                (g, chartPanel) => DrawBarChart(g, chartPanel.ClientRectangle, items, x => x.ItemName, x => _itemMapSortByAmount ? x.Amount : x.QtySold, AccentBlue));
+        }
+
+        private void GridTopQty_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0)
+                return;
+
+            IList<SalesItemMetric> items = GetAllSoldItems()
+                .OrderByDescending(x => x.QtySold)
+                .ToList();
+            ShowSalesGridPopup("All Items Sold By Quantity - " + FormatDateRange(), BuildItemSalesRows(items));
+        }
+
+        private void GridTopAmount_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0)
+                return;
+
+            IList<SalesItemMetric> items = GetAllSoldItems()
+                .OrderByDescending(x => x.Amount)
+                .ToList();
+            ShowSalesGridPopup("All Items Sold By Amount - " + FormatDateRange(), BuildItemSalesRows(items));
+        }
+
         private void PaymentCanvas_Paint(object sender, PaintEventArgs e)
         {
             DrawDonutBreakdown(e.Graphics, paymentCanvas.ClientRectangle, GetPaymentMethodsForPaint());
@@ -338,6 +460,21 @@ namespace PosBranch_Win.Dashboard
             return IsInDesigner() ? SampleItemSales() : new List<SalesItemMetric>();
         }
 
+        private IList<SalesItemMetric> GetAllSoldItems()
+        {
+            IList<SalesItemMetric> items = GetItemSalesForPaint();
+            if (items != null && items.Count > 0)
+                return items;
+
+            if (_analytics != null && _analytics.TopByQuantity != null && _analytics.TopByQuantity.Count > 0)
+                return _analytics.TopByQuantity;
+
+            if (_analytics != null && _analytics.TopByAmount != null && _analytics.TopByAmount.Count > 0)
+                return _analytics.TopByAmount;
+
+            return new List<SalesItemMetric>();
+        }
+
         private IList<SalesBreakdown> GetPaymentMethodsForPaint()
         {
             if (_analytics != null && _analytics.PaymentMethods != null && _analytics.PaymentMethods.Count > 0)
@@ -357,6 +494,74 @@ namespace PosBranch_Win.Dashboard
         private bool IsInDesigner()
         {
             return IsDesignerHosted();
+        }
+
+        private List<SalesItemDetailRow> BuildItemSalesRows(IEnumerable<SalesItemMetric> items)
+        {
+            return (items ?? Enumerable.Empty<SalesItemMetric>()).Where(x => x != null).Select((x, i) => new SalesItemDetailRow
+            {
+                Rank = i + 1,
+                ItemName = ShortLabel(x.ItemName, 40),
+                QtySold = x.QtySold.ToString("N2", _culture),
+                Amount = Money(x.Amount),
+                Profit = Money(x.Profit),
+                Range = FormatDateRange()
+            }).ToList();
+        }
+
+        private List<SalesTrendDetailRow> BuildTrendDetails(IEnumerable<SalesTrendPoint> trend)
+        {
+            List<SalesTrendPoint> trendRows = (trend ?? Enumerable.Empty<SalesTrendPoint>()).Where(x => x != null).ToList();
+            List<SalesItemMetric> itemRows = GetAllSoldItems().Where(x => x != null).ToList();
+            List<SalesTrendDetailRow> rows = new List<SalesTrendDetailRow>();
+
+            if (trendRows.Count == 0)
+                return rows;
+
+            if (itemRows.Count == 0)
+            {
+                for (int i = 0; i < trendRows.Count; i++)
+                {
+                    rows.Add(new SalesTrendDetailRow
+                    {
+                        Rank = i + 1,
+                        Caption = trendRows[i].Caption,
+                        SaleDate = trendRows[i].SaleDate.ToString("dd MMM yyyy", _culture),
+                        Value = Money(trendRows[i].Amount),
+                        ItemName = "No item",
+                        QtySold = "0.00",
+                        Amount = Money(0),
+                        Profit = Money(0)
+                    });
+                }
+                return rows;
+            }
+
+            int rank = 1;
+            foreach (SalesTrendPoint point in trendRows)
+            {
+                foreach (SalesItemMetric item in itemRows)
+                {
+                    rows.Add(new SalesTrendDetailRow
+                    {
+                        Rank = rank++,
+                        Caption = point.Caption,
+                        SaleDate = point.SaleDate.ToString("dd MMM yyyy", _culture),
+                        Value = Money(point.Amount),
+                        ItemName = ShortLabel(item.ItemName, 40),
+                        QtySold = item.QtySold.ToString("N2", _culture),
+                        Amount = Money(item.Amount),
+                        Profit = Money(item.Profit)
+                    });
+                }
+            }
+
+            return rows;
+        }
+
+        private string FormatDateRange()
+        {
+            return _fromDate.ToString("dd MMM yyyy", _culture) + " to " + _toDate.ToString("dd MMM yyyy", _culture);
         }
 
         private List<SalesTrendPoint> SampleSalesTrend()
@@ -586,6 +791,159 @@ namespace PosBranch_Win.Dashboard
             }
         }
 
+        private void ShowSalesChartPopup<T>(string popupTitle, BindingList<T> rows, Action<Graphics, Panel> drawChart)
+        {
+            Form popup = CreatePopupForm(popupTitle, new Size(930, 580));
+            Panel card = CreatePopupCard();
+            Label title = CreatePopupTitle(popupTitle);
+            Button close = CreatePopupCloseButton(popup);
+
+            TableLayoutPanel content = new TableLayoutPanel
+            {
+                ColumnCount = 1,
+                Dock = DockStyle.Fill,
+                RowCount = 2,
+                Padding = new Padding(0, 8, 0, 0)
+            };
+            content.RowStyles.Add(new RowStyle(SizeType.Percent, 58F));
+            content.RowStyles.Add(new RowStyle(SizeType.Percent, 42F));
+
+            Panel chartPanel = new Panel
+            {
+                AutoScroll = true,
+                BackColor = CardBackColor,
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0, 0, 0, 10)
+            };
+            chartPanel.Paint += (s, e) => drawChart(e.Graphics, chartPanel);
+
+            DataGridView detailGrid = CreatePopupGrid(rows);
+            content.Controls.Add(chartPanel, 0, 0);
+            content.Controls.Add(detailGrid, 0, 1);
+            card.Controls.Add(content);
+            card.Controls.Add(title);
+            card.Controls.Add(close);
+            close.BringToFront();
+            popup.Controls.Add(card);
+            popup.ShowDialog(this);
+        }
+
+        private void ShowSalesGridPopup<T>(string popupTitle, IEnumerable<T> rows)
+        {
+            Form popup = CreatePopupForm(popupTitle, new Size(820, 470));
+            Panel card = CreatePopupCard();
+            Label title = CreatePopupTitle(popupTitle);
+            Button close = CreatePopupCloseButton(popup);
+            DataGridView detailGrid = CreatePopupGrid(new BindingList<T>((rows ?? Enumerable.Empty<T>()).ToList()));
+
+            card.Controls.Add(detailGrid);
+            card.Controls.Add(title);
+            card.Controls.Add(close);
+            close.BringToFront();
+            popup.Controls.Add(card);
+            popup.ShowDialog(this);
+        }
+
+        private Form CreatePopupForm(string popupTitle, Size size)
+        {
+            return new Form
+            {
+                Text = popupTitle,
+                StartPosition = FormStartPosition.CenterParent,
+                Size = size,
+                MinimizeBox = false,
+                MaximizeBox = false,
+                ShowIcon = false,
+                BackColor = PageBackColor,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                Padding = new Padding(14)
+            };
+        }
+
+        private Panel CreatePopupCard()
+        {
+            Panel card = new Panel
+            {
+                BackColor = CardBackColor,
+                Dock = DockStyle.Fill,
+                Padding = new Padding(12, 10, 12, 12)
+            };
+            card.Paint += Card_Paint;
+            return card;
+        }
+
+        private Label CreatePopupTitle(string popupTitle)
+        {
+            return new Label
+            {
+                Dock = DockStyle.Top,
+                Height = 32,
+                Text = popupTitle,
+                Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold),
+                ForeColor = TextBlue,
+                Padding = new Padding(3, 3, 0, 0)
+            };
+        }
+
+        private Button CreatePopupCloseButton(Form popup)
+        {
+            Button close = new Button
+            {
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BackColor = AccentBlue,
+                FlatStyle = FlatStyle.Flat,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI Semibold", 8.5F, FontStyle.Bold),
+                Location = new Point(popup.ClientSize.Width - 105, 16),
+                Size = new Size(72, 28),
+                Text = "Close"
+            };
+            close.FlatAppearance.BorderSize = 0;
+            close.Click += (s, e) => popup.Close();
+            return close;
+        }
+
+        private DataGridView CreatePopupGrid<T>(BindingList<T> rows)
+        {
+            DataGridView grid = new DataGridView
+            {
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                AllowUserToResizeRows = false,
+                AutoGenerateColumns = true,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                BackgroundColor = CardBackColor,
+                BorderStyle = BorderStyle.None,
+                Dock = DockStyle.Fill,
+                EnableHeadersVisualStyles = false,
+                GridColor = Color.FromArgb(220, 233, 246),
+                ReadOnly = true,
+                RowHeadersVisible = false,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                DataSource = rows
+            };
+            grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(232, 241, 252);
+            grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
+            grid.ColumnHeadersDefaultCellStyle.ForeColor = TextBlue;
+            grid.ColumnHeadersHeight = 32;
+            grid.DefaultCellStyle.Font = new Font("Segoe UI", 9F);
+            grid.DefaultCellStyle.ForeColor = Color.FromArgb(36, 64, 105);
+            grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(215, 232, 250);
+            grid.DefaultCellStyle.SelectionForeColor = TextBlue;
+            grid.RowTemplate.Height = 28;
+            foreach (DataGridViewColumn column in grid.Columns)
+            {
+                column.SortMode = DataGridViewColumnSortMode.NotSortable;
+                if (column.Name == "Rank")
+                    column.FillWeight = 34;
+                else if (column.Name == "ItemName")
+                    column.FillWeight = 135;
+                else
+                    column.FillWeight = 78;
+            }
+            return grid;
+        }
+
         private void PrepareGraphics(Graphics g)
         {
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -773,6 +1131,28 @@ namespace PosBranch_Win.Dashboard
         {
             public int Rank { get; set; }
             public string ItemName { get; set; }
+            public string Amount { get; set; }
+            public string Profit { get; set; }
+        }
+
+        private class SalesItemDetailRow
+        {
+            public int Rank { get; set; }
+            public string ItemName { get; set; }
+            public string QtySold { get; set; }
+            public string Amount { get; set; }
+            public string Profit { get; set; }
+            public string Range { get; set; }
+        }
+
+        private class SalesTrendDetailRow
+        {
+            public int Rank { get; set; }
+            public string Caption { get; set; }
+            public string SaleDate { get; set; }
+            public string Value { get; set; }
+            public string ItemName { get; set; }
+            public string QtySold { get; set; }
             public string Amount { get; set; }
             public string Profit { get; set; }
         }

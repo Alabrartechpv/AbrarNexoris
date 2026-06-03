@@ -1,6 +1,7 @@
 using Dapper;
 using ModelClass;
 using ModelClass.Master;
+using Repository.SettingsRepo;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -1202,6 +1203,12 @@ WHERE ItemId = @ItemId";
 
             try
             {
+                var deletedItemInfo = DataConnection.QueryFirstOrDefault<dynamic>(
+                    "SELECT TOP 1 CAST(ItemNo AS NVARCHAR(50)) AS ItemNo, Description AS ItemName, Barcode FROM ItemMaster WHERE ItemId = @ItemId",
+                    new { ItemId = itemId },
+                    transaction
+                );
+
                 // Delete price settings first
                 var deletePriceSettings = new ItemMasterPriceSettings
                 {
@@ -1237,6 +1244,23 @@ WHERE ItemId = @ItemId";
                 ).ToList();
 
                 transaction.Commit();
+                try
+                {
+                    using (var activityLog = new ItemActivityLogRepository())
+                    {
+                        activityLog.SaveItemActivity(
+                            itemId,
+                            deletedItemInfo != null ? Convert.ToString(deletedItemInfo.ItemNo) : string.Empty,
+                            deletedItemInfo != null ? Convert.ToString(deletedItemInfo.ItemName) : string.Empty,
+                            deletedItemInfo != null ? Convert.ToString(deletedItemInfo.Barcode) : string.Empty,
+                            "DELETE",
+                            "Item deleted from item master.");
+                    }
+                }
+                catch (Exception logEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Item delete activity log failed: {logEx.Message}");
+                }
                 return "Success";
             }
             catch (Exception ex)

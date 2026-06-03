@@ -12,6 +12,7 @@ using ModelClass;
 using ModelClass.Master;
 using Repository;
 using Repository.TransactionRepository;
+using Repository.SettingsRepo;
 using PosBranch_Win.DialogBox;
 using ModelClass.TransactionModels;
 using Infragistics.Win.UltraWinGrid;
@@ -5492,6 +5493,8 @@ namespace PosBranch_Win.Transaction
                         System.Diagnostics.Debug.WriteLine($"Displayed saved PurchaseNo: {ObjPurchaseMaster.PurchaseNo}");
                     }
 
+                    SavePurchaseActivityLog("SAVE", ObjPurchaseMaster.PurchaseNo, ObjPurchaseMaster);
+
                     // Show a simple success message now instead of the popup
                     MessageBox.Show("Saved Successfully", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
@@ -6792,6 +6795,8 @@ namespace PosBranch_Win.Transaction
 
                 if (string.IsNullOrEmpty(message) || message.ToLower().Contains("success"))
                 {
+                    SavePurchaseActivityLog("UPDATE", ObjPurchaseMaster.PurchaseNo, ObjPurchaseMaster);
+
                     // Show a simple success message now instead of the popup
                     MessageBox.Show("Updated Successfully", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
@@ -7084,6 +7089,15 @@ namespace PosBranch_Win.Transaction
 
                     if (string.IsNullOrEmpty(message) || message.ToLower().Contains("success"))
                     {
+                        SavePurchaseActivityLog(
+                            "DELETE",
+                            purchaseNo,
+                            txtInvoiceNo.Text,
+                            CmboVendor.Text,
+                            CmboPayment.Text,
+                            ParseDecimal(label6.Text),
+                            $"Purchase invoice GRN-{purchaseNo} deleted.");
+
                         // Show success message
                         MessageBox.Show("Purchase invoice deleted successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
@@ -7101,6 +7115,59 @@ namespace PosBranch_Win.Transaction
             {
                 MessageBox.Show("Error deleting purchase: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void SavePurchaseActivityLog(string activityType, int purchaseNo, PurchaseMaster purchaseMaster)
+        {
+            if (purchaseMaster == null)
+            {
+                return;
+            }
+
+            string details = $"Purchase invoice GRN-{purchaseNo} {activityType.ToLowerInvariant()}d.";
+            SavePurchaseActivityLog(
+                activityType,
+                purchaseNo,
+                purchaseMaster.InvoiceNo,
+                purchaseMaster.VendorName,
+                purchaseMaster.Paymode,
+                Convert.ToDecimal(purchaseMaster.NetTotal > 0 ? purchaseMaster.NetTotal : purchaseMaster.GrandTotal),
+                details);
+        }
+
+        private void SavePurchaseActivityLog(
+            string activityType,
+            int purchaseNo,
+            string invoiceNo,
+            string vendorName,
+            string paymentMode,
+            decimal netAmount,
+            string details)
+        {
+            try
+            {
+                using (var repo = new TransactionActivityLogRepository())
+                {
+                    repo.SavePurchaseActivity(
+                        purchaseNo,
+                        invoiceNo,
+                        vendorName,
+                        paymentMode,
+                        netAmount,
+                        activityType,
+                        details);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Unable to save purchase activity log: " + ex.Message);
+            }
+        }
+
+        private decimal ParseDecimal(string value)
+        {
+            decimal parsed;
+            return decimal.TryParse(value, out parsed) ? parsed : 0m;
         }
 
         // Method to remove the selected item from the grid

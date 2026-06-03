@@ -4,6 +4,7 @@ using ModelClass.Master;
 using PosBranch_Win.DialogBox;
 using PosBranch_Win.Transaction;
 using Repository.MasterRepositry;
+using Repository.SettingsRepo;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -65,6 +66,134 @@ namespace PosBranch_Win.Master
             {
                 System.Diagnostics.Debug.WriteLine($"Error notifying item master change: {ex.Message}");
             }
+        }
+
+        private void LogItemActivity(string activityType, string activityDetails)
+        {
+            try
+            {
+                int itemId = 0;
+                if (ItemMaster != null && ItemMaster.ItemId > 0)
+                {
+                    itemId = ItemMaster.ItemId;
+                }
+                else if (CurrentItemId > 0)
+                {
+                    itemId = CurrentItemId;
+                }
+
+                string itemNo = txt_ItemNo?.Text?.Trim() ?? (ItemMaster != null ? ItemMaster.ItemNo.ToString() : string.Empty);
+                string itemName = txt_description?.Text?.Trim() ?? (ItemMaster != null ? ItemMaster.Description : string.Empty);
+                string barcode = string.Empty;
+
+                try
+                {
+                    var txtBarcodeCtrl = this.Controls.Find("txt_barcode", true).FirstOrDefault() as TextBox;
+                    barcode = txtBarcodeCtrl != null ? (txtBarcodeCtrl.Text ?? string.Empty).Trim() : (ItemMaster != null ? ItemMaster.Barcode : string.Empty);
+                }
+                catch
+                {
+                    barcode = ItemMaster != null ? ItemMaster.Barcode : string.Empty;
+                }
+
+                ItemActivityLogRepository.SaveItemActivity(
+                    itemId,
+                    itemNo,
+                    itemName,
+                    barcode,
+                    activityType,
+                    activityDetails,
+                    ParseNullableDecimal(Txt_UnitCost?.Text),
+                    ParseNullableDecimal(txt_Retail?.Text),
+                    ParseNullableDecimal(txt_walkin?.Text));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Item activity log failed: {ex.Message}");
+            }
+        }
+
+        private static decimal? ParseNullableDecimal(string value)
+        {
+            decimal parsed;
+            return decimal.TryParse((value ?? string.Empty).Trim(), out parsed) ? parsed : (decimal?)null;
+        }
+
+        private PriceSnapshot GetCurrentBasePriceSnapshot(int itemId)
+        {
+            try
+            {
+                if (itemId <= 0)
+                {
+                    return null;
+                }
+
+                var prices = ItemRepository.GetItemPriceSettings(itemId);
+                var basePrice = prices?
+                    .OrderBy(p => string.Equals(p.IsBaseUnit, "Y", StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+                    .ThenBy(p => Math.Abs(p.Packing - 1d) < 0.0001d ? 0 : 1)
+                    .ThenBy(p => p.Packing)
+                    .FirstOrDefault();
+
+                if (basePrice == null)
+                {
+                    return null;
+                }
+
+                return new PriceSnapshot
+                {
+                    UnitCost = Convert.ToDecimal(basePrice.Cost),
+                    RetailPrice = Convert.ToDecimal(basePrice.WholeSalePrice),
+                    WalkinPrice = Convert.ToDecimal(basePrice.RetailPrice)
+                };
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Unable to read existing item prices for activity log: {ex.Message}");
+                return null;
+            }
+        }
+
+        private string BuildUpdateActivityDetails(PriceSnapshot oldPrice)
+        {
+            var changes = new List<string>();
+            AddPriceChange(changes, "Unit Cost", oldPrice?.UnitCost, ParseNullableDecimal(Txt_UnitCost?.Text));
+            AddPriceChange(changes, "Retail Price", oldPrice?.RetailPrice, ParseNullableDecimal(txt_Retail?.Text));
+            AddPriceChange(changes, "Walkin Price", oldPrice?.WalkinPrice, ParseNullableDecimal(txt_walkin?.Text));
+
+            if (changes.Count == 0)
+            {
+                return "Item updated from item master. No price change detected.";
+            }
+
+            return string.Join("; ", changes) + ".";
+        }
+
+        private static void AddPriceChange(List<string> changes, string label, decimal? oldValue, decimal? newValue)
+        {
+            if (!oldValue.HasValue || !newValue.HasValue)
+            {
+                return;
+            }
+
+            if (Math.Abs(oldValue.Value - newValue.Value) < 0.0001m)
+            {
+                return;
+            }
+
+            changes.Add($"{label} changed from {FormatPrice(oldValue.Value)} to {FormatPrice(newValue.Value)}");
+        }
+
+        private static string FormatPrice(decimal value)
+        {
+            return value.ToString("0.####");
+        }
+
+        private class PriceSnapshot
+        {
+            public decimal UnitCost { get; set; }
+            public decimal RetailPrice { get; set; }
+            public decimal WalkinPrice { get; set; }
         }
 
         /// <summary>
@@ -400,6 +529,7 @@ namespace PosBranch_Win.Master
         Item ItemMaster = new Item();
         ItemMasterPriceSettings ItemPriceSettings = new ItemMasterPriceSettings();
         ItemMasterRepository ItemRepository = new ItemMasterRepository();
+        ItemActivityLogRepository ItemActivityLogRepository = new ItemActivityLogRepository();
         internal object lblCost;
 
         // Add after other field declarations (e.g., after line 304)
@@ -2946,6 +3076,7 @@ namespace PosBranch_Win.Master
 
                             // Also remove from Ult_Price grid if it exists
                             RemoveUnitFromPriceGrid(unitName);
+                            LogItemActivity("REMOVE_UNIT", $"Unit '{unitName}' removed from item master.");
 
                             MessageBox.Show($"Unit '{unitName}' has been removed successfully.", "Unit Removed", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
@@ -7086,6 +7217,7 @@ namespace PosBranch_Win.Master
                 if (!string.IsNullOrEmpty(Message) && Message.StartsWith("Success"))
                 {
                     TryPersistItemStatusForCurrentItem(true);
+                    LogItemActivity("SAVE", "Item saved from item master before opening stock adjustment.");
 
                     // Raise event to notify other forms that item was updated
                     if (ItemMaster.ItemId > 0)
@@ -7635,6 +7767,7 @@ namespace PosBranch_Win.Master
                 if (!string.IsNullOrEmpty(Message) && Message.StartsWith("Success"))
                 {
                     TryPersistItemStatusForCurrentItem(true);
+                    LogItemActivity("SAVE", "Item saved from item master.");
 
                     // Raise event to notify other forms that item was updated
                     if (ItemMaster.ItemId > 0)
@@ -8009,10 +8142,12 @@ namespace PosBranch_Win.Master
 
             // Get Ult_Price data and convert to DataGridView for backward compatibility
             DataGridView tempPriceGrid = ConvertUltPriceToDataGridView();
+            PriceSnapshot oldPriceSnapshot = GetCurrentBasePriceSnapshot(currentItemId);
             string Message = ItemRepository.UpdateItemMaster(ItemMaster, ItemPriceSettings, UomDataGridView, tempPriceGrid, GetAlternativeBarcodesDataGridView());
             if (!string.IsNullOrEmpty(Message) && Message.StartsWith("Success"))
             {
                 TryPersistItemStatusForCurrentItem(true);
+                LogItemActivity("UPDATE", BuildUpdateActivityDetails(oldPriceSnapshot));
 
                 // Raise event to notify other forms that item was updated
                 if (ItemMaster.ItemId > 0)

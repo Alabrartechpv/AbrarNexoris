@@ -39,6 +39,8 @@ namespace PosBranch_Win.Dashboard
             ConfigureDashboardDateEditor(dtFrom);
             ConfigureDashboardDateEditor(dtTo);
             ConfigureQuickDateCombo();
+            if (cmbAnalysisMode != null && !cmbAnalysisMode.Items.Contains("Yearly"))
+                cmbAnalysisMode.Items.Add("Yearly");
             Load += FrmStockAnalytics_Load;
             Resize += (s, e) => InvalidateCharts();
             cmbAnalysisMode.SelectedIndexChanged += CmbAnalysisMode_SelectedIndexChanged;
@@ -129,41 +131,10 @@ namespace PosBranch_Win.Dashboard
         private void CmbQuickDate_ValueChanged(object sender, EventArgs e)
         {
             string selected = Convert.ToString(cmbQuickDate.Value ?? cmbQuickDate.Text);
-            DateTime today = DateTime.Today;
-            DateTime fromDate;
-            DateTime toDate;
+            DateRange range = GetQuickDateRange(selected);
 
-            switch (selected)
-            {
-                case "Yesterday":
-                    fromDate = today.AddDays(-1);
-                    toDate = fromDate;
-                    break;
-                case "This Month":
-                    fromDate = new DateTime(today.Year, today.Month, 1);
-                    toDate = new DateTime(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month));
-                    break;
-                case "Previous Month":
-                    DateTime previousMonth = new DateTime(today.Year, today.Month, 1).AddMonths(-1);
-                    fromDate = previousMonth;
-                    toDate = new DateTime(previousMonth.Year, previousMonth.Month, DateTime.DaysInMonth(previousMonth.Year, previousMonth.Month));
-                    break;
-                case "This Year":
-                    fromDate = new DateTime(today.Year, 1, 1);
-                    toDate = new DateTime(today.Year, 12, 31);
-                    break;
-                case "Previous Year":
-                    fromDate = new DateTime(today.Year - 1, 1, 1);
-                    toDate = new DateTime(today.Year - 1, 12, 31);
-                    break;
-                default:
-                    fromDate = today;
-                    toDate = today;
-                    break;
-            }
-
-            _fromDate = fromDate;
-            _toDate = toDate;
+            _fromDate = range.FromDate;
+            _toDate = range.ToDate;
             if (dtFrom != null) dtFrom.Value = _fromDate;
             if (dtTo != null) dtTo.Value = _toDate;
             if (IsHandleCreated) LoadAnalytics();
@@ -220,6 +191,7 @@ namespace PosBranch_Win.Dashboard
                 ItemName = ShortLabel(x.ItemName, 34),
                 Category = ShortLabel(x.CategoryName, 24),
                 Quantity = x.ClosingStock.ToString("N2", _culture),
+                Cost = Money(x.Cost),
                 Value = Money(x.StockValue)
             }).ToList();
 
@@ -246,6 +218,7 @@ namespace PosBranch_Win.Dashboard
                     ItemName = ShortLabel(x.ItemName, 24),
                     Category = ShortLabel(x.Category, 16),
                     Quantity = x.Quantity,
+                    Cost = x.Cost,
                     Value = x.Value
                 }).ToList(),
                 LowStock = items.Where(IsLowRiskStock).OrderBy(x => x.ClosingStock).Select((x, i) => new LowStockRow
@@ -291,7 +264,11 @@ namespace PosBranch_Win.Dashboard
 
         private List<StockTrendPoint> BuildTrend(decimal totalValue)
         {
-            string mode = Convert.ToString(cmbAnalysisMode.SelectedItem ?? cmbAnalysisMode.Text);
+            return BuildTrend(totalValue, Convert.ToString(cmbAnalysisMode.SelectedItem ?? cmbAnalysisMode.Text));
+        }
+
+        private List<StockTrendPoint> BuildTrend(decimal totalValue, string mode)
+        {
             int points = GetTrendPointCount(mode);
             int dateSpan = Math.Max(1, (_toDate - _fromDate).Days + 1);
             List<StockTrendPoint> trend = new List<StockTrendPoint>();
@@ -352,6 +329,8 @@ namespace PosBranch_Win.Dashboard
                     column.FillWeight = 30;
                 else if (column.Name == "ItemName")
                     column.FillWeight = 130;
+                else if (column.Name == "Cost")
+                    column.FillWeight = 68;
                 else
                     column.FillWeight = 75;
             }
@@ -397,12 +376,12 @@ namespace PosBranch_Win.Dashboard
 
         private void TrendCanvas_Click(object sender, EventArgs e)
         {
-            ShowChartPopup("Stock Trend (Value)", _analytics.Trend, (g, bounds) => DrawLineChart(g, bounds, _analytics.Trend));
+            ShowTrendPopup();
         }
 
         private void ItemGraphCanvas_Click(object sender, EventArgs e)
         {
-            ShowChartPopup("Item Stock (Top 10 by Quantity)", _analytics.TopItems, (g, bounds) => DrawBarChart(g, bounds, _analytics.TopItems));
+            ShowItemGraphPopup();
         }
 
         private void CategoryCanvas_Paint(object sender, PaintEventArgs e)
@@ -969,6 +948,342 @@ namespace PosBranch_Win.Dashboard
             popup.ShowDialog(this);
         }
 
+        private void ShowTrendPopup()
+        {
+            Form popup = new Form
+            {
+                Text = "Stock Trend (Value)",
+                StartPosition = FormStartPosition.CenterParent,
+                Size = new Size(940, 590),
+                MinimizeBox = false,
+                MaximizeBox = false,
+                ShowIcon = false,
+                BackColor = PageBackColor,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                Padding = new Padding(14)
+            };
+
+            Panel card = new Panel
+            {
+                BackColor = CardBackColor,
+                Dock = DockStyle.Fill,
+                Padding = new Padding(12, 10, 12, 12)
+            };
+            card.Paint += Card_Paint;
+
+            Label title = new Label
+            {
+                Dock = DockStyle.Top,
+                Height = 32,
+                Text = BuildTrendPopupTitle(GetSelectedAnalysisModeCaption(), GetSelectedQuickDateCaption()),
+                Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold),
+                ForeColor = TextBlue,
+                Padding = new Padding(3, 3, 0, 0)
+            };
+
+            Button close = new Button
+            {
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BackColor = AccentBlue,
+                FlatStyle = FlatStyle.Flat,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI Semibold", 8.5F, FontStyle.Bold),
+                Location = new Point(popup.ClientSize.Width - 105, 16),
+                Size = new Size(72, 28),
+                Text = "Close"
+            };
+            close.FlatAppearance.BorderSize = 0;
+            close.Click += (s, e) => popup.Close();
+
+            TableLayoutPanel content = new TableLayoutPanel
+            {
+                ColumnCount = 1,
+                Dock = DockStyle.Fill,
+                RowCount = 3,
+                Padding = new Padding(0, 8, 0, 0)
+            };
+            content.RowStyles.Add(new RowStyle(SizeType.Absolute, 42F));
+            content.RowStyles.Add(new RowStyle(SizeType.Percent, 58F));
+            content.RowStyles.Add(new RowStyle(SizeType.Percent, 42F));
+
+            FlowLayoutPanel filters = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                Padding = new Padding(2, 6, 0, 4),
+                WrapContents = false
+            };
+
+            Label modeLabel = CreatePopupFilterLabel("Mode");
+            ComboBox modeCombo = CreatePopupCombo(108);
+            modeCombo.Items.AddRange(new object[] { "Daily", "Weekly", "Monthly", "Yearly" });
+            modeCombo.SelectedItem = GetSelectedAnalysisModeCaption();
+
+            Label quickLabel = CreatePopupFilterLabel("Quick Date");
+            ComboBox quickDateCombo = CreatePopupCombo(150);
+            quickDateCombo.Items.AddRange(new object[] { "Today", "Yesterday", "This Month", "Previous Month", "This Year", "Previous Year" });
+            quickDateCombo.SelectedItem = GetSelectedQuickDateCaption();
+
+            filters.Controls.Add(modeLabel);
+            filters.Controls.Add(modeCombo);
+            filters.Controls.Add(quickLabel);
+            filters.Controls.Add(quickDateCombo);
+
+            Panel chartPanel = new Panel
+            {
+                BackColor = CardBackColor,
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0, 0, 0, 10)
+            };
+            chartPanel.Paint += (s, e) =>
+            {
+                Rectangle chartBounds = new Rectangle(4, 4, Math.Max(1, chartPanel.ClientSize.Width - 8), Math.Max(1, chartPanel.ClientSize.Height - 8));
+                DrawLineChart(e.Graphics, chartBounds, _analytics.Trend);
+            };
+
+            DataGridView detailGrid = new DataGridView
+            {
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                AllowUserToResizeRows = false,
+                AutoGenerateColumns = true,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                BackgroundColor = CardBackColor,
+                BorderStyle = BorderStyle.None,
+                Dock = DockStyle.Fill,
+                EnableHeadersVisualStyles = false,
+                GridColor = Color.FromArgb(220, 233, 246),
+                ReadOnly = true,
+                RowHeadersVisible = false,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                DataSource = new BindingList<TrendDetailRow>(BuildTrendDetails())
+            };
+            detailGrid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(232, 241, 252);
+            detailGrid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
+            detailGrid.ColumnHeadersDefaultCellStyle.ForeColor = TextBlue;
+            detailGrid.ColumnHeadersHeight = 32;
+            detailGrid.DefaultCellStyle.Font = new Font("Segoe UI", 9F);
+            detailGrid.DefaultCellStyle.ForeColor = Color.FromArgb(36, 64, 105);
+            detailGrid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(215, 232, 250);
+            detailGrid.DefaultCellStyle.SelectionForeColor = TextBlue;
+            detailGrid.RowTemplate.Height = 28;
+            FormatGrid(detailGrid);
+
+            Action refreshPopup = () =>
+            {
+                string mode = Convert.ToString(modeCombo.SelectedItem);
+                _analytics.Trend = BuildTrend(_analytics.TotalStockValue, mode);
+                title.Text = BuildTrendPopupTitle(mode, Convert.ToString(quickDateCombo.SelectedItem));
+                detailGrid.DataSource = new BindingList<TrendDetailRow>(BuildTrendDetails());
+                FormatGrid(detailGrid);
+                chartPanel.Invalidate();
+            };
+
+            modeCombo.SelectedIndexChanged += (s, e) =>
+            {
+                if (cmbAnalysisMode != null && modeCombo.SelectedItem != null && cmbAnalysisMode.Items.Contains(modeCombo.SelectedItem))
+                    cmbAnalysisMode.SelectedItem = modeCombo.SelectedItem;
+                refreshPopup();
+            };
+            quickDateCombo.SelectedIndexChanged += (s, e) =>
+            {
+                DateRange range = GetQuickDateRange(Convert.ToString(quickDateCombo.SelectedItem));
+                _fromDate = range.FromDate;
+                _toDate = range.ToDate;
+                if (dtFrom != null) dtFrom.Value = _fromDate;
+                if (dtTo != null) dtTo.Value = _toDate;
+                LoadAnalytics();
+                refreshPopup();
+            };
+
+            content.Controls.Add(filters, 0, 0);
+            content.Controls.Add(chartPanel, 0, 1);
+            content.Controls.Add(detailGrid, 0, 2);
+            card.Controls.Add(content);
+            card.Controls.Add(title);
+            card.Controls.Add(close);
+            close.BringToFront();
+            popup.Controls.Add(card);
+            popup.ShowDialog(this);
+        }
+
+        private void ShowItemGraphPopup()
+        {
+            Form popup = new Form
+            {
+                Text = "Item Stock (Top 10 by Quantity)",
+                StartPosition = FormStartPosition.CenterParent,
+                Size = new Size(940, 590),
+                MinimizeBox = false,
+                MaximizeBox = false,
+                ShowIcon = false,
+                BackColor = PageBackColor,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                Padding = new Padding(14)
+            };
+
+            Panel card = new Panel
+            {
+                BackColor = CardBackColor,
+                Dock = DockStyle.Fill,
+                Padding = new Padding(12, 10, 12, 12)
+            };
+            card.Paint += Card_Paint;
+
+            Label title = new Label
+            {
+                Dock = DockStyle.Top,
+                Height = 32,
+                Text = BuildItemGraphPopupTitle("Daily", GetSelectedQuickDateCaption()),
+                Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold),
+                ForeColor = TextBlue,
+                Padding = new Padding(3, 3, 0, 0)
+            };
+
+            Button close = new Button
+            {
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BackColor = AccentBlue,
+                FlatStyle = FlatStyle.Flat,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI Semibold", 8.5F, FontStyle.Bold),
+                Location = new Point(popup.ClientSize.Width - 105, 16),
+                Size = new Size(72, 28),
+                Text = "Close"
+            };
+            close.FlatAppearance.BorderSize = 0;
+            close.Click += (s, e) => popup.Close();
+
+            TableLayoutPanel content = new TableLayoutPanel
+            {
+                ColumnCount = 1,
+                Dock = DockStyle.Fill,
+                RowCount = 3,
+                Padding = new Padding(0, 8, 0, 0)
+            };
+            content.RowStyles.Add(new RowStyle(SizeType.Absolute, 42F));
+            content.RowStyles.Add(new RowStyle(SizeType.Percent, 58F));
+            content.RowStyles.Add(new RowStyle(SizeType.Percent, 42F));
+
+            FlowLayoutPanel filters = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                Padding = new Padding(2, 6, 0, 4),
+                WrapContents = false
+            };
+
+            Label modeLabel = CreatePopupFilterLabel("Mode");
+            ComboBox modeCombo = CreatePopupCombo(108);
+            modeCombo.Items.AddRange(new object[] { "Daily", "Weekly", "Monthly", "Yearly" });
+            modeCombo.SelectedItem = "Daily";
+
+            Label quickLabel = CreatePopupFilterLabel("Quick Date");
+            ComboBox quickDateCombo = CreatePopupCombo(150);
+            quickDateCombo.Items.AddRange(new object[] { "Today", "Yesterday", "This Month", "Previous Month", "This Year", "Previous Year" });
+            quickDateCombo.SelectedItem = GetSelectedQuickDateCaption();
+
+            filters.Controls.Add(modeLabel);
+            filters.Controls.Add(modeCombo);
+            filters.Controls.Add(quickLabel);
+            filters.Controls.Add(quickDateCombo);
+
+            Panel chartPanel = new Panel
+            {
+                BackColor = CardBackColor,
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0, 0, 0, 10)
+            };
+            chartPanel.Paint += (s, e) =>
+            {
+                Rectangle chartBounds = new Rectangle(4, 4, Math.Max(1, chartPanel.ClientSize.Width - 8), Math.Max(1, chartPanel.ClientSize.Height - 8));
+                DrawBarChart(e.Graphics, chartBounds, _analytics.TopItems);
+            };
+
+            DataGridView detailGrid = new DataGridView
+            {
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                AllowUserToResizeRows = false,
+                AutoGenerateColumns = true,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                BackgroundColor = CardBackColor,
+                BorderStyle = BorderStyle.None,
+                Dock = DockStyle.Fill,
+                EnableHeadersVisualStyles = false,
+                GridColor = Color.FromArgb(220, 233, 246),
+                ReadOnly = true,
+                RowHeadersVisible = false,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                DataSource = new BindingList<StockItemRow>(_analytics.TopItems.ToList())
+            };
+            detailGrid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(232, 241, 252);
+            detailGrid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
+            detailGrid.ColumnHeadersDefaultCellStyle.ForeColor = TextBlue;
+            detailGrid.ColumnHeadersHeight = 32;
+            detailGrid.DefaultCellStyle.Font = new Font("Segoe UI", 9F);
+            detailGrid.DefaultCellStyle.ForeColor = Color.FromArgb(36, 64, 105);
+            detailGrid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(215, 232, 250);
+            detailGrid.DefaultCellStyle.SelectionForeColor = TextBlue;
+            detailGrid.RowTemplate.Height = 28;
+            FormatGrid(detailGrid);
+
+            Action refreshPopup = () =>
+            {
+                title.Text = BuildItemGraphPopupTitle(Convert.ToString(modeCombo.SelectedItem), Convert.ToString(quickDateCombo.SelectedItem));
+                detailGrid.DataSource = new BindingList<StockItemRow>(_analytics.TopItems.ToList());
+                FormatGrid(detailGrid);
+                chartPanel.Invalidate();
+            };
+
+            modeCombo.SelectedIndexChanged += (s, e) => refreshPopup();
+            quickDateCombo.SelectedIndexChanged += (s, e) =>
+            {
+                DateRange range = GetQuickDateRange(Convert.ToString(quickDateCombo.SelectedItem));
+                _fromDate = range.FromDate;
+                _toDate = range.ToDate;
+                if (dtFrom != null) dtFrom.Value = _fromDate;
+                if (dtTo != null) dtTo.Value = _toDate;
+                LoadAnalytics();
+                refreshPopup();
+            };
+
+            content.Controls.Add(filters, 0, 0);
+            content.Controls.Add(chartPanel, 0, 1);
+            content.Controls.Add(detailGrid, 0, 2);
+            card.Controls.Add(content);
+            card.Controls.Add(title);
+            card.Controls.Add(close);
+            close.BringToFront();
+            popup.Controls.Add(card);
+            popup.ShowDialog(this);
+        }
+
+        private Label CreatePopupFilterLabel(string text)
+        {
+            return new Label
+            {
+                AutoSize = false,
+                Font = new Font("Segoe UI Semibold", 8.5F, FontStyle.Bold),
+                ForeColor = MutedBlue,
+                Margin = new Padding(0, 5, 7, 0),
+                Size = new Size(text.Length > 6 ? 70 : 42, 24),
+                Text = text,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+        }
+
+        private ComboBox CreatePopupCombo(int width)
+        {
+            return new ComboBox
+            {
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Font = new Font("Segoe UI", 8.75F),
+                Margin = new Padding(0, 2, 18, 0),
+                Size = new Size(width, 23)
+            };
+        }
+
         private void PrepareGraphics(Graphics g)
         {
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -1090,6 +1405,56 @@ namespace PosBranch_Win.Dashboard
             }).ToList();
         }
 
+        private List<TrendDetailRow> BuildTrendDetails()
+        {
+            List<StockTrendPoint> trendPoints = _analytics.Trend ?? new List<StockTrendPoint>();
+            List<StockItemRow> itemRows = (_analytics.TopItems ?? new List<StockItemRow>()).ToList();
+            List<TrendDetailRow> rows = new List<TrendDetailRow>();
+
+            if (trendPoints.Count == 0)
+                return rows;
+
+            if (itemRows.Count == 0)
+            {
+                for (int i = 0; i < trendPoints.Count; i++)
+                {
+                    rows.Add(new TrendDetailRow
+                    {
+                        Rank = i + 1,
+                        Caption = trendPoints[i].Caption,
+                        Value = Money(trendPoints[i].Value),
+                        ItemName = "No item",
+                        Category = string.Empty,
+                        Quantity = "0.00",
+                        Cost = Money(0),
+                        StockValue = Money(0)
+                    });
+                }
+                return rows;
+            }
+
+            int rank = 1;
+            for (int i = 0; i < trendPoints.Count; i++)
+            {
+                foreach (StockItemRow item in itemRows)
+                {
+                    rows.Add(new TrendDetailRow
+                    {
+                        Rank = rank++,
+                        Caption = trendPoints[i].Caption,
+                        Value = Money(trendPoints[i].Value),
+                        ItemName = item.ItemName,
+                        Category = item.Category,
+                        Quantity = item.Quantity,
+                        Cost = item.Cost,
+                        StockValue = item.Value
+                    });
+                }
+            }
+
+            return rows;
+        }
+
         private int GetCompanyId()
         {
             if (SessionContext.IsInitialized && SessionContext.CompanyId > 0)
@@ -1120,8 +1485,74 @@ namespace PosBranch_Win.Dashboard
             return decimal.TryParse(value, NumberStyles.Any, _culture, out result) ? result : 0;
         }
 
+        private DateRange GetQuickDateRange(string selected)
+        {
+            DateTime today = DateTime.Today;
+            DateTime fromDate;
+            DateTime toDate;
+
+            switch (selected)
+            {
+                case "Yesterday":
+                    fromDate = today.AddDays(-1);
+                    toDate = fromDate;
+                    break;
+                case "This Month":
+                    fromDate = new DateTime(today.Year, today.Month, 1);
+                    toDate = new DateTime(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month));
+                    break;
+                case "Previous Month":
+                    DateTime previousMonth = new DateTime(today.Year, today.Month, 1).AddMonths(-1);
+                    fromDate = previousMonth;
+                    toDate = new DateTime(previousMonth.Year, previousMonth.Month, DateTime.DaysInMonth(previousMonth.Year, previousMonth.Month));
+                    break;
+                case "This Year":
+                    fromDate = new DateTime(today.Year, 1, 1);
+                    toDate = new DateTime(today.Year, 12, 31);
+                    break;
+                case "Previous Year":
+                    fromDate = new DateTime(today.Year - 1, 1, 1);
+                    toDate = new DateTime(today.Year - 1, 12, 31);
+                    break;
+                default:
+                    fromDate = today;
+                    toDate = today;
+                    break;
+            }
+
+            return new DateRange(fromDate, toDate);
+        }
+
+        private string GetSelectedQuickDateCaption()
+        {
+            string selected = Convert.ToString(cmbQuickDate.Value ?? cmbQuickDate.Text);
+            return string.IsNullOrWhiteSpace(selected) ? "Today" : selected;
+        }
+
+        private string GetSelectedAnalysisModeCaption()
+        {
+            string selected = Convert.ToString(cmbAnalysisMode.SelectedItem ?? cmbAnalysisMode.Text);
+            return string.IsNullOrWhiteSpace(selected) ? "Daily" : selected;
+        }
+
+        private string BuildItemGraphPopupTitle(string mode, string quickDate)
+        {
+            string selectedMode = string.IsNullOrWhiteSpace(mode) ? "Daily" : mode;
+            string selectedQuickDate = string.IsNullOrWhiteSpace(quickDate) ? "Today" : quickDate;
+            return "Item Stock (Top 10 by Quantity) - " + selectedMode + " - " + selectedQuickDate;
+        }
+
+        private string BuildTrendPopupTitle(string mode, string quickDate)
+        {
+            string selectedMode = string.IsNullOrWhiteSpace(mode) ? "Daily" : mode;
+            string selectedQuickDate = string.IsNullOrWhiteSpace(quickDate) ? "Today" : quickDate;
+            return "Stock Trend (Value) - " + selectedMode + " - " + selectedQuickDate;
+        }
+
         private int GetTrendPointCount(string mode)
         {
+            if (string.Equals(mode, "Yearly", StringComparison.OrdinalIgnoreCase))
+                return 5;
             if (string.Equals(mode, "Monthly", StringComparison.OrdinalIgnoreCase))
                 return 6;
             if (string.Equals(mode, "Weekly", StringComparison.OrdinalIgnoreCase))
@@ -1131,6 +1562,8 @@ namespace PosBranch_Win.Dashboard
 
         private DateTime GetTrendDate(int index, int pointCount, int dateSpan, string mode)
         {
+            if (string.Equals(mode, "Yearly", StringComparison.OrdinalIgnoreCase))
+                return _toDate.AddYears(index - pointCount + 1);
             if (string.Equals(mode, "Monthly", StringComparison.OrdinalIgnoreCase))
                 return _toDate.AddMonths(index - pointCount + 1);
             if (string.Equals(mode, "Weekly", StringComparison.OrdinalIgnoreCase))
@@ -1142,6 +1575,8 @@ namespace PosBranch_Win.Dashboard
 
         private string FormatTrendCaption(DateTime date, string mode)
         {
+            if (string.Equals(mode, "Yearly", StringComparison.OrdinalIgnoreCase))
+                return date.ToString("yyyy", _culture);
             if (string.Equals(mode, "Monthly", StringComparison.OrdinalIgnoreCase))
                 return date.ToString("MMM yy", _culture);
             if (string.Equals(mode, "Weekly", StringComparison.OrdinalIgnoreCase))
@@ -1235,7 +1670,20 @@ namespace PosBranch_Win.Dashboard
             public string ItemName { get; set; }
             public string Category { get; set; }
             public string Quantity { get; set; }
+            public string Cost { get; set; }
             public string Value { get; set; }
+        }
+
+        private sealed class TrendDetailRow
+        {
+            public int Rank { get; set; }
+            public string Caption { get; set; }
+            public string Value { get; set; }
+            public string ItemName { get; set; }
+            public string Category { get; set; }
+            public string Quantity { get; set; }
+            public string Cost { get; set; }
+            public string StockValue { get; set; }
         }
 
         private sealed class LowStockRow
@@ -1267,6 +1715,18 @@ namespace PosBranch_Win.Dashboard
             public string TotalOut { get; set; }
             public string ClosingStock { get; set; }
             public string StockValue { get; set; }
+        }
+
+        private sealed class DateRange
+        {
+            public DateRange(DateTime fromDate, DateTime toDate)
+            {
+                FromDate = fromDate;
+                ToDate = toDate;
+            }
+
+            public DateTime FromDate { get; private set; }
+            public DateTime ToDate { get; private set; }
         }
 
         private enum MovementTileKind

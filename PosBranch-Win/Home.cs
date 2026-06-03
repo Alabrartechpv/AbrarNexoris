@@ -1341,8 +1341,10 @@ namespace PosBranch_Win
                 // Get all tools from the toolbar manager
                 foreach (Infragistics.Win.UltraWinToolbars.ToolBase tool in ultraToolbarsManager1.Tools)
                 {
+                    string toolKey = tool.Key?.Trim();
+
                     // Check if user has CanView permission for this tool
-                    bool hasPermission = tool.Key == "Overview" || SessionContext.CanView(tool.Key);
+                    bool hasPermission = toolKey == "Overview" || SessionContext.CanView(toolKey) || SessionContext.CanView(tool.Key);
                     tool.SharedProps.Enabled = hasPermission;
 
                     System.Diagnostics.Debug.WriteLine($"Tool '{tool.Key}': Enabled={hasPermission}");
@@ -1363,9 +1365,10 @@ namespace PosBranch_Win
         /// </summary>
         /// <param name="formKey">Form key to check</param>
         /// <returns>True if permitted, false if denied</returns>
-        private bool CheckViewPermission(string formKey)
+        private bool CheckViewPermission(string formKey, params string[] alternateFormKeys)
         {
-            if (!SessionContext.CanView(formKey))
+            var formKeys = new[] { formKey }.Concat(alternateFormKeys ?? Enumerable.Empty<string>());
+            if (!formKeys.Any(key => SessionContext.CanView(key)))
             {
                 MessageBox.Show($"You do not have permission to access this module.\n\nRequired permission: View access to '{formKey}'",
                     "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1399,12 +1402,14 @@ namespace PosBranch_Win
 
         private void ultraToolbarsManager1_ToolClick_1(object sender, Infragistics.Win.UltraWinToolbars.ToolClickEventArgs e)
         {
+            string toolKey = e.Tool.Key?.Trim();
+
             // Debug the clicked tool key
             System.Diagnostics.Debug.WriteLine($"Tool Clicked: {e.Tool.Key}");
-            _lastActivatedToolKey = e.Tool.Key; // Store for favorites tracking
+            _lastActivatedToolKey = toolKey; // Store for favorites tracking
 
             // Handle LogOff immediately before permission checks
-            if (e.Tool.Key == "LogIn" || e.Tool.Key == "LogOff")
+            if (toolKey == "LogIn" || toolKey == "LogOff")
             {
                 // Confirm logoff
                 var result = MessageBox.Show("Are you sure you want to log off?", "Confirm Log Off",
@@ -1435,7 +1440,7 @@ namespace PosBranch_Win
                 return;
             }
 
-            if (e.Tool.Key == "Nexoris AI")
+            if (toolKey == "Nexoris AI")
             {
                 using (var frmSettings = new FrmNexorisAISettings())
                 {
@@ -1451,7 +1456,7 @@ namespace PosBranch_Win
                 return;
             }
 
-            if (e.Tool.Key == "Overview")
+            if (toolKey == "Overview")
             {
                 Dashboard.FrmDashboardOverview overview = new Dashboard.FrmDashboardOverview(OpenFormInTabSafe);
                 OpenFormInTabSafe(overview, "Overview");
@@ -1459,17 +1464,17 @@ namespace PosBranch_Win
             }
 
             // Map aliases to permission keys
-            string permissionKey = e.Tool.Key;
-            if (e.Tool.Key == "Roles") permissionKey = "RolePermissions";
+            string permissionKey = toolKey;
+            if (toolKey == "Roles") permissionKey = "RolePermissions";
 
             // Check permission before opening any form
-            if (!CheckViewPermission(permissionKey))
+            if (!CheckViewPermission(permissionKey, e.Tool.Key))
                 return;
 
             // Universal Save button — delegates to the active tab's form save method
             // Covers all forms: FrmPurchase (SavePurchase), most Master/Accounts/Settings forms (btnSave_Click),
             // frmSalesReturn/frmPurchaseReturn (pbxSave_Click), and any form with a public Save()/SaveData() method.
-            if (e.Tool.Key == "Save")
+            if (toolKey == "Save")
             {
                 try
                 {
@@ -1576,7 +1581,7 @@ namespace PosBranch_Win
                 return;
             }
 
-            if (e.Tool.Key == "Clear" || e.Tool.Key == "Delet" || e.Tool.Key == "Update" || e.Tool.Key == "Hold" || e.Tool.Key == "LastBill")
+            if (toolKey == "Clear" || toolKey == "Delet" || toolKey == "Update" || toolKey == "Hold" || toolKey == "LastBill")
             {
                 try
                 {
@@ -1584,15 +1589,15 @@ namespace PosBranch_Win
                     if (activeForm == null || activeForm.IsDisposed) return;
 
                     string[] candidateMethods = new string[0];
-                    if (e.Tool.Key == "Clear")
+                    if (toolKey == "Clear")
                         candidateMethods = new[] { "RibbonClear", "Clear", "Reset", "ClearForm", "ResetForm", "btnClear_Click", "BtnClear_Click", "brnClear_Click", "btnReset_Click", "BtnNew_Click", "btnNew_Click", "button7_Click", "ultraPictureBox1_Click", "button2_Click", "button4_Click", "btnClear_Click_1", "ultraBtnClear_Click", "btn_clear_Click" };
-                    else if (e.Tool.Key == "Delet")
+                    else if (toolKey == "Delet")
                         candidateMethods = new[] { "RibbonDeleteInvoice", "Delete", "DeleteRecord", "DeleteItem", "DeletePurchase", "DeletePurchaseReturn", "DeleteReturn", "btnDelete_Click", "BtnDelete_Click", "btn_delete_Click", "ultraPictureBox2_Click", "ultraBtnDelete_Click" };
-                    else if (e.Tool.Key == "Update")
+                    else if (toolKey == "Update")
                         candidateMethods = new[] { "btnUpdate_Click", "BtnUpdate_Click", "updtbtn_Click", "ultraPictureBox7_Click", "UpdateRecord", "UpdateData", "btn_update_Click", "ultraBtnUpdate_Click" };
-                    else if (e.Tool.Key == "Hold")
+                    else if (toolKey == "Hold")
                         candidateMethods = new[] { "pbxHold_Click" };
-                    else if (e.Tool.Key == "LastBill")
+                    else if (toolKey == "LastBill")
                         candidateMethods = new[] { "RibbonLastBill" };
 
                     bool handled = false;
@@ -1620,7 +1625,7 @@ namespace PosBranch_Win
 
                     if (!handled)
                     {
-                        MessageBox.Show($"{e.Tool.Key} is not supported for this form.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show($"{toolKey} is not supported for this form.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
                 catch (System.Reflection.TargetInvocationException tie)
@@ -1733,7 +1738,7 @@ namespace PosBranch_Win
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error executing {e.Tool.Key}: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"Error executing {toolKey}: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 return;
             }
@@ -2076,22 +2081,29 @@ namespace PosBranch_Win
                 OpenFormInTab(salesRptv, "Daily Sales Report");
             }
 
+            // Activity Log
+            if (toolKey == "ActivityLog")
+            {
+                ActivityLogSelector activityLog = new ActivityLogSelector();
+                OpenFormInTab(activityLog, "Activity Log");
+            }
+
             // POS Settings
-            if (e.Tool.Key == "POSSettings" || e.Tool.Key == "Settings")
+            if (toolKey == "POSSettings" || toolKey == "Settings")
             {
                 frmPOSSettings posSettings = new frmPOSSettings();
                 OpenFormInTab(posSettings, "Sale Settings");
             }
 
             // Role Permissions (Admin only)
-            if (e.Tool.Key == "RolePermissions" || e.Tool.Key == "Roles")
+            if (toolKey == "RolePermissions" || toolKey == "Roles")
             {
                 FrmRolePermissions rolePerms = new FrmRolePermissions();
                 OpenFormInTab(rolePerms, "Role Permissions");
             }
 
             // Report Navigator Toggle
-            if (e.Tool.Key == "Report")
+            if (toolKey == "Report")
             {
                 if (_isReportNavigatorVisible)
                     HideReportNavigator();

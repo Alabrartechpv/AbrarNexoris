@@ -4,6 +4,7 @@ using ModelClass.Master;
 using ModelClass.TransactionModels;
 using PosBranch_Win.DialogBox;
 using Repository;
+using Repository.SettingsRepo;
 using Repository.TransactionRepository;
 using System;
 using System.Collections;
@@ -3246,6 +3247,12 @@ namespace PosBranch_Win.Transaction
             {
                 System.Diagnostics.Debug.WriteLine($"{(isUpdate ? "UpdateSales" : "SaveSales")} succeeded! Returned message: {message}");
                 string actionText = isUpdate ? "updated" : "saved";
+                long loggedBillNo = ParseLong(message, sales != null ? sales.BillNo : 0);
+                SaveSalesActivityLog(
+                    isUpdate ? "UPDATE" : "SAVE",
+                    loggedBillNo,
+                    sales,
+                    $"Sales invoice #{loggedBillNo} {actionText}.");
 
                 if (isUpdate && isEditingHoldBill)
                 {
@@ -5166,6 +5173,13 @@ namespace PosBranch_Win.Transaction
                     // Check if save was successful
                     if (!string.IsNullOrEmpty(billNoResult) && billNoResult != "0" && !billNoResult.StartsWith("Error"))
                     {
+                        long savedBillNoForLog = ParseLong(billNoResult, sales != null ? sales.BillNo : 0);
+                        SaveSalesActivityLog(
+                            isCompletingHeldBill ? "UPDATE" : "SAVE",
+                            savedBillNoForLog,
+                            sales,
+                            $"Sales invoice #{savedBillNoForLog} processed.");
+
                         // SPLIT PAYMENT: Save payment details if provided
                         if (paymentResult.PaymentDetails != null && paymentResult.PaymentDetails.Count > 0)
                         {
@@ -5345,6 +5359,12 @@ namespace PosBranch_Win.Transaction
 
                 if (message.Contains("success"))
                 {
+                    SaveSalesActivityLog(
+                        "DELETE",
+                        billNo,
+                        sales,
+                        $"Sales invoice #{billNo} deleted.");
+
                     ShowInfo("Sales invoice deleted successfully!", "Success");
 
                     // Clear the form
@@ -5377,6 +5397,45 @@ namespace PosBranch_Win.Transaction
                 System.Diagnostics.Debug.WriteLine($"Exception in DeleteSalesInvoice: {ex.ToString()}");
             }
         }
+
+        private void SaveSalesActivityLog(string activityType, long billNo, SalesMaster salesMaster, string details)
+        {
+            try
+            {
+                string customerName = salesMaster != null ? salesMaster.CustomerName : txtCustomer.Text;
+                string paymentMode = salesMaster != null ? salesMaster.PaymodeName : string.Empty;
+                decimal netAmount = salesMaster != null ? Convert.ToDecimal(salesMaster.NetAmount) : ParseDecimal(txtNetTotal.Text);
+
+                using (var repo = new TransactionActivityLogRepository())
+                {
+                    repo.SaveSalesActivity(
+                        billNo,
+                        billNo > 0 ? billNo.ToString() : string.Empty,
+                        customerName,
+                        paymentMode,
+                        netAmount,
+                        activityType,
+                        details);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Unable to save sales activity log: " + ex.Message);
+            }
+        }
+
+        private long ParseLong(string value, long fallback)
+        {
+            long parsed;
+            return long.TryParse(value, out parsed) ? parsed : fallback;
+        }
+
+        private decimal ParseDecimal(string value)
+        {
+            decimal parsed;
+            return decimal.TryParse(value, out parsed) ? parsed : 0m;
+        }
+
         // Add this method to hide the receipt panel (ultraPanel7) when user interacts with controls
         private void HideReceiptPanel()
         {
