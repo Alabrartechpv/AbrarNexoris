@@ -25,6 +25,8 @@ namespace Repository.MasterRepositry
 
             try
             {
+                EnsureActivityLogPermissionForm();
+
                 using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_RolePermission, (SqlConnection)DataConnection))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
@@ -204,6 +206,8 @@ namespace Repository.MasterRepositry
 
             try
             {
+                EnsureActivityLogPermissionForm();
+
                 using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_RolePermission, (SqlConnection)DataConnection))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
@@ -238,6 +242,90 @@ namespace Repository.MasterRepositry
             }
 
             return forms;
+        }
+
+        private void EnsureActivityLogPermissionForm()
+        {
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand(@"
+DECLARE @SchemaName SYSNAME;
+DECLARE @TableName SYSNAME;
+DECLARE @FullName NVARCHAR(300);
+DECLARE @Sql NVARCHAR(MAX);
+DECLARE @ObjectId INT;
+DECLARE @HasCategory BIT;
+DECLARE @HasIsActive BIT;
+
+SELECT TOP (1)
+    @SchemaName = s.name,
+    @TableName = t.name
+FROM sys.tables t
+INNER JOIN sys.schemas s ON s.schema_id = t.schema_id
+WHERE EXISTS (
+        SELECT 1
+        FROM sys.columns c
+        WHERE c.object_id = t.object_id
+          AND c.name = 'FormKey'
+    )
+  AND EXISTS (
+        SELECT 1
+        FROM sys.columns c
+        WHERE c.object_id = t.object_id
+          AND c.name = 'FormName'
+    )
+ORDER BY CASE
+    WHEN t.name IN ('Forms', 'FormMaster', 'RoleForms', 'POS_Forms', 'ApplicationForms') THEN 0
+    ELSE 1
+END, t.name;
+
+IF @TableName IS NOT NULL
+BEGIN
+    SET @FullName = QUOTENAME(@SchemaName) + N'.' + QUOTENAME(@TableName);
+    SET @ObjectId = OBJECT_ID(@FullName);
+    SET @HasCategory = CASE WHEN EXISTS (SELECT 1 FROM sys.columns WHERE object_id = @ObjectId AND name = 'Category') THEN 1 ELSE 0 END;
+    SET @HasIsActive = CASE WHEN EXISTS (SELECT 1 FROM sys.columns WHERE object_id = @ObjectId AND name = 'IsActive') THEN 1 ELSE 0 END;
+
+    SET @Sql = N'
+IF NOT EXISTS (SELECT 1 FROM ' + @FullName + N' WHERE FormKey = @FormKey)
+BEGIN
+    INSERT INTO ' + @FullName + N'
+    (
+        FormKey,
+        FormName' +
+        CASE WHEN @HasCategory = 1 THEN N',
+        Category' ELSE N'' END +
+        CASE WHEN @HasIsActive = 1 THEN N',
+        IsActive' ELSE N'' END +
+    N'
+    )
+    VALUES
+    (
+        @FormKey,
+        @FormName' +
+        CASE WHEN @HasCategory = 1 THEN N',
+        @Category' ELSE N'' END +
+        CASE WHEN @HasIsActive = 1 THEN N',
+        1' ELSE N'' END +
+    N'
+    );
+END';
+
+    EXEC sp_executesql
+        @Sql,
+        N'@FormKey NVARCHAR(100), @FormName NVARCHAR(200), @Category NVARCHAR(100)',
+        @FormKey = N'ActivityLog',
+        @FormName = N'Activity Log',
+        @Category = N'Settings';
+END", (SqlConnection)DataConnection))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Unable to ensure ActivityLog permission form: {ex.Message}");
+            }
         }
 
         /// <summary>
