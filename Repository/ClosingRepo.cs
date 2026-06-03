@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -444,17 +444,35 @@ WHERE SessionId = @SessionId
                     return true;
                 }
 
-                string narration = $"Shift Closing - {model.Counter} - {model.TransactionDate:dd-MMM-yyyy}";
-                System.Diagnostics.Debug.WriteLine($"Narration: {narration}");
-                System.Diagnostics.Debug.WriteLine($"Amount: {model.PhysicalCashCounted}");
+                decimal difference = model.CashDifference;
 
-                // Debit Entry: CASH EXCESS OR SHORT (LedgerID=500, GroupID=13)
-                System.Diagnostics.Debug.WriteLine($"Creating Debit Entry - CASH EXCESS OR SHORT - LedgerID: {cashExcessShortLedgerId}, Debit: {model.PhysicalCashCounted}");
-                CreateVoucherEntry(voucherId, cashExcessShortLedgerId, model.PhysicalCashCounted, 0, 1, "Shift Closing - Cash Excess or Short", transaction);
+                if (difference == 0)
+                {
+                    System.Diagnostics.Debug.WriteLine("No cash difference. Skipping voucher entries.");
+                    return true;
+                }
 
-                // Credit Entry: CASH-IN-HAND (LedgerID=258, GroupID=14)
-                System.Diagnostics.Debug.WriteLine($"Creating Credit Entry - CASH-IN-HAND - LedgerID: {cashInHandLedgerId}, Credit: {model.PhysicalCashCounted}");
-                CreateVoucherEntry(voucherId, cashInHandLedgerId, 0, model.PhysicalCashCounted, 2, "Shift Closing - Cash in Hand", transaction);
+                string narration = $"Shift Closing - {model.Counter} - {model.TransactionDate:dd-MMM-yyyy} - Variance: {difference}";
+
+                if (difference > 0)
+                {
+                    // Excess Cash: Debit CASH-IN-HAND, Credit CASH EXCESS OR SHORT
+                    System.Diagnostics.Debug.WriteLine($"Creating Debit Entry - CASH-IN-HAND - LedgerID: {cashInHandLedgerId}, Debit: {difference}");
+                    CreateVoucherEntry(voucherId, cashInHandLedgerId, difference, 0, 1, narration, transaction);
+
+                    System.Diagnostics.Debug.WriteLine($"Creating Credit Entry - CASH EXCESS OR SHORT - LedgerID: {cashExcessShortLedgerId}, Credit: {difference}");
+                    CreateVoucherEntry(voucherId, cashExcessShortLedgerId, 0, difference, 2, narration, transaction);
+                }
+                else
+                {
+                    // Short Cash: Debit CASH EXCESS OR SHORT, Credit CASH-IN-HAND
+                    decimal absDifference = Math.Abs(difference);
+                    System.Diagnostics.Debug.WriteLine($"Creating Debit Entry - CASH EXCESS OR SHORT - LedgerID: {cashExcessShortLedgerId}, Debit: {absDifference}");
+                    CreateVoucherEntry(voucherId, cashExcessShortLedgerId, absDifference, 0, 1, narration, transaction);
+
+                    System.Diagnostics.Debug.WriteLine($"Creating Credit Entry - CASH-IN-HAND - LedgerID: {cashInHandLedgerId}, Credit: {absDifference}");
+                    CreateVoucherEntry(voucherId, cashInHandLedgerId, 0, absDifference, 2, narration, transaction);
+                }
 
                 System.Diagnostics.Debug.WriteLine($"✅ Voucher entries created successfully - VoucherID: {voucherId}");
                 System.Diagnostics.Debug.WriteLine($"=== CreateVoucherEntries END ===");
