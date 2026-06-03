@@ -967,6 +967,24 @@
     <Compile Include="Settings\frmChangeItemNo.Designer.cs">
       <DependentUpon>frmChangeItemNo.cs</DependentUpon>
     </Compile>
+    <Compile Include="Settings\ActivityLog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Settings\ActivityLog.Designer.cs">
+      <DependentUpon>ActivityLog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Settings\ActivityLogSelector.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Settings\TransactionActivityLogForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Settings\PurchaseLog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Settings\SalesLog.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Settings\FrmNexorisAISettings.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1510,6 +1528,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="ReportViewer.resx">
       <DependentUpon>ReportViewer.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Settings\ActivityLog.resx">
+      <DependentUpon>ActivityLog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Settings\frmPOSSettings.resx">
       <DependentUpon>frmPOSSettings.cs</DependentUpon>
