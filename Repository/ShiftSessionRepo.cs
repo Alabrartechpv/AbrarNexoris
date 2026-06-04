@@ -106,6 +106,11 @@ END";
         {
             errorMessage = null;
 
+            if (SessionContext.UserLevel?.Equals("Administrator", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                return true;
+            }
+
             if (SessionContext.CounterSessionId <= 0)
             {
                 errorMessage = "Counter session is not started. Please login again.";

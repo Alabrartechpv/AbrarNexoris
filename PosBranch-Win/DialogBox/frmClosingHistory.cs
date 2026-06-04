@@ -1,4 +1,4 @@
-﻿using Infragistics.Win;
+using Infragistics.Win;
 using Infragistics.Win.UltraWinGrid;
 using ModelClass;
 using Repository;
@@ -114,7 +114,7 @@ namespace PosBranch_Win.DialogBox
 
         private bool CanViewSensitiveCashDetails()
         {
-            return false;
+            return SessionContext.UserLevel?.Equals("Administrator", StringComparison.OrdinalIgnoreCase) == true;
         }
 
         private void InitializeSavedColumnWidths()

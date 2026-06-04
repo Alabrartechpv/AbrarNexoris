@@ -3408,6 +3408,11 @@ namespace PosBranch_Win
 
         private void ClosingAlertTimer_Tick(object sender, EventArgs e)
         {
+            if (SessionContext.UserLevel?.Equals("Administrator", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                return;
+            }
+
             DateTime now = DateTime.Now;
 
             if (SessionContext.IsInitialized && SessionContext.LoginTime != DateTime.MinValue &&
