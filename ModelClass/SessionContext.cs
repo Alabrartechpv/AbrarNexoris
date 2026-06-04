@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using ModelClass.Settings;
 
@@ -449,6 +449,12 @@ namespace ModelClass
 
             if (LoginTime == DateTime.MinValue)
                 LoginTime = DateTime.Now;
+
+            if (UserLevel?.Equals("Administrator", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                errorMessage = null;
+                return true;
+            }
 
             if (RequiresClosing || DateTime.Now.Date > LoginTime.Date)
             {

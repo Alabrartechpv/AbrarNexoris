@@ -299,8 +299,11 @@ namespace PosBranch_Win
                                         }
                                         else if (SessionContext.RequiresClosing)
                                         {
-                                            MessageBox.Show("This counter has a pending closing. Please complete closing before continuing transactions.",
-                                                "Counter Closing Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                            if (userLevel?.Equals("Administrator", StringComparison.OrdinalIgnoreCase) != true)
+                                            {
+                                                MessageBox.Show("This counter has a pending closing. Please complete closing before continuing transactions.",
+                                                    "Counter Closing Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                            }
                                         }
                                     }
                                 }
