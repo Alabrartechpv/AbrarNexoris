@@ -627,7 +627,8 @@ WHERE SessionId = @SessionId
                                 SystemExpectedCash = reader["SystemExpectedCash"] != DBNull.Value ? Convert.ToDecimal(reader["SystemExpectedCash"]) : 0,
                                 PhysicalCashCounted = reader["PhysicalCashCounted"] != DBNull.Value ? Convert.ToDecimal(reader["PhysicalCashCounted"]) : 0,
                                 CashDifference = reader["CashDifference"] != DBNull.Value ? Convert.ToDecimal(reader["CashDifference"]) : 0,
-                                Status = reader["Status"]?.ToString() ?? ""
+                                Status = reader["Status"]?.ToString() ?? "",
+                                Counter = reader["Counter"]?.ToString() ?? ""
                             };
 
                             historyList.Add(model);

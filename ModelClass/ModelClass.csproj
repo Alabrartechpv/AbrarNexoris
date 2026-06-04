@@ -83,6 +83,7 @@
     <Compile Include="Report\PurchaseReportMaster.cs" />
     <Compile Include="Report\PurchaseReturnReport.cs" />
     <Compile Include="Report\Reports.cs" />
+    <Compile Include="Report\CounterReportModel.cs" />
     <Compile Include="Report\SalesReturnReport.cs" />
     <Compile Include="Report\StockReportAdvanceModel.cs" />
     <Compile Include="Report\TradingPLModel.cs" />

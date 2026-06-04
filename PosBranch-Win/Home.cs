@@ -70,6 +70,7 @@ namespace PosBranch_Win
             new ReportNavigatorDefinition("Sales", "Sales Profit", "SalesProfit"),
             new ReportNavigatorDefinition("Sales", "Salesman Incentive Report", "SalesmanIncentiveReport"),
             new ReportNavigatorDefinition("Sales", "Daily Sales", "DSales"),
+            new ReportNavigatorDefinition("Sales", "Counter Report", "CounterReport"),
             new ReportNavigatorDefinition("Purchase", "Purchase Details", "Purchase Details"),
             new ReportNavigatorDefinition("Purchase", "Purchase Return Report", "PurchaseReturn"),
             new ReportNavigatorDefinition("Customer", "Customer Outstanding Listing", "CustomerOutstandingReport"),
@@ -2080,6 +2081,11 @@ namespace PosBranch_Win
                 frmSales_RPT salesRptv = new frmSales_RPT();
                 OpenFormInTab(salesRptv, "Daily Sales Report");
             }
+            if (e.Tool.Key == "CounterReport")
+            {
+                Reports.SalesReports.frmCounterReport frmCounterReport = new Reports.SalesReports.frmCounterReport();
+                OpenFormInTab(frmCounterReport, "Counter Report");
+            }
 
             // Activity Log
             if (toolKey == "ActivityLog")
@@ -3671,7 +3677,8 @@ namespace PosBranch_Win
                     keyToExecute == "AuditTrail" ||
                     keyToExecute == "VendorDNPaymentReport" ||
                     keyToExecute == "CustomerReceiptReport" ||
-                    keyToExecute == "SalesmanIncentiveReport")
+                    keyToExecute == "SalesmanIncentiveReport" ||
+                    keyToExecute == "CounterReport")
                 {
                     Infragistics.Win.UltraWinToolbars.ToolBase toolToExecute;
 

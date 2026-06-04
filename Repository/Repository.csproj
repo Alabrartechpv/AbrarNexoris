@@ -90,6 +90,7 @@
     <Compile Include="ReportRepository\SalesmanIncentiveReportRepository.cs" />
     <Compile Include="ReportRepository\SalesReturnReportRepository.cs" />
     <Compile Include="ReportRepository\SalesProfitReportRepository.cs" />
+    <Compile Include="ReportRepository\CounterReportRepository.cs" />
     <Compile Include="ReportRepository\TradingPLRepository.cs" />
     <Compile Include="ReportRepository\BalanceSheetRepository.cs" />
     <Compile Include="ReportRepository\TrialBalanceRepository.cs" />
