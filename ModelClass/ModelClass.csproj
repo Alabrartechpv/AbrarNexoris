@@ -99,6 +99,8 @@
     <Compile Include="SessionContext.cs" />
     <Compile Include="Settings\POSSetting.cs" />
     <Compile Include="SessionContextExtensions.cs" />
+    <Compile Include="TransactionModels\GeneralVoucherModel.cs" />
+    <Compile Include="TransactionModels\BankReconciliationModel.cs" />
     <Compile Include="TransactionModels\HoldItemDetails.cs" />
     <Compile Include="TransactionModels\JournalVoucherModel.cs" />
     <Compile Include="TransactionModels\PurchaseModel.cs" />

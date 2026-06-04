@@ -95,6 +95,8 @@ namespace PosBranch_Win
         {
             InitializeComponent();
 
+            // Ribbon tools are now serialized in the designer (Home.Designer.cs)
+
             // UltraTabControl doesn't need DrawItem handler as it has built-in styling
 
             // Wire up mouse events for tabs
@@ -1874,6 +1876,21 @@ namespace PosBranch_Win
             {
                 Accounts.FrmPayment payment = new FrmPayment();
                 OpenFormInTab(payment, "Payment");
+            }
+            if (e.Tool.Key == "GeneralPayment")
+            {
+                Accounts.FrmGeneralPayment payment = new FrmGeneralPayment();
+                OpenFormInTab(payment, "General Payment");
+            }
+            if (e.Tool.Key == "GeneralReceipt")
+            {
+                Accounts.FrmGeneralReceipt receipt = new FrmGeneralReceipt();
+                OpenFormInTab(receipt, "General Receipt");
+            }
+            if (e.Tool.Key == "BankReconciliation")
+            {
+                Accounts.FrmBankReconciliation bankRecon = new FrmBankReconciliation();
+                OpenFormInTab(bankRecon, "Bank Reconciliation");
             }
             if (e.Tool.Key == "Contra")
             {

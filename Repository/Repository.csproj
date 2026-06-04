@@ -57,6 +57,8 @@
     <Compile Include="Accounts\ContraVoucherRepository.cs" />
     <Compile Include="Accounts\LedgerRepository.cs" />
     <Compile Include="Accounts\ManualPartyBalanceRepository.cs" />
+    <Compile Include="Accounts\GeneralVoucherRepository.cs" />
+    <Compile Include="Accounts\BankReconciliationRepository.cs" />
     <Compile Include="Accounts\VendorPaymentRepository.cs" />
     <Compile Include="BaseRepostitory.cs" />
     <Compile Include="ClientOperations.cs" />

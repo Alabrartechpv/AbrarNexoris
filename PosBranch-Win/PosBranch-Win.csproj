@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -466,6 +466,30 @@
     </Compile>
     <Compile Include="Accounts\FrmReceipt.Designer.cs">
       <DependentUpon>FrmReceipt.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Accounts\FrmGeneralPayment.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Accounts\FrmGeneralPayment.Designer.cs">
+      <DependentUpon>FrmGeneralPayment.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Accounts\FrmGeneralReceipt.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Accounts\FrmGeneralReceipt.Designer.cs">
+      <DependentUpon>FrmGeneralReceipt.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Accounts\FrmGeneralVoucherHistory.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Accounts\FrmGeneralVoucherHistory.Designer.cs">
+      <DependentUpon>FrmGeneralVoucherHistory.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Accounts\FrmBankReconciliation.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Accounts\FrmBankReconciliation.Designer.cs">
+      <DependentUpon>FrmBankReconciliation.cs</DependentUpon>
     </Compile>
     <Compile Include="Accounts\FrmVendor.cs">
       <SubType>Form</SubType>
@@ -1229,6 +1253,9 @@
     </Compile>
     <EmbeddedResource Include="Accounts\FrmAccountGroup.resx">
       <DependentUpon>FrmAccountGroup.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Accounts\FrmBankReconciliation.resx">
+      <DependentUpon>FrmBankReconciliation.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Accounts\FrmContra.resx">
       <DependentUpon>FrmContra.cs</DependentUpon>

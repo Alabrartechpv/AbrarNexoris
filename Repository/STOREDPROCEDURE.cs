@@ -104,6 +104,8 @@ namespace Repository
         public static string _VendorPaymentReport = "_VendorPaymentReport";
         public static string _POS_GetSmartReorderSuggestions = "_POS_GetSmartReorderSuggestions";
         public static string _POS_CalculateReorderStats = "_POS_CalculateReorderStats";
+        public static string POS_GetGeneralVoucherHistory = "POS_GetGeneralVoucherHistory";
+        public static string POS_BankReconciliation = "POS_BankReconciliation";
 
         #endregion
 
