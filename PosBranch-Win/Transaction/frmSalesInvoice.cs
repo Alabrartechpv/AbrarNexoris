@@ -5405,6 +5405,12 @@ namespace PosBranch_Win.Transaction
                 string customerName = salesMaster != null ? salesMaster.CustomerName : txtCustomer.Text;
                 string paymentMode = salesMaster != null ? salesMaster.PaymodeName : string.Empty;
                 decimal netAmount = salesMaster != null ? Convert.ToDecimal(salesMaster.NetAmount) : ParseDecimal(txtNetTotal.Text);
+                decimal qty;
+                decimal cost;
+                string unit;
+                string barcode;
+                GetSalesActivitySummary(out qty, out cost, out unit, out barcode);
+                string fullDetails = BuildSalesActivityDetails(activityType, billNo, netAmount, details);
 
                 using (var repo = new TransactionActivityLogRepository())
                 {
@@ -5415,13 +5421,135 @@ namespace PosBranch_Win.Transaction
                         paymentMode,
                         netAmount,
                         activityType,
-                        details);
+                        fullDetails,
+                        qty,
+                        cost,
+                        unit,
+                        barcode);
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine("Unable to save sales activity log: " + ex.Message);
             }
+        }
+
+        private void GetSalesActivitySummary(out decimal qty, out decimal cost, out string unit, out string barcode)
+        {
+            qty = 0m;
+            cost = 0m;
+            unit = string.Empty;
+            barcode = string.Empty;
+
+            DataTable table = ultraGrid1.DataSource as DataTable;
+            if (table == null || table.Rows.Count == 0)
+            {
+                return;
+            }
+
+            var units = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var barcodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            decimal firstCost = 0m;
+
+            foreach (DataRow row in table.Rows)
+            {
+                if (row.RowState == DataRowState.Deleted)
+                {
+                    continue;
+                }
+
+                qty += GetDecimal(row, "Qty");
+                if (firstCost == 0m)
+                {
+                    firstCost = GetDecimal(row, "Cost");
+                }
+
+                string rowUnit = GetString(row, "Unit");
+                if (!string.IsNullOrWhiteSpace(rowUnit))
+                {
+                    units.Add(rowUnit);
+                }
+
+                string rowBarcode = GetString(row, "BarCode");
+                if (!string.IsNullOrWhiteSpace(rowBarcode))
+                {
+                    barcodes.Add(rowBarcode);
+                }
+            }
+
+            cost = firstCost;
+            unit = units.Count == 1 ? units.First() : units.Count > 1 ? "Multiple" : string.Empty;
+            barcode = barcodes.Count == 1 ? barcodes.First() : barcodes.Count > 1 ? "Multiple" : string.Empty;
+        }
+
+        private string BuildSalesActivityDetails(string activityType, long billNo, decimal netAmount, string fallbackDetails)
+        {
+            string baseText = !string.IsNullOrWhiteSpace(fallbackDetails)
+                ? fallbackDetails.TrimEnd('.', ' ')
+                : $"Sales invoice #{billNo} {activityType.ToLowerInvariant()}d";
+
+            DataTable table = ultraGrid1.DataSource as DataTable;
+            if (table == null || table.Rows.Count == 0)
+            {
+                return $"{baseText}. Net amount = {netAmount:0.##}.";
+            }
+
+            var changes = new List<string>();
+            foreach (DataRow row in table.Rows)
+            {
+                if (row.RowState == DataRowState.Deleted)
+                {
+                    continue;
+                }
+
+                AddChangedValue(changes, "Qty", GetDecimal(row, "OldQty"), GetDecimal(row, "Qty"));
+                AddChangedValue(changes, "Cost", GetDecimal(row, "OriginalCost"), GetDecimal(row, "Cost"));
+            }
+
+            if (changes.Count == 0)
+            {
+                decimal qty;
+                decimal cost;
+                string unit;
+                string barcode;
+                GetSalesActivitySummary(out qty, out cost, out unit, out barcode);
+                changes.Add($"Qty = {qty:0.####}");
+                if (cost != 0m) changes.Add($"Cost = {cost:0.####}");
+                if (!string.IsNullOrWhiteSpace(unit)) changes.Add($"Unit = {unit}");
+                if (!string.IsNullOrWhiteSpace(barcode)) changes.Add($"Barcode = {barcode}");
+            }
+
+            changes.Add($"Net amount = {netAmount:0.##}");
+            return $"{baseText}. {string.Join(", ", changes)}.";
+        }
+
+        private void AddChangedValue(List<string> changes, string caption, decimal oldValue, decimal newValue)
+        {
+            if (oldValue != 0m && oldValue != newValue)
+            {
+                changes.Add($"{caption} changed from {oldValue:0.####} to {newValue:0.####}");
+            }
+        }
+
+        private decimal GetDecimal(DataRow row, string columnName)
+        {
+            if (row == null || row.Table == null || !row.Table.Columns.Contains(columnName) || row[columnName] == DBNull.Value)
+            {
+                return 0m;
+            }
+
+            decimal value;
+            return decimal.TryParse(Convert.ToString(row[columnName]), out value) ? value : 0m;
+        }
+
+        private string GetString(DataRow row, string columnName)
+        {
+            if (row == null || row.Table == null || !row.Table.Columns.Contains(columnName) || row[columnName] == DBNull.Value)
+            {
+                return string.Empty;
+            }
+
+            return Convert.ToString(row[columnName]);
         }
 
         private long ParseLong(string value, long fallback)

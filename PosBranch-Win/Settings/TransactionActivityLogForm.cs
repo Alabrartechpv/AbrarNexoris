@@ -73,17 +73,17 @@ namespace PosBranch_Win.Settings
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
                 RowCount = 1,
-                BackColor = Color.FromArgb(247, 252, 255),
-                Padding = new Padding(14)
+                BackColor = Color.White,
+                Padding = new Padding(8)
             };
-            root.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 270F));
+            root.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 250F));
             root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 
             var filterPanel = new RoundedPanel
             {
                 Dock = DockStyle.Fill,
-                BackColor = Color.FromArgb(241, 252, 255),
-                Padding = new Padding(14),
+                BackColor = Color.FromArgb(245, 250, 255),
+                Padding = new Padding(12),
                 BorderColor = Color.FromArgb(176, 224, 255),
                 BorderRadius = 8
             };
@@ -93,7 +93,7 @@ namespace PosBranch_Win.Settings
                 Dock = DockStyle.Top,
                 AutoSize = true,
                 ColumnCount = 1,
-                RowCount = 16,
+                RowCount = 13,
                 BackColor = Color.Transparent
             };
             filters.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
@@ -114,6 +114,7 @@ namespace PosBranch_Win.Settings
                 cmbQuickDate.Items.Add(quickDate);
             }
             cmbQuickDate.ValueChanged += cmbQuickDate_SelectedIndexChanged;
+            cmbQuickDate.Visible = false;
             dtpFrom = new UltraDateTimeEditor();
             dtpTo = new UltraDateTimeEditor();
             dtpFrom.ValueChanged += DatePicker_ValueChanged;
@@ -128,9 +129,7 @@ namespace PosBranch_Win.Settings
             btnReset.Click += btnReset_Click;
 
             filters.Controls.Add(filterTitle);
-            AddFilter(filters, "Quick Date", cmbQuickDate);
-            AddFilter(filters, "From Date", dtpFrom);
-            AddFilter(filters, "To Date", dtpTo);
+            AddDateRangeFilter(filters);
             AddFilter(filters, "User", cmbUser);
             AddFilter(filters, "Activity Type", cmbActivityType);
             AddFilter(filters, searchCaption, txtSearch);
@@ -145,63 +144,46 @@ namespace PosBranch_Win.Settings
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
-                RowCount = 3,
-                Padding = new Padding(18, 0, 0, 0),
-                BackColor = Color.Transparent
+                RowCount = 4,
+                Padding = new Padding(10, 4, 0, 0),
+                BackColor = Color.White
             };
-            content.RowStyles.Add(new RowStyle(SizeType.Absolute, 82F));
+            content.RowStyles.Add(new RowStyle(SizeType.Absolute, 58F));
+            content.RowStyles.Add(new RowStyle(SizeType.Absolute, 58F));
             content.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            content.RowStyles.Add(new RowStyle(SizeType.Absolute, 48F));
-
-            var header = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 2,
-                RowCount = 1,
-                BackColor = Color.Transparent
-            };
-            header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 520F));
+            content.RowStyles.Add(new RowStyle(SizeType.Absolute, 42F));
 
             var titlePanel = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent };
             lblTitle = new Label
             {
                 Text = title,
-                Location = new Point(10, 14),
-                AutoSize = true,
-                Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold),
+                Dock = DockStyle.Top,
+                Height = 28,
+                Font = new Font("Segoe UI Semibold", 13F, FontStyle.Bold),
                 ForeColor = navy
             };
             lblSubtitle = new Label
             {
                 Text = $"Track all activities performed in {logType}.",
-                Location = new Point(10, 44),
-                AutoSize = true,
+                Dock = DockStyle.Top,
+                Height = 20,
                 ForeColor = Color.FromArgb(35, 77, 145)
             };
-            titlePanel.Controls.Add(lblTitle);
             titlePanel.Controls.Add(lblSubtitle);
+            titlePanel.Controls.Add(lblTitle);
 
-            var cards = new TableLayoutPanel
+            var cards = new FlowLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 4,
-                RowCount = 1,
-                BackColor = Color.Transparent,
-                Padding = new Padding(0, 10, 0, 10)
+                BackColor = Color.White,
+                WrapContents = false,
+                FlowDirection = FlowDirection.LeftToRight
             };
-            for (int i = 0; i < 4; i++)
-            {
-                cards.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
-            }
 
-            lblTotal = CreateCard(cards, "Total Activities", 0);
-            lblToday = CreateCard(cards, "Today", 1);
-            lblWeek = CreateCard(cards, "This Week", 2);
-            lblMonth = CreateCard(cards, "This Month", 3);
-
-            header.Controls.Add(titlePanel, 0, 0);
-            header.Controls.Add(cards, 1, 0);
+            lblTotal = CreateCard(cards, "Selected Range");
+            lblToday = CreateCard(cards, "Today");
+            lblWeek = CreateCard(cards, "This Week");
+            lblMonth = CreateCard(cards, "This Month");
 
             gridFrame = new RoundedPanel
             {
@@ -242,13 +224,50 @@ namespace PosBranch_Win.Settings
             footer.Controls.Add(new Label(), 1, 0);
             footer.Controls.Add(btnExport, 2, 0);
 
-            content.Controls.Add(header, 0, 0);
-            content.Controls.Add(gridFrame, 0, 1);
-            content.Controls.Add(footer, 0, 2);
+            content.Controls.Add(titlePanel, 0, 0);
+            content.Controls.Add(cards, 0, 1);
+            content.Controls.Add(gridFrame, 0, 2);
+            content.Controls.Add(footer, 0, 3);
 
             root.Controls.Add(filterPanel, 0, 0);
             root.Controls.Add(content, 1, 0);
             Controls.Add(root);
+        }
+
+        private void AddDateRangeFilter(TableLayoutPanel panel)
+        {
+            var label = new Label
+            {
+                Text = "Date Range",
+                Dock = DockStyle.Top,
+                Height = 22,
+                ForeColor = navy,
+                TextAlign = ContentAlignment.BottomLeft,
+                BackColor = Color.FromArgb(245, 250, 255)
+            };
+
+            var dateRow = new TableLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                Height = 30,
+                ColumnCount = 2,
+                RowCount = 1,
+                BackColor = Color.Transparent
+            };
+            dateRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            dateRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+
+            dtpFrom.Dock = DockStyle.Fill;
+            dtpFrom.Margin = new Padding(0, 0, 4, 0);
+            dtpTo.Dock = DockStyle.Fill;
+            dtpTo.Margin = new Padding(4, 0, 0, 0);
+
+            dateRow.Controls.Add(dtpFrom, 0, 0);
+            dateRow.Controls.Add(dtpTo, 1, 0);
+
+            panel.Controls.Add(label);
+            panel.Controls.Add(dateRow);
+            panel.Controls.Add(new Panel { Height = 8, Dock = DockStyle.Top });
         }
 
         private void AddFilter(TableLayoutPanel panel, string caption, Control control)
@@ -260,7 +279,7 @@ namespace PosBranch_Win.Settings
                 Height = 22,
                 ForeColor = navy,
                 TextAlign = ContentAlignment.BottomLeft,
-                BackColor = Color.FromArgb(246, 253, 255)
+                BackColor = Color.FromArgb(245, 250, 255)
             };
             control.Dock = DockStyle.Top;
             control.Height = 30;
@@ -269,23 +288,23 @@ namespace PosBranch_Win.Settings
             panel.Controls.Add(new Panel { Height = 8, Dock = DockStyle.Top });
         }
 
-        private Label CreateCard(TableLayoutPanel host, string caption, int column)
+        private Label CreateCard(FlowLayoutPanel host, string caption)
         {
             var panel = new RoundedPanel
             {
-                Dock = DockStyle.Fill,
-                Margin = new Padding(8, 0, 0, 0),
-                Padding = new Padding(12, 8, 12, 8),
-                BackColor = Color.White,
-                BorderColor = Color.FromArgb(215, 232, 248),
-                BorderRadius = 6
+                Size = new Size(132, 50),
+                Margin = new Padding(0, 0, 10, 6),
+                BackColor = Color.FromArgb(250, 253, 255),
+                BorderColor = Color.FromArgb(190, 226, 250),
+                BorderRadius = 8
             };
             var labelCaption = new Label
             {
                 Text = caption,
                 Dock = DockStyle.Top,
-                Height = 20,
-                ForeColor = Color.FromArgb(54, 77, 130)
+                Height = 21,
+                Padding = new Padding(9, 4, 0, 0),
+                ForeColor = Color.FromArgb(54, 78, 120)
             };
             var labelValue = new Label
             {
@@ -293,11 +312,12 @@ namespace PosBranch_Win.Settings
                 Dock = DockStyle.Fill,
                 Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold),
                 ForeColor = navy,
+                Padding = new Padding(9, 0, 0, 0),
                 TextAlign = ContentAlignment.MiddleLeft
             };
             panel.Controls.Add(labelValue);
             panel.Controls.Add(labelCaption);
-            host.Controls.Add(panel, column, 0);
+            host.Controls.Add(panel);
             return labelValue;
         }
 
@@ -413,6 +433,10 @@ namespace PosBranch_Win.Settings
             SetColumn("PartyName", logType == "Purchase" ? "Vendor" : "Customer", 220);
             SetColumn("PaymentMode", "Payment", 120);
             SetColumn("NetAmount", "Net Amount", 115);
+            SetColumn("Qty", "Qty", 80);
+            SetColumn("Cost", "Cost", 90);
+            SetColumn("Unit", "Unit", 80);
+            SetColumn("Barcode", "Barcode", 135);
             SetColumn("ActivityDetails", "Details", 420);
             SetColumn("CompanyId", "Company", 80);
             SetColumn("BranchId", "Branch", 75);
@@ -420,16 +444,54 @@ namespace PosBranch_Win.Settings
             SetColumn("CounterName", "Counter", 130);
             SetColumn("CounterId", "Counter ID", 85);
             SetColumn("CounterSessionId", "Session", 90);
+            HideColumn("CompanyId");
+            HideColumn("BranchId");
+            HideColumn("FinYearId");
+            EnsureDetailsButtonColumn();
 
             if (gridActivity.Columns.Contains("CreatedOn"))
             {
                 gridActivity.Columns["CreatedOn"].DefaultCellStyle.Format = "dd MMM yyyy hh:mm tt";
             }
 
-            if (gridActivity.Columns.Contains("NetAmount"))
+            foreach (string numericColumn in new[] { "NetAmount", "Qty", "Cost" })
             {
-                gridActivity.Columns["NetAmount"].DefaultCellStyle.Format = "0.00";
-                gridActivity.Columns["NetAmount"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                if (gridActivity.Columns.Contains(numericColumn))
+                {
+                    gridActivity.Columns[numericColumn].DefaultCellStyle.Format = "0.####";
+                    gridActivity.Columns[numericColumn].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                }
+            }
+        }
+
+        private void EnsureDetailsButtonColumn()
+        {
+            const string columnName = "ViewDetails";
+            if (gridActivity.Columns.Contains(columnName))
+            {
+                gridActivity.Columns[columnName].DisplayIndex = 0;
+                return;
+            }
+
+            var buttonColumn = new DataGridViewButtonColumn
+            {
+                Name = columnName,
+                HeaderText = "",
+                Text = "+",
+                UseColumnTextForButtonValue = true,
+                Width = 38,
+                MinimumWidth = 38,
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
+                FlatStyle = FlatStyle.Flat
+            };
+            gridActivity.Columns.Insert(0, buttonColumn);
+        }
+
+        private void HideColumn(string name)
+        {
+            if (gridActivity.Columns.Contains(name))
+            {
+                gridActivity.Columns[name].Visible = false;
             }
         }
 
@@ -445,6 +507,27 @@ namespace PosBranch_Win.Settings
             column.Width = width;
             column.MinimumWidth = Math.Min(width, 80);
             column.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+        }
+
+        private void gridActivity_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || !gridActivity.Columns.Contains("ViewDetails"))
+            {
+                return;
+            }
+
+            if (gridActivity.Columns[e.ColumnIndex].Name != "ViewDetails")
+            {
+                return;
+            }
+
+            string details = Convert.ToString(gridActivity.Rows[e.RowIndex].Cells["ActivityDetails"].Value);
+            if (string.IsNullOrWhiteSpace(details))
+            {
+                details = "No additional details available for this log entry.";
+            }
+
+            MessageBox.Show(details, "Activity Details", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void StyleGrid()
@@ -479,6 +562,8 @@ namespace PosBranch_Win.Settings
             gridActivity.DefaultCellStyle.SelectionForeColor = navy;
             gridActivity.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 252, 255);
             gridActivity.RowTemplate.Height = 30;
+            gridActivity.CellContentClick -= gridActivity_CellContentClick;
+            gridActivity.CellContentClick += gridActivity_CellContentClick;
         }
 
         private void StyleActionButtons()

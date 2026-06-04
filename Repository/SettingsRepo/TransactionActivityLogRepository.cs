@@ -14,9 +14,13 @@ namespace Repository.SettingsRepo
             string paymentMode,
             decimal netAmount,
             string activityType,
-            string activityDetails)
+            string activityDetails,
+            decimal? qty = null,
+            decimal? cost = null,
+            string unit = null,
+            string barcode = null)
         {
-            SaveActivity("Purchase", transactionNo, invoiceNo, partyName, paymentMode, netAmount, activityType, activityDetails);
+            SaveActivity("Purchase", transactionNo, invoiceNo, partyName, paymentMode, netAmount, activityType, activityDetails, qty, cost, unit, barcode);
         }
 
         public void SaveSalesActivity(
@@ -26,9 +30,13 @@ namespace Repository.SettingsRepo
             string paymentMode,
             decimal netAmount,
             string activityType,
-            string activityDetails)
+            string activityDetails,
+            decimal? qty = null,
+            decimal? cost = null,
+            string unit = null,
+            string barcode = null)
         {
-            SaveActivity("Sales", transactionNo, invoiceNo, partyName, paymentMode, netAmount, activityType, activityDetails);
+            SaveActivity("Sales", transactionNo, invoiceNo, partyName, paymentMode, netAmount, activityType, activityDetails, qty, cost, unit, barcode);
         }
 
         public DataTable GetActivityLog(string logType, DateTime fromDate, DateTime toDate, string userName, string activityType, string searchText)
@@ -55,6 +63,10 @@ SELECT
     PartyName,
     PaymentMode,
     NetAmount,
+    Qty,
+    Cost,
+    Unit,
+    Barcode,
     ActivityDetails,
     CompanyId,
     BranchId,
@@ -149,7 +161,11 @@ WHERE CreatedOn >= @FromDate
             string paymentMode,
             decimal netAmount,
             string activityType,
-            string activityDetails)
+            string activityDetails,
+            decimal? qty,
+            decimal? cost,
+            string unit,
+            string barcode)
         {
             try
             {
@@ -172,6 +188,10 @@ WHERE CreatedOn >= @FromDate
                     cmd.Parameters.AddWithValue("@PartyName", (object)partyName ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@PaymentMode", (object)paymentMode ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@NetAmount", netAmount);
+                    cmd.Parameters.AddWithValue("@Qty", (object)qty ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Cost", (object)cost ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Unit", (object)unit ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Barcode", (object)barcode ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@ActivityType", (object)activityType ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@ActivityDetails", (object)activityDetails ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@CompanyId", GetCompanyId());
@@ -243,6 +263,10 @@ BEGIN
         NetAmount DECIMAL(18,4) NOT NULL DEFAULT(0),
         ActivityType NVARCHAR(50) NOT NULL,
         ActivityDetails NVARCHAR(500) NULL,
+        Qty DECIMAL(18,4) NULL,
+        Cost DECIMAL(18,4) NULL,
+        Unit NVARCHAR(50) NULL,
+        Barcode NVARCHAR(100) NULL,
         CompanyId INT NOT NULL DEFAULT(0),
         BranchId INT NOT NULL DEFAULT(0),
         FinYearId INT NOT NULL DEFAULT(0),
@@ -259,6 +283,18 @@ BEGIN
 END
 ELSE
 BEGIN
+    IF COL_LENGTH('dbo.{tableName}', 'Qty') IS NULL
+        ALTER TABLE dbo.{tableName} ADD Qty DECIMAL(18,4) NULL;
+
+    IF COL_LENGTH('dbo.{tableName}', 'Cost') IS NULL
+        ALTER TABLE dbo.{tableName} ADD Cost DECIMAL(18,4) NULL;
+
+    IF COL_LENGTH('dbo.{tableName}', 'Unit') IS NULL
+        ALTER TABLE dbo.{tableName} ADD Unit NVARCHAR(50) NULL;
+
+    IF COL_LENGTH('dbo.{tableName}', 'Barcode') IS NULL
+        ALTER TABLE dbo.{tableName} ADD Barcode NVARCHAR(100) NULL;
+
     IF COL_LENGTH('dbo.{tableName}', 'CompanyId') IS NULL
         ALTER TABLE dbo.{tableName} ADD CompanyId INT NOT NULL CONSTRAINT DF_{tableName}_CompanyId DEFAULT(0);
 
@@ -306,6 +342,10 @@ ALTER PROCEDURE dbo.POS_TransactionActivityLog
     @PartyName NVARCHAR(250) = NULL,
     @PaymentMode NVARCHAR(100) = NULL,
     @NetAmount DECIMAL(18,4) = 0,
+    @Qty DECIMAL(18,4) = NULL,
+    @Cost DECIMAL(18,4) = NULL,
+    @Unit NVARCHAR(50) = NULL,
+    @Barcode NVARCHAR(100) = NULL,
     @ActivityType NVARCHAR(50) = NULL,
     @ActivityDetails NVARCHAR(500) = NULL,
     @CompanyId INT = 0,
@@ -338,6 +378,7 @@ BEGIN
 INSERT INTO dbo.' + QUOTENAME(@TableName) + N'
 (
     TransactionNo, InvoiceNo, PartyName, PaymentMode, NetAmount,
+    Qty, Cost, Unit, Barcode,
     ActivityType, ActivityDetails,
     CompanyId, BranchId, FinYearId, UserId, UserName,
     CounterId, CounterName, CounterSessionId, CreatedOn
@@ -345,6 +386,7 @@ INSERT INTO dbo.' + QUOTENAME(@TableName) + N'
 VALUES
 (
     @TransactionNo, @InvoiceNo, @PartyName, @PaymentMode, @NetAmount,
+    @Qty, @Cost, @Unit, @Barcode,
     @ActivityType, @ActivityDetails,
     @CompanyId, @BranchId, @FinYearId, @UserId, @UserName,
     @CounterId, @CounterName, @CounterSessionId, GETDATE()
@@ -352,8 +394,8 @@ VALUES
 
         EXEC sp_executesql
             @Sql,
-            N'@TransactionNo BIGINT, @InvoiceNo NVARCHAR(100), @PartyName NVARCHAR(250), @PaymentMode NVARCHAR(100), @NetAmount DECIMAL(18,4), @ActivityType NVARCHAR(50), @ActivityDetails NVARCHAR(500), @CompanyId INT, @BranchId INT, @FinYearId INT, @UserId INT, @UserName NVARCHAR(150), @CounterId INT, @CounterName NVARCHAR(150), @CounterSessionId BIGINT',
-            @TransactionNo, @InvoiceNo, @PartyName, @PaymentMode, @NetAmount,
+            N'@TransactionNo BIGINT, @InvoiceNo NVARCHAR(100), @PartyName NVARCHAR(250), @PaymentMode NVARCHAR(100), @NetAmount DECIMAL(18,4), @Qty DECIMAL(18,4), @Cost DECIMAL(18,4), @Unit NVARCHAR(50), @Barcode NVARCHAR(100), @ActivityType NVARCHAR(50), @ActivityDetails NVARCHAR(500), @CompanyId INT, @BranchId INT, @FinYearId INT, @UserId INT, @UserName NVARCHAR(150), @CounterId INT, @CounterName NVARCHAR(150), @CounterSessionId BIGINT',
+            @TransactionNo, @InvoiceNo, @PartyName, @PaymentMode, @NetAmount, @Qty, @Cost, @Unit, @Barcode,
             @ActivityType, @ActivityDetails,
             @CompanyId, @BranchId, @FinYearId, @UserId, @UserName,
             @CounterId, @CounterName, @CounterSessionId;

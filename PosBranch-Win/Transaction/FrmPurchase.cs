@@ -7124,15 +7124,26 @@ namespace PosBranch_Win.Transaction
                 return;
             }
 
-            string details = $"Purchase invoice GRN-{purchaseNo} {activityType.ToLowerInvariant()}d.";
+            decimal qty;
+            decimal cost;
+            string unit;
+            string barcode;
+            GetPurchaseActivitySummary(out qty, out cost, out unit, out barcode);
+
+            decimal netAmount = Convert.ToDecimal(purchaseMaster.NetTotal > 0 ? purchaseMaster.NetTotal : purchaseMaster.GrandTotal);
+            string details = BuildPurchaseActivityDetails(activityType, purchaseNo, netAmount);
             SavePurchaseActivityLog(
                 activityType,
                 purchaseNo,
                 purchaseMaster.InvoiceNo,
                 purchaseMaster.VendorName,
                 purchaseMaster.Paymode,
-                Convert.ToDecimal(purchaseMaster.NetTotal > 0 ? purchaseMaster.NetTotal : purchaseMaster.GrandTotal),
-                details);
+                netAmount,
+                details,
+                qty,
+                cost,
+                unit,
+                barcode);
         }
 
         private void SavePurchaseActivityLog(
@@ -7142,7 +7153,11 @@ namespace PosBranch_Win.Transaction
             string vendorName,
             string paymentMode,
             decimal netAmount,
-            string details)
+            string details,
+            decimal? qty = null,
+            decimal? cost = null,
+            string unit = null,
+            string barcode = null)
         {
             try
             {
@@ -7155,13 +7170,132 @@ namespace PosBranch_Win.Transaction
                         paymentMode,
                         netAmount,
                         activityType,
-                        details);
+                        details,
+                        qty,
+                        cost,
+                        unit,
+                        barcode);
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine("Unable to save purchase activity log: " + ex.Message);
             }
+        }
+
+        private void GetPurchaseActivitySummary(out decimal qty, out decimal cost, out string unit, out string barcode)
+        {
+            qty = 0m;
+            cost = 0m;
+            unit = string.Empty;
+            barcode = string.Empty;
+
+            DataTable table = ultraGrid1.DataSource as DataTable;
+            if (table == null || table.Rows.Count == 0)
+            {
+                return;
+            }
+
+            var units = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var barcodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            decimal firstCost = 0m;
+
+            foreach (DataRow row in table.Rows)
+            {
+                if (row.RowState == DataRowState.Deleted)
+                {
+                    continue;
+                }
+
+                qty += GetDecimal(row, "Qty");
+                if (firstCost == 0m)
+                {
+                    firstCost = GetDecimal(row, "Cost");
+                }
+
+                string rowUnit = GetString(row, "Unit");
+                if (!string.IsNullOrWhiteSpace(rowUnit))
+                {
+                    units.Add(rowUnit);
+                }
+
+                string rowBarcode = GetString(row, "BarCode");
+                if (!string.IsNullOrWhiteSpace(rowBarcode))
+                {
+                    barcodes.Add(rowBarcode);
+                }
+            }
+
+            cost = firstCost;
+            unit = units.Count == 1 ? units.First() : units.Count > 1 ? "Multiple" : string.Empty;
+            barcode = barcodes.Count == 1 ? barcodes.First() : barcodes.Count > 1 ? "Multiple" : string.Empty;
+        }
+
+        private string BuildPurchaseActivityDetails(string activityType, int purchaseNo, decimal netAmount)
+        {
+            string baseText = $"Purchase invoice GRN-{purchaseNo} {activityType.ToLowerInvariant()}d.";
+            DataTable table = ultraGrid1.DataSource as DataTable;
+            if (table == null || table.Rows.Count == 0)
+            {
+                return $"{baseText} Net amount = {netAmount:0.##}.";
+            }
+
+            var changes = new List<string>();
+            foreach (DataRow row in table.Rows)
+            {
+                if (row.RowState == DataRowState.Deleted)
+                {
+                    continue;
+                }
+
+                AddChangedValue(changes, "Qty", GetDecimal(row, "OldQty"), GetDecimal(row, "Qty"));
+                AddChangedValue(changes, "Cost", GetDecimal(row, "OriginalCost"), GetDecimal(row, "Cost"));
+            }
+
+            if (changes.Count == 0)
+            {
+                decimal qty;
+                decimal cost;
+                string unit;
+                string barcode;
+                GetPurchaseActivitySummary(out qty, out cost, out unit, out barcode);
+                changes.Add($"Qty = {qty:0.####}");
+                if (cost != 0m) changes.Add($"Cost = {cost:0.####}");
+                if (!string.IsNullOrWhiteSpace(unit)) changes.Add($"Unit = {unit}");
+                if (!string.IsNullOrWhiteSpace(barcode)) changes.Add($"Barcode = {barcode}");
+            }
+
+            changes.Add($"Net amount = {netAmount:0.##}");
+            return $"{baseText} {string.Join(", ", changes)}.";
+        }
+
+        private void AddChangedValue(List<string> changes, string caption, decimal oldValue, decimal newValue)
+        {
+            if (oldValue != 0m && oldValue != newValue)
+            {
+                changes.Add($"{caption} changed from {oldValue:0.####} to {newValue:0.####}");
+            }
+        }
+
+        private decimal GetDecimal(DataRow row, string columnName)
+        {
+            if (row == null || row.Table == null || !row.Table.Columns.Contains(columnName) || row[columnName] == DBNull.Value)
+            {
+                return 0m;
+            }
+
+            decimal value;
+            return decimal.TryParse(Convert.ToString(row[columnName]), out value) ? value : 0m;
+        }
+
+        private string GetString(DataRow row, string columnName)
+        {
+            if (row == null || row.Table == null || !row.Table.Columns.Contains(columnName) || row[columnName] == DBNull.Value)
+            {
+                return string.Empty;
+            }
+
+            return Convert.ToString(row[columnName]);
         }
 
         private decimal ParseDecimal(string value)
