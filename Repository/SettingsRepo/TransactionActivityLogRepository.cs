@@ -1,6 +1,9 @@
 using ModelClass;
 using System;
 using System.Data;
+using ModelClass;
+using System;
+using System.Data;
 using System.Data.SqlClient;
 
 namespace Repository.SettingsRepo
@@ -18,9 +21,19 @@ namespace Repository.SettingsRepo
             decimal? qty = null,
             decimal? cost = null,
             string unit = null,
-            string barcode = null)
+            string barcode = null,
+            decimal? sPrice = null,
+            decimal? taxAmt = null,
+            decimal? taxPer = null,
+            decimal? baseAmount = null,
+            decimal? packing = null,
+            decimal? retailPrice = null,
+            decimal? free = null,
+            decimal? unitSP = null,
+            string taxType = null,
+            decimal? gross = null)
         {
-            SaveActivity("Purchase", transactionNo, invoiceNo, partyName, paymentMode, netAmount, activityType, activityDetails, qty, cost, unit, barcode);
+            SaveActivity("Purchase", transactionNo, invoiceNo, partyName, paymentMode, netAmount, activityType, activityDetails, qty, cost, unit, barcode, sPrice, taxAmt, taxPer, baseAmount, packing, retailPrice, free, unitSP, taxType, gross);
         }
 
         public void SaveSalesActivity(
@@ -34,9 +47,19 @@ namespace Repository.SettingsRepo
             decimal? qty = null,
             decimal? cost = null,
             string unit = null,
-            string barcode = null)
+            string barcode = null,
+            decimal? sPrice = null,
+            decimal? taxAmt = null,
+            decimal? taxPer = null,
+            decimal? baseAmount = null,
+            decimal? packing = null,
+            decimal? retailPrice = null,
+            decimal? free = null,
+            decimal? unitSP = null,
+            string taxType = null,
+            decimal? gross = null)
         {
-            SaveActivity("Sales", transactionNo, invoiceNo, partyName, paymentMode, netAmount, activityType, activityDetails, qty, cost, unit, barcode);
+            SaveActivity("Sales", transactionNo, invoiceNo, partyName, paymentMode, netAmount, activityType, activityDetails, qty, cost, unit, barcode, sPrice, taxAmt, taxPer, baseAmount, packing, retailPrice, free, unitSP, taxType, gross);
         }
 
         public DataTable GetActivityLog(string logType, DateTime fromDate, DateTime toDate, string userName, string activityType, string searchText)
@@ -67,6 +90,16 @@ SELECT
     Cost,
     Unit,
     Barcode,
+    SPrice,
+    TaxAmt,
+    TaxPer,
+    BaseAmount,
+    Packing,
+    RetailPrice,
+    Free,
+    UnitSP,
+    TaxType,
+    Gross,
     ActivityDetails,
     CompanyId,
     BranchId,
@@ -165,7 +198,17 @@ WHERE CreatedOn >= @FromDate
             decimal? qty,
             decimal? cost,
             string unit,
-            string barcode)
+            string barcode,
+            decimal? sPrice = null,
+            decimal? taxAmt = null,
+            decimal? taxPer = null,
+            decimal? baseAmount = null,
+            decimal? packing = null,
+            decimal? retailPrice = null,
+            decimal? free = null,
+            decimal? unitSP = null,
+            string taxType = null,
+            decimal? gross = null)
         {
             try
             {
@@ -192,6 +235,16 @@ WHERE CreatedOn >= @FromDate
                     cmd.Parameters.AddWithValue("@Cost", (object)cost ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@Unit", (object)unit ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@Barcode", (object)barcode ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@SPrice", (object)sPrice ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@TaxAmt", (object)taxAmt ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@TaxPer", (object)taxPer ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@BaseAmount", (object)baseAmount ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Packing", (object)packing ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@RetailPrice", (object)retailPrice ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Free", (object)free ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@UnitSP", (object)unitSP ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@TaxType", (object)taxType ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Gross", (object)gross ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@ActivityType", (object)activityType ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@ActivityDetails", (object)activityDetails ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@CompanyId", GetCompanyId());
@@ -262,11 +315,21 @@ BEGIN
         PaymentMode NVARCHAR(100) NULL,
         NetAmount DECIMAL(18,4) NOT NULL DEFAULT(0),
         ActivityType NVARCHAR(50) NOT NULL,
-        ActivityDetails NVARCHAR(500) NULL,
+        ActivityDetails NVARCHAR(MAX) NULL,
         Qty DECIMAL(18,4) NULL,
         Cost DECIMAL(18,4) NULL,
         Unit NVARCHAR(50) NULL,
         Barcode NVARCHAR(100) NULL,
+        SPrice DECIMAL(18,4) NULL,
+        TaxAmt DECIMAL(18,4) NULL,
+        TaxPer DECIMAL(18,4) NULL,
+        BaseAmount DECIMAL(18,4) NULL,
+        Packing DECIMAL(18,4) NULL,
+        RetailPrice DECIMAL(18,4) NULL,
+        Free DECIMAL(18,4) NULL,
+        UnitSP DECIMAL(18,4) NULL,
+        TaxType NVARCHAR(50) NULL,
+        Gross DECIMAL(18,4) NULL,
         CompanyId INT NOT NULL DEFAULT(0),
         BranchId INT NOT NULL DEFAULT(0),
         FinYearId INT NOT NULL DEFAULT(0),
@@ -294,6 +357,39 @@ BEGIN
 
     IF COL_LENGTH('dbo.{tableName}', 'Barcode') IS NULL
         ALTER TABLE dbo.{tableName} ADD Barcode NVARCHAR(100) NULL;
+
+    IF COL_LENGTH('dbo.{tableName}', 'SPrice') IS NULL
+        ALTER TABLE dbo.{tableName} ADD SPrice DECIMAL(18,4) NULL;
+
+    IF COL_LENGTH('dbo.{tableName}', 'TaxAmt') IS NULL
+        ALTER TABLE dbo.{tableName} ADD TaxAmt DECIMAL(18,4) NULL;
+
+    IF COL_LENGTH('dbo.{tableName}', 'TaxPer') IS NULL
+        ALTER TABLE dbo.{tableName} ADD TaxPer DECIMAL(18,4) NULL;
+
+    IF COL_LENGTH('dbo.{tableName}', 'BaseAmount') IS NULL
+        ALTER TABLE dbo.{tableName} ADD BaseAmount DECIMAL(18,4) NULL;
+
+    IF COL_LENGTH('dbo.{tableName}', 'Packing') IS NULL
+        ALTER TABLE dbo.{tableName} ADD Packing DECIMAL(18,4) NULL;
+
+    IF COL_LENGTH('dbo.{tableName}', 'RetailPrice') IS NULL
+        ALTER TABLE dbo.{tableName} ADD RetailPrice DECIMAL(18,4) NULL;
+
+    IF COL_LENGTH('dbo.{tableName}', 'Free') IS NULL
+        ALTER TABLE dbo.{tableName} ADD Free DECIMAL(18,4) NULL;
+
+    IF COL_LENGTH('dbo.{tableName}', 'UnitSP') IS NULL
+        ALTER TABLE dbo.{tableName} ADD UnitSP DECIMAL(18,4) NULL;
+
+    IF COL_LENGTH('dbo.{tableName}', 'TaxType') IS NULL
+        ALTER TABLE dbo.{tableName} ADD TaxType NVARCHAR(50) NULL;
+
+    IF COL_LENGTH('dbo.{tableName}', 'Gross') IS NULL
+        ALTER TABLE dbo.{tableName} ADD Gross DECIMAL(18,4) NULL;
+
+    IF COL_LENGTH('dbo.{tableName}', 'ActivityDetails') IS NOT NULL
+        ALTER TABLE dbo.{tableName} ALTER COLUMN ActivityDetails NVARCHAR(MAX) NULL;
 
     IF COL_LENGTH('dbo.{tableName}', 'CompanyId') IS NULL
         ALTER TABLE dbo.{tableName} ADD CompanyId INT NOT NULL CONSTRAINT DF_{tableName}_CompanyId DEFAULT(0);
@@ -346,8 +442,18 @@ ALTER PROCEDURE dbo.POS_TransactionActivityLog
     @Cost DECIMAL(18,4) = NULL,
     @Unit NVARCHAR(50) = NULL,
     @Barcode NVARCHAR(100) = NULL,
+    @SPrice DECIMAL(18,4) = NULL,
+    @TaxAmt DECIMAL(18,4) = NULL,
+    @TaxPer DECIMAL(18,4) = NULL,
+    @BaseAmount DECIMAL(18,4) = NULL,
+    @Packing DECIMAL(18,4) = NULL,
+    @RetailPrice DECIMAL(18,4) = NULL,
+    @Free DECIMAL(18,4) = NULL,
+    @UnitSP DECIMAL(18,4) = NULL,
+    @TaxType NVARCHAR(50) = NULL,
+    @Gross DECIMAL(18,4) = NULL,
     @ActivityType NVARCHAR(50) = NULL,
-    @ActivityDetails NVARCHAR(500) = NULL,
+    @ActivityDetails NVARCHAR(MAX) = NULL,
     @CompanyId INT = 0,
     @BranchId INT = 0,
     @FinYearId INT = 0,
@@ -379,6 +485,8 @@ INSERT INTO dbo.' + QUOTENAME(@TableName) + N'
 (
     TransactionNo, InvoiceNo, PartyName, PaymentMode, NetAmount,
     Qty, Cost, Unit, Barcode,
+    SPrice, TaxAmt, TaxPer, BaseAmount,
+    Packing, RetailPrice, Free, UnitSP, TaxType, Gross,
     ActivityType, ActivityDetails,
     CompanyId, BranchId, FinYearId, UserId, UserName,
     CounterId, CounterName, CounterSessionId, CreatedOn
@@ -387,6 +495,8 @@ VALUES
 (
     @TransactionNo, @InvoiceNo, @PartyName, @PaymentMode, @NetAmount,
     @Qty, @Cost, @Unit, @Barcode,
+    @SPrice, @TaxAmt, @TaxPer, @BaseAmount,
+    @Packing, @RetailPrice, @Free, @UnitSP, @TaxType, @Gross,
     @ActivityType, @ActivityDetails,
     @CompanyId, @BranchId, @FinYearId, @UserId, @UserName,
     @CounterId, @CounterName, @CounterSessionId, GETDATE()
@@ -394,8 +504,10 @@ VALUES
 
         EXEC sp_executesql
             @Sql,
-            N'@TransactionNo BIGINT, @InvoiceNo NVARCHAR(100), @PartyName NVARCHAR(250), @PaymentMode NVARCHAR(100), @NetAmount DECIMAL(18,4), @Qty DECIMAL(18,4), @Cost DECIMAL(18,4), @Unit NVARCHAR(50), @Barcode NVARCHAR(100), @ActivityType NVARCHAR(50), @ActivityDetails NVARCHAR(500), @CompanyId INT, @BranchId INT, @FinYearId INT, @UserId INT, @UserName NVARCHAR(150), @CounterId INT, @CounterName NVARCHAR(150), @CounterSessionId BIGINT',
+            N'@TransactionNo BIGINT, @InvoiceNo NVARCHAR(100), @PartyName NVARCHAR(250), @PaymentMode NVARCHAR(100), @NetAmount DECIMAL(18,4), @Qty DECIMAL(18,4), @Cost DECIMAL(18,4), @Unit NVARCHAR(50), @Barcode NVARCHAR(100), @SPrice DECIMAL(18,4), @TaxAmt DECIMAL(18,4), @TaxPer DECIMAL(18,4), @BaseAmount DECIMAL(18,4), @Packing DECIMAL(18,4), @RetailPrice DECIMAL(18,4), @Free DECIMAL(18,4), @UnitSP DECIMAL(18,4), @TaxType NVARCHAR(50), @Gross DECIMAL(18,4), @ActivityType NVARCHAR(50), @ActivityDetails NVARCHAR(MAX), @CompanyId INT, @BranchId INT, @FinYearId INT, @UserId INT, @UserName NVARCHAR(150), @CounterId INT, @CounterName NVARCHAR(150), @CounterSessionId BIGINT',
             @TransactionNo, @InvoiceNo, @PartyName, @PaymentMode, @NetAmount, @Qty, @Cost, @Unit, @Barcode,
+            @SPrice, @TaxAmt, @TaxPer, @BaseAmount,
+            @Packing, @RetailPrice, @Free, @UnitSP, @TaxType, @Gross,
             @ActivityType, @ActivityDetails,
             @CompanyId, @BranchId, @FinYearId, @UserId, @UserName,
             @CounterId, @CounterName, @CounterSessionId;

@@ -1,5 +1,6 @@
-﻿using ModelClass;
+using ModelClass;
 using PosBranch_Win.DialogBox;
+using Repository.SettingsRepo;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -12,6 +13,7 @@ namespace PosBranch_Win.Utilities
     public partial class frmChangeItemNo : Form
     {
         private int _selectedItemId = 0;
+        private string _selectedItemNo = string.Empty;
 
         public frmChangeItemNo()
         {
@@ -75,6 +77,7 @@ namespace PosBranch_Win.Utilities
                 {
                     string barcode = selectedItemData.ContainsKey("BarCode") ? selectedItemData["BarCode"]?.ToString() ?? "" : "";
                     string description = selectedItemData.ContainsKey("Description") ? selectedItemData["Description"]?.ToString() ?? "" : "";
+                    _selectedItemNo = selectedItemData.ContainsKey("ItemNo") ? selectedItemData["ItemNo"]?.ToString() ?? "" : string.Empty;
 
                     if (selectedItemData.ContainsKey("ItemId"))
                     {
@@ -96,7 +99,7 @@ namespace PosBranch_Win.Utilities
             db.DataConnection.Open();
             try
             {
-                using (SqlCommand cmd = new SqlCommand("SELECT ItemId, Barcode, Description FROM ItemMaster WHERE Barcode = @Barcode", (SqlConnection)db.DataConnection))
+                using (SqlCommand cmd = new SqlCommand("SELECT ItemId, ItemNo, Barcode, Description FROM ItemMaster WHERE Barcode = @Barcode", (SqlConnection)db.DataConnection))
                 {
                     cmd.Parameters.AddWithValue("@Barcode", barcode);
                     using (SqlDataReader reader = cmd.ExecuteReader())
@@ -104,8 +107,9 @@ namespace PosBranch_Win.Utilities
                         if (reader.Read())
                         {
                             _selectedItemId = reader.GetInt32(0);
-                            txtOldItemNo.Text = reader.GetString(1);
-                            txtDescription.Text = reader.GetString(2);
+                            _selectedItemNo = reader["ItemNo"] == DBNull.Value ? string.Empty : Convert.ToString(reader["ItemNo"]);
+                            txtOldItemNo.Text = reader["Barcode"] == DBNull.Value ? string.Empty : Convert.ToString(reader["Barcode"]);
+                            txtDescription.Text = reader["Description"] == DBNull.Value ? string.Empty : Convert.ToString(reader["Description"]);
                             txtNewItemNo.Focus();
                         }
                         else
@@ -134,7 +138,7 @@ namespace PosBranch_Win.Utilities
             db.DataConnection.Open();
             try
             {
-                using (SqlCommand cmd = new SqlCommand("SELECT ItemId, Barcode, Description FROM ItemMaster WHERE ItemId = @ItemId", (SqlConnection)db.DataConnection))
+                using (SqlCommand cmd = new SqlCommand("SELECT ItemId, ItemNo, Barcode, Description FROM ItemMaster WHERE ItemId = @ItemId", (SqlConnection)db.DataConnection))
                 {
                     cmd.Parameters.AddWithValue("@ItemId", itemId);
                     using (SqlDataReader reader = cmd.ExecuteReader())
@@ -142,8 +146,9 @@ namespace PosBranch_Win.Utilities
                         if (reader.Read())
                         {
                             _selectedItemId = reader.GetInt32(0);
-                            txtOldItemNo.Text = reader.GetString(1);
-                            txtDescription.Text = reader.GetString(2);
+                            _selectedItemNo = reader["ItemNo"] == DBNull.Value ? string.Empty : Convert.ToString(reader["ItemNo"]);
+                            txtOldItemNo.Text = reader["Barcode"] == DBNull.Value ? string.Empty : Convert.ToString(reader["Barcode"]);
+                            txtDescription.Text = reader["Description"] == DBNull.Value ? string.Empty : Convert.ToString(reader["Description"]);
                             txtNewItemNo.Focus();
                         }
                     }
@@ -220,6 +225,7 @@ namespace PosBranch_Win.Utilities
                 }
 
                 trans.Commit();
+                LogItemBarcodeChange(oldItemNo, newItemNo);
                 MessageBox.Show("Item No changed successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.Close();
             }
@@ -245,6 +251,33 @@ namespace PosBranch_Win.Utilities
                 if (db.DataConnection.State == ConnectionState.Open)
                     db.DataConnection.Close();
             }
+        }
+
+        private void LogItemBarcodeChange(string oldBarcode, string newBarcode)
+        {
+            try
+            {
+                using (var activityLog = new ItemActivityLogRepository())
+                {
+                    activityLog.SaveItemActivity(
+                        _selectedItemId,
+                        _selectedItemNo,
+                        txtDescription.Text.Trim(),
+                        newBarcode,
+                        "UPDATE",
+                        $"Item '{txtDescription.Text.Trim()}': Barcode changed from {FormatLogValue(oldBarcode)} to {FormatLogValue(newBarcode)}.");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Item barcode activity log failed: " + ex.Message);
+            }
+        }
+
+        private static string FormatLogValue(string value)
+        {
+            value = (value ?? string.Empty).Trim();
+            return string.IsNullOrWhiteSpace(value) ? "(blank)" : value;
         }
 
         private void btnCancel_Click(object sender, EventArgs e)

@@ -187,6 +187,17 @@ namespace PosBranch_Win.Settings
             SetColumn("CounterName", "Counter", 130);
             SetColumn("CounterId", "Counter ID", 85);
             SetColumn("CounterSessionId", "Session", 90);
+            SetColumn("Quantity", "Quantity", 90);
+            SetColumn("Available", "Available", 90);
+            SetColumn("OnHold", "On Hold", 80);
+            SetColumn("Reorder", "Reorder", 80);
+            SetColumn("OrderCycleDays", "Order Cycle Days", 120);
+            SetColumn("BoxQty", "Box Qty", 80);
+            SetColumn("ItemType", "Item Type", 100);
+            SetColumn("Category", "Category", 100);
+            SetColumn("ItemGroup", "Group", 100);
+            SetColumn("HSN", "HSN", 100);
+            SetColumn("ItemStatus", "Status", 90);
 
             if (gridActivity.Columns.Contains("CreatedOn"))
             {
@@ -201,6 +212,48 @@ namespace PosBranch_Win.Settings
                     gridActivity.Columns[moneyColumn].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                 }
             }
+
+            foreach (string numColumn in new[] { "Quantity", "Available", "OnHold", "Reorder" })
+            {
+                if (gridActivity.Columns.Contains(numColumn))
+                {
+                    gridActivity.Columns[numColumn].DefaultCellStyle.Format = "0.####";
+                    gridActivity.Columns[numColumn].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                }
+            }
+
+            foreach (string intColumn in new[] { "OrderCycleDays", "BoxQty" })
+            {
+                if (gridActivity.Columns.Contains(intColumn))
+                {
+                    gridActivity.Columns[intColumn].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                }
+            }
+
+            EnsureDetailsButtonColumn();
+        }
+
+        private void EnsureDetailsButtonColumn()
+        {
+            const string columnName = "ViewDetails";
+            if (gridActivity.Columns.Contains(columnName))
+            {
+                gridActivity.Columns[columnName].DisplayIndex = 0;
+                return;
+            }
+
+            var buttonColumn = new DataGridViewButtonColumn
+            {
+                Name = columnName,
+                HeaderText = "",
+                Text = "+",
+                UseColumnTextForButtonValue = true,
+                Width = 38,
+                MinimumWidth = 38,
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
+                FlatStyle = FlatStyle.Flat
+            };
+            gridActivity.Columns.Insert(0, buttonColumn);
         }
 
         private void SetColumn(string name, string header, int width)
@@ -226,6 +279,8 @@ namespace PosBranch_Win.Settings
             StyleFilterCombo(cmbActivityType, true);
             StyleFilterCombo(cmbAction, true);
             StyleFilterText(txtItemSearch);
+            txtItemSearch.KeyDown -= txtItemSearch_KeyDown;
+            txtItemSearch.KeyDown += txtItemSearch_KeyDown;
             StyleActionButtons();
 
             gridActivity.Dock = DockStyle.Fill;
@@ -247,10 +302,47 @@ namespace PosBranch_Win.Settings
             gridActivity.DefaultCellStyle.WrapMode = DataGridViewTriState.False;
             gridActivity.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 252, 255);
             gridActivity.RowTemplate.Height = 30;
+            gridActivity.CellContentClick -= gridActivity_CellContentClick;
+            gridActivity.CellContentClick += gridActivity_CellContentClick;
 
             gridFrame.BorderColor = Color.FromArgb(176, 224, 255);
             gridFrame.BorderRadius = 8;
             gridFrame.Padding = new Padding(2);
+        }
+
+        private void txtItemSearch_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.Handled = true;
+                string searchText = txtItemSearch.Text?.Trim();
+                if (!string.IsNullOrEmpty(searchText))
+                {
+                    var popup = new frmItemHistoryPopup(searchText);
+                    popup.ShowDialog(this);
+                }
+            }
+        }
+
+        private void gridActivity_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || !gridActivity.Columns.Contains("ViewDetails"))
+            {
+                return;
+            }
+
+            if (gridActivity.Columns[e.ColumnIndex].Name != "ViewDetails")
+            {
+                return;
+            }
+
+            string details = Convert.ToString(gridActivity.Rows[e.RowIndex].Cells["ActivityDetails"].Value);
+            if (string.IsNullOrWhiteSpace(details))
+            {
+                details = "No additional details available for this log entry.";
+            }
+
+            MessageBox.Show(details, "Activity Details", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void StyleActionButtons()
