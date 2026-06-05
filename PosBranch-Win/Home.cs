@@ -3731,5 +3731,10 @@ namespace PosBranch_Win
         }
 
         #endregion
+
+        private void ultraTabSharedControlsPage1_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
     }
 }

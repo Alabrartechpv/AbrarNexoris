@@ -1771,6 +1771,11 @@
     <None Include="Resources\balance.png" />
     <None Include="Resources\balance1.png" />
     <None Include="Resources\cash-on-delivery1.png" />
+    <None Include="Resources\bank1.png" />
+    <None Include="Resources\cashless-payment.png" />
+    <None Include="Resources\bill %281%29.png" />
+    <None Include="Resources\bank2.png" />
+    <None Include="Resources\accounting.png" />
     <Content Include="Resources\color-selection.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -1785,6 +1790,8 @@
     <None Include="Resources\profit-and-loss.png" />
     <None Include="Resources\scale.png" />
     <None Include="Resources\report1.png" />
+    <None Include="Resources\payment-method.png" />
+    <None Include="Resources\payment-method1.png" />
     <Content Include="Resources\splash_logo.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
