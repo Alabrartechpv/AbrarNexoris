@@ -1,4 +1,4 @@
-﻿using Infragistics.Win.UltraWinGrid;
+using Infragistics.Win.UltraWinGrid;
 using ModelClass;
 using ModelClass.Master;
 using ModelClass.TransactionModels;
@@ -3072,13 +3072,22 @@ namespace PosBranch_Win.Transaction
                 PrepareSalesObject(isUpdate, existingBillNo, My.StartsWith(PAYMENT_PANEL_PREFIX));
 
                 DataGridView tempGrid = PrepareGridData();
+                string updateActivityDetails = null;
+                if (isUpdate && existingBillNo > 0)
+                {
+                    updateActivityDetails = BuildSalesUpdateActivityDetails(
+                        existingBillNo,
+                        GetOldSalesForLog(existingBillNo),
+                        tempGrid,
+                        sales != null ? Convert.ToDecimal(sales.NetAmount) : ParseDecimal(txtNetTotal.Text));
+                }
 
                 string message = SaveOrUpdateSales(isUpdate, tempGrid);
 
                 // Determine if we should show success message based on operation type
                 // Show message if it's NOT a payment panel flow OR if it's a CREDIT SALE
                 bool showMessage = !My.StartsWith(PAYMENT_PANEL_PREFIX) || isCreditMode;
-                HandleSaveResult(isUpdate, message, showMessage);
+                HandleSaveResult(isUpdate, message, showMessage, updateActivityDetails);
             }
             catch (Exception ex)
             {
@@ -3241,7 +3250,7 @@ namespace PosBranch_Win.Transaction
             }
         }
 
-        private void HandleSaveResult(bool isUpdate, string message, bool showMessage = true)
+        private void HandleSaveResult(bool isUpdate, string message, bool showMessage = true, string updateActivityDetails = null)
         {
             if (!string.IsNullOrEmpty(message) && message != "0")
             {
@@ -3252,7 +3261,8 @@ namespace PosBranch_Win.Transaction
                     isUpdate ? "UPDATE" : "SAVE",
                     loggedBillNo,
                     sales,
-                    $"Sales invoice #{loggedBillNo} {actionText}.");
+                    updateActivityDetails ?? $"Sales invoice #{loggedBillNo} {actionText}.",
+                    isUpdate && !string.IsNullOrWhiteSpace(updateActivityDetails));
 
                 if (isUpdate && isEditingHoldBill)
                 {
@@ -5014,6 +5024,7 @@ namespace PosBranch_Win.Transaction
                     newRow["ItemId"] = details[i].ItemId;
                     newRow["BarCode"] = details[i].Barcode;
                     newRow["ItemName"] = details[i].ItemName;
+                    newRow["UnitId"] = details[i].UnitId;
                     newRow["Unit"] = details[i].Unit;
                     newRow["UnitPrice"] = details[i].UnitPrice;
                     newRow["Cost"] = details[i].Cost;
@@ -5168,7 +5179,18 @@ namespace PosBranch_Win.Transaction
 
                     // For both new and held bills, save using the unified logic in SaveOrUpdateSales
                     // This ensures that stock reduction and other repository logic is correctly applied
-                    string billNoResult = SaveOrUpdateSales(isCompletingHeldBill, PrepareGridData());
+                    DataGridView tempGrid = PrepareGridData();
+                    string updateActivityDetails = null;
+                    if (isCompletingHeldBill && existingHoldBillNo > 0)
+                    {
+                        updateActivityDetails = BuildSalesUpdateActivityDetails(
+                            existingHoldBillNo,
+                            GetOldSalesForLog(existingHoldBillNo),
+                            tempGrid,
+                            sales != null ? Convert.ToDecimal(sales.NetAmount) : ParseDecimal(txtNetTotal.Text));
+                    }
+
+                    string billNoResult = SaveOrUpdateSales(isCompletingHeldBill, tempGrid);
 
                     // Check if save was successful
                     if (!string.IsNullOrEmpty(billNoResult) && billNoResult != "0" && !billNoResult.StartsWith("Error"))
@@ -5178,7 +5200,8 @@ namespace PosBranch_Win.Transaction
                             isCompletingHeldBill ? "UPDATE" : "SAVE",
                             savedBillNoForLog,
                             sales,
-                            $"Sales invoice #{savedBillNoForLog} processed.");
+                            updateActivityDetails ?? $"Sales invoice #{savedBillNoForLog} processed.",
+                            !string.IsNullOrWhiteSpace(updateActivityDetails));
 
                         // SPLIT PAYMENT: Save payment details if provided
                         if (paymentResult.PaymentDetails != null && paymentResult.PaymentDetails.Count > 0)
@@ -5398,7 +5421,7 @@ namespace PosBranch_Win.Transaction
             }
         }
 
-        private void SaveSalesActivityLog(string activityType, long billNo, SalesMaster salesMaster, string details)
+        private void SaveSalesActivityLog(string activityType, long billNo, SalesMaster salesMaster, string details, bool detailsAreFinal = false)
         {
             try
             {
@@ -5407,10 +5430,17 @@ namespace PosBranch_Win.Transaction
                 decimal netAmount = salesMaster != null ? Convert.ToDecimal(salesMaster.NetAmount) : ParseDecimal(txtNetTotal.Text);
                 decimal qty;
                 decimal cost;
+                decimal sPrice;
+                decimal taxAmt;
+                decimal taxPer;
+                decimal baseAmount;
                 string unit;
                 string barcode;
                 GetSalesActivitySummary(out qty, out cost, out unit, out barcode);
-                string fullDetails = BuildSalesActivityDetails(activityType, billNo, netAmount, details);
+                GetSalesLogColumnSummary(out sPrice, out taxAmt, out taxPer, out baseAmount);
+                string fullDetails = detailsAreFinal && !string.IsNullOrWhiteSpace(details)
+                    ? details
+                    : BuildSalesActivityDetails(activityType, billNo, netAmount, details);
 
                 using (var repo = new TransactionActivityLogRepository())
                 {
@@ -5425,7 +5455,11 @@ namespace PosBranch_Win.Transaction
                         qty,
                         cost,
                         unit,
-                        barcode);
+                        barcode,
+                        sPrice,
+                        taxAmt,
+                        taxPer,
+                        baseAmount);
                 }
             }
             catch (Exception ex)
@@ -5482,6 +5516,45 @@ namespace PosBranch_Win.Transaction
             barcode = barcodes.Count == 1 ? barcodes.First() : barcodes.Count > 1 ? "Multiple" : string.Empty;
         }
 
+        private void GetSalesLogColumnSummary(out decimal sPrice, out decimal taxAmt, out decimal taxPer, out decimal baseAmount)
+        {
+            sPrice = 0m;
+            taxAmt = 0m;
+            taxPer = 0m;
+            baseAmount = 0m;
+
+            DataTable table = ultraGrid1.DataSource as DataTable;
+            if (table == null || table.Rows.Count == 0)
+            {
+                return;
+            }
+
+            foreach (DataRow row in table.Rows)
+            {
+                if (row.RowState == DataRowState.Deleted)
+                {
+                    continue;
+                }
+
+                if (sPrice == 0m)
+                {
+                    sPrice = GetDecimal(row, "Amount");
+                    if (sPrice == 0m)
+                    {
+                        sPrice = GetDecimal(row, "UnitPrice");
+                    }
+                }
+
+                if (taxPer == 0m)
+                {
+                    taxPer = GetDecimal(row, "TaxPer");
+                }
+
+                taxAmt += GetDecimal(row, "TaxAmt");
+                baseAmount += GetDecimal(row, "BaseAmount");
+            }
+        }
+
         private string BuildSalesActivityDetails(string activityType, long billNo, decimal netAmount, string fallbackDetails)
         {
             string baseText = !string.IsNullOrWhiteSpace(fallbackDetails)
@@ -5523,6 +5596,169 @@ namespace PosBranch_Win.Transaction
             return $"{baseText}. {string.Join(", ", changes)}.";
         }
 
+        private string BuildSalesUpdateActivityDetails(
+            long billNo,
+            salesGrid oldSale,
+            DataGridView newDetails,
+            decimal netAmount)
+        {
+            var changes = new List<string>();
+            var updatedItemNames = new List<string>();
+            SalesMaster oldMaster = oldSale != null && oldSale.ListSales != null ? oldSale.ListSales.FirstOrDefault() : null;
+            AddTextChange(changes, "Customer", oldMaster != null ? oldMaster.CustomerName : string.Empty, sales != null ? sales.CustomerName : txtCustomer.Text);
+
+            var oldRows = oldSale != null && oldSale.ListSDetails != null
+                ? oldSale.ListSDetails.ToList()
+                : new List<SalesDetails>();
+
+            if (newDetails != null)
+            {
+                foreach (DataGridViewRow row in newDetails.Rows)
+                {
+                    if (row.IsNewRow)
+                    {
+                        continue;
+                    }
+
+                    SalesDetails oldRow = TakeMatchingSalesSnapshot(oldRows, row);
+                    string itemName = GetCellString(row, "ItemName");
+                    if (string.IsNullOrWhiteSpace(itemName) && oldRow != null)
+                    {
+                        itemName = oldRow.ItemName;
+                    }
+
+                    if (oldRow == null)
+                    {
+                        changes.Add($"Added with Qty {FormatAmount(GetDecimal(row, "Qty"))}");
+                        updatedItemNames.Add(FormatItemName(itemName));
+                        continue;
+                    }
+
+                    var itemChanges = new List<string>();
+                    AddTextChange(itemChanges, "Barcode", oldRow.Barcode, GetCellString(row, "BarCode"));
+                    AddTextChange(itemChanges, "Item", oldRow.ItemName, itemName);
+                    AddTextChange(itemChanges, "Unit", oldRow.Unit, GetCellString(row, "Unit"));
+                    AddNumericChange(itemChanges, "Qty", Convert.ToDecimal(oldRow.Qty), GetDecimal(row, "Qty"));
+                    AddNumericChange(itemChanges, "S/Price", GetOldSalesSPrice(oldRow), GetDecimal(row, "Amount"));
+                    AddNumericChange(itemChanges, "Tax %", Convert.ToDecimal(oldRow.TaxPer), GetDecimal(row, "TaxPer"));
+                    AddNumericChange(itemChanges, "Tax amount", Convert.ToDecimal(oldRow.TaxAmt), GetDecimal(row, "TaxAmt"));
+                    AddNumericChange(itemChanges, "Base amount", GetOldSalesBaseAmount(oldRow), GetDecimal(row, "BaseAmount"));
+                    AddNumericChange(itemChanges, "Total amount", Convert.ToDecimal(oldRow.TotalAmount), GetDecimal(row, "TotalAmount"));
+
+                    if (itemChanges.Count > 0)
+                    {
+                        changes.AddRange(itemChanges);
+                        updatedItemNames.Add(FormatItemName(itemName));
+                    }
+                }
+            }
+
+            foreach (var remaining in oldRows)
+            {
+                changes.Add("Removed");
+                updatedItemNames.Add(FormatItemName(remaining.ItemName));
+            }
+
+            if (changes.Count == 0 && updatedItemNames.Count == 0)
+            {
+                changes.Add("No line item change detected");
+            }
+
+            changes.Add($"Net amount = {FormatAmount(netAmount)}");
+
+            var uniqueItemNames = updatedItemNames.Distinct().ToList();
+            string itemHeader = uniqueItemNames.Count > 0
+                ? $"{Environment.NewLine}{string.Join(", ", uniqueItemNames)}"
+                : string.Empty;
+
+            return $"Sales invoice #{billNo} updated.{itemHeader}{Environment.NewLine}Changes:{Environment.NewLine}- {string.Join(Environment.NewLine + "- ", changes)}";
+        }
+
+        private salesGrid GetOldSalesForLog(long billNo)
+        {
+            try
+            {
+                return operations.GetById(billNo);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Unable to load old sales details for activity log: " + ex.Message);
+                return null;
+            }
+        }
+
+        private Dictionary<string, Queue<SalesDetails>> BuildSalesSnapshotQueue(IEnumerable<SalesDetails> details)
+        {
+            var result = new Dictionary<string, Queue<SalesDetails>>(StringComparer.OrdinalIgnoreCase);
+            if (details == null)
+            {
+                return result;
+            }
+
+            foreach (SalesDetails detail in details)
+            {
+                string key = BuildTransactionRowKey(Convert.ToInt32(detail.ItemId), detail.UnitId, detail.Barcode);
+                if (!result.ContainsKey(key))
+                {
+                    result[key] = new Queue<SalesDetails>();
+                }
+                result[key].Enqueue(detail);
+            }
+
+            return result;
+        }
+
+        private SalesDetails DequeueSnapshot(Dictionary<string, Queue<SalesDetails>> rows, string key)
+        {
+            if (rows == null || !rows.ContainsKey(key) || rows[key].Count == 0)
+            {
+                return null;
+            }
+
+            return rows[key].Dequeue();
+        }
+
+        private SalesDetails TakeMatchingSalesSnapshot(List<SalesDetails> oldRows, DataGridViewRow newRow)
+        {
+            if (oldRows == null || oldRows.Count == 0 || newRow == null)
+            {
+                return null;
+            }
+
+            int itemId = GetInt(newRow, "ItemId");
+            string barcode = NormalizeLogKey(GetCellString(newRow, "BarCode"));
+            string itemName = NormalizeLogKey(GetCellString(newRow, "ItemName"));
+            string unit = NormalizeLogKey(GetCellString(newRow, "Unit"));
+
+            int matchIndex = oldRows.FindIndex(oldRow => itemId > 0 && oldRow.ItemId == itemId);
+
+            if (matchIndex < 0 && !string.IsNullOrWhiteSpace(barcode))
+            {
+                matchIndex = oldRows.FindIndex(oldRow => NormalizeLogKey(oldRow.Barcode) == barcode);
+            }
+
+            if (matchIndex < 0 && !string.IsNullOrWhiteSpace(itemName) && !string.IsNullOrWhiteSpace(unit))
+            {
+                matchIndex = oldRows.FindIndex(oldRow =>
+                    NormalizeLogKey(oldRow.ItemName) == itemName &&
+                    NormalizeLogKey(oldRow.Unit) == unit);
+            }
+
+            if (matchIndex < 0 && !string.IsNullOrWhiteSpace(itemName))
+            {
+                matchIndex = oldRows.FindIndex(oldRow => NormalizeLogKey(oldRow.ItemName) == itemName);
+            }
+
+            if (matchIndex < 0)
+            {
+                return null;
+            }
+
+            SalesDetails match = oldRows[matchIndex];
+            oldRows.RemoveAt(matchIndex);
+            return match;
+        }
+
         private void AddChangedValue(List<string> changes, string caption, decimal oldValue, decimal newValue)
         {
             if (oldValue != 0m && oldValue != newValue)
@@ -5550,6 +5786,132 @@ namespace PosBranch_Win.Transaction
             }
 
             return Convert.ToString(row[columnName]);
+        }
+
+        private string BuildTransactionRowKey(int itemId, int unitId, string barcode)
+        {
+            if (itemId > 0)
+            {
+                return "ITEM|" + itemId;
+            }
+
+            barcode = (barcode ?? string.Empty).Trim();
+            if (!string.IsNullOrWhiteSpace(barcode))
+            {
+                return "BARCODE|" + barcode;
+            }
+
+            return "UNKNOWN";
+        }
+
+        private string NormalizeLogKey(string value)
+        {
+            return (value ?? string.Empty).Trim().ToUpperInvariant();
+        }
+
+        private void AddNumericChange(List<string> changes, string caption, decimal oldValue, decimal newValue)
+        {
+            if (Math.Abs(oldValue - newValue) >= 0.0001m)
+            {
+                changes.Add($"{caption} updated from {FormatAmount(oldValue)} to {FormatAmount(newValue)}");
+            }
+        }
+
+        private void AddTextChange(List<string> changes, string caption, string oldValue, string newValue)
+        {
+            oldValue = (oldValue ?? string.Empty).Trim();
+            newValue = (newValue ?? string.Empty).Trim();
+            if (!string.Equals(oldValue, newValue, StringComparison.OrdinalIgnoreCase))
+            {
+                changes.Add($"{caption} updated from {FormatTextValue(oldValue)} to {FormatTextValue(newValue)}");
+            }
+        }
+
+        private decimal GetDecimal(DataGridViewRow row, string columnName)
+        {
+            if (row == null || row.DataGridView == null || !row.DataGridView.Columns.Contains(columnName))
+            {
+                return 0m;
+            }
+
+            object value = row.Cells[columnName].Value;
+            decimal parsed;
+            return value != null && value != DBNull.Value && decimal.TryParse(Convert.ToString(value), out parsed) ? parsed : 0m;
+        }
+
+        private int GetInt(DataGridViewRow row, string columnName)
+        {
+            return Convert.ToInt32(GetDecimal(row, columnName));
+        }
+
+        private string GetCellString(DataGridViewRow row, string columnName)
+        {
+            if (row == null || row.DataGridView == null || !row.DataGridView.Columns.Contains(columnName))
+            {
+                return string.Empty;
+            }
+
+            object value = row.Cells[columnName].Value;
+            return value == null || value == DBNull.Value ? string.Empty : Convert.ToString(value);
+        }
+
+        private string FormatAmount(decimal value)
+        {
+            return value.ToString("0.####");
+        }
+
+        private string FormatTextValue(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? "(blank)" : $"\"{value.Trim()}\"";
+        }
+
+        private string FormatItemName(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? "Item" : value.Trim();
+        }
+
+        private decimal GetOldSalesSPrice(SalesDetails oldRow)
+        {
+            if (oldRow == null)
+            {
+                return 0m;
+            }
+
+            if (oldRow.Qty > 0 && oldRow.Amount > 0)
+            {
+                return Convert.ToDecimal(oldRow.Amount / oldRow.Qty);
+            }
+
+            return Convert.ToDecimal(oldRow.UnitPrice);
+        }
+
+        private decimal GetOldSalesBaseAmount(SalesDetails oldRow)
+        {
+            if (oldRow == null)
+            {
+                return 0m;
+            }
+
+            if (oldRow.BaseAmount > 0)
+            {
+                return Convert.ToDecimal(oldRow.BaseAmount);
+            }
+
+            // Calculate BaseAmount if not stored or loaded as 0
+            string taxType = oldRow.TaxType ?? "incl";
+            double taxPer = oldRow.TaxPer;
+            double totalAmount = oldRow.TotalAmount;
+            double taxAmt = oldRow.TaxAmt;
+
+            if (taxType.ToLower() == "incl" && taxPer > 0)
+            {
+                double divisor = 1.0 + (taxPer / 100.0);
+                return Convert.ToDecimal(Math.Round(totalAmount / divisor, 2));
+            }
+            else
+            {
+                return Convert.ToDecimal(totalAmount - taxAmt);
+            }
         }
 
         private long ParseLong(string value, long fallback)

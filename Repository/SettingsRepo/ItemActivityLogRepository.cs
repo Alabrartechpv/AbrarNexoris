@@ -16,7 +16,18 @@ namespace Repository.SettingsRepo
             string activityDetails,
             decimal? unitCost = null,
             decimal? retailPrice = null,
-            decimal? walkinPrice = null)
+            decimal? walkinPrice = null,
+            decimal? quantity = null,
+            decimal? available = null,
+            decimal? onHold = null,
+            decimal? reorder = null,
+            int? orderCycleDays = null,
+            int? boxQty = null,
+            string itemType = null,
+            string category = null,
+            string itemGroup = null,
+            string hsn = null,
+            string itemStatus = null)
         {
             try
             {
@@ -41,6 +52,17 @@ namespace Repository.SettingsRepo
                     cmd.Parameters.AddWithValue("@UnitCost", (object)unitCost ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@RetailPrice", (object)retailPrice ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@WalkinPrice", (object)walkinPrice ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Quantity", (object)quantity ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Available", (object)available ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@OnHold", (object)onHold ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Reorder", (object)reorder ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@OrderCycleDays", (object)orderCycleDays ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@BoxQty", (object)boxQty ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@ItemType", (object)itemType ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Category", (object)category ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@ItemGroup", (object)itemGroup ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@HSN", (object)hsn ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@ItemStatus", (object)itemStatus ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@CompanyId", GetCompanyId());
                     cmd.Parameters.AddWithValue("@BranchId", GetBranchId());
                     cmd.Parameters.AddWithValue("@FinYearId", GetFinYearId());
@@ -86,6 +108,17 @@ SELECT
     UnitCost,
     RetailPrice,
     WalkinPrice,
+    ISNULL(Quantity, 0) AS Quantity,
+    ISNULL(Available, 0) AS Available,
+    ISNULL(OnHold, 0) AS OnHold,
+    ISNULL(Reorder, 0) AS Reorder,
+    ISNULL(OrderCycleDays, 0) AS OrderCycleDays,
+    ISNULL(BoxQty, 0) AS BoxQty,
+    ISNULL(ItemType, '') AS ItemType,
+    ISNULL(Category, '') AS Category,
+    ISNULL(ItemGroup, '') AS ItemGroup,
+    ISNULL(HSN, '') AS HSN,
+    ISNULL(ItemStatus, '') AS ItemStatus,
     CompanyId,
     BranchId,
     FinYearId,
@@ -128,6 +161,82 @@ ORDER BY CreatedOn DESC, ItemActivityLogId DESC;", (SqlConnection)DataConnection
 
             return result;
         }
+
+        public DataTable GetItemHistoryLog(string searchText)
+        {
+            DataTable result = new DataTable();
+            try
+            {
+                if (DataConnection.State != ConnectionState.Open)
+                {
+                    DataConnection.Open();
+                }
+
+                EnsureItemActivityLogTable();
+
+                using (SqlCommand cmd = new SqlCommand(@"
+WITH MatchingItemIds AS (
+    SELECT ItemId FROM dbo.ItemMaster WHERE Barcode = @SearchText OR Description LIKE '%' + @SearchText + '%' OR ItemNo = @SearchText
+    UNION
+    SELECT ItemId FROM dbo.PriceSettings WHERE BarCode = @SearchText OR AliasBarcode = @SearchText
+    UNION
+    SELECT ItemId FROM dbo.ItemAlternativeBarcode WHERE Barcode = @SearchText
+    UNION
+    SELECT ItemId FROM dbo.ItemActivityLog WHERE Barcode = @SearchText OR ItemName LIKE '%' + @SearchText + '%' OR ItemNo = @SearchText
+)
+SELECT
+    ItemActivityLogId,
+    CreatedOn,
+    UserName,
+    ActivityType,
+    ItemNo,
+    ItemName,
+    Barcode,
+    ActivityDetails,
+    UnitCost,
+    RetailPrice,
+    WalkinPrice,
+    ISNULL(Quantity, 0) AS Quantity,
+    ISNULL(Available, 0) AS Available,
+    ISNULL(OnHold, 0) AS OnHold,
+    ISNULL(Reorder, 0) AS Reorder,
+    ISNULL(OrderCycleDays, 0) AS OrderCycleDays,
+    ISNULL(BoxQty, 0) AS BoxQty,
+    ISNULL(ItemType, '') AS ItemType,
+    ISNULL(Category, '') AS Category,
+    ISNULL(ItemGroup, '') AS ItemGroup,
+    ISNULL(HSN, '') AS HSN,
+    ISNULL(ItemStatus, '') AS ItemStatus,
+    CompanyId,
+    BranchId,
+    FinYearId,
+    UserId,
+    CounterName,
+    CounterId,
+    CounterSessionId
+FROM dbo.ItemActivityLog
+WHERE ItemId IN (SELECT ItemId FROM MatchingItemIds)
+ORDER BY CreatedOn DESC, ItemActivityLogId DESC;", (SqlConnection)DataConnection))
+                {
+                    cmd.Parameters.AddWithValue("@SearchText", searchText ?? string.Empty);
+
+                    using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+                    {
+                        adapter.Fill(result);
+                    }
+                }
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                {
+                    DataConnection.Close();
+                }
+            }
+
+            return result;
+        }
+
 
         public DataTable GetItemActivityUsers()
         {
@@ -216,7 +325,7 @@ BEGIN
         ItemName NVARCHAR(250) NULL,
         Barcode NVARCHAR(100) NULL,
         ActivityType NVARCHAR(50) NOT NULL,
-        ActivityDetails NVARCHAR(500) NULL,
+        ActivityDetails NVARCHAR(2000) NULL,
         UnitCost DECIMAL(18,4) NULL,
         RetailPrice DECIMAL(18,4) NULL,
         WalkinPrice DECIMAL(18,4) NULL,
@@ -236,6 +345,9 @@ BEGIN
 END
 ELSE
 BEGIN
+    IF COL_LENGTH('dbo.ItemActivityLog', 'ActivityDetails') IS NOT NULL
+        ALTER TABLE dbo.ItemActivityLog ALTER COLUMN ActivityDetails NVARCHAR(2000) NULL;
+
     IF COL_LENGTH('dbo.ItemActivityLog', 'UnitCost') IS NULL
         ALTER TABLE dbo.ItemActivityLog ADD UnitCost DECIMAL(18,4) NULL;
 
@@ -268,6 +380,39 @@ BEGIN
 
     IF COL_LENGTH('dbo.ItemActivityLog', 'CounterSessionId') IS NULL
         ALTER TABLE dbo.ItemActivityLog ADD CounterSessionId BIGINT NOT NULL CONSTRAINT DF_ItemActivityLog_CounterSessionId DEFAULT(0);
+
+    IF COL_LENGTH('dbo.ItemActivityLog', 'Quantity') IS NULL
+        ALTER TABLE dbo.ItemActivityLog ADD Quantity DECIMAL(18,4) NULL;
+
+    IF COL_LENGTH('dbo.ItemActivityLog', 'Available') IS NULL
+        ALTER TABLE dbo.ItemActivityLog ADD Available DECIMAL(18,4) NULL;
+
+    IF COL_LENGTH('dbo.ItemActivityLog', 'OnHold') IS NULL
+        ALTER TABLE dbo.ItemActivityLog ADD OnHold DECIMAL(18,4) NULL;
+
+    IF COL_LENGTH('dbo.ItemActivityLog', 'Reorder') IS NULL
+        ALTER TABLE dbo.ItemActivityLog ADD Reorder DECIMAL(18,4) NULL;
+
+    IF COL_LENGTH('dbo.ItemActivityLog', 'OrderCycleDays') IS NULL
+        ALTER TABLE dbo.ItemActivityLog ADD OrderCycleDays INT NULL;
+
+    IF COL_LENGTH('dbo.ItemActivityLog', 'BoxQty') IS NULL
+        ALTER TABLE dbo.ItemActivityLog ADD BoxQty INT NULL;
+
+    IF COL_LENGTH('dbo.ItemActivityLog', 'ItemType') IS NULL
+        ALTER TABLE dbo.ItemActivityLog ADD ItemType NVARCHAR(100) NULL;
+
+    IF COL_LENGTH('dbo.ItemActivityLog', 'Category') IS NULL
+        ALTER TABLE dbo.ItemActivityLog ADD Category NVARCHAR(100) NULL;
+
+    IF COL_LENGTH('dbo.ItemActivityLog', 'ItemGroup') IS NULL
+        ALTER TABLE dbo.ItemActivityLog ADD ItemGroup NVARCHAR(100) NULL;
+
+    IF COL_LENGTH('dbo.ItemActivityLog', 'HSN') IS NULL
+        ALTER TABLE dbo.ItemActivityLog ADD HSN NVARCHAR(50) NULL;
+
+    IF COL_LENGTH('dbo.ItemActivityLog', 'ItemStatus') IS NULL
+        ALTER TABLE dbo.ItemActivityLog ADD ItemStatus NVARCHAR(50) NULL;
 END;", (SqlConnection)DataConnection))
             {
                 cmd.ExecuteNonQuery();
@@ -291,10 +436,21 @@ ALTER PROCEDURE dbo.POS_ItemActivityLog
     @ItemName NVARCHAR(250) = NULL,
     @Barcode NVARCHAR(100) = NULL,
     @ActivityType NVARCHAR(50) = NULL,
-    @ActivityDetails NVARCHAR(500) = NULL,
+    @ActivityDetails NVARCHAR(2000) = NULL,
     @UnitCost DECIMAL(18,4) = NULL,
     @RetailPrice DECIMAL(18,4) = NULL,
     @WalkinPrice DECIMAL(18,4) = NULL,
+    @Quantity DECIMAL(18,4) = NULL,
+    @Available DECIMAL(18,4) = NULL,
+    @OnHold DECIMAL(18,4) = NULL,
+    @Reorder DECIMAL(18,4) = NULL,
+    @OrderCycleDays INT = NULL,
+    @BoxQty INT = NULL,
+    @ItemType NVARCHAR(100) = NULL,
+    @Category NVARCHAR(100) = NULL,
+    @ItemGroup NVARCHAR(100) = NULL,
+    @HSN NVARCHAR(50) = NULL,
+    @ItemStatus NVARCHAR(50) = NULL,
     @CompanyId INT = 0,
     @BranchId INT = 0,
     @FinYearId INT = 0,
@@ -313,6 +469,8 @@ BEGIN
         (
             ItemId, ItemNo, ItemName, Barcode, ActivityType, ActivityDetails,
             UnitCost, RetailPrice, WalkinPrice,
+            Quantity, Available, OnHold, Reorder, OrderCycleDays, BoxQty,
+            ItemType, Category, ItemGroup, HSN, ItemStatus,
             CompanyId, BranchId, FinYearId, UserId, UserName,
             CounterId, CounterName, CounterSessionId, CreatedOn
         )
@@ -320,6 +478,8 @@ BEGIN
         (
             @ItemId, @ItemNo, @ItemName, @Barcode, @ActivityType, @ActivityDetails,
             @UnitCost, @RetailPrice, @WalkinPrice,
+            @Quantity, @Available, @OnHold, @Reorder, @OrderCycleDays, @BoxQty,
+            @ItemType, @Category, @ItemGroup, @HSN, @ItemStatus,
             @CompanyId, @BranchId, @FinYearId, @UserId, @UserName,
             @CounterId, @CounterName, @CounterSessionId, GETDATE()
         );

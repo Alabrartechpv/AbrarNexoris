@@ -75,6 +75,8 @@ namespace PosBranch_Win.Transaction
         // The int parameter is the ItemId that was updated
         public static event Action<int> OnPriceSettingsUpdated;
 
+        private System.Collections.Generic.Dictionary<string, float> _originalSellingPrices = new System.Collections.Generic.Dictionary<string, float>(System.StringComparer.OrdinalIgnoreCase);
+
         // Guard flag to prevent infinite recursion when updating cells from NetAmt change
         private bool _isUpdatingFromNetAmt = false;
 
@@ -5516,6 +5518,7 @@ namespace PosBranch_Win.Transaction
         // Add Clear method to reset form after saving
         public void Clear()
         {
+            _originalSellingPrices.Clear();
             // Generate and display next purchase number dynamically
             GenerateAndDisplayPurchaseNumber();
 
@@ -6288,6 +6291,7 @@ namespace PosBranch_Win.Transaction
         {
             try
             {
+                _originalSellingPrices.Clear();
                 // First clear the grid
                 DataTable dt = ultraGrid1.DataSource as DataTable;
                 if (dt != null)
@@ -6349,6 +6353,14 @@ namespace PosBranch_Win.Transaction
 
                         foreach (PurchaseDetails pd in purchaseInvoiceGrid.Listpdetails)
                         {
+                            // Store the original selling price for activity logging comparison
+                            float initialPriceVal = GetWholeSalePriceFromPriceSettings(pd.ItemID, pd.UnitId);
+                            float initialSellingPrice = initialPriceVal > 0
+                                ? initialPriceVal
+                                : (float)pd.WholeSalePrice;
+                            string key = $"{pd.ItemID}_{pd.UnitId}";
+                            _originalSellingPrices[key] = initialSellingPrice;
+
                             DataRow newRow = dt.NewRow();
 
                             // Assign sequential SLNO value from counter instead of using database value
@@ -6712,6 +6724,8 @@ namespace PosBranch_Win.Transaction
                 tempGridView.Columns.Add("CardPrice", "CardPrice");
                 tempGridView.Columns.Add("NetAmt", "NetAmt");
                 tempGridView.Columns.Add("Gross", "Gross");
+                tempGridView.Columns.Add("SellingPrice", "SellingPrice");
+                tempGridView.Columns.Add("UnitSP", "UnitSP");
 
                 // Transfer data from UltraGrid (via DataTable) to DataGridView
                 int slnoCounter = 1;
@@ -6753,6 +6767,14 @@ namespace PosBranch_Win.Transaction
                     tempGridView.Rows[index].Cells["Gross"].Value = row.Table.Columns.Contains("Gross") && row["Gross"] != null && row["Gross"] != DBNull.Value
                         ? row["Gross"]
                         : 0f;
+                    if (row.Table.Columns.Contains("SellingPrice") && row["SellingPrice"] != null && row["SellingPrice"] != DBNull.Value)
+                    {
+                        tempGridView.Rows[index].Cells["SellingPrice"].Value = row["SellingPrice"];
+                    }
+                    if (row.Table.Columns.Contains("UnitSP") && row["UnitSP"] != null && row["UnitSP"] != DBNull.Value)
+                    {
+                        tempGridView.Rows[index].Cells["UnitSP"].Value = row["UnitSP"];
+                    }
                 }
 
                 // Set up purchase details with first item
@@ -6783,6 +6805,35 @@ namespace PosBranch_Win.Transaction
                     ObjPurchaseDetails.PurchaseNo = ObjPurchaseMaster.PurchaseNo;
                 }
 
+                // Retrieve the old purchase invoice master and details before updating
+                PurchaseInvoiceGrid oldPurchaseForLog = null;
+                try
+                {
+                    oldPurchaseForLog = GetOldPurchaseForLog(ObjPurchaseMaster.Pid);
+                    if (oldPurchaseForLog != null && oldPurchaseForLog.Listpdetails != null)
+                    {
+                        foreach (var pd in oldPurchaseForLog.Listpdetails)
+                        {
+                            string key = $"{pd.ItemID}_{pd.UnitId}";
+                            if (_originalSellingPrices.ContainsKey(key))
+                            {
+                                pd.SalesPrice = _originalSellingPrices[key];
+                            }
+                            else
+                            {
+                                float wholeSalePriceFromPriceSettings = GetWholeSalePriceFromPriceSettings(pd.ItemID, pd.UnitId);
+                                pd.SalesPrice = wholeSalePriceFromPriceSettings > 0
+                                    ? wholeSalePriceFromPriceSettings
+                                    : pd.WholeSalePrice;
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("Error loading old purchase for log: " + ex.Message);
+                }
+
                 // Show confirmation dialog before updating
                 DialogBox.frmSuccesMsg confirmDialog = new DialogBox.frmSuccesMsg(txtPurchaseNo.Text.Replace("GRN-", ""));
                 if (confirmDialog.ShowDialog() != DialogResult.Yes)
@@ -6795,7 +6846,30 @@ namespace PosBranch_Win.Transaction
 
                 if (string.IsNullOrEmpty(message) || message.ToLower().Contains("success"))
                 {
-                    SavePurchaseActivityLog("UPDATE", ObjPurchaseMaster.PurchaseNo, ObjPurchaseMaster);
+                    string updateActivityDetails = null;
+                    if (oldPurchaseForLog != null)
+                    {
+                        try
+                        {
+                            updateActivityDetails = BuildPurchaseUpdateActivityDetails(
+                                ObjPurchaseMaster.PurchaseNo,
+                                oldPurchaseForLog,
+                                tempGridView,
+                                Convert.ToDecimal(ObjPurchaseMaster.NetTotal > 0 ? ObjPurchaseMaster.NetTotal : ObjPurchaseMaster.GrandTotal)
+                            );
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine("Error building purchase update log details: " + ex.Message);
+                        }
+                    }
+
+                    SavePurchaseActivityLog(
+                        "UPDATE", 
+                        ObjPurchaseMaster.PurchaseNo, 
+                        ObjPurchaseMaster, 
+                        updateActivityDetails, 
+                        !string.IsNullOrWhiteSpace(updateActivityDetails));
 
                     // Show a simple success message now instead of the popup
                     MessageBox.Show("Updated Successfully", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -7117,7 +7191,7 @@ namespace PosBranch_Win.Transaction
             }
         }
 
-        private void SavePurchaseActivityLog(string activityType, int purchaseNo, PurchaseMaster purchaseMaster)
+        private void SavePurchaseActivityLog(string activityType, int purchaseNo, PurchaseMaster purchaseMaster, string details = null, bool detailsAreFinal = false)
         {
             if (purchaseMaster == null)
             {
@@ -7130,8 +7204,24 @@ namespace PosBranch_Win.Transaction
             string barcode;
             GetPurchaseActivitySummary(out qty, out cost, out unit, out barcode);
 
+            decimal sellingPrice;
+            decimal taxAmt;
+            decimal taxPer;
+            decimal baseCost;
+            decimal packing;
+            decimal retailPrice;
+            decimal free;
+            decimal unitSP;
+            string taxType;
+            decimal gross;
+            GetPurchaseLogColumnSummary(out sellingPrice, out taxAmt, out taxPer, out baseCost, out packing, out retailPrice, out free, out unitSP, out taxType, out gross);
+
             decimal netAmount = Convert.ToDecimal(purchaseMaster.NetTotal > 0 ? purchaseMaster.NetTotal : purchaseMaster.GrandTotal);
-            string details = BuildPurchaseActivityDetails(activityType, purchaseNo, netAmount);
+            
+            string fullDetails = detailsAreFinal && !string.IsNullOrWhiteSpace(details)
+                ? details
+                : BuildPurchaseActivityDetails(activityType, purchaseNo, netAmount);
+
             SavePurchaseActivityLog(
                 activityType,
                 purchaseNo,
@@ -7139,11 +7229,21 @@ namespace PosBranch_Win.Transaction
                 purchaseMaster.VendorName,
                 purchaseMaster.Paymode,
                 netAmount,
-                details,
+                fullDetails,
                 qty,
                 cost,
                 unit,
-                barcode);
+                barcode,
+                sellingPrice,
+                taxAmt,
+                taxPer,
+                baseCost,
+                packing,
+                retailPrice,
+                free,
+                unitSP,
+                taxType,
+                gross);
         }
 
         private void SavePurchaseActivityLog(
@@ -7157,7 +7257,17 @@ namespace PosBranch_Win.Transaction
             decimal? qty = null,
             decimal? cost = null,
             string unit = null,
-            string barcode = null)
+            string barcode = null,
+            decimal? sPrice = null,
+            decimal? taxAmt = null,
+            decimal? taxPer = null,
+            decimal? baseAmount = null,
+            decimal? packing = null,
+            decimal? retailPrice = null,
+            decimal? free = null,
+            decimal? unitSP = null,
+            string taxType = null,
+            decimal? gross = null)
         {
             try
             {
@@ -7174,12 +7284,365 @@ namespace PosBranch_Win.Transaction
                         qty,
                         cost,
                         unit,
-                        barcode);
+                        barcode,
+                        sPrice,
+                        taxAmt,
+                        taxPer,
+                        baseAmount,
+                        packing,
+                        retailPrice,
+                        free,
+                        unitSP,
+                        taxType,
+                        gross);
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine("Unable to save purchase activity log: " + ex.Message);
+            }
+        }
+
+        private void GetPurchaseLogColumnSummary(
+            out decimal sellingPrice,
+            out decimal taxAmt,
+            out decimal taxPer,
+            out decimal baseCost,
+            out decimal packing,
+            out decimal retailPrice,
+            out decimal free,
+            out decimal unitSP,
+            out string taxType,
+            out decimal gross)
+        {
+            sellingPrice = 0m;
+            taxAmt = 0m;
+            taxPer = 0m;
+            baseCost = 0m;
+            packing = 0m;
+            retailPrice = 0m;
+            free = 0m;
+            unitSP = 0m;
+            taxType = string.Empty;
+            gross = 0m;
+
+            DataTable table = ultraGrid1.DataSource as DataTable;
+            if (table == null || table.Rows.Count == 0)
+            {
+                return;
+            }
+
+            foreach (DataRow row in table.Rows)
+            {
+                if (row.RowState == DataRowState.Deleted)
+                {
+                    continue;
+                }
+
+                if (sellingPrice == 0m)
+                {
+                    sellingPrice = GetDecimal(row, "SellingPrice");
+                }
+
+                if (taxPer == 0m)
+                {
+                    taxPer = GetDecimal(row, "TaxPer");
+                }
+
+                if (packing == 0m)
+                {
+                    packing = GetDecimal(row, "Packing");
+                }
+
+                if (retailPrice == 0m)
+                {
+                    retailPrice = GetDecimal(row, "RetailPrice");
+                }
+
+                if (unitSP == 0m)
+                {
+                    unitSP = GetDecimal(row, "UnitSP");
+                }
+
+                if (string.IsNullOrEmpty(taxType))
+                {
+                    taxType = GetString(row, "TaxType");
+                }
+
+                taxAmt += GetDecimal(row, "TaxAmt");
+                baseCost += GetDecimal(row, "BaseCost");
+                free += GetDecimal(row, "Free");
+                gross += GetDecimal(row, "Gross");
+            }
+        }
+
+        private PurchaseInvoiceGrid GetOldPurchaseForLog(int pid)
+        {
+            try
+            {
+                return ObjPurchaseInviceRepo.getPurchaseNumber(pid);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Unable to load old purchase details for activity log: " + ex.Message);
+                return null;
+            }
+        }
+
+        private string BuildPurchaseUpdateActivityDetails(
+            int purchaseNo,
+            PurchaseInvoiceGrid oldPurchase,
+            DataGridView newDetails,
+            decimal netAmount)
+        {
+            var changes = new List<string>();
+            var updatedItemNames = new List<string>();
+            PurchaseMaster oldMaster = oldPurchase != null && oldPurchase.Listpmaster != null ? oldPurchase.Listpmaster.FirstOrDefault() : null;
+
+            if (oldMaster != null)
+            {
+                AddTextChange(changes, "Vendor", oldMaster.VendorName, CmboVendor.Text);
+                AddTextChange(changes, "Paymode", oldMaster.Paymode, CmboPayment.Text);
+            }
+
+            var oldRows = oldPurchase != null && oldPurchase.Listpdetails != null
+                ? oldPurchase.Listpdetails.ToList()
+                : new List<PurchaseDetails>();
+
+            if (newDetails != null)
+            {
+                foreach (DataGridViewRow row in newDetails.Rows)
+                {
+                    if (row.IsNewRow)
+                    {
+                        continue;
+                    }
+
+                    PurchaseDetails oldRow = TakeMatchingPurchaseSnapshot(oldRows, row);
+                    string itemName = GetCellString(row, "Description"); // "Description" represents ItemName in grid
+                    if (string.IsNullOrWhiteSpace(itemName) && oldRow != null)
+                    {
+                        itemName = oldRow.ItemName;
+                    }
+
+                    if (oldRow == null)
+                    {
+                        changes.Add($"Added with Qty {FormatAmount(GetCellDecimal(row, "Qty"))}");
+                        updatedItemNames.Add(FormatItemName(itemName));
+                        continue;
+                    }
+
+                    var itemChanges = new List<string>();
+                    AddTextChange(itemChanges, "Barcode", oldRow.Barcode, GetCellString(row, "BarCode"));
+                    AddTextChange(itemChanges, "Unit", oldRow.Unit, GetCellString(row, "Unit"));
+                    AddNumericChange(itemChanges, "Qty", Convert.ToDecimal(oldRow.Qty), GetCellDecimal(row, "Qty"));
+                    AddNumericChange(itemChanges, "Cost", Convert.ToDecimal(oldRow.Cost), GetCellDecimal(row, "Cost"));
+                    AddNumericChange(itemChanges, "Free", Convert.ToDecimal(oldRow.Free), GetCellDecimal(row, "Free"));
+                    AddNumericChange(itemChanges, "Packing", Convert.ToDecimal(oldRow.Packing), GetCellDecimal(row, "Packing"));
+                    AddNumericChange(itemChanges, "Tax %", Convert.ToDecimal(oldRow.TaxPer), GetCellDecimal(row, "TaxPer"));
+                    AddNumericChange(itemChanges, "TaxAmt", Convert.ToDecimal(oldRow.TaxAmt), GetCellDecimal(row, "TaxAmt"));
+                    AddNumericChange(itemChanges, "Retail Price", Convert.ToDecimal(oldRow.RetailPrice), GetCellDecimal(row, "RetailPrice"));
+                    
+                    decimal newSellingPrice = GetCellDecimal(row, "SellingPrice");
+                    if (newSellingPrice == 0m)
+                    {
+                        newSellingPrice = GetCellDecimal(row, "WholeSalePrice");
+                    }
+                    AddNumericChange(itemChanges, "Selling price", Convert.ToDecimal(oldRow.SalesPrice), newSellingPrice);
+                    AddNumericChange(itemChanges, "Unit SP", GetOldPurchaseUnitSP(oldRow), GetCellDecimal(row, "UnitSP"));
+                    AddNumericChange(itemChanges, "Base Cost", GetOldPurchaseBaseCost(oldRow), GetCellDecimal(row, "BaseCost"));
+                    AddNumericChange(itemChanges, "Gross", GetOldPurchaseGross(oldRow), GetCellDecimal(row, "Gross"));
+                    
+                    // Row level net amount: Qty * Cost + TaxAmt
+                    decimal oldNetAmt = Convert.ToDecimal(oldRow.Qty * oldRow.Cost + oldRow.TaxAmt);
+                    AddNumericChange(itemChanges, "Net amount", oldNetAmt, GetCellDecimal(row, "NetAmt"));
+
+                    if (itemChanges.Count > 0)
+                    {
+                        changes.AddRange(itemChanges);
+                        updatedItemNames.Add(FormatItemName(itemName));
+                    }
+                }
+            }
+
+            foreach (var remaining in oldRows)
+            {
+                changes.Add("Removed");
+                updatedItemNames.Add(FormatItemName(remaining.ItemName));
+            }
+
+            if (changes.Count == 0 && updatedItemNames.Count == 0)
+            {
+                changes.Add("No line item change detected");
+            }
+
+            changes.Add($"Net amount = {FormatAmount(netAmount)}");
+
+            var uniqueItemNames = updatedItemNames.Distinct().Select(x => $"\"{x}\"").ToList();
+            string itemHeader = uniqueItemNames.Count > 0
+                ? $"{Environment.NewLine}{string.Join(", ", uniqueItemNames)}"
+                : string.Empty;
+
+            return $"Purchase invoice GRN-{purchaseNo} updated.{itemHeader}{Environment.NewLine}Changes:{Environment.NewLine}- {string.Join(Environment.NewLine + "- ", changes)}";
+        }
+
+        private PurchaseDetails TakeMatchingPurchaseSnapshot(List<PurchaseDetails> oldRows, DataGridViewRow newRow)
+        {
+            if (oldRows == null || oldRows.Count == 0 || newRow == null)
+            {
+                return null;
+            }
+
+            int itemId = GetInt(newRow, "ItemId");
+            string barcode = NormalizeLogKey(GetCellString(newRow, "BarCode"));
+            string itemName = NormalizeLogKey(GetCellString(newRow, "Description"));
+            string unit = NormalizeLogKey(GetCellString(newRow, "Unit"));
+
+            int matchIndex = oldRows.FindIndex(oldRow => itemId > 0 && oldRow.ItemID == itemId);
+
+            if (matchIndex < 0 && !string.IsNullOrWhiteSpace(barcode))
+            {
+                matchIndex = oldRows.FindIndex(oldRow => NormalizeLogKey(oldRow.Barcode) == barcode);
+            }
+
+            if (matchIndex < 0 && !string.IsNullOrWhiteSpace(itemName) && !string.IsNullOrWhiteSpace(unit))
+            {
+                matchIndex = oldRows.FindIndex(oldRow =>
+                    NormalizeLogKey(oldRow.ItemName) == itemName &&
+                    NormalizeLogKey(oldRow.Unit) == unit);
+            }
+
+            if (matchIndex < 0 && !string.IsNullOrWhiteSpace(itemName))
+            {
+                matchIndex = oldRows.FindIndex(oldRow => NormalizeLogKey(oldRow.ItemName) == itemName);
+            }
+
+            if (matchIndex < 0)
+            {
+                return null;
+            }
+
+            PurchaseDetails match = oldRows[matchIndex];
+            oldRows.RemoveAt(matchIndex);
+            return match;
+        }
+
+        private decimal GetOldPurchaseUnitSP(PurchaseDetails oldRow)
+        {
+            if (oldRow == null)
+            {
+                return 0m;
+            }
+
+            float unit1WholeSalePrice = GetWholeSalePriceFromPriceSettings(oldRow.ItemID, 1);
+            if (unit1WholeSalePrice > 0f)
+            {
+                return Convert.ToDecimal(unit1WholeSalePrice);
+            }
+
+            return Convert.ToDecimal(oldRow.WholeSalePrice);
+        }
+
+        private decimal GetOldPurchaseBaseCost(PurchaseDetails oldRow)
+        {
+            if (oldRow == null)
+            {
+                return 0m;
+            }
+
+            decimal cost = Convert.ToDecimal(oldRow.Cost);
+            string taxType = oldRow.TaxType ?? "incl";
+            decimal taxPer = Convert.ToDecimal(oldRow.TaxPer);
+
+            if (string.Equals(taxType, "incl", StringComparison.OrdinalIgnoreCase) && taxPer > 0m)
+            {
+                decimal taxAmtPerUnit = (cost * taxPer) / (100m + taxPer);
+                return cost - taxAmtPerUnit;
+            }
+
+            return cost;
+        }
+
+        private decimal GetOldPurchaseGross(PurchaseDetails oldRow)
+        {
+            if (oldRow == null)
+            {
+                return 0m;
+            }
+
+            decimal amount = Convert.ToDecimal(oldRow.Cost * oldRow.Qty);
+            string taxType = oldRow.TaxType ?? "incl";
+            if (string.Equals(taxType, "incl", StringComparison.OrdinalIgnoreCase))
+            {
+                return amount - Convert.ToDecimal(oldRow.TaxAmt);
+            }
+
+            return 0m;
+        }
+
+        private string NormalizeLogKey(string value)
+        {
+            return (value ?? string.Empty).Trim().ToUpperInvariant();
+        }
+
+        private decimal GetCellDecimal(DataGridViewRow row, string columnName)
+        {
+            if (row == null || row.DataGridView == null || !row.DataGridView.Columns.Contains(columnName))
+            {
+                return 0m;
+            }
+
+            object value = row.Cells[columnName].Value;
+            decimal parsed;
+            return value != null && value != DBNull.Value && decimal.TryParse(Convert.ToString(value), out parsed) ? parsed : 0m;
+        }
+
+        private int GetInt(DataGridViewRow row, string columnName)
+        {
+            return Convert.ToInt32(GetCellDecimal(row, columnName));
+        }
+
+        private string GetCellString(DataGridViewRow row, string columnName)
+        {
+            if (row == null || row.DataGridView == null || !row.DataGridView.Columns.Contains(columnName))
+            {
+                return string.Empty;
+            }
+
+            object value = row.Cells[columnName].Value;
+            return value == null || value == DBNull.Value ? string.Empty : Convert.ToString(value);
+        }
+
+        private string FormatAmount(decimal value)
+        {
+            return value.ToString("0.####");
+        }
+
+        private string FormatTextValue(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? "(blank)" : $"\"{value.Trim()}\"";
+        }
+
+        private string FormatItemName(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? "Item" : value.Trim();
+        }
+
+        private void AddNumericChange(List<string> changes, string caption, decimal oldValue, decimal newValue)
+        {
+            if (Math.Abs(oldValue - newValue) >= 0.0001m)
+            {
+                changes.Add($"{caption} updated from {FormatAmount(oldValue)} to {FormatAmount(newValue)}");
+            }
+        }
+
+        private void AddTextChange(List<string> changes, string caption, string oldValue, string newValue)
+        {
+            oldValue = (oldValue ?? string.Empty).Trim();
+            newValue = (newValue ?? string.Empty).Trim();
+            if (!string.Equals(oldValue, newValue, StringComparison.OrdinalIgnoreCase))
+            {
+                changes.Add($"{caption} updated from {FormatTextValue(oldValue)} to {FormatTextValue(newValue)}");
             }
         }
 

@@ -96,6 +96,19 @@ namespace PosBranch_Win.Master
                     barcode = ItemMaster != null ? ItemMaster.Barcode : string.Empty;
                 }
 
+                // Collect new item fields
+                decimal? quantity = ParseNullableDecimal(txt_qty?.Text);
+                decimal? available = ParseNullableDecimal(txt_available?.Text);
+                decimal? onHold = ParseNullableDecimal(txt_hold?.Text);
+                decimal? reorder = ParseNullableDecimal(textBox13?.Text);
+                int? orderCycleDays = ParseNullableInt(ultraOrderCycle?.Text);
+                int? boxQty = ParseNullableInt(ultraBoxQty?.Text);
+                string itemType = txt_ItemType?.Text?.Trim();
+                string category = txt_Category?.Text?.Trim();
+                string itemGroup = txt_Group?.Text?.Trim();
+                string hsn = textBox4?.Text?.Trim();
+                string itemStatus = GetSelectedItemStatus();
+
                 ItemActivityLogRepository.SaveItemActivity(
                     itemId,
                     itemNo,
@@ -105,7 +118,18 @@ namespace PosBranch_Win.Master
                     activityDetails,
                     ParseNullableDecimal(Txt_UnitCost?.Text),
                     ParseNullableDecimal(txt_Retail?.Text),
-                    ParseNullableDecimal(txt_walkin?.Text));
+                    ParseNullableDecimal(txt_walkin?.Text),
+                    quantity,
+                    available,
+                    onHold,
+                    reorder,
+                    orderCycleDays,
+                    boxQty,
+                    itemType,
+                    category,
+                    itemGroup,
+                    hsn,
+                    itemStatus);
             }
             catch (Exception ex)
             {
@@ -117,6 +141,12 @@ namespace PosBranch_Win.Master
         {
             decimal parsed;
             return decimal.TryParse((value ?? string.Empty).Trim(), out parsed) ? parsed : (decimal?)null;
+        }
+
+        private static int? ParseNullableInt(string value)
+        {
+            int parsed;
+            return int.TryParse((value ?? string.Empty).Trim(), out parsed) ? parsed : (int?)null;
         }
 
         private PriceSnapshot GetCurrentBasePriceSnapshot(int itemId)
@@ -154,19 +184,275 @@ namespace PosBranch_Win.Master
             }
         }
 
-        private string BuildUpdateActivityDetails(PriceSnapshot oldPrice)
+        private string GetOldItemStatus(int itemId)
+        {
+            try
+            {
+                DataTable statusTable = ExecuteStoredProcedureTable(
+                    STOREDPROCEDURE.POS_ItemMasterStatusRules,
+                    CreateSqlParameter("@_Operation", ItemMasterOperationGetStatus),
+                    CreateSqlParameter("@ItemId", itemId));
+
+                if (statusTable.Rows.Count > 0)
+                {
+                    return statusTable.Rows[0]["StatusName"]?.ToString() ?? "Active";
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error getting old status for log: {ex.Message}");
+            }
+            return "Active";
+        }
+
+        private string BuildSaveActivityDetails()
+        {
+            var details = new List<string>();
+            
+            string itemName = txt_description?.Text?.Trim() ?? string.Empty;
+            string barcode = string.Empty;
+            try
+            {
+                var txtBarcodeCtrl = this.Controls.Find("txt_barcode", true).FirstOrDefault() as TextBox;
+                barcode = txtBarcodeCtrl != null ? (txtBarcodeCtrl.Text ?? string.Empty).Trim() : string.Empty;
+            }
+            catch { }
+
+            details.Add($"- Item Name: {itemName}");
+            
+            string baseUnit = txt_BaseUnit?.Text?.Trim() ?? string.Empty;
+            if (!string.IsNullOrEmpty(baseUnit)) details.Add($"- Base Unit: {baseUnit}");
+
+            string itemType = txt_ItemType?.Text?.Trim() ?? string.Empty;
+            if (!string.IsNullOrEmpty(itemType)) details.Add($"- Item Type: {itemType}");
+
+            string category = txt_Category?.Text?.Trim() ?? string.Empty;
+            if (!string.IsNullOrEmpty(category)) details.Add($"- Category: {category}");
+
+            string group = txt_Group?.Text?.Trim() ?? string.Empty;
+            if (!string.IsNullOrEmpty(group)) details.Add($"- Group: {group}");
+
+            string hsn = textBox4?.Text?.Trim() ?? string.Empty;
+            if (!string.IsNullOrEmpty(hsn)) details.Add($"- HSN: {hsn}");
+
+            decimal? unitCost = ParseNullableDecimal(Txt_UnitCost?.Text);
+            if (unitCost.HasValue) details.Add($"- Unit Cost: {FormatPrice(unitCost.Value)}");
+
+            decimal? retailPrice = ParseNullableDecimal(txt_Retail?.Text);
+            if (retailPrice.HasValue) details.Add($"- Retail Price: {FormatPrice(retailPrice.Value)}");
+
+            decimal? walkinPrice = ParseNullableDecimal(txt_walkin?.Text);
+            if (walkinPrice.HasValue) details.Add($"- Walkin Price: {FormatPrice(walkinPrice.Value)}");
+
+            string status = GetSelectedItemStatus() ?? "Active";
+            details.Add($"- Item Status: {status}");
+
+            // Include any added units in ultraGrid1/Ult_Price
+            try
+            {
+                DataGridView currentGrid = ConvertUltPriceToDataGridView();
+                if (currentGrid != null)
+                {
+                    foreach (DataGridViewRow row in currentGrid.Rows)
+                    {
+                        string unitName = row.Cells["Unit"].Value?.ToString()?.Trim() ?? string.Empty;
+                        if (string.IsNullOrEmpty(unitName) || string.Equals(unitName, baseUnit, StringComparison.OrdinalIgnoreCase)) continue;
+
+                        decimal newPacking = ParseNullableDecimal(row.Cells["Packing"].Value?.ToString()) ?? 1m;
+                        decimal newCost = ParseNullableDecimal(row.Cells["Cost"].Value?.ToString()) ?? 0m;
+                        decimal newRetail = ParseNullableDecimal(row.Cells["RetailPrice"].Value?.ToString()) ?? 0m;
+                        decimal newWalkin = ParseNullableDecimal(row.Cells["WholeSalePrice"].Value?.ToString()) ?? 0m;
+
+                        details.Add($"- Added Unit '{unitName}': Packing = {newPacking}, Cost = {FormatPrice(newCost)}, Retail Price = {FormatPrice(newRetail)}, Walkin Price = {FormatPrice(newWalkin)}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to load added units for save log: {ex.Message}");
+            }
+
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine($"Item '{itemName}' (Barcode: {barcode}) created.");
+            sb.AppendLine("Details:");
+            foreach (var detail in details)
+            {
+                sb.AppendLine(detail);
+            }
+            return sb.ToString().TrimEnd();
+        }
+
+        private string BuildUpdateActivityDetails(ItemGet oldItem, string oldStatus, PriceSnapshot oldPrice)
         {
             var changes = new List<string>();
+
             AddPriceChange(changes, "Unit Cost", oldPrice?.UnitCost, ParseNullableDecimal(Txt_UnitCost?.Text));
             AddPriceChange(changes, "Retail Price", oldPrice?.RetailPrice, ParseNullableDecimal(txt_Retail?.Text));
             AddPriceChange(changes, "Walkin Price", oldPrice?.WalkinPrice, ParseNullableDecimal(txt_walkin?.Text));
 
-            if (changes.Count == 0)
+            bool nameChanged = false;
+            string oldName = string.Empty;
+            string newName = string.Empty;
+
+            try
             {
-                return "Item updated from item master. No price change detected.";
+                if (oldItem != null)
+                {
+                    string newDesc = txt_description?.Text?.Trim() ?? string.Empty;
+                    string oldDesc = oldItem.Description?.Trim() ?? string.Empty;
+                    if (newDesc != oldDesc)
+                    {
+                        nameChanged = true;
+                        oldName = oldDesc;
+                        newName = newDesc;
+                    }
+
+                    string newBaseUnit = txt_BaseUnit?.Text?.Trim() ?? string.Empty;
+                    string oldBaseUnit = oldItem.UnitName?.Trim() ?? string.Empty;
+                    if (newBaseUnit != oldBaseUnit)
+                    {
+                        changes.Add($"Base Unit changed from '{oldBaseUnit}' to '{newBaseUnit}'");
+                    }
+
+                    string newType = txt_ItemType?.Text?.Trim() ?? string.Empty;
+                    string oldType = oldItem.ItemType?.Trim() ?? string.Empty;
+                    if (newType != oldType)
+                    {
+                        changes.Add($"Item Type changed from '{oldType}' to '{newType}'");
+                    }
+
+                    string newCategory = txt_Category?.Text?.Trim() ?? string.Empty;
+                    string oldCategory = oldItem.CategoryName?.Trim() ?? string.Empty;
+                    if (newCategory != oldCategory)
+                    {
+                        changes.Add($"Category changed from '{oldCategory}' to '{newCategory}'");
+                    }
+
+                    string newGroup = txt_Group?.Text?.Trim() ?? string.Empty;
+                    string oldGroup = oldItem.GroupName?.Trim() ?? string.Empty;
+                    if (newGroup != oldGroup)
+                    {
+                        changes.Add($"Group changed from '{oldGroup}' to '{newGroup}'");
+                    }
+
+                    string newHsn = textBox4?.Text?.Trim() ?? string.Empty;
+                    string oldHsn = oldItem.HSNCode?.Trim() ?? string.Empty;
+                    if (newHsn != oldHsn)
+                    {
+                        changes.Add($"HSN changed from '{oldHsn}' to '{newHsn}'");
+                    }
+
+                    string newStatus = GetSelectedItemStatus() ?? string.Empty;
+                    if (newStatus != oldStatus)
+                    {
+                        changes.Add($"Item Status changed from '{oldStatus}' to '{newStatus}'");
+                    }
+
+                    // Compare UOM Grid / Price Grid changes in ultraGrid1/Ult_Price
+                    DataGridView currentGrid = ConvertUltPriceToDataGridView();
+                    if (currentGrid != null && oldItem.List != null)
+                    {
+                        var matchedOldUnits = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                        foreach (DataGridViewRow row in currentGrid.Rows)
+                        {
+                            string unitName = row.Cells["Unit"].Value?.ToString()?.Trim() ?? string.Empty;
+                            if (string.IsNullOrEmpty(unitName)) continue;
+
+                            decimal newPacking = ParseNullableDecimal(row.Cells["Packing"].Value?.ToString()) ?? 1m;
+                            decimal newCost = ParseNullableDecimal(row.Cells["Cost"].Value?.ToString()) ?? 0m;
+                            decimal newRetail = ParseNullableDecimal(row.Cells["RetailPrice"].Value?.ToString()) ?? 0m;
+                            decimal newWalkin = ParseNullableDecimal(row.Cells["WholeSalePrice"].Value?.ToString()) ?? 0m;
+
+                            var oldSetting = oldItem.List.FirstOrDefault(x => string.Equals(x.Unit?.Trim(), unitName, StringComparison.OrdinalIgnoreCase));
+                            if (oldSetting != null)
+                            {
+                                matchedOldUnits.Add(unitName);
+
+                                // Compare Packing
+                                decimal oldPacking = Convert.ToDecimal(oldSetting.Packing);
+                                if (Math.Abs(oldPacking - newPacking) > 0.0001m)
+                                {
+                                    changes.Add($"Unit '{unitName}' Packing changed from {oldPacking} to {newPacking}");
+                                }
+
+                                // Compare Cost
+                                decimal oldCost = Convert.ToDecimal(oldSetting.Cost);
+                                if (Math.Abs(oldCost - newCost) > 0.0001m)
+                                {
+                                    changes.Add($"Unit '{unitName}' Cost changed from {FormatPrice(oldCost)} to {FormatPrice(newCost)}");
+                                }
+
+                                // Compare Retail Price (WholeSalePrice in DB)
+                                decimal oldRetail = Convert.ToDecimal(oldSetting.WholeSalePrice);
+                                if (Math.Abs(oldRetail - newRetail) > 0.0001m)
+                                {
+                                    changes.Add($"Unit '{unitName}' Retail Price changed from {FormatPrice(oldRetail)} to {FormatPrice(newRetail)}");
+                                }
+
+                                // Compare Walkin Price (RetailPrice in DB)
+                                decimal oldWalkin = Convert.ToDecimal(oldSetting.RetailPrice);
+                                if (Math.Abs(oldWalkin - newWalkin) > 0.0001m)
+                                {
+                                    changes.Add($"Unit '{unitName}' Walkin Price changed from {FormatPrice(oldWalkin)} to {FormatPrice(newWalkin)}");
+                                }
+                            }
+                            else
+                            {
+                                changes.Add($"Added Unit '{unitName}': Packing = {newPacking}, Cost = {FormatPrice(newCost)}, Retail Price = {FormatPrice(newRetail)}, Walkin Price = {FormatPrice(newWalkin)}");
+                            }
+                        }
+
+                        // Check for deleted units
+                        foreach (var oldSetting in oldItem.List)
+                        {
+                            string oldUnit = oldSetting.Unit?.Trim();
+                            if (!string.IsNullOrEmpty(oldUnit) && !matchedOldUnits.Contains(oldUnit))
+                            {
+                                changes.Add($"Removed Unit '{oldUnit}'");
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to retrieve old item details for activity log comparison: {ex.Message}");
             }
 
-            return string.Join("; ", changes) + ".";
+            if (changes.Count == 0 && !nameChanged)
+            {
+                return "Item updated from item master. No change detected.";
+            }
+
+            string itemNameHeader = txt_description?.Text?.Trim() ?? string.Empty;
+            string barcodeHeader = string.Empty;
+            try
+            {
+                var txtBarcodeCtrl = this.Controls.Find("txt_barcode", true).FirstOrDefault() as TextBox;
+                barcodeHeader = txtBarcodeCtrl != null ? (txtBarcodeCtrl.Text ?? string.Empty).Trim() : string.Empty;
+            }
+            catch { }
+
+            StringBuilder sb = new StringBuilder();
+            if (nameChanged)
+            {
+                sb.AppendLine($"Item '{oldName}' changed to '{newName}' (Barcode: {barcodeHeader})");
+            }
+            else
+            {
+                sb.AppendLine($"Item '{itemNameHeader}' (Barcode: {barcodeHeader}) updated.");
+            }
+
+            if (changes.Count > 0)
+            {
+                sb.AppendLine("Changes:");
+                foreach (var change in changes)
+                {
+                    sb.AppendLine($"- {change}");
+                }
+            }
+            return sb.ToString().TrimEnd();
         }
 
         private static void AddPriceChange(List<string> changes, string label, decimal? oldValue, decimal? newValue)
@@ -7217,7 +7503,7 @@ namespace PosBranch_Win.Master
                 if (!string.IsNullOrEmpty(Message) && Message.StartsWith("Success"))
                 {
                     TryPersistItemStatusForCurrentItem(true);
-                    LogItemActivity("SAVE", "Item saved from item master before opening stock adjustment.");
+                    LogItemActivity("SAVE", BuildSaveActivityDetails());
 
                     // Raise event to notify other forms that item was updated
                     if (ItemMaster.ItemId > 0)
@@ -7767,7 +8053,7 @@ namespace PosBranch_Win.Master
                 if (!string.IsNullOrEmpty(Message) && Message.StartsWith("Success"))
                 {
                     TryPersistItemStatusForCurrentItem(true);
-                    LogItemActivity("SAVE", "Item saved from item master.");
+                    LogItemActivity("SAVE", BuildSaveActivityDetails());
 
                     // Raise event to notify other forms that item was updated
                     if (ItemMaster.ItemId > 0)
@@ -8142,12 +8428,14 @@ namespace PosBranch_Win.Master
 
             // Get Ult_Price data and convert to DataGridView for backward compatibility
             DataGridView tempPriceGrid = ConvertUltPriceToDataGridView();
+            ItemGet oldItemSnapshot = ItemRepository.GetByIdItem(currentItemId);
+            string oldStatusSnapshot = GetOldItemStatus(currentItemId);
             PriceSnapshot oldPriceSnapshot = GetCurrentBasePriceSnapshot(currentItemId);
             string Message = ItemRepository.UpdateItemMaster(ItemMaster, ItemPriceSettings, UomDataGridView, tempPriceGrid, GetAlternativeBarcodesDataGridView());
             if (!string.IsNullOrEmpty(Message) && Message.StartsWith("Success"))
             {
                 TryPersistItemStatusForCurrentItem(true);
-                LogItemActivity("UPDATE", BuildUpdateActivityDetails(oldPriceSnapshot));
+                LogItemActivity("UPDATE", BuildUpdateActivityDetails(oldItemSnapshot, oldStatusSnapshot, oldPriceSnapshot));
 
                 // Raise event to notify other forms that item was updated
                 if (ItemMaster.ItemId > 0)

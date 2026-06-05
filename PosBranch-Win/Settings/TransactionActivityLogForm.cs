@@ -437,6 +437,16 @@ namespace PosBranch_Win.Settings
             SetColumn("Cost", "Cost", 90);
             SetColumn("Unit", "Unit", 80);
             SetColumn("Barcode", "Barcode", 135);
+            SetColumn("SPrice", "S/Price", 90);
+            SetColumn("TaxAmt", "TaxAmt", 90);
+            SetColumn("TaxPer", "Tax %", 80);
+            SetColumn("BaseAmount", "BaseAmount", 110);
+            SetColumn("Packing", "Packing", 80);
+            SetColumn("RetailPrice", "Retail Price", 95);
+            SetColumn("Free", "Free", 70);
+            SetColumn("UnitSP", "Unit SP", 90);
+            SetColumn("TaxType", "Tax Type", 90);
+            SetColumn("Gross", "Gross", 95);
             SetColumn("ActivityDetails", "Details", 420);
             SetColumn("CompanyId", "Company", 80);
             SetColumn("BranchId", "Branch", 75);
@@ -447,6 +457,35 @@ namespace PosBranch_Win.Settings
             HideColumn("CompanyId");
             HideColumn("BranchId");
             HideColumn("FinYearId");
+
+            if (logType == "Sales")
+            {
+                HideColumn("Packing");
+                HideColumn("RetailPrice");
+                HideColumn("Free");
+                HideColumn("UnitSP");
+                HideColumn("TaxType");
+                HideColumn("Gross");
+            }
+            else if (logType == "Purchase")
+            {
+                SetColumn("SPrice", "Selling Price", 100);
+                SetColumn("BaseAmount", "Base Cost", 110);
+            }
+            else
+            {
+                HideColumn("SPrice");
+                HideColumn("TaxAmt");
+                HideColumn("TaxPer");
+                HideColumn("BaseAmount");
+                HideColumn("Packing");
+                HideColumn("RetailPrice");
+                HideColumn("Free");
+                HideColumn("UnitSP");
+                HideColumn("TaxType");
+                HideColumn("Gross");
+            }
+
             EnsureDetailsButtonColumn();
 
             if (gridActivity.Columns.Contains("CreatedOn"))
@@ -454,7 +493,7 @@ namespace PosBranch_Win.Settings
                 gridActivity.Columns["CreatedOn"].DefaultCellStyle.Format = "dd MMM yyyy hh:mm tt";
             }
 
-            foreach (string numericColumn in new[] { "NetAmount", "Qty", "Cost" })
+            foreach (string numericColumn in new[] { "NetAmount", "Qty", "Cost", "SPrice", "TaxAmt", "TaxPer", "BaseAmount", "Packing", "RetailPrice", "Free", "UnitSP", "Gross" })
             {
                 if (gridActivity.Columns.Contains(numericColumn))
                 {
