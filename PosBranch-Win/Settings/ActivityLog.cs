@@ -20,6 +20,8 @@ namespace PosBranch_Win.Settings
         private bool applyButtonHot;
         private bool applyButtonPressed;
         private DataTable currentData;
+        private System.Windows.Forms.Timer _pollTimer;
+        private int _lastKnownMaxLogId = 0;
 
         public ActivityLog()
         {
@@ -36,9 +38,17 @@ namespace PosBranch_Win.Settings
 
             // Subscribe to real-time item save/update notifications
             frmItemMasterNew.OnItemMasterUpdated += OnItemSavedOrUpdated;
+
+            // Poll DB every 10 seconds for cross-counter/cross-session real-time refresh
+            _pollTimer = new System.Windows.Forms.Timer { Interval = 10000 };
+            _pollTimer.Tick += PollForNewActivityLogs;
+            _pollTimer.Start();
+
             this.FormClosed += (s, args) =>
             {
                 frmItemMasterNew.OnItemMasterUpdated -= OnItemSavedOrUpdated;
+                _pollTimer?.Stop();
+                _pollTimer?.Dispose();
             };
         }
 
@@ -52,6 +62,39 @@ namespace PosBranch_Win.Settings
                 return;
             }
             LoadActivityLog();
+        }
+
+        private int GetCurrentMaxLogId()
+        {
+            try
+            {
+                using (var repo = new ItemActivityLogRepository())
+                {
+                    return repo.GetLatestActivityLogId();
+                }
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
+        private void PollForNewActivityLogs(object sender, EventArgs e)
+        {
+            if (this.IsDisposed || !this.IsHandleCreated) return;
+            try
+            {
+                int latestId = GetCurrentMaxLogId();
+                if (latestId > 0 && latestId > _lastKnownMaxLogId)
+                {
+                    _lastKnownMaxLogId = latestId;
+                    LoadActivityLog();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ActivityLog poll error: {ex.Message}");
+            }
         }
 
         private void cmbQuickDate_SelectedIndexChanged(object sender, EventArgs e)
@@ -150,6 +193,12 @@ namespace PosBranch_Win.Settings
                 ConfigureGridColumns();
                 UpdateSummaryCards();
                 lblShowing.Text = $"Showing {currentData.Rows.Count} record(s)";
+
+                int maxId = GetCurrentMaxLogId();
+                if (maxId > 0)
+                {
+                    _lastKnownMaxLogId = maxId;
+                }
             }
             catch (Exception ex)
             {

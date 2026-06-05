@@ -237,6 +237,31 @@ ORDER BY CreatedOn DESC, ItemActivityLogId DESC;", (SqlConnection)DataConnection
             return result;
         }
 
+        public int GetLatestActivityLogId()
+        {
+            try
+            {
+                if (DataConnection.State != ConnectionState.Open)
+                {
+                    DataConnection.Open();
+                }
+
+                EnsureItemActivityLogTable();
+
+                using (SqlCommand cmd = new SqlCommand("SELECT ISNULL(MAX(ItemActivityLogId), 0) FROM dbo.ItemActivityLog", (SqlConnection)DataConnection))
+                {
+                    object result = cmd.ExecuteScalar();
+                    return result == null || result == DBNull.Value ? 0 : Convert.ToInt32(result);
+                }
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                {
+                    DataConnection.Close();
+                }
+            }
+        }
 
         public DataTable GetItemActivityUsers()
         {
