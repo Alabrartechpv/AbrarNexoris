@@ -467,6 +467,30 @@
     <Compile Include="Accounts\FrmReceipt.Designer.cs">
       <DependentUpon>FrmReceipt.cs</DependentUpon>
     </Compile>
+    <Compile Include="Accounts\FrmGeneralPayment.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Accounts\FrmGeneralPayment.Designer.cs">
+      <DependentUpon>FrmGeneralPayment.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Accounts\FrmGeneralReceipt.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Accounts\FrmGeneralReceipt.Designer.cs">
+      <DependentUpon>FrmGeneralReceipt.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Accounts\FrmGeneralVoucherHistory.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Accounts\FrmGeneralVoucherHistory.Designer.cs">
+      <DependentUpon>FrmGeneralVoucherHistory.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Accounts\FrmBankReconciliation.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Accounts\FrmBankReconciliation.Designer.cs">
+      <DependentUpon>FrmBankReconciliation.cs</DependentUpon>
+    </Compile>
     <Compile Include="Accounts\FrmVendor.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1054,6 +1078,12 @@
     <Compile Include="Reports\SalesReports\frmSalesProfit.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Reports\SalesReports\frmCounterReport.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reports\SalesReports\frmCounterReport.Designer.cs">
+      <DependentUpon>frmCounterReport.cs</DependentUpon>
+    </Compile>
     <Compile Include="Reports\SalesReports\frmSalesmanIncentiveReport.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1223,6 +1253,9 @@
     </Compile>
     <EmbeddedResource Include="Accounts\FrmAccountGroup.resx">
       <DependentUpon>FrmAccountGroup.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Accounts\FrmBankReconciliation.resx">
+      <DependentUpon>FrmBankReconciliation.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Accounts\FrmContra.resx">
       <DependentUpon>FrmContra.cs</DependentUpon>
@@ -1535,6 +1568,9 @@
     <EmbeddedResource Include="Reports\SalesReports\frmSalesProfit.resx">
       <DependentUpon>frmSalesProfit.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Reports\SalesReports\frmCounterReport.resx">
+      <DependentUpon>frmCounterReport.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ReportViewer.resx">
       <DependentUpon>ReportViewer.cs</DependentUpon>
     </EmbeddedResource>
@@ -1735,6 +1771,11 @@
     <None Include="Resources\balance.png" />
     <None Include="Resources\balance1.png" />
     <None Include="Resources\cash-on-delivery1.png" />
+    <None Include="Resources\bank1.png" />
+    <None Include="Resources\cashless-payment.png" />
+    <None Include="Resources\bill %281%29.png" />
+    <None Include="Resources\bank2.png" />
+    <None Include="Resources\accounting.png" />
     <Content Include="Resources\color-selection.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -1749,6 +1790,8 @@
     <None Include="Resources\profit-and-loss.png" />
     <None Include="Resources\scale.png" />
     <None Include="Resources\report1.png" />
+    <None Include="Resources\payment-method.png" />
+    <None Include="Resources\payment-method1.png" />
     <Content Include="Resources\splash_logo.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

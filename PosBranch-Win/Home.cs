@@ -70,6 +70,7 @@ namespace PosBranch_Win
             new ReportNavigatorDefinition("Sales", "Sales Profit", "SalesProfit"),
             new ReportNavigatorDefinition("Sales", "Salesman Incentive Report", "SalesmanIncentiveReport"),
             new ReportNavigatorDefinition("Sales", "Daily Sales", "DSales"),
+            new ReportNavigatorDefinition("Sales", "Counter Report", "CounterReport"),
             new ReportNavigatorDefinition("Purchase", "Purchase Details", "Purchase Details"),
             new ReportNavigatorDefinition("Purchase", "Purchase Return Report", "PurchaseReturn"),
             new ReportNavigatorDefinition("Customer", "Customer Outstanding Listing", "CustomerOutstandingReport"),
@@ -93,6 +94,8 @@ namespace PosBranch_Win
         public Home()
         {
             InitializeComponent();
+
+            // Ribbon tools are now serialized in the designer (Home.Designer.cs)
 
             // UltraTabControl doesn't need DrawItem handler as it has built-in styling
 
@@ -1874,6 +1877,21 @@ namespace PosBranch_Win
                 Accounts.FrmPayment payment = new FrmPayment();
                 OpenFormInTab(payment, "Payment");
             }
+            if (e.Tool.Key == "GeneralPayment")
+            {
+                Accounts.FrmGeneralPayment payment = new FrmGeneralPayment();
+                OpenFormInTab(payment, "General Payment");
+            }
+            if (e.Tool.Key == "GeneralReceipt")
+            {
+                Accounts.FrmGeneralReceipt receipt = new FrmGeneralReceipt();
+                OpenFormInTab(receipt, "General Receipt");
+            }
+            if (e.Tool.Key == "BankReconciliation")
+            {
+                Accounts.FrmBankReconciliation bankRecon = new FrmBankReconciliation();
+                OpenFormInTab(bankRecon, "Bank Reconciliation");
+            }
             if (e.Tool.Key == "Contra")
             {
                 Accounts.FrmContra contra = new FrmContra();
@@ -2079,6 +2097,11 @@ namespace PosBranch_Win
             {
                 frmSales_RPT salesRptv = new frmSales_RPT();
                 OpenFormInTab(salesRptv, "Daily Sales Report");
+            }
+            if (e.Tool.Key == "CounterReport")
+            {
+                Reports.SalesReports.frmCounterReport frmCounterReport = new Reports.SalesReports.frmCounterReport();
+                OpenFormInTab(frmCounterReport, "Counter Report");
             }
 
             // Activity Log
@@ -3671,7 +3694,8 @@ namespace PosBranch_Win
                     keyToExecute == "AuditTrail" ||
                     keyToExecute == "VendorDNPaymentReport" ||
                     keyToExecute == "CustomerReceiptReport" ||
-                    keyToExecute == "SalesmanIncentiveReport")
+                    keyToExecute == "SalesmanIncentiveReport" ||
+                    keyToExecute == "CounterReport")
                 {
                     Infragistics.Win.UltraWinToolbars.ToolBase toolToExecute;
 
@@ -3707,5 +3731,10 @@ namespace PosBranch_Win
         }
 
         #endregion
+
+        private void ultraTabSharedControlsPage1_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
     }
 }

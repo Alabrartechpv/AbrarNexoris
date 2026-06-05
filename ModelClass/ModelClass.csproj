@@ -83,6 +83,7 @@
     <Compile Include="Report\PurchaseReportMaster.cs" />
     <Compile Include="Report\PurchaseReturnReport.cs" />
     <Compile Include="Report\Reports.cs" />
+    <Compile Include="Report\CounterReportModel.cs" />
     <Compile Include="Report\SalesReturnReport.cs" />
     <Compile Include="Report\StockReportAdvanceModel.cs" />
     <Compile Include="Report\TradingPLModel.cs" />
@@ -98,6 +99,8 @@
     <Compile Include="SessionContext.cs" />
     <Compile Include="Settings\POSSetting.cs" />
     <Compile Include="SessionContextExtensions.cs" />
+    <Compile Include="TransactionModels\GeneralVoucherModel.cs" />
+    <Compile Include="TransactionModels\BankReconciliationModel.cs" />
     <Compile Include="TransactionModels\HoldItemDetails.cs" />
     <Compile Include="TransactionModels\JournalVoucherModel.cs" />
     <Compile Include="TransactionModels\PurchaseModel.cs" />

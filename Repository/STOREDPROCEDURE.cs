@@ -67,6 +67,7 @@ namespace Repository
         public const string _POS_DayBook = "POS_DayBook";
         public static string POS_ShiftClosing = "POS_ShiftClosing";
         public static string POS_ShiftClosingDenominations = "POS_ShiftClosingDenominations";
+        public static string POS_CounterReport = "POS_CounterReport";
         public static string _POS_Opening_Stock = "_POS_Opening_Stock";
         public static string _CreditNoteMaster = "_CreditNoteMaster";
         public static string _CreditNoteDetails = "_CreditNoteDetails";
@@ -103,6 +104,8 @@ namespace Repository
         public static string _VendorPaymentReport = "_VendorPaymentReport";
         public static string _POS_GetSmartReorderSuggestions = "_POS_GetSmartReorderSuggestions";
         public static string _POS_CalculateReorderStats = "_POS_CalculateReorderStats";
+        public static string POS_GetGeneralVoucherHistory = "POS_GetGeneralVoucherHistory";
+        public static string POS_BankReconciliation = "POS_BankReconciliation";
 
         #endregion
 
