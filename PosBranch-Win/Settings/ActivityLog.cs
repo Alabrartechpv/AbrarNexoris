@@ -1,6 +1,7 @@
 using Repository.SettingsRepo;
 using Infragistics.Win;
 using Infragistics.Win.UltraWinEditors;
+using PosBranch_Win.Master;
 using System;
 using System.Data;
 using System.Drawing;
@@ -31,6 +32,25 @@ namespace PosBranch_Win.Settings
             LoadFilterLists();
             cmbQuickDate.Text = "Today";
             ApplyQuickDate();
+            LoadActivityLog();
+
+            // Subscribe to real-time item save/update notifications
+            frmItemMasterNew.OnItemMasterUpdated += OnItemSavedOrUpdated;
+            this.FormClosed += (s, args) =>
+            {
+                frmItemMasterNew.OnItemMasterUpdated -= OnItemSavedOrUpdated;
+            };
+        }
+
+        private void OnItemSavedOrUpdated(int itemId)
+        {
+            // Marshal back to UI thread safely
+            if (this.IsDisposed || !this.IsHandleCreated) return;
+            if (this.InvokeRequired)
+            {
+                this.BeginInvoke(new Action(() => OnItemSavedOrUpdated(itemId)));
+                return;
+            }
             LoadActivityLog();
         }
 
@@ -341,8 +361,39 @@ namespace PosBranch_Win.Settings
             {
                 details = "No additional details available for this log entry.";
             }
+            else
+            {
+                details = FilterActivityDetails(details);
+            }
 
             MessageBox.Show(details, "Activity Details", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        /// <summary>
+        /// Strips display lines that should not be shown to the user,
+        /// such as per-unit Retail Price and Walkin Price change lines
+        /// that were logged in older records before the fix.
+        /// </summary>
+        private static string FilterActivityDetails(string details)
+        {
+            if (string.IsNullOrWhiteSpace(details)) return details;
+
+            var lines = details.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            var filtered = new StringBuilder();
+            foreach (var line in lines)
+            {
+                // Skip per-unit Retail Price and Walkin Price change lines
+                // e.g. "- Unit 'UNIT' Retail Price changed from X to Y"
+                //      "- Unit 'UNIT' Walkin Price changed from X to Y"
+                string trimmed = line.TrimStart('-', ' ');
+                if (trimmed.StartsWith("Unit '", StringComparison.OrdinalIgnoreCase) &&
+                    (trimmed.Contains("Retail Price changed") || trimmed.Contains("Walkin Price changed")))
+                {
+                    continue;
+                }
+                filtered.AppendLine(line);
+            }
+            return filtered.ToString().TrimEnd();
         }
 
         private void StyleActionButtons()

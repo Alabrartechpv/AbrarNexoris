@@ -197,8 +197,31 @@ namespace PosBranch_Win.Settings
                 {
                     details = "No additional details available.";
                 }
+                else
+                {
+                    details = FilterActivityDetails(details);
+                }
                 MessageBox.Show(details, "Activity Details", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
+        }
+
+        private static string FilterActivityDetails(string details)
+        {
+            if (string.IsNullOrWhiteSpace(details)) return details;
+
+            var lines = details.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            var filtered = new System.Text.StringBuilder();
+            foreach (var line in lines)
+            {
+                string trimmed = line.TrimStart('-', ' ');
+                if (trimmed.StartsWith("Unit '", StringComparison.OrdinalIgnoreCase) &&
+                    (trimmed.Contains("Retail Price changed") || trimmed.Contains("Walkin Price changed")))
+                {
+                    continue;
+                }
+                filtered.AppendLine(line);
+            }
+            return filtered.ToString().TrimEnd();
         }
     }
 }

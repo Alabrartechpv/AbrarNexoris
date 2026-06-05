@@ -130,6 +130,9 @@ namespace PosBranch_Win.Master
                     itemGroup,
                     hsn,
                     itemStatus);
+
+                // Notify any open ActivityLog window to refresh in real-time
+                OnItemMasterUpdated?.Invoke(itemId);
             }
             catch (Exception ex)
             {
@@ -381,20 +384,6 @@ namespace PosBranch_Win.Master
                                 if (Math.Abs(oldCost - newCost) > 0.0001m)
                                 {
                                     changes.Add($"Unit '{unitName}' Cost changed from {FormatPrice(oldCost)} to {FormatPrice(newCost)}");
-                                }
-
-                                // Compare Retail Price (WholeSalePrice in DB)
-                                decimal oldRetail = Convert.ToDecimal(oldSetting.WholeSalePrice);
-                                if (Math.Abs(oldRetail - newRetail) > 0.0001m)
-                                {
-                                    changes.Add($"Unit '{unitName}' Retail Price changed from {FormatPrice(oldRetail)} to {FormatPrice(newRetail)}");
-                                }
-
-                                // Compare Walkin Price (RetailPrice in DB)
-                                decimal oldWalkin = Convert.ToDecimal(oldSetting.RetailPrice);
-                                if (Math.Abs(oldWalkin - newWalkin) > 0.0001m)
-                                {
-                                    changes.Add($"Unit '{unitName}' Walkin Price changed from {FormatPrice(oldWalkin)} to {FormatPrice(newWalkin)}");
                                 }
                             }
                             else
