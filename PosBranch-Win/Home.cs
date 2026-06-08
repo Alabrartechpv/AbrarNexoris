@@ -1466,6 +1466,13 @@ namespace PosBranch_Win
                 return;
             }
 
+            if (toolKey == "BusinessSummary")
+            {
+                Settings.FinalAnalysis finalAnalysis = new Settings.FinalAnalysis();
+                OpenFormInTabSafe(finalAnalysis, "Business Summary");
+                return;
+            }
+
             // Map aliases to permission keys
             string permissionKey = toolKey;
             if (toolKey == "Roles") permissionKey = "RolePermissions";

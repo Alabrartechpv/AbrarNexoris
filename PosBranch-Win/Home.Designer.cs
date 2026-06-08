@@ -69,6 +69,7 @@ namespace PosBranch_Win
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool126 = new Infragistics.Win.UltraWinToolbars.ButtonTool("ReOrder");
             Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup12 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("Dashboard");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolOverviewInstance = new Infragistics.Win.UltraWinToolbars.ButtonTool("Overview");
+            Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolBusinessSummaryHome = new Infragistics.Win.UltraWinToolbars.ButtonTool("BusinessSummary");
             Infragistics.Win.UltraWinToolbars.RibbonTab ribbonTab2 = new Infragistics.Win.UltraWinToolbars.RibbonTab("ribbon1");
             Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup13 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("Company");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool13 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Company");
@@ -320,6 +321,7 @@ namespace PosBranch_Win
             Infragistics.Win.Appearance appearance80 = new Infragistics.Win.Appearance();
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolOverview = new Infragistics.Win.UltraWinToolbars.ButtonTool("Overview");
             Infragistics.Win.Appearance appearance81 = new Infragistics.Win.Appearance();
+            Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolBusinessSummary = new Infragistics.Win.UltraWinToolbars.ButtonTool("BusinessSummary");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool131 = new Infragistics.Win.UltraWinToolbars.ButtonTool("ActivityLog ");
             Infragistics.Win.Appearance appearance82 = new Infragistics.Win.Appearance();
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool132 = new Infragistics.Win.UltraWinToolbars.ButtonTool("ButtonTool6");
@@ -503,7 +505,7 @@ namespace PosBranch_Win
             buttonTool120.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             ribbonGroup5.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonTool120});
-            ribbonGroup6.Caption = "F12";
+            ribbonGroup6.Caption = "Ctrl+B";
             buttonTool124.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             ribbonGroup6.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonTool124});
@@ -532,8 +534,10 @@ namespace PosBranch_Win
             ribbonGroup12.Caption = "Dashboard";
             buttonToolOverviewInstance.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonToolOverviewInstance.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
+            buttonToolBusinessSummaryHome.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             ribbonGroup12.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
-            buttonToolOverviewInstance});
+            buttonToolOverviewInstance,
+            buttonToolBusinessSummaryHome});
             ribbonTab1.Groups.AddRange(new Infragistics.Win.UltraWinToolbars.RibbonGroup[] {
             ribbonGroup1,
             ribbonGroup2,
@@ -762,7 +766,7 @@ namespace PosBranch_Win
             buttonTool110.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             ribbonGroup31.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonTool110});
-            ribbonGroup32.Caption = "ribbonGroup1";
+            ribbonGroup32.Caption = "Ctrl+A";
             buttonTool43.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             ribbonGroup32.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonTool43});
@@ -1059,6 +1063,9 @@ namespace PosBranch_Win
             buttonToolOverview.SharedPropsInternal.Caption = "Overview";
             buttonToolOverview.SharedPropsInternal.DisplayStyle = Infragistics.Win.UltraWinToolbars.ToolDisplayStyle.ImageAndText;
             buttonToolOverview.SharedPropsInternal.ToolTipTitle = "Business Dashboard";
+            buttonToolBusinessSummary.SharedPropsInternal.Caption = "Business Summary";
+            buttonToolBusinessSummary.SharedPropsInternal.DisplayStyle = Infragistics.Win.UltraWinToolbars.ToolDisplayStyle.ImageAndText;
+            buttonToolBusinessSummary.SharedPropsInternal.ToolTipTitle = "Final Analysis - Business Summary";
             appearance82.Image = ((object)(resources.GetObject("appearance82.Image")));
             buttonTool131.SharedPropsInternal.AppearancesLarge.Appearance = appearance82;
             buttonTool131.SharedPropsInternal.Caption = "ActivityLog ";
@@ -1161,6 +1168,7 @@ namespace PosBranch_Win
             buttonToolReport_Tool,
             buttonTool130,
             buttonToolOverview,
+            buttonToolBusinessSummary,
             buttonTool131,
             buttonTool132,
             buttonToolGeneralPayment,
@@ -1175,9 +1183,9 @@ namespace PosBranch_Win
             this._Home_Toolbars_Dock_Area_Right.DockedPosition = Infragistics.Win.UltraWinToolbars.DockedPosition.Right;
             this._Home_Toolbars_Dock_Area_Right.ForeColor = System.Drawing.SystemColors.ControlText;
             this._Home_Toolbars_Dock_Area_Right.InitialResizeAreaExtent = 8;
-            this._Home_Toolbars_Dock_Area_Right.Location = new System.Drawing.Point(1356, 189);
+            this._Home_Toolbars_Dock_Area_Right.Location = new System.Drawing.Point(1356, 162);
             this._Home_Toolbars_Dock_Area_Right.Name = "_Home_Toolbars_Dock_Area_Right";
-            this._Home_Toolbars_Dock_Area_Right.Size = new System.Drawing.Size(8, 348);
+            this._Home_Toolbars_Dock_Area_Right.Size = new System.Drawing.Size(8, 375);
             this._Home_Toolbars_Dock_Area_Right.ToolbarsManager = this.ultraToolbarsManager1;
             // 
             // _Home_Toolbars_Dock_Area_Left
@@ -1187,9 +1195,9 @@ namespace PosBranch_Win
             this._Home_Toolbars_Dock_Area_Left.DockedPosition = Infragistics.Win.UltraWinToolbars.DockedPosition.Left;
             this._Home_Toolbars_Dock_Area_Left.ForeColor = System.Drawing.SystemColors.ControlText;
             this._Home_Toolbars_Dock_Area_Left.InitialResizeAreaExtent = 8;
-            this._Home_Toolbars_Dock_Area_Left.Location = new System.Drawing.Point(0, 189);
+            this._Home_Toolbars_Dock_Area_Left.Location = new System.Drawing.Point(0, 162);
             this._Home_Toolbars_Dock_Area_Left.Name = "_Home_Toolbars_Dock_Area_Left";
-            this._Home_Toolbars_Dock_Area_Left.Size = new System.Drawing.Size(8, 348);
+            this._Home_Toolbars_Dock_Area_Left.Size = new System.Drawing.Size(8, 375);
             this._Home_Toolbars_Dock_Area_Left.ToolbarsManager = this.ultraToolbarsManager1;
             // 
             // _Home_Toolbars_Dock_Area_Bottom
@@ -1211,7 +1219,7 @@ namespace PosBranch_Win
             this._Home_Toolbars_Dock_Area_Top.ForeColor = System.Drawing.SystemColors.ControlText;
             this._Home_Toolbars_Dock_Area_Top.Location = new System.Drawing.Point(0, 0);
             this._Home_Toolbars_Dock_Area_Top.Name = "_Home_Toolbars_Dock_Area_Top";
-            this._Home_Toolbars_Dock_Area_Top.Size = new System.Drawing.Size(1364, 189);
+            this._Home_Toolbars_Dock_Area_Top.Size = new System.Drawing.Size(1364, 162);
             this._Home_Toolbars_Dock_Area_Top.ToolbarsManager = this.ultraToolbarsManager1;
             // 
             // tabControlMain
@@ -1223,7 +1231,7 @@ namespace PosBranch_Win
             this.tabControlMain.Location = new System.Drawing.Point(0, 0);
             this.tabControlMain.Name = "tabControlMain";
             this.tabControlMain.SharedControlsPage = this.ultraTabSharedControlsPage1;
-            this.tabControlMain.Size = new System.Drawing.Size(1128, 348);
+            this.tabControlMain.Size = new System.Drawing.Size(1128, 375);
             this.tabControlMain.TabIndex = 10;
             this.tabControlMain.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             // 
@@ -1251,16 +1259,16 @@ namespace PosBranch_Win
             // 
             this.ultraTabSharedControlsPage1.Location = new System.Drawing.Point(2, 21);
             this.ultraTabSharedControlsPage1.Name = "ultraTabSharedControlsPage1";
-            this.ultraTabSharedControlsPage1.Size = new System.Drawing.Size(1124, 325);
+            this.ultraTabSharedControlsPage1.Size = new System.Drawing.Size(1124, 352);
             this.ultraTabSharedControlsPage1.Paint += new System.Windows.Forms.PaintEventHandler(this.ultraTabSharedControlsPage1_Paint);
             // 
             // panelMain
             // 
             this.panelMain.Controls.Add(this.tabControlMain);
             this.panelMain.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelMain.Location = new System.Drawing.Point(228, 189);
+            this.panelMain.Location = new System.Drawing.Point(228, 162);
             this.panelMain.Name = "panelMain";
-            this.panelMain.Size = new System.Drawing.Size(1128, 348);
+            this.panelMain.Size = new System.Drawing.Size(1128, 375);
             this.panelMain.TabIndex = 12;
             // 
             // ultraExplorerBarSideMenu
@@ -1287,9 +1295,9 @@ namespace PosBranch_Win
             ultraExplorerBarGroup1,
             ultraExplorerBarGroup2,
             ultraExplorerBarGroup3});
-            this.ultraExplorerBarSideMenu.Location = new System.Drawing.Point(8, 189);
+            this.ultraExplorerBarSideMenu.Location = new System.Drawing.Point(8, 162);
             this.ultraExplorerBarSideMenu.Name = "ultraExplorerBarSideMenu";
-            this.ultraExplorerBarSideMenu.Size = new System.Drawing.Size(220, 348);
+            this.ultraExplorerBarSideMenu.Size = new System.Drawing.Size(220, 375);
             this.ultraExplorerBarSideMenu.TabIndex = 13;
             this.ultraExplorerBarSideMenu.ContextMenuInitializing += new Infragistics.Win.UltraWinExplorerBar.ContextMenuInitializingEventHandler(this.ultraExplorerBarSideMenu_ContextMenuInitializing);
             // 
