@@ -6,435 +6,372 @@ using System.Windows.Forms;
 using Infragistics.Win;
 using Infragistics.Win.Misc;
 using Infragistics.Win.UltraWinEditors;
+using Infragistics.Win.UltraWinGrid;
 using ModelClass;
+using ModelClass.Master;
 using ModelClass.TransactionModels;
+using Repository;
 using Repository.Accounts;
-using Repository.MasterRepositry;
 
 namespace PosBranch_Win.Accounts
 {
     public partial class FrmGeneralPayment : Form
     {
-        private readonly GeneralVoucherRepository _voucherRepository = new GeneralVoucherRepository();
-        private DataTable _allLedgersTable;
-        private long _currentVoucherId = 0;
-
-        // Custom HSL/Modern color scheme
-        private static readonly Color ClrBackground = Color.FromArgb(243, 244, 246);
-        private static readonly Color ClrSurface = Color.White;
-        private static readonly Color ClrBorder = Color.FromArgb(209, 213, 219);
-        private static readonly Color ClrTextPrimary = Color.FromArgb(17, 24, 39);
-        private static readonly Color ClrTextSecondary = Color.FromArgb(75, 85, 99);
-        private static readonly Color ClrHeaderBg1 = Color.FromArgb(18, 65, 89);
-        private static readonly Color ClrHeaderBg2 = Color.FromArgb(28, 85, 110);
-        
-        // Button color states
-        private static readonly Color ClrBtnBlue = Color.FromArgb(25, 118, 210);
-        private static readonly Color ClrBtnBlue2 = Color.FromArgb(33, 150, 243);
-        private static readonly Color ClrBtnSlate = Color.FromArgb(84, 110, 122);
-        private static readonly Color ClrBtnSlate2 = Color.FromArgb(96, 125, 139);
-        private static readonly Color ClrBtnRed = Color.FromArgb(211, 47, 47);
-        private static readonly Color ClrBtnRed2 = Color.FromArgb(244, 67, 54);
-        private static readonly Color ClrBtnTeal = Color.FromArgb(0, 121, 107);
-        private static readonly Color ClrBtnTeal2 = Color.FromArgb(0, 150, 136);
+        private readonly Dropdowns dropdowns = new Dropdowns();
+        private readonly LedgerRepository ledgerRepository = new LedgerRepository();
+        private readonly GeneralPaymentRepository paymentRepository = new GeneralPaymentRepository();
+        private DataTable ledgerTable;
+        private DataTable journalLineTable;
+        private UltraButton btnHistory;
+        private long currentVoucherId;
+        private bool isBinding;
 
         public FrmGeneralPayment()
         {
             InitializeComponent();
+            ConfigureGridDataSource();
+            ConfigureHistoryButton();
+            ConfigureGridEvents();
             ApplyModernTheme();
-            InitializeEvents();
-        }
-
-        private void InitializeEvents()
-        {
-            this.Load += FrmGeneralPayment_Load;
-            btnSave.Click += (s, e) => SaveVoucher();
-            btnClear.Click += (s, e) => ClearForm();
-            btnDelete.Click += (s, e) => DeleteVoucher();
-            btnHistory.Click += (s, e) => OpenHistory();
-            btnClose.Click += (s, e) => this.Close();
-
-            // Keyboard navigation
-            this.KeyPreview = true;
-            this.KeyDown += FrmGeneralPayment_KeyDown;
-
-            // Wire Enter key as Tab for inputs
-            foreach (Control ctrl in this.Controls)
-            {
-                if (ctrl is UltraTextEditor || ctrl is UltraComboEditor || ctrl is UltraDateTimeEditor || ctrl is UltraNumericEditor)
-                {
-                    ctrl.KeyDown += (s, e) =>
-                    {
-                        if (e.KeyCode == Keys.Enter)
-                        {
-                            this.SelectNextControl((Control)s, true, true, true, true);
-                            e.Handled = true;
-                            e.SuppressKeyPress = true;
-                        }
-                    };
-                }
-            }
         }
 
         private void FrmGeneralPayment_Load(object sender, EventArgs e)
         {
+            isBinding = true;
+            BindBranches();
+            isBinding = false;
             BindLedgers();
             ClearForm();
         }
 
-        private void BindLedgers()
+        private void BindBranches()
         {
-            try
+            BranchDDlGrid branchDDL = dropdowns.getBanchDDl();
+            CmboBranch.DataSource = branchDDL.List;
+            CmboBranch.DisplayMember = "BranchName";
+            CmboBranch.ValueMember = "Id";
+
+            if (SessionContext.BranchId > 0)
             {
-                int branchId = SessionContext.BranchId > 0 ? SessionContext.BranchId : Convert.ToInt32(DataBase.BranchId);
-                _allLedgersTable = new Repository.Accounts.LedgerRepository().GetAllLedgers(branchId);
-
-                if (_allLedgersTable == null) return;
-
-                // 1. Filter Target Ledgers (All except Cash/Bank accounts)
-                var targetTable = _allLedgersTable.Clone();
-                // 2. Filter Cash/Bank Ledgers
-                var cashBankTable = _allLedgersTable.Clone();
-
-                foreach (DataRow row in _allLedgersTable.Rows)
-                {
-                    string groupName = Convert.ToString(row["GroupName"]) ?? string.Empty;
-                    string ledgerName = Convert.ToString(row["LedgerName"]) ?? string.Empty;
-
-                    if (IsCashOrBankLedger(groupName, ledgerName))
-                    {
-                        cashBankTable.ImportRow(row);
-                    }
-                    else
-                    {
-                        targetTable.ImportRow(row);
-                    }
-                }
-
-                // Bind combo box for Target Ledger (Expense/Debit account)
-                cmbTargetLedger.DataSource = targetTable;
-                cmbTargetLedger.ValueMember = "LedgerID";
-                cmbTargetLedger.DisplayMember = "LedgerName";
-                cmbTargetLedger.AutoCompleteMode = Infragistics.Win.AutoCompleteMode.SuggestAppend;
-
-                // Bind combo box for Cash/Bank Ledger (Credit account)
-                cmbCashBankLedger.DataSource = cashBankTable;
-                cmbCashBankLedger.ValueMember = "LedgerID";
-                cmbCashBankLedger.DisplayMember = "LedgerName";
-                cmbCashBankLedger.AutoCompleteMode = Infragistics.Win.AutoCompleteMode.SuggestAppend;
+                CmboBranch.Value = SessionContext.BranchId;
             }
-            catch (Exception ex)
+            else if (int.TryParse(DataBase.BranchId, out int branchId) && branchId > 0)
             {
-                MessageBox.Show($"Error binding ledgers: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CmboBranch.Value = branchId;
             }
         }
 
-        private bool IsCashOrBankLedger(string groupName, string ledgerName)
+        private void BindLedgers()
         {
-            string value = $"{groupName} {ledgerName}".ToUpperInvariant();
-            return value.Contains("CASH") || value.Contains("BANK");
+            int branchId = GetSelectedBranchId();
+            ledgerTable = ledgerRepository.GetAllLedgers(branchId);
+            ApplyLedgerValueList();
+        }
+
+        private void ConfigureGridDataSource()
+        {
+            journalLineTable = new DataTable();
+            journalLineTable.Columns.Add("LedgerID", typeof(int));
+            journalLineTable.Columns.Add("Debit", typeof(decimal));
+            journalLineTable.Columns.Add("Credit", typeof(decimal));
+            journalLineTable.Columns.Add("Narration", typeof(string));
+            journalLineTable.ColumnChanged += (sender, args) => UpdateTotals();
+            journalLineTable.RowDeleted += (sender, args) => UpdateTotals();
+            journalLineTable.RowChanged += (sender, args) => UpdateTotals();
+
+            gridPayment.DataSource = journalLineTable;
+        }
+
+        private void ConfigureGridEvents()
+        {
+            gridPayment.InitializeLayout += gridPayment_InitializeLayout;
+            gridPayment.AfterCellUpdate += gridPayment_AfterCellUpdate;
+            gridPayment.KeyDown += gridPayment_KeyDown;
+            txtVoucherNo.KeyDown += txtVoucherNo_KeyDown;
+            this.Load += FrmGeneralPayment_Load;
         }
 
         private void ApplyModernTheme()
         {
-            this.BackColor = ClrBackground;
-            this.DoubleBuffered = true;
-            this.Font = new Font("Segoe UI", 10F);
+            Color pageBack = Color.FromArgb(236, 244, 247);
+            Color cardBack = Color.FromArgb(248, 251, 252);
+            Color muted = Color.FromArgb(91, 111, 127);
+            Color navy = Color.FromArgb(8, 47, 73);
+            Color headerBack = Color.FromArgb(205, 229, 236);
 
-            // Header Layout and Styling
-            headerPanel.Appearance.BackColor = ClrHeaderBg1;
-            headerPanel.Appearance.BackColor2 = ClrHeaderBg2;
-            headerPanel.Appearance.BackGradientStyle = GradientStyle.Vertical;
-            headerPanel.BorderStyle = UIElementBorderStyle.None;
+            BackColor = pageBack;
+            Font = new Font("Segoe UI", 9.5F, FontStyle.Regular);
 
-            lblHeader.Appearance.ForeColor = Color.White;
+            lblHeader.Appearance.BackColor = headerBack;
+            lblHeader.Appearance.ForeColor = navy;
             lblHeader.Appearance.FontData.Bold = DefaultableBoolean.True;
-            lblHeader.Appearance.FontData.SizeInPoints = 16F;
+            lblHeader.Appearance.FontData.SizeInPoints = 18F;
             lblHeader.Appearance.TextVAlign = VAlign.Middle;
-            lblHeader.Padding = new Size(24, 0);
+            lblHeader.Appearance.TextHAlign = HAlign.Left;
+            lblHeader.Height = 50;
+            lblHeader.Padding = new Size(28, 0);
 
-            // Assign control text values programmatically
-            lblVoucherNo.Text = "Voucher No";
-            lblVoucherDate.Text = "Voucher Date";
-            lblTargetLedger.Text = "Account Ledger (Debit)";
-            lblCashBankLedger.Text = "Payment Mode (Credit)";
-            lblAmount.Text = "Amount";
-            lblReferenceNo.Text = "Reference / Cheque No";
-            lblNarration.Text = "Narration / Remarks";
+            StylePanel(headerPanel, cardBack);
+            headerPanel.Height = 92;
+            StylePanel(narrationPanel, cardBack);
+            narrationPanel.Height = 100;
+            StylePanel(footerPanel, cardBack);
+            footerPanel.Height = 78;
 
-            btnSave.Text = "Save";
-            btnClear.Text = "Clear";
-            btnDelete.Text = "Delete";
-            btnHistory.Text = "History";
-            btnClose.Text = "Close";
+            StyleLabel(lblVocuherNo, muted);
+            StyleLabel(lblVoucherDate, muted);
+            StyleLabel(lblBranch, muted);
+            StyleLabel(lblNarration, muted);
+            StyleLabel(lblTotalDebit, muted);
+            StyleLabel(lblTotalCredit, muted);
+            StyleLabel(lblDifference, muted);
 
-            // Labels styling
-            foreach (var ctrl in this.Controls)
+            StyleInput(txtVoucherNo);
+            StyleInput(txtNarration);
+            StyleCombo(CmboBranch);
+            StyleDate(dtpVoucherDate);
+            StyleTotalValue(lblTotalDebitValue);
+            StyleTotalValue(lblTotalCreditValue);
+            StyleTotalValue(lblDifferenceValue);
+            StyleHistoryButton();
+
+            LayoutHeaderControls();
+            LayoutNarrationControls();
+            LayoutFooterControls();
+            StyleGrid();
+
+            Resize += (sender, args) =>
             {
-                if (ctrl is UltraLabel lbl && lbl != lblHeader)
-                {
-                    lbl.Appearance.ForeColor = ClrTextSecondary;
-                    lbl.Appearance.FontData.Bold = DefaultableBoolean.True;
-                    lbl.AutoSize = true;
-                }
-            }
-
-            // Input Display Style
-            SetFlatInputs(this);
-
-            // Form buttons
-            StyleGradientButton(btnSave, ClrBtnBlue, ClrBtnBlue2, Color.FromArgb(21, 101, 192), Color.FromArgb(66, 165, 245), 100);
-            StyleGradientButton(btnClear, ClrBtnSlate, ClrBtnSlate2, Color.FromArgb(69, 90, 100), Color.FromArgb(120, 144, 156), 100);
-            StyleGradientButton(btnDelete, ClrBtnRed, ClrBtnRed2, Color.FromArgb(198, 40, 40), Color.FromArgb(239, 83, 80), 100);
-            StyleGradientButton(btnHistory, ClrBtnTeal, ClrBtnTeal2, Color.FromArgb(0, 105, 92), Color.FromArgb(38, 166, 154), 100);
-            StyleGradientButton(btnClose, ClrBtnSlate, ClrBtnSlate2, Color.FromArgb(69, 90, 100), Color.FromArgb(120, 144, 156), 100);
-
-            LayoutControls();
-            this.SizeChanged += (s, e) => LayoutControls();
+                LayoutHeaderControls();
+                LayoutNarrationControls();
+                LayoutFooterControls();
+            };
         }
 
-        private void SetFlatInputs(Control parent)
+        private void StylePanel(UltraPanel panel, Color backColor)
         {
-            foreach (Control ctrl in parent.Controls)
-            {
-                if (ctrl is UltraTextEditor txt)
-                {
-                    txt.DisplayStyle = EmbeddableElementDisplayStyle.Office2013;
-                }
-                else if (ctrl is UltraComboEditor cmb)
-                {
-                    cmb.DisplayStyle = EmbeddableElementDisplayStyle.Office2013;
-                }
-                else if (ctrl is UltraNumericEditor num)
-                {
-                    num.DisplayStyle = EmbeddableElementDisplayStyle.Office2013;
-                }
-                else if (ctrl is UltraDateTimeEditor dt)
-                {
-                    dt.DisplayStyle = EmbeddableElementDisplayStyle.Office2013;
-                }
-
-                if (ctrl.HasChildren)
-                {
-                    SetFlatInputs(ctrl);
-                }
-            }
+            panel.Appearance.BackColor = backColor;
+            panel.BackColor = backColor;
         }
 
-        private void StyleGradientButton(UltraButton button, Color backColor, Color backColor2, Color borderColor, Color hoverColor, int width)
+        private void LayoutHeaderControls()
         {
-            button.UseOsThemes = DefaultableBoolean.False;
-            button.UseAppStyling = false;
-            button.ButtonStyle = UIElementButtonStyle.Flat;
-            button.Size = new Size(width, 36);
-            button.Appearance.BackColor = backColor;
-            button.Appearance.BackColor2 = backColor2;
-            button.Appearance.BackGradientStyle = GradientStyle.Vertical;
-            button.Appearance.ForeColor = Color.White;
-            button.Appearance.FontData.Bold = DefaultableBoolean.True;
-            button.Appearance.FontData.SizeInPoints = 9.5F;
-            button.Appearance.BorderColor = borderColor;
-            button.HotTrackAppearance.BackColor = hoverColor;
-            button.HotTrackAppearance.ForeColor = Color.White;
-            button.HotTrackAppearance.BorderColor = borderColor;
+            int topLabel = 14;
+            int topInput = 39;
+            int left = 28;
+            int gap = 24;
+
+            lblVocuherNo.Location = new Point(left, topLabel);
+            txtVoucherNo.Location = new Point(left, topInput);
+            txtVoucherNo.Size = new Size(310, 30);
+
+            lblVoucherDate.Location = new Point(txtVoucherNo.Right + gap, topLabel);
+            dtpVoucherDate.Location = new Point(txtVoucherNo.Right + gap, topInput);
+            dtpVoucherDate.Size = new Size(150, 30);
+
+            lblBranch.Location = new Point(dtpVoucherDate.Right + gap, topLabel);
+            CmboBranch.Location = new Point(dtpVoucherDate.Right + gap, topInput);
+            CmboBranch.Size = new Size(260, 30);
+
+            btnHistory.Location = new Point(CmboBranch.Right + gap, topInput);
+            btnHistory.Size = new Size(110, 30);
         }
 
-        private void LayoutControls()
+        private void LayoutNarrationControls()
         {
-            int topOffset = 80;
-            int labelWidth = 180;
-            int inputWidth = 280;
-            int gap = 20;
-
-            // Column 1 Layout (Left)
-            lblVoucherNo.Location = new Point(30, topOffset);
-            txtVoucherNo.Location = new Point(30, topOffset + 24);
-            txtVoucherNo.Size = new Size(inputWidth, 28);
-            txtVoucherNo.ReadOnly = true;
-
-            lblVoucherDate.Location = new Point(30, txtVoucherNo.Bottom + gap);
-            dtpVoucherDate.Location = new Point(30, txtVoucherNo.Bottom + gap + 24);
-            dtpVoucherDate.Size = new Size(inputWidth, 28);
-
-            lblTargetLedger.Location = new Point(30, dtpVoucherDate.Bottom + gap);
-            cmbTargetLedger.Location = new Point(30, dtpVoucherDate.Bottom + gap + 24);
-            cmbTargetLedger.Size = new Size(inputWidth, 28);
-
-            lblCashBankLedger.Location = new Point(30, cmbTargetLedger.Bottom + gap);
-            cmbCashBankLedger.Location = new Point(30, cmbTargetLedger.Bottom + gap + 24);
-            cmbCashBankLedger.Size = new Size(inputWidth, 28);
-
-            // Column 2 Layout (Right)
-            int col2Left = 30 + inputWidth + 60;
-            numAmount.NumericType = NumericType.Decimal;
-            numAmount.MaskInput = "{double:9.2}";
-
-            lblAmount.Location = new Point(col2Left, topOffset);
-            numAmount.Location = new Point(col2Left, topOffset + 24);
-            numAmount.Size = new Size(inputWidth, 28);
-
-            lblReferenceNo.Location = new Point(col2Left, numAmount.Bottom + gap);
-            txtReferenceNo.Location = new Point(col2Left, numAmount.Bottom + gap + 24);
-            txtReferenceNo.Size = new Size(inputWidth, 28);
-
-            lblNarration.Location = new Point(col2Left, txtReferenceNo.Bottom + gap);
-            txtNarration.Location = new Point(col2Left, txtReferenceNo.Bottom + gap + 24);
-            txtNarration.Size = new Size(inputWidth, 80);
-            txtNarration.Multiline = true;
-
-            // Action Buttons layout at the bottom
-            int buttonsTop = Math.Max(cmbCashBankLedger.Bottom, txtNarration.Bottom) + 40;
-            btnSave.Location = new Point(30, buttonsTop);
-            btnClear.Location = new Point(btnSave.Right + 12, buttonsTop);
-            btnDelete.Location = new Point(btnClear.Right + 12, buttonsTop);
-            btnHistory.Location = new Point(btnDelete.Right + 12, buttonsTop);
-            btnClose.Location = new Point(btnHistory.Right + 12, buttonsTop);
+            lblNarration.Location = new Point(28, 10);
+            txtNarration.Location = new Point(28, 33);
+            txtNarration.Size = new Size(Math.Max(200, narrationPanel.ClientSize.Width - 56), 52);
         }
 
-        private void ClearForm()
+        private void LayoutFooterControls()
         {
-            _currentVoucherId = 0;
-            txtVoucherNo.Text = "AUTO-GENERATED";
-            dtpVoucherDate.Value = DateTime.Today;
-            cmbTargetLedger.Value = null;
-            cmbCashBankLedger.Value = null;
-            numAmount.Value = 0.00;
-            txtReferenceNo.Text = string.Empty;
-            txtNarration.Text = string.Empty;
-            btnDelete.Enabled = false;
+            int right = footerPanel.ClientSize.Width - 28;
+            int cardWidth = 170;
+            int labelTop = 14;
+            int valueTop = 36;
+
+            lblDifferenceValue.Location = new Point(right - cardWidth, valueTop);
+            lblDifferenceValue.Size = new Size(cardWidth, 30);
+            lblDifference.Location = new Point(lblDifferenceValue.Left, labelTop);
+
+            lblTotalCreditValue.Location = new Point(lblDifferenceValue.Left - cardWidth - 34, valueTop);
+            lblTotalCreditValue.Size = new Size(cardWidth, 30);
+            lblTotalCredit.Location = new Point(lblTotalCreditValue.Left, labelTop);
+
+            lblTotalDebitValue.Location = new Point(lblTotalCreditValue.Left - cardWidth - 34, valueTop);
+            lblTotalDebitValue.Size = new Size(cardWidth, 30);
+            lblTotalDebit.Location = new Point(lblTotalDebitValue.Left, labelTop);
         }
 
-        private void SaveVoucher()
+        private void StyleLabel(UltraLabel label, Color color)
         {
-            try
-            {
-                if (cmbTargetLedger.Value == null || Convert.ToInt32(cmbTargetLedger.Value) <= 0)
-                {
-                    MessageBox.Show("Please select an Account Ledger to Debit.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    cmbTargetLedger.Focus();
-                    return;
-                }
-
-                if (cmbCashBankLedger.Value == null || Convert.ToInt32(cmbCashBankLedger.Value) <= 0)
-                {
-                    MessageBox.Show("Please select a Cash/Bank Payment Ledger.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    cmbCashBankLedger.Focus();
-                    return;
-                }
-
-                decimal amount = Convert.ToDecimal(numAmount.Value);
-                if (amount <= 0)
-                {
-                    MessageBox.Show("Please enter an Amount greater than zero.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    numAmount.Focus();
-                    return;
-                }
-
-                var voucher = new GeneralVoucher
-                {
-                    VoucherID = _currentVoucherId,
-                    VoucherType = "GENPAY",
-                    VoucherDate = Convert.ToDateTime(dtpVoucherDate.Value).Date,
-                    LedgerID = Convert.ToInt32(cmbTargetLedger.Value),
-                    CashBankLedgerID = Convert.ToInt32(cmbCashBankLedger.Value),
-                    Amount = amount,
-                    ReferenceNo = txtReferenceNo.Text.Trim(),
-                    Narration = txtNarration.Text.Trim()
-                };
-
-                var saved = _voucherRepository.Save(voucher);
-                _currentVoucherId = saved.VoucherID;
-                txtVoucherNo.Text = saved.VoucherNumber;
-                
-                MessageBox.Show($"General Payment Voucher {saved.VoucherNumber} saved successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                ClearForm();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error saving voucher: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            label.Appearance.ForeColor = color;
+            label.Appearance.FontData.Bold = DefaultableBoolean.True;
+            label.Appearance.FontData.SizeInPoints = 9.25F;
+            label.AutoSize = true;
         }
 
-        private void DeleteVoucher()
+        private void StyleInput(UltraTextEditor textBox)
         {
-            if (_currentVoucherId <= 0) return;
-
-            if (MessageBox.Show("Are you sure you want to delete this payment voucher?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-            {
-                try
-                {
-                    int branchId = SessionContext.BranchId > 0 ? SessionContext.BranchId : Convert.ToInt32(DataBase.BranchId);
-                    _voucherRepository.Delete(_currentVoucherId, branchId, "GENPAY");
-                    MessageBox.Show("Payment voucher deleted successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    ClearForm();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Error deleting voucher: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
+            textBox.Appearance.BackColor = Color.White;
+            textBox.Appearance.ForeColor = Color.FromArgb(31, 42, 55);
+            textBox.Appearance.FontData.SizeInPoints = 10.25F;
+            textBox.BorderStyle = UIElementBorderStyle.Solid;
         }
 
-        private void OpenHistory()
+        private void StyleCombo(UltraComboEditor comboBox)
         {
-            using (var historyForm = new FrmGeneralVoucherHistory("GENPAY"))
-            {
-                if (historyForm.ShowDialog(this) == DialogResult.OK && historyForm.SelectedVoucherId > 0)
-                {
-                    LoadVoucher(historyForm.SelectedVoucherId);
-                }
-            }
+            comboBox.Appearance.BackColor = Color.White;
+            comboBox.Appearance.ForeColor = Color.FromArgb(31, 42, 55);
+            comboBox.Appearance.FontData.SizeInPoints = 10.25F;
+            comboBox.BorderStyle = UIElementBorderStyle.Solid;
         }
 
-        private void LoadVoucher(long voucherId)
+        private void StyleDate(UltraDateTimeEditor dateEditor)
         {
-            try
-            {
-                int branchId = SessionContext.BranchId > 0 ? SessionContext.BranchId : Convert.ToInt32(DataBase.BranchId);
-                var voucher = _voucherRepository.GetGeneralVoucher(voucherId, branchId, "GENPAY");
-
-                if (voucher == null)
-                {
-                    MessageBox.Show("Voucher not found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-
-                _currentVoucherId = voucher.VoucherID;
-                txtVoucherNo.Text = voucher.VoucherNumber;
-                dtpVoucherDate.Value = voucher.VoucherDate;
-                cmbTargetLedger.Value = voucher.LedgerID;
-                cmbCashBankLedger.Value = voucher.CashBankLedgerID;
-                numAmount.Value = voucher.Amount;
-                txtReferenceNo.Text = voucher.ReferenceNo;
-                txtNarration.Text = voucher.Narration;
-                
-                btnDelete.Enabled = true;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error loading voucher: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            dateEditor.Appearance.BackColor = Color.White;
+            dateEditor.Appearance.ForeColor = Color.FromArgb(31, 42, 55);
+            dateEditor.Appearance.FontData.SizeInPoints = 10.25F;
+            dateEditor.BorderStyle = UIElementBorderStyle.Solid;
         }
 
-        private void FrmGeneralPayment_KeyDown(object sender, KeyEventArgs e)
+        private void StyleTotalValue(UltraLabel label)
         {
-            if (e.KeyCode == Keys.Escape)
+            label.Appearance.FontData.Bold = DefaultableBoolean.True;
+            label.Appearance.FontData.SizeInPoints = 13F;
+            label.Appearance.TextHAlign = HAlign.Right;
+            label.Appearance.TextVAlign = VAlign.Middle;
+        }
+
+        private void StyleHistoryButton()
+        {
+            btnHistory.Appearance.BackColor = Color.FromArgb(18, 65, 89);
+            btnHistory.Appearance.ForeColor = Color.White;
+            btnHistory.Appearance.FontData.Bold = DefaultableBoolean.True;
+            btnHistory.ButtonStyle = UIElementButtonStyle.FlatBorderless;
+            btnHistory.UseOsThemes = DefaultableBoolean.False;
+        }
+
+        private void StyleGrid()
+        {
+            gridPayment.Text = string.Empty;
+            gridPayment.DisplayLayout.BorderStyle = UIElementBorderStyle.None;
+            gridPayment.DisplayLayout.CaptionVisible = DefaultableBoolean.False;
+            gridPayment.DisplayLayout.GroupByBox.Hidden = true;
+            gridPayment.DisplayLayout.AutoFitStyle = AutoFitStyle.ResizeAllColumns;
+            gridPayment.DisplayLayout.Appearance.BackColor = Color.White;
+            gridPayment.DisplayLayout.Override.HeaderAppearance.BackColor = Color.FromArgb(18, 65, 89);
+            gridPayment.DisplayLayout.Override.HeaderAppearance.BackColor2 = Color.FromArgb(18, 65, 89);
+            gridPayment.DisplayLayout.Override.HeaderAppearance.BackGradientStyle = GradientStyle.None;
+            gridPayment.DisplayLayout.Override.HeaderAppearance.ForeColor = Color.White;
+            gridPayment.DisplayLayout.Override.HeaderAppearance.FontData.Bold = DefaultableBoolean.True;
+            gridPayment.DisplayLayout.Override.HeaderAppearance.TextHAlign = HAlign.Center;
+            gridPayment.DisplayLayout.Override.HeaderStyle = HeaderStyle.WindowsXPCommand;
+            gridPayment.DisplayLayout.Override.HeaderClickAction = HeaderClickAction.Select;
+            gridPayment.DisplayLayout.Override.RowAppearance.BackColor = Color.White;
+            gridPayment.DisplayLayout.Override.RowAlternateAppearance.BackColor = Color.FromArgb(248, 251, 252);
+            gridPayment.DisplayLayout.Override.ActiveRowAppearance.BackColor = Color.FromArgb(219, 234, 254);
+            gridPayment.DisplayLayout.Override.ActiveCellAppearance.BackColor = Color.FromArgb(239, 246, 255);
+            gridPayment.DisplayLayout.Override.CellAppearance.ForeColor = Color.FromArgb(31, 42, 55);
+            gridPayment.DisplayLayout.Override.CellPadding = 6;
+            gridPayment.DisplayLayout.Override.RowSelectorWidth = 34;
+            gridPayment.DisplayLayout.Override.RowSelectorHeaderStyle = RowSelectorHeaderStyle.ColumnChooserButton;
+            gridPayment.DisplayLayout.Override.CellClickAction = CellClickAction.EditAndSelectText;
+            gridPayment.DisplayLayout.Override.AllowAddNew = AllowAddNew.TemplateOnBottom;
+            gridPayment.DisplayLayout.Override.AllowDelete = DefaultableBoolean.True;
+            gridPayment.DisplayLayout.Override.SelectTypeRow = SelectType.Single;
+            gridPayment.DisplayLayout.Override.RowSelectors = DefaultableBoolean.True;
+            gridPayment.DisplayLayout.Override.RowSizing = RowSizing.AutoFree;
+            gridPayment.DisplayLayout.ScrollStyle = ScrollStyle.Immediate;
+            gridPayment.DisplayLayout.ScrollBounds = ScrollBounds.ScrollToFill;
+        }
+
+        private void ConfigureHistoryButton()
+        {
+            btnHistory = new UltraButton
             {
-                this.Close();
+                Text = "History"
+            };
+            btnHistory.Click += btnHistory_Click;
+            headerPanel.ClientArea.Controls.Add(btnHistory);
+        }
+
+        private void gridPayment_InitializeLayout(object sender, InitializeLayoutEventArgs e)
+        {
+            e.Layout.CaptionVisible = DefaultableBoolean.False;
+            e.Layout.GroupByBox.Hidden = true;
+            e.Layout.AutoFitStyle = AutoFitStyle.ResizeAllColumns;
+
+            UltraGridBand band = e.Layout.Bands[0];
+            band.HeaderVisible = false;
+            band.Columns["LedgerID"].Header.Caption = "Ledger Name";
+            band.Columns["LedgerID"].Width = 420;
+            band.Columns["LedgerID"].MinWidth = 260;
+            band.Columns["Debit"].Width = 180;
+            band.Columns["Debit"].MinWidth = 130;
+            band.Columns["Credit"].Width = 180;
+            band.Columns["Credit"].MinWidth = 130;
+            band.Columns["Narration"].Header.Caption = "Line Narration";
+            band.Columns["Narration"].Width = 460;
+            band.Columns["Narration"].MinWidth = 260;
+            band.Columns["Debit"].Format = "N2";
+            band.Columns["Credit"].Format = "N2";
+            band.Columns["Debit"].CellAppearance.TextHAlign = HAlign.Right;
+            band.Columns["Credit"].CellAppearance.TextHAlign = HAlign.Right;
+            band.Columns["Narration"].CellMultiLine = DefaultableBoolean.True;
+            ApplyLedgerValueList();
+        }
+
+        private void ApplyLedgerValueList()
+        {
+            if (ledgerTable == null || gridPayment.DisplayLayout.Bands.Count == 0)
+            {
+                return;
             }
-            else if (e.KeyCode == Keys.F1)
+
+            ValueList existingList = null;
+            foreach (ValueList valueList in gridPayment.DisplayLayout.ValueLists)
             {
-                ClearForm();
+                if (string.Equals(valueList.Key, "LedgerList", StringComparison.OrdinalIgnoreCase))
+                {
+                    existingList = valueList;
+                    break;
+                }
             }
-            else if (e.KeyCode == Keys.F8)
+
+            if (existingList != null)
             {
-                SaveVoucher();
+                gridPayment.DisplayLayout.ValueLists.Remove(existingList);
+            }
+
+            ValueList ledgerList = gridPayment.DisplayLayout.ValueLists.Add("LedgerList");
+            foreach (DataRow row in ledgerTable.Rows)
+            {
+                int ledgerId = GetIntValue(row["LedgerID"]);
+                if (ledgerId > 0)
+                {
+                    ledgerList.ValueListItems.Add(ledgerId, Convert.ToString(row["LedgerName"]));
+                }
+            }
+
+            UltraGridBand band = gridPayment.DisplayLayout.Bands[0];
+            if (band.Columns.Exists("LedgerID"))
+            {
+                band.Columns["LedgerID"].ValueList = ledgerList;
+                band.Columns["LedgerID"].Style = Infragistics.Win.UltraWinGrid.ColumnStyle.DropDownValidate;
             }
         }
 
         public void Save()
         {
-            SaveVoucher();
+            currentVoucherId = 0;
+            SavePayment(false);
+        }
+
+        public void UpdateRecord()
+        {
+            SavePayment(true);
         }
 
         public void Clear()
@@ -444,7 +381,408 @@ namespace PosBranch_Win.Accounts
 
         public void Delete()
         {
-            DeleteVoucher();
+            DeletePayment();
+        }
+
+        public void LoadVoucher()
+        {
+            LoadPayment();
+        }
+
+        private void ClearForm()
+        {
+            isBinding = true;
+            currentVoucherId = 0;
+            txtVoucherNo.Text = string.Empty;
+            dtpVoucherDate.Value = DateTime.Today;
+            txtNarration.Text = string.Empty;
+            journalLineTable.Clear();
+            journalLineTable.Rows.Add(journalLineTable.NewRow());
+            isBinding = false;
+            UpdateTotals();
+        }
+
+        private JournalVoucher BuildPaymentFromGrid()
+        {
+            var journal = new JournalVoucher
+            {
+                VoucherID = currentVoucherId,
+                VoucherNumber = txtVoucherNo.Text.Trim(),
+                VoucherDate = GetVoucherDate(),
+                Narration = txtNarration.Text.Trim(),
+                BranchID = GetSelectedBranchId()
+            };
+
+            int slNo = 1;
+            foreach (DataRow row in journalLineTable.Rows)
+            {
+                if (row.RowState == DataRowState.Deleted)
+                {
+                    continue;
+                }
+
+                long ledgerId = GetLongValue(row["LedgerID"]);
+                decimal debit = GetDecimalValue(row["Debit"]);
+                decimal credit = GetDecimalValue(row["Credit"]);
+                string narration = Convert.ToString(row["Narration"]) ?? string.Empty;
+
+                if (ledgerId <= 0 && debit == 0 && credit == 0 && string.IsNullOrWhiteSpace(narration))
+                {
+                    continue;
+                }
+
+                journal.Lines.Add(new JournalVoucherLine
+                {
+                    SlNo = slNo++,
+                    LedgerID = ledgerId,
+                    LedgerName = GetLedgerName(ledgerId),
+                    Debit = debit,
+                    Credit = credit,
+                    Narration = narration.Trim()
+                });
+            }
+
+            return journal;
+        }
+
+        private bool ValidatePaymentForSave(JournalVoucher journal)
+        {
+            ClearRowErrors();
+
+            if (journal.Lines.Count < 2)
+            {
+                MessageBox.Show("Please enter at least two payment lines.", "Validation",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            bool valid = true;
+            foreach (DataRow row in journalLineTable.Rows)
+            {
+                if (row.RowState == DataRowState.Deleted)
+                {
+                    continue;
+                }
+
+                long ledgerId = GetLongValue(row["LedgerID"]);
+                decimal debit = GetDecimalValue(row["Debit"]);
+                decimal credit = GetDecimalValue(row["Credit"]);
+
+                if (ledgerId <= 0 && debit == 0 && credit == 0)
+                {
+                    continue;
+                }
+
+                if (ledgerId <= 0)
+                {
+                    row.SetColumnError("LedgerID", "Select ledger.");
+                    valid = false;
+                }
+
+                if (debit < 0 || credit < 0)
+                {
+                    row.RowError = "Amount cannot be negative.";
+                    valid = false;
+                }
+
+                if ((debit <= 0 && credit <= 0) || (debit > 0 && credit > 0))
+                {
+                    row.RowError = "Enter either Debit or Credit.";
+                    valid = false;
+                }
+            }
+
+            if (!valid)
+            {
+                MessageBox.Show("Please fix highlighted payment lines.", "Validation",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            if (Math.Round(journal.TotalDebit, 2) != Math.Round(journal.TotalCredit, 2))
+            {
+                MessageBox.Show("Total Debit must equal Total Credit before saving.", "Payment Not Balanced",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            return true;
+        }
+
+        private void LoadPaymentToForm(JournalVoucher journal)
+        {
+            isBinding = true;
+            currentVoucherId = journal.VoucherID;
+            txtVoucherNo.Text = journal.VoucherNumber;
+            dtpVoucherDate.Value = journal.VoucherDate;
+            txtNarration.Text = journal.Narration;
+            if (journal.BranchID > 0)
+            {
+                CmboBranch.Value = journal.BranchID;
+            }
+
+            journalLineTable.Clear();
+            foreach (var line in journal.Lines.OrderBy(line => line.SlNo))
+            {
+                DataRow row = journalLineTable.NewRow();
+                row["LedgerID"] = Convert.ToInt32(line.LedgerID);
+                row["Debit"] = line.Debit == 0 ? (object)DBNull.Value : line.Debit;
+                row["Credit"] = line.Credit == 0 ? (object)DBNull.Value : line.Credit;
+                row["Narration"] = line.Narration;
+                journalLineTable.Rows.Add(row);
+            }
+            journalLineTable.Rows.Add(journalLineTable.NewRow());
+
+            isBinding = false;
+            UpdateTotals();
+        }
+
+        private void SavePayment(bool requireExisting)
+        {
+            try
+            {
+                gridPayment.PerformAction(UltraGridAction.ExitEditMode);
+
+                if (requireExisting && currentVoucherId <= 0)
+                {
+                    MessageBox.Show("Load an existing payment voucher before updating.", "Information",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                JournalVoucher journal = BuildPaymentFromGrid();
+                if (!ValidatePaymentForSave(journal))
+                {
+                    UpdateTotals();
+                    return;
+                }
+
+                JournalVoucher saved = paymentRepository.Save(journal);
+                currentVoucherId = saved.VoucherID;
+                string savedVoucherNumber = saved.VoucherNumber;
+                MessageBox.Show($"General Payment voucher {savedVoucherNumber} saved successfully.", "Success",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ClearForm();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error saving payment voucher: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void LoadPayment()
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(txtVoucherNo.Text))
+                {
+                    MessageBox.Show("Enter a voucher number or voucher ID to load.", "Information",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                JournalVoucher journal = paymentRepository.GetJournalVoucher(txtVoucherNo.Text.Trim());
+                if (journal == null)
+                {
+                    MessageBox.Show("General Payment voucher not found.", "Information",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                LoadPaymentToForm(journal);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading payment voucher: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void DeletePayment()
+        {
+            if (currentVoucherId <= 0)
+            {
+                MessageBox.Show("Load a payment voucher before deleting.", "Information",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            DialogResult result = MessageBox.Show("Delete this payment voucher?", "Confirm Delete",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (result != DialogResult.Yes)
+            {
+                return;
+            }
+
+            try
+            {
+                paymentRepository.Delete(currentVoucherId);
+                ClearForm();
+                MessageBox.Show("General Payment voucher deleted successfully.", "Success",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error deleting payment voucher: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void UpdateTotals()
+        {
+            if (isBinding || journalLineTable == null)
+            {
+                return;
+            }
+
+            decimal totalDebit = 0;
+            decimal totalCredit = 0;
+
+            foreach (DataRow row in journalLineTable.Rows)
+            {
+                if (row.RowState == DataRowState.Deleted)
+                {
+                    continue;
+                }
+
+                totalDebit += GetDecimalValue(row["Debit"]);
+                totalCredit += GetDecimalValue(row["Credit"]);
+            }
+
+            lblTotalDebitValue.Text = totalDebit.ToString("N2");
+            lblTotalCreditValue.Text = totalCredit.ToString("N2");
+            lblDifferenceValue.Text = Math.Abs(totalDebit - totalCredit).ToString("N2");
+
+            bool balanced = Math.Round(totalDebit, 2) == Math.Round(totalCredit, 2);
+            Color statusColor = balanced ? Color.FromArgb(46, 125, 50) : Color.FromArgb(198, 40, 40);
+            lblTotalDebitValue.Appearance.ForeColor = statusColor;
+            lblTotalCreditValue.Appearance.ForeColor = statusColor;
+            lblDifferenceValue.Appearance.ForeColor = statusColor;
+        }
+
+        private void ClearRowErrors()
+        {
+            foreach (DataRow row in journalLineTable.Rows)
+            {
+                row.ClearErrors();
+                row.RowError = string.Empty;
+            }
+        }
+
+        private int GetSelectedBranchId()
+        {
+            if (CmboBranch.Value != null && int.TryParse(CmboBranch.Value.ToString(), out int selectedBranchId))
+            {
+                return selectedBranchId;
+            }
+
+            if (SessionContext.BranchId > 0)
+            {
+                return SessionContext.BranchId;
+            }
+
+            return int.TryParse(DataBase.BranchId, out int branchId) ? branchId : 0;
+        }
+
+        private DateTime GetVoucherDate()
+        {
+            if (dtpVoucherDate.Value is DateTime date)
+            {
+                return date.Date;
+            }
+
+            return DateTime.Today;
+        }
+
+        private string GetLedgerName(long ledgerId)
+        {
+            if (ledgerTable == null || ledgerId <= 0)
+            {
+                return string.Empty;
+            }
+
+            DataRow[] rows = ledgerTable.Select($"LedgerID = {ledgerId}");
+            return rows.Length > 0 ? rows[0]["LedgerName"].ToString() : string.Empty;
+        }
+
+        private int GetIntValue(object value)
+        {
+            if (value == null || value == DBNull.Value)
+            {
+                return 0;
+            }
+
+            return int.TryParse(value.ToString(), out int result) ? result : 0;
+        }
+
+        private long GetLongValue(object value)
+        {
+            if (value == null || value == DBNull.Value)
+            {
+                return 0;
+            }
+
+            return long.TryParse(value.ToString(), out long result) ? result : 0;
+        }
+
+        private decimal GetDecimalValue(object value)
+        {
+            if (value == null || value == DBNull.Value)
+            {
+                return 0;
+            }
+
+            return decimal.TryParse(value.ToString(), out decimal result) ? result : 0;
+        }
+
+        private void CmboBranch_ValueChanged(object sender, EventArgs e)
+        {
+            if (!isBinding)
+            {
+                BindLedgers();
+            }
+        }
+
+        private void btnHistory_Click(object sender, EventArgs e)
+        {
+            using (var historyForm = new FrmGeneralVoucherHistory("GENPAY"))
+            {
+                if (historyForm.ShowDialog(this) == DialogResult.OK && historyForm.SelectedVoucherId > 0)
+                {
+                    txtVoucherNo.Text = historyForm.SelectedVoucherId.ToString();
+                    LoadPayment();
+                }
+            }
+        }
+
+        private void gridPayment_AfterCellUpdate(object sender, CellEventArgs e)
+        {
+            if (e.Cell.Row?.ListObject is DataRowView rowView)
+            {
+                rowView.Row.ClearErrors();
+                rowView.Row.RowError = string.Empty;
+            }
+
+            UpdateTotals();
+        }
+
+        private void gridPayment_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                gridPayment.PerformAction(UltraGridAction.NextCellByTab);
+                e.Handled = true;
+            }
+        }
+
+        private void txtVoucherNo_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter && !string.IsNullOrWhiteSpace(txtVoucherNo.Text))
+            {
+                LoadPayment();
+                e.Handled = true;
+            }
         }
     }
 }

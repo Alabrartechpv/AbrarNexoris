@@ -417,4 +417,17 @@ ORDER BY MAX(v.VoucherDate) DESC, v.VoucherID DESC;";
             return $"{VoucherNumberPrefix}{voucherId:000000}";
         }
     }
+
+    public class GeneralPaymentRepository : JournalVoucherRepository
+    {
+        protected override string VoucherType => "GENPAY";
+        protected override string VoucherNumberPrefix => "GP";
+    }
+
+    public class GeneralReceiptRepository : JournalVoucherRepository
+    {
+        protected override string VoucherType => "GENREC";
+        protected override string VoucherNumberPrefix => "GR";
+    }
 }
+
