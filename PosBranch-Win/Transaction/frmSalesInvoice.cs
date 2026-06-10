@@ -54,6 +54,13 @@ namespace PosBranch_Win.Transaction
         private DataTable originalPaymentModes = null;
         // Track the previous price level selection to revert if user cancels
         private string previousPriceLevel = "RetailPrice";
+        private string _activityCustomer = string.Empty;
+        private string _activityPaymentMode = string.Empty;
+        private string _activityPriceLevel = string.Empty;
+        private string _activityDiscount = string.Empty;
+        private string _activityRoundOff = string.Empty;
+        private string _activityHoldText = string.Empty;
+        private string _activityStatus = string.Empty;
         // Add this at the class level
         private string lastPaymentModeButton = PAYMENT_MODE_CASH; // Default to Cash
 
@@ -3381,7 +3388,51 @@ namespace PosBranch_Win.Transaction
         // Replace this entire method with a call to the repository version
         private DataGridView ConvertUltraGridToDataGridView(UltraGrid ultraGrid)
         {
-            return operations.ConvertDataTableToDataGridView(ultraGrid.DataSource as DataTable);
+            DataGridView grid = operations.ConvertDataTableToDataGridView(ultraGrid.DataSource as DataTable);
+            AddSalesActivityGridCells(grid);
+            return grid;
+        }
+
+        private void AddSalesActivityGridCells(DataGridView grid)
+        {
+            if (grid == null)
+            {
+                return;
+            }
+
+            AddLogColumn(grid, "cmpPrice");
+            AddLogColumn(grid, "cmbPaymt");
+            AddLogColumn(grid, "txtDisc");
+            AddLogColumn(grid, "textBoxround");
+            AddLogColumn(grid, "textBoxhold");
+
+            string priceLevel = GetCurrentPriceLevelText();
+            string paymentText = GetCurrentPaymentLogText();
+            string discountText = GetCurrentDiscountText();
+            string roundOffText = GetCurrentRoundOffText();
+            string holdText = GetCurrentHoldText();
+
+            foreach (DataGridViewRow row in grid.Rows)
+            {
+                if (row.IsNewRow)
+                {
+                    continue;
+                }
+
+                row.Cells["cmpPrice"].Value = priceLevel;
+                row.Cells["cmbPaymt"].Value = paymentText;
+                row.Cells["txtDisc"].Value = discountText;
+                row.Cells["textBoxround"].Value = roundOffText;
+                row.Cells["textBoxhold"].Value = holdText;
+            }
+        }
+
+        private void AddLogColumn(DataGridView grid, string columnName)
+        {
+            if (!grid.Columns.Contains(columnName))
+            {
+                grid.Columns.Add(columnName, columnName);
+            }
         }
 
         private void CompleteSale(string status)
@@ -3683,6 +3734,7 @@ namespace PosBranch_Win.Transaction
                 ResetPriceLevel();
                 ResetPaymentModes();
                 ResetBarcodeAndRefreshGrid();
+                ClearSalesActivitySnapshot();
 
                 // Payment reference clearing is now handled by FrmSalesCmpt dialog
 
@@ -4259,15 +4311,18 @@ namespace PosBranch_Win.Transaction
             lblBillNo.Text = master.BillNo.ToString();
             lblBillNo.Visible = true; // Make sure the label is visible
 
-            txtNetTotal.Text = master.NetAmount.ToString();
-            txtSubtotal.Text = master.SubTotal.ToString();
-            txtCustomer.Text = master.CustomerName;
-            lblledger.Text = master.LedgerID.ToString();
+                txtNetTotal.Text = master.NetAmount.ToString();
+                txtSubtotal.Text = master.SubTotal.ToString();
+                txtCustomer.Text = master.CustomerName;
+                lblledger.Text = master.LedgerID.ToString();
+                txtDisc.Text = master.DiscountAmt != 0 ? master.DiscountAmt.ToString("0.00") : string.Empty;
+                textBoxround.Text = master.RoundOff.ToString("0.00");
 
-            ApplySavedPaymentModeSelection(master);
+                ApplySavedPaymentModeSelection(master);
+                CaptureSalesActivitySnapshot(master);
 
-            System.Diagnostics.Debug.WriteLine($"GetMyBill: Loaded bill #{master.BillNo} with VoucherID={master.VoucherID}, Status={master.Status}");
-        }
+                System.Diagnostics.Debug.WriteLine($"GetMyBill: Loaded bill #{master.BillNo} with VoucherID={master.VoucherID}, Status={master.Status}");
+            }
 
         private void textBox5_KeyUp(object sender, KeyEventArgs e)
         {
@@ -5567,6 +5622,38 @@ namespace PosBranch_Win.Transaction
                 return $"{baseText}. Net amount = {netAmount:0.##}.";
             }
 
+            if (string.Equals(activityType, "SAVE", StringComparison.OrdinalIgnoreCase))
+            {
+                var lines = new List<string>
+                {
+                    $"{baseText}.",
+                    "Items:"
+                };
+
+                foreach (DataRow row in table.Rows)
+                {
+                    if (row.RowState == DataRowState.Deleted)
+                    {
+                        continue;
+                    }
+
+                    string itemName = FormatItemName(GetString(row, "ItemName"));
+                    lines.Add($"- \"{itemName}\"");
+                    lines.Add($"  {BuildSalesItemSummary(row)}");
+                    lines.Add($"  cmpPrice: {FormatTextValue(GetCurrentPriceLevelText())}");
+                    lines.Add($"  cmbPaymt: {FormatTextValue(GetCurrentPaymentLogText())}");
+                }
+
+                lines.Add("Details:");
+                lines.Add($"- txtCustomer: {FormatTextValue(txtCustomer.Text)}");
+                lines.Add($"- txtDisc: {FormatTextValue(GetCurrentDiscountText())}");
+                lines.Add($"- textBoxround: {FormatTextValue(GetCurrentRoundOffText())}");
+                lines.Add($"- textBoxhold: {FormatTextValue(GetCurrentHoldText())}");
+                lines.Add($"- Net amount: {FormatAmount(netAmount)}");
+
+                return string.Join(Environment.NewLine, lines);
+            }
+
             var changes = new List<string>();
             foreach (DataRow row in table.Rows)
             {
@@ -5604,8 +5691,15 @@ namespace PosBranch_Win.Transaction
         {
             var changes = new List<string>();
             var updatedItemNames = new List<string>();
+            var saleItemNames = new List<string>();
             SalesMaster oldMaster = oldSale != null && oldSale.ListSales != null ? oldSale.ListSales.FirstOrDefault() : null;
-            AddTextChange(changes, "Customer", oldMaster != null ? oldMaster.CustomerName : string.Empty, sales != null ? sales.CustomerName : txtCustomer.Text);
+            AddTextChange(changes, "txtCustomer", oldMaster != null ? oldMaster.CustomerName : _activityCustomer, sales != null ? sales.CustomerName : txtCustomer.Text);
+            AddTextChange(changes, "cmpPrice", _activityPriceLevel, GetCurrentPriceLevelText());
+            AddTextChange(changes, "cmbPaymt", oldMaster != null ? GetSalesMasterPaymentLogText(oldMaster) : _activityPaymentMode, GetSalesMasterPaymentLogText(sales));
+            AddTextChange(changes, "txtDisc", oldMaster != null ? FormatAmount(Convert.ToDecimal(oldMaster.DiscountAmt)) : _activityDiscount, GetCurrentDiscountText());
+            AddTextChange(changes, "textBoxround", oldMaster != null ? FormatAmount(Convert.ToDecimal(oldMaster.RoundOff)) : _activityRoundOff, GetCurrentRoundOffText());
+            AddTextChange(changes, "textBoxhold", _activityHoldText, GetCurrentHoldText());
+            AddTextChange(changes, "Status", oldMaster != null ? oldMaster.Status : _activityStatus, sales != null ? sales.Status : string.Empty);
 
             var oldRows = oldSale != null && oldSale.ListSDetails != null
                 ? oldSale.ListSDetails.ToList()
@@ -5627,9 +5721,14 @@ namespace PosBranch_Win.Transaction
                         itemName = oldRow.ItemName;
                     }
 
+                    if (!string.IsNullOrWhiteSpace(itemName))
+                    {
+                        saleItemNames.Add(FormatItemName(itemName));
+                    }
+
                     if (oldRow == null)
                     {
-                        changes.Add($"Added with Qty {FormatAmount(GetDecimal(row, "Qty"))}");
+                        changes.Add($"new item \"{FormatItemName(itemName)}\" added with {BuildSalesItemSummary(row)}");
                         updatedItemNames.Add(FormatItemName(itemName));
                         continue;
                     }
@@ -5647,7 +5746,7 @@ namespace PosBranch_Win.Transaction
 
                     if (itemChanges.Count > 0)
                     {
-                        changes.AddRange(itemChanges);
+                        changes.Add($"{FormatItemName(itemName)}: {string.Join("; ", itemChanges)}");
                         updatedItemNames.Add(FormatItemName(itemName));
                     }
                 }
@@ -5655,9 +5754,11 @@ namespace PosBranch_Win.Transaction
 
             foreach (var remaining in oldRows)
             {
-                changes.Add("Removed");
+                changes.Add($"Removed item \"{FormatItemName(remaining.ItemName)}\"");
                 updatedItemNames.Add(FormatItemName(remaining.ItemName));
             }
+
+            AddHoldActivityChanges(changes, oldMaster);
 
             if (changes.Count == 0 && updatedItemNames.Count == 0)
             {
@@ -5666,12 +5767,130 @@ namespace PosBranch_Win.Transaction
 
             changes.Add($"Net amount = {FormatAmount(netAmount)}");
 
-            var uniqueItemNames = updatedItemNames.Distinct().ToList();
+            var sourceItemNames = saleItemNames.Count > 0 ? saleItemNames : updatedItemNames;
+            var uniqueItemNames = sourceItemNames
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Select(x => $"- \"{x}\"")
+                .ToList();
             string itemHeader = uniqueItemNames.Count > 0
-                ? $"{Environment.NewLine}{string.Join(", ", uniqueItemNames)}"
+                ? $"{Environment.NewLine}Items:{Environment.NewLine}{string.Join(Environment.NewLine, uniqueItemNames)}"
                 : string.Empty;
 
             return $"Sales invoice #{billNo} updated.{itemHeader}{Environment.NewLine}Changes:{Environment.NewLine}- {string.Join(Environment.NewLine + "- ", changes)}";
+        }
+
+        private string BuildSalesItemSummary(DataRow row)
+        {
+            if (row == null)
+            {
+                return "item details unavailable";
+            }
+
+            var parts = new List<string>
+            {
+                $"Qty {FormatAmount(GetDecimal(row, "Qty"))}",
+                $"UnitPrice {FormatAmount(GetDecimal(row, "UnitPrice"))}",
+                $"S/Price {FormatAmount(GetDecimal(row, "Amount"))}",
+                $"DiscAmt {FormatAmount(GetDecimal(row, "DiscAmt"))}",
+                $"TaxAmt {FormatAmount(GetDecimal(row, "TaxAmt"))}",
+                $"TotalAmount {FormatAmount(GetDecimal(row, "TotalAmount"))}"
+            };
+
+            string unit = GetString(row, "Unit");
+            if (!string.IsNullOrWhiteSpace(unit))
+            {
+                parts.Add($"Unit {unit}");
+            }
+
+            string barcode = GetString(row, "BarCode");
+            if (!string.IsNullOrWhiteSpace(barcode))
+            {
+                parts.Add($"Barcode {barcode}");
+            }
+
+            return string.Join(", ", parts);
+        }
+
+        private string BuildSalesItemSummary(DataGridViewRow row)
+        {
+            if (row == null)
+            {
+                return "item details unavailable";
+            }
+
+            var parts = new List<string>
+            {
+                $"Qty {FormatAmount(GetDecimal(row, "Qty"))}",
+                $"UnitPrice {FormatAmount(GetDecimal(row, "UnitPrice"))}",
+                $"S/Price {FormatAmount(GetDecimal(row, "Amount"))}",
+                $"DiscAmt {FormatAmount(GetDecimal(row, "DiscAmt"))}",
+                $"TaxAmt {FormatAmount(GetDecimal(row, "TaxAmt"))}",
+                $"TotalAmount {FormatAmount(GetDecimal(row, "TotalAmount"))}",
+                $"cmpPrice {FormatTextValue(GetCellString(row, "cmpPrice"))}",
+                $"cmbPaymt {FormatTextValue(GetCellString(row, "cmbPaymt"))}",
+                $"txtDisc {FormatTextValue(GetCellString(row, "txtDisc"))}",
+                $"textBoxround {FormatTextValue(GetCellString(row, "textBoxround"))}"
+            };
+
+            string unit = GetCellString(row, "Unit");
+            if (!string.IsNullOrWhiteSpace(unit))
+            {
+                parts.Add($"Unit {unit}");
+            }
+
+            string barcode = GetCellString(row, "BarCode");
+            if (!string.IsNullOrWhiteSpace(barcode))
+            {
+                parts.Add($"Barcode {barcode}");
+            }
+
+            string holdText = GetCellString(row, "textBoxhold");
+            if (!string.IsNullOrWhiteSpace(holdText))
+            {
+                parts.Add($"textBoxhold {FormatTextValue(holdText)}");
+            }
+
+            return string.Join(", ", parts);
+        }
+
+        private void AddHoldActivityChanges(List<string> changes, SalesMaster oldMaster)
+        {
+            if (changes == null)
+            {
+                return;
+            }
+
+            var holdChanges = new List<string>();
+            string oldStatus = oldMaster != null ? oldMaster.Status : _activityStatus;
+            string newStatus = sales != null ? sales.Status : string.Empty;
+            bool oldIsHold = string.Equals(oldStatus, STATUS_HOLD, StringComparison.OrdinalIgnoreCase);
+            bool newIsHold = string.Equals(newStatus, STATUS_HOLD, StringComparison.OrdinalIgnoreCase);
+
+            if (!oldIsHold && newIsHold)
+            {
+                holdChanges.Add("added bill to hold");
+            }
+            else if (oldIsHold && !newIsHold)
+            {
+                holdChanges.Add("hold bill completed");
+            }
+            else if (oldIsHold && newIsHold)
+            {
+                holdChanges.Add("hold bill updated");
+            }
+
+            string oldHoldText = _activityHoldText;
+            string newHoldText = GetCurrentHoldText();
+            if (!string.Equals((oldHoldText ?? string.Empty).Trim(), (newHoldText ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase))
+            {
+                holdChanges.Add($"textBoxhold updated to {FormatTextValue(newHoldText)} (was {FormatTextValue(oldHoldText)})");
+            }
+
+            if (holdChanges.Count > 0)
+            {
+                changes.Add("Hold updates: " + string.Join("; ", holdChanges));
+            }
         }
 
         private salesGrid GetOldSalesForLog(long billNo)
@@ -5868,6 +6087,96 @@ namespace PosBranch_Win.Transaction
         private string FormatItemName(string value)
         {
             return string.IsNullOrWhiteSpace(value) ? "Item" : value.Trim();
+        }
+
+        private void CaptureSalesActivitySnapshot(SalesMaster master = null)
+        {
+            _activityCustomer = master != null ? master.CustomerName ?? string.Empty : txtCustomer.Text ?? string.Empty;
+            _activityPaymentMode = master != null ? GetSalesMasterPaymentLogText(master) : GetCurrentPaymentLogText();
+            _activityPriceLevel = GetCurrentPriceLevelText();
+            _activityDiscount = master != null ? FormatAmount(Convert.ToDecimal(master.DiscountAmt)) : GetCurrentDiscountText();
+            _activityRoundOff = master != null ? FormatAmount(Convert.ToDecimal(master.RoundOff)) : GetCurrentRoundOffText();
+            _activityHoldText = GetCurrentHoldText();
+            _activityStatus = master != null ? master.Status ?? string.Empty : (sales != null ? sales.Status ?? string.Empty : string.Empty);
+        }
+
+        private void ClearSalesActivitySnapshot()
+        {
+            _activityCustomer = string.Empty;
+            _activityPaymentMode = string.Empty;
+            _activityPriceLevel = string.Empty;
+            _activityDiscount = string.Empty;
+            _activityRoundOff = string.Empty;
+            _activityHoldText = string.Empty;
+            _activityStatus = string.Empty;
+        }
+
+        private string GetCurrentPriceLevelText()
+        {
+            return cmpPrice != null ? (cmpPrice.Text ?? string.Empty).Trim() : string.Empty;
+        }
+
+        private string GetCurrentDiscountText()
+        {
+            return string.IsNullOrWhiteSpace(txtDisc.Text) ? "0" : txtDisc.Text.Trim();
+        }
+
+        private string GetCurrentRoundOffText()
+        {
+            return string.IsNullOrWhiteSpace(textBoxround.Text) ? "0" : textBoxround.Text.Trim();
+        }
+
+        private string GetCurrentHoldText()
+        {
+            return textBoxhold != null ? (textBoxhold.Text ?? string.Empty).Trim() : string.Empty;
+        }
+
+        private string GetCurrentPaymentLogText()
+        {
+            string displayText = cmbPaymt != null ? (cmbPaymt.GetItemText(cmbPaymt.SelectedItem) ?? cmbPaymt.Text ?? string.Empty).Trim() : string.Empty;
+            int creditDays = sales != null ? sales.CreditDays : 0;
+
+            if (IsCreditPaymentText(displayText) || isCreditMode)
+            {
+                if (creditDays <= 0)
+                {
+                    int.TryParse(cmbPaymt != null ? Convert.ToString(cmbPaymt.Value) : string.Empty, out creditDays);
+                }
+
+                if (creditDays <= 0 && TryParseCreditDaysLabel(displayText, out int parsedDays))
+                {
+                    creditDays = parsedDays;
+                }
+
+                if (creditDays > 0)
+                {
+                    return creditDays.ToString();
+                }
+            }
+
+            return displayText;
+        }
+
+        private string GetSalesMasterPaymentLogText(SalesMaster master)
+        {
+            if (master == null)
+            {
+                return GetCurrentPaymentLogText();
+            }
+
+            if (IsCreditPaymentText(master.PaymodeName) || master.CreditDays > 0)
+            {
+                return master.CreditDays > 0 ? master.CreditDays.ToString() : master.PaymodeName;
+            }
+
+            return master.PaymodeName ?? string.Empty;
+        }
+
+        private bool IsCreditPaymentText(string paymentText)
+        {
+            paymentText = (paymentText ?? string.Empty).Trim();
+            return paymentText.Equals(PAYMENT_MODE_CREDIT, StringComparison.OrdinalIgnoreCase)
+                || paymentText.IndexOf("day", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private decimal GetOldSalesSPrice(SalesDetails oldRow)
@@ -6506,6 +6815,7 @@ namespace PosBranch_Win.Transaction
                 txtSubtotal.Text = sm.SubTotal.ToString();
                 txtCustomer.Text = sm.CustomerName.ToString();
                 lblBillNo.Text = sm.BillNo.ToString();
+                textBoxround.Text = sm.RoundOff.ToString("0.00");
 
                 // IMPORTANT: Store the VoucherID for later use in update
                 if (sm.VoucherID > 0)
@@ -6566,6 +6876,7 @@ namespace PosBranch_Win.Transaction
 
                 // Set focus back to barcode textbox
                 txtBarcode.Focus();
+                CaptureSalesActivitySnapshot(sm);
 
                 System.Diagnostics.Debug.WriteLine("Successfully loaded bill data");
             }
