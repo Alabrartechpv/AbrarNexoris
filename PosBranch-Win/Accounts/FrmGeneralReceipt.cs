@@ -786,3 +786,4 @@ namespace PosBranch_Win.Accounts
         }
     }
 }
+
