@@ -1,9 +1,6 @@
 using ModelClass;
 using System;
 using System.Data;
-using ModelClass;
-using System;
-using System.Data;
 using System.Data.SqlClient;
 
 namespace Repository.SettingsRepo
@@ -132,6 +129,10 @@ ORDER BY CreatedOn DESC, ActivityLogId DESC;", (SqlConnection)DataConnection))
                         adapter.Fill(result);
                     }
                 }
+
+                AppendRecoveredTransactionRows(result, logType, fromDate, toDate, userName, activityType, searchText);
+                result.DefaultView.Sort = "CreatedOn DESC, ActivityLogId DESC";
+                result = result.DefaultView.ToTable();
             }
             finally
             {
@@ -174,7 +175,7 @@ WHERE CreatedOn >= @FromDate
                 {
                     cmd.Parameters.AddWithValue("@FromDate", fromDate.Date);
                     cmd.Parameters.AddWithValue("@ToDate", toDate.Date);
-                    return Convert.ToInt32(cmd.ExecuteScalar());
+                    return Convert.ToInt32(cmd.ExecuteScalar()) + CountRecoveredTransactions(logType, fromDate, toDate);
                 }
             }
             finally
@@ -301,6 +302,303 @@ ORDER BY Value;", (SqlConnection)DataConnection))
             return result;
         }
 
+        private void AppendRecoveredTransactionRows(DataTable result, string logType, DateTime fromDate, DateTime toDate, string userName, string activityType, string searchText)
+        {
+            if (!string.IsNullOrWhiteSpace(activityType) && !string.Equals(activityType, "SAVE", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(userName))
+            {
+                return;
+            }
+
+            string sql = string.Equals(logType, "Purchase", StringComparison.OrdinalIgnoreCase)
+                ? BuildRecoveredPurchaseSql()
+                : BuildRecoveredSalesSql();
+
+            using (SqlCommand cmd = new SqlCommand(sql, (SqlConnection)DataConnection))
+            {
+                cmd.Parameters.AddWithValue("@FromDate", fromDate.Date);
+                cmd.Parameters.AddWithValue("@ToDate", toDate.Date);
+                cmd.Parameters.AddWithValue("@SearchText", searchText ?? string.Empty);
+
+                using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+                {
+                    adapter.Fill(result);
+                }
+            }
+        }
+
+        private int CountRecoveredTransactions(string logType, DateTime fromDate, DateTime toDate)
+        {
+            string sql = string.Equals(logType, "Purchase", StringComparison.OrdinalIgnoreCase)
+                ? BuildRecoveredPurchaseCountSql()
+                : BuildRecoveredSalesCountSql();
+
+            using (SqlCommand cmd = new SqlCommand(sql, (SqlConnection)DataConnection))
+            {
+                cmd.Parameters.AddWithValue("@FromDate", fromDate.Date);
+                cmd.Parameters.AddWithValue("@ToDate", toDate.Date);
+                object value = cmd.ExecuteScalar();
+                return value == null || value == DBNull.Value ? 0 : Convert.ToInt32(value);
+            }
+        }
+
+        private static string BuildRecoveredSalesSql()
+        {
+            return @"
+IF OBJECT_ID('dbo.SMaster', 'U') IS NULL
+    SELECT TOP 0
+        CAST(0 AS int) AS ActivityLogId,
+        CAST(GETDATE() AS datetime) AS CreatedOn,
+        CAST(NULL AS nvarchar(150)) AS UserName,
+        CAST('SAVE' AS nvarchar(50)) AS ActivityType,
+        CAST(0 AS bigint) AS TransactionNo,
+        CAST(NULL AS nvarchar(100)) AS InvoiceNo,
+        CAST(NULL AS nvarchar(250)) AS PartyName,
+        CAST(NULL AS nvarchar(100)) AS PaymentMode,
+        CAST(0 AS decimal(18,4)) AS NetAmount,
+        CAST(NULL AS decimal(18,4)) AS Qty,
+        CAST(NULL AS decimal(18,4)) AS Cost,
+        CAST(NULL AS nvarchar(50)) AS Unit,
+        CAST(NULL AS nvarchar(100)) AS Barcode,
+        CAST(NULL AS decimal(18,4)) AS SPrice,
+        CAST(NULL AS decimal(18,4)) AS TaxAmt,
+        CAST(NULL AS decimal(18,4)) AS TaxPer,
+        CAST(NULL AS decimal(18,4)) AS BaseAmount,
+        CAST(NULL AS decimal(18,4)) AS Packing,
+        CAST(NULL AS decimal(18,4)) AS RetailPrice,
+        CAST(NULL AS decimal(18,4)) AS Free,
+        CAST(NULL AS decimal(18,4)) AS UnitSP,
+        CAST(NULL AS nvarchar(50)) AS TaxType,
+        CAST(NULL AS decimal(18,4)) AS Gross,
+        CAST(NULL AS nvarchar(MAX)) AS ActivityDetails,
+        CAST(0 AS int) AS CompanyId,
+        CAST(0 AS int) AS BranchId,
+        CAST(0 AS int) AS FinYearId,
+        CAST(0 AS int) AS UserId,
+        CAST(NULL AS nvarchar(150)) AS CounterName,
+        CAST(0 AS int) AS CounterId,
+        CAST(0 AS bigint) AS CounterSessionId
+ELSE
+    SELECT
+        CAST(0 AS int) AS ActivityLogId,
+        sm.BillDate AS CreatedOn,
+        CAST(CASE WHEN ISNULL(sm.UserId, 0) = 0 THEN NULL ELSE 'User ' + CONVERT(nvarchar(20), sm.UserId) END AS nvarchar(150)) AS UserName,
+        CAST('SAVE' AS nvarchar(50)) AS ActivityType,
+        CAST(sm.BillNo AS bigint) AS TransactionNo,
+        CONVERT(nvarchar(100), sm.BillNo) AS InvoiceNo,
+        CAST(sm.CustomerName AS nvarchar(250)) AS PartyName,
+        CAST(sm.PaymodeName AS nvarchar(100)) AS PaymentMode,
+        CAST(ISNULL(sm.NetAmount, 0) AS decimal(18,4)) AS NetAmount,
+        d.Qty,
+        d.Cost,
+        d.Unit,
+            CAST(NULL AS nvarchar(100)) AS Barcode,
+        d.SPrice,
+        d.TaxAmt,
+        d.TaxPer,
+        d.BaseAmount,
+        CAST(NULL AS decimal(18,4)) AS Packing,
+        CAST(NULL AS decimal(18,4)) AS RetailPrice,
+        CAST(NULL AS decimal(18,4)) AS Free,
+        CAST(NULL AS decimal(18,4)) AS UnitSP,
+        CAST(NULL AS nvarchar(50)) AS TaxType,
+        CAST(NULL AS decimal(18,4)) AS Gross,
+        CAST('Recovered from saved sales invoice.' AS nvarchar(MAX)) AS ActivityDetails,
+        CAST(ISNULL(sm.CompanyId, 0) AS int) AS CompanyId,
+        CAST(ISNULL(sm.BranchId, 0) AS int) AS BranchId,
+        CAST(ISNULL(sm.FinYearId, 0) AS int) AS FinYearId,
+        CAST(ISNULL(sm.UserId, 0) AS int) AS UserId,
+        CAST(NULL AS nvarchar(150)) AS CounterName,
+        CAST(ISNULL(sm.CounterId, 0) AS int) AS CounterId,
+        CAST(ISNULL(sm.CounterSessionId, 0) AS bigint) AS CounterSessionId
+    FROM dbo.SMaster sm
+    OUTER APPLY
+    (
+        SELECT
+            CAST(SUM(ISNULL(sd.Qty, 0)) AS decimal(18,4)) AS Qty,
+            CAST(SUM(ISNULL(sd.Cost, 0) * ISNULL(sd.Qty, 0)) AS decimal(18,4)) AS Cost,
+            CAST(MAX(sd.Unit) AS nvarchar(50)) AS Unit,
+            CAST(MAX(sd.UnitPrice) AS decimal(18,4)) AS SPrice,
+            CAST(SUM(ISNULL(sd.TaxAmt, 0)) AS decimal(18,4)) AS TaxAmt,
+            CAST(MAX(sd.TaxPer) AS decimal(18,4)) AS TaxPer,
+            CAST(SUM(ISNULL(sd.BaseAmount, 0)) AS decimal(18,4)) AS BaseAmount
+        FROM dbo.SDetails sd
+        WHERE sd.BillNo = sm.BillNo
+          AND sd.BranchId = sm.BranchId
+          AND sd.CompanyId = sm.CompanyId
+          AND sd.FinYearId = sm.FinYearId
+    ) d
+    WHERE ISNULL(sm.CancelFlag, 0) = 0
+      AND sm.BillDate >= @FromDate
+      AND sm.BillDate < DATEADD(DAY, 1, @ToDate)
+      AND NOT EXISTS
+      (
+          SELECT 1
+          FROM dbo.SalesActivityLog sal
+          WHERE sal.TransactionNo = sm.BillNo
+            AND ISNULL(sal.ActivityType, '') = 'SAVE'
+      )
+      AND (
+            @SearchText = ''
+            OR CONVERT(nvarchar(50), sm.BillNo) LIKE '%' + @SearchText + '%'
+            OR ISNULL(sm.CustomerName, '') LIKE '%' + @SearchText + '%'
+          )
+    ORDER BY sm.BillDate DESC, sm.BillNo DESC;";
+        }
+
+        private static string BuildRecoveredPurchaseSql()
+        {
+            return @"
+IF OBJECT_ID('dbo.PMaster', 'U') IS NULL
+    SELECT TOP 0
+        CAST(0 AS int) AS ActivityLogId,
+        CAST(GETDATE() AS datetime) AS CreatedOn,
+        CAST(NULL AS nvarchar(150)) AS UserName,
+        CAST('SAVE' AS nvarchar(50)) AS ActivityType,
+        CAST(0 AS bigint) AS TransactionNo,
+        CAST(NULL AS nvarchar(100)) AS InvoiceNo,
+        CAST(NULL AS nvarchar(250)) AS PartyName,
+        CAST(NULL AS nvarchar(100)) AS PaymentMode,
+        CAST(0 AS decimal(18,4)) AS NetAmount,
+        CAST(NULL AS decimal(18,4)) AS Qty,
+        CAST(NULL AS decimal(18,4)) AS Cost,
+        CAST(NULL AS nvarchar(50)) AS Unit,
+        CAST(NULL AS nvarchar(100)) AS Barcode,
+        CAST(NULL AS decimal(18,4)) AS SPrice,
+        CAST(NULL AS decimal(18,4)) AS TaxAmt,
+        CAST(NULL AS decimal(18,4)) AS TaxPer,
+        CAST(NULL AS decimal(18,4)) AS BaseAmount,
+        CAST(NULL AS decimal(18,4)) AS Packing,
+        CAST(NULL AS decimal(18,4)) AS RetailPrice,
+        CAST(NULL AS decimal(18,4)) AS Free,
+        CAST(NULL AS decimal(18,4)) AS UnitSP,
+        CAST(NULL AS nvarchar(50)) AS TaxType,
+        CAST(NULL AS decimal(18,4)) AS Gross,
+        CAST(NULL AS nvarchar(MAX)) AS ActivityDetails,
+        CAST(0 AS int) AS CompanyId,
+        CAST(0 AS int) AS BranchId,
+        CAST(0 AS int) AS FinYearId,
+        CAST(0 AS int) AS UserId,
+        CAST(NULL AS nvarchar(150)) AS CounterName,
+        CAST(0 AS int) AS CounterId,
+        CAST(0 AS bigint) AS CounterSessionId
+ELSE
+    SELECT
+        CAST(0 AS int) AS ActivityLogId,
+        pm.PurchaseDate AS CreatedOn,
+        CAST(pm.UserName AS nvarchar(150)) AS UserName,
+        CAST('SAVE' AS nvarchar(50)) AS ActivityType,
+        CAST(pm.PurchaseNo AS bigint) AS TransactionNo,
+        CAST(pm.InvoiceNo AS nvarchar(100)) AS InvoiceNo,
+        CAST(pm.VendorName AS nvarchar(250)) AS PartyName,
+        CAST(pm.Paymode AS nvarchar(100)) AS PaymentMode,
+        CAST(ISNULL(NULLIF(pm.NetTotal, 0), pm.GrandTotal) AS decimal(18,4)) AS NetAmount,
+        d.Qty,
+        d.Cost,
+        d.Unit,
+        CAST(NULL AS nvarchar(100)) AS Barcode,
+        d.SPrice,
+        d.TaxAmt,
+        d.TaxPer,
+        d.BaseAmount,
+        d.Packing,
+        CAST(NULL AS decimal(18,4)) AS RetailPrice,
+        d.Free,
+        CAST(NULL AS decimal(18,4)) AS UnitSP,
+        d.TaxType,
+        d.Gross,
+        CAST('Recovered from saved purchase invoice.' AS nvarchar(MAX)) AS ActivityDetails,
+        CAST(ISNULL(pm.CompanyId, 0) AS int) AS CompanyId,
+        CAST(ISNULL(pm.BranchId, 0) AS int) AS BranchId,
+        CAST(ISNULL(pm.FinYearId, 0) AS int) AS FinYearId,
+        CAST(ISNULL(pm.UserID, 0) AS int) AS UserId,
+        CAST(NULL AS nvarchar(150)) AS CounterName,
+        CAST(0 AS int) AS CounterId,
+        CAST(0 AS bigint) AS CounterSessionId
+    FROM dbo.PMaster pm
+    OUTER APPLY
+    (
+        SELECT
+            CAST(SUM(ISNULL(pd.Qty, 0)) AS decimal(18,4)) AS Qty,
+            CAST(SUM(ISNULL(pd.Cost, 0) * ISNULL(pd.Qty, 0)) AS decimal(18,4)) AS Cost,
+            CAST(MAX(pd.Unit) AS nvarchar(50)) AS Unit,
+            CAST(MAX(pd.SalesPrice) AS decimal(18,4)) AS SPrice,
+            CAST(SUM(ISNULL(pd.TaxAmt, 0)) AS decimal(18,4)) AS TaxAmt,
+            CAST(MAX(pd.TaxPer) AS decimal(18,4)) AS TaxPer,
+            CAST(SUM(ISNULL(pd.Cost, 0) * ISNULL(pd.Qty, 0)) AS decimal(18,4)) AS BaseAmount,
+            CAST(MAX(pd.Packing) AS decimal(18,4)) AS Packing,
+            CAST(SUM(ISNULL(pd.Free, 0)) AS decimal(18,4)) AS Free,
+            CAST(MAX(pd.TaxType) AS nvarchar(50)) AS TaxType,
+            CAST(SUM(ISNULL(pd.TotalSP, 0)) AS decimal(18,4)) AS Gross
+        FROM dbo.PDetails pd
+        WHERE pd.PurchaseNo = pm.PurchaseNo
+          AND pd.BranchID = pm.BranchID
+          AND pd.CompanyId = pm.CompanyId
+          AND pd.FinYearId = pm.FinYearId
+    ) d
+    WHERE ISNULL(pm.CancelFlag, 0) = 0
+      AND pm.PurchaseDate >= @FromDate
+      AND pm.PurchaseDate < DATEADD(DAY, 1, @ToDate)
+      AND NOT EXISTS
+      (
+          SELECT 1
+          FROM dbo.PurchaseActivityLog pal
+          WHERE pal.TransactionNo = pm.PurchaseNo
+            AND ISNULL(pal.ActivityType, '') = 'SAVE'
+      )
+      AND (
+            @SearchText = ''
+            OR CONVERT(nvarchar(50), pm.PurchaseNo) LIKE '%' + @SearchText + '%'
+            OR ISNULL(pm.InvoiceNo, '') LIKE '%' + @SearchText + '%'
+            OR ISNULL(pm.VendorName, '') LIKE '%' + @SearchText + '%'
+          )
+    ORDER BY pm.PurchaseDate DESC, pm.PurchaseNo DESC;";
+        }
+
+        private static string BuildRecoveredSalesCountSql()
+        {
+            return @"
+IF OBJECT_ID('dbo.SMaster', 'U') IS NULL
+    SELECT 0
+ELSE
+    SELECT COUNT(1)
+    FROM dbo.SMaster sm
+    WHERE ISNULL(sm.CancelFlag, 0) = 0
+      AND sm.BillDate >= @FromDate
+      AND sm.BillDate < DATEADD(DAY, 1, @ToDate)
+      AND NOT EXISTS
+      (
+          SELECT 1
+          FROM dbo.SalesActivityLog sal
+          WHERE sal.TransactionNo = sm.BillNo
+            AND ISNULL(sal.ActivityType, '') = 'SAVE'
+      );";
+        }
+
+        private static string BuildRecoveredPurchaseCountSql()
+        {
+            return @"
+IF OBJECT_ID('dbo.PMaster', 'U') IS NULL
+    SELECT 0
+ELSE
+    SELECT COUNT(1)
+    FROM dbo.PMaster pm
+    WHERE ISNULL(pm.CancelFlag, 0) = 0
+      AND pm.PurchaseDate >= @FromDate
+      AND pm.PurchaseDate < DATEADD(DAY, 1, @ToDate)
+      AND NOT EXISTS
+      (
+          SELECT 1
+          FROM dbo.PurchaseActivityLog pal
+          WHERE pal.TransactionNo = pm.PurchaseNo
+            AND ISNULL(pal.ActivityType, '') = 'SAVE'
+      );";
+        }
+
         private void EnsureActivityLogTable(string tableName)
         {
             using (SqlCommand cmd = new SqlCommand($@"
@@ -346,6 +644,30 @@ BEGIN
 END
 ELSE
 BEGIN
+    IF COL_LENGTH('dbo.{tableName}', 'ActivityLogId') IS NULL
+        ALTER TABLE dbo.{tableName} ADD ActivityLogId INT IDENTITY(1,1) NOT NULL;
+
+    IF COL_LENGTH('dbo.{tableName}', 'TransactionNo') IS NULL
+        ALTER TABLE dbo.{tableName} ADD TransactionNo BIGINT NOT NULL CONSTRAINT DF_{tableName}_TransactionNo DEFAULT(0);
+
+    IF COL_LENGTH('dbo.{tableName}', 'InvoiceNo') IS NULL
+        ALTER TABLE dbo.{tableName} ADD InvoiceNo NVARCHAR(100) NULL;
+
+    IF COL_LENGTH('dbo.{tableName}', 'PartyName') IS NULL
+        ALTER TABLE dbo.{tableName} ADD PartyName NVARCHAR(250) NULL;
+
+    IF COL_LENGTH('dbo.{tableName}', 'PaymentMode') IS NULL
+        ALTER TABLE dbo.{tableName} ADD PaymentMode NVARCHAR(100) NULL;
+
+    IF COL_LENGTH('dbo.{tableName}', 'NetAmount') IS NULL
+        ALTER TABLE dbo.{tableName} ADD NetAmount DECIMAL(18,4) NOT NULL CONSTRAINT DF_{tableName}_NetAmount DEFAULT(0);
+
+    IF COL_LENGTH('dbo.{tableName}', 'ActivityType') IS NULL
+        ALTER TABLE dbo.{tableName} ADD ActivityType NVARCHAR(50) NOT NULL CONSTRAINT DF_{tableName}_ActivityType DEFAULT('');
+
+    IF COL_LENGTH('dbo.{tableName}', 'ActivityDetails') IS NULL
+        ALTER TABLE dbo.{tableName} ADD ActivityDetails NVARCHAR(MAX) NULL;
+
     IF COL_LENGTH('dbo.{tableName}', 'Qty') IS NULL
         ALTER TABLE dbo.{tableName} ADD Qty DECIMAL(18,4) NULL;
 
@@ -414,6 +736,9 @@ BEGIN
 
     IF COL_LENGTH('dbo.{tableName}', 'CounterSessionId') IS NULL
         ALTER TABLE dbo.{tableName} ADD CounterSessionId BIGINT NOT NULL CONSTRAINT DF_{tableName}_CounterSessionId DEFAULT(0);
+
+    IF COL_LENGTH('dbo.{tableName}', 'CreatedOn') IS NULL
+        ALTER TABLE dbo.{tableName} ADD CreatedOn DATETIME NOT NULL CONSTRAINT DF_{tableName}_CreatedOn DEFAULT(GETDATE());
 END;", (SqlConnection)DataConnection))
             {
                 cmd.ExecuteNonQuery();

@@ -190,6 +190,7 @@ WHERE " + salesReturnScope + @";", p);
                 // Non-Profit Items (items whose profit/margin <= 0)
                 // Calculated as items where sale cost >= sale price
                 model.NonProfitItems = ReadNonProfitSalesItems(salesAliasScope, p);
+                model.NonProfitAmount = ReadNonProfitSalesAmount(salesAliasScope, p);
 
                 // Excess Stock Items — stock > reorder level * 2
                 // We try common reorder column names and pick the first that exists
@@ -677,25 +678,56 @@ FROM (
 
         private int ReadNonProfitSalesItems(string salesAliasScope, DynamicParameters p)
         {
-            string marginColumn = GetFirstExistingColumn("SDetails", "MarginAmt");
             string costColumn = GetFirstExistingColumn("SDetails", "Cost", "CostPrice");
-            string rateColumn = GetFirstExistingColumn("SDetails", "Rate", "UnitPrice");
+            string salePriceColumn = GetFirstExistingColumn("SDetails", "UnitPrice", "Rate", "SellingPrice");
+            string itemColumn = GetFirstExistingColumn("SDetails", "ItemId", "ItemCode", "ItemName");
 
-            if (string.IsNullOrWhiteSpace(marginColumn) && (string.IsNullOrWhiteSpace(costColumn) || string.IsNullOrWhiteSpace(rateColumn)))
+            if (string.IsNullOrWhiteSpace(costColumn) || string.IsNullOrWhiteSpace(salePriceColumn))
                 return 0;
 
-            string condition = !string.IsNullOrWhiteSpace(marginColumn)
-                ? $"ISNULL(sd.{marginColumn},0)<=0"
-                : $"ISNULL(sd.{rateColumn},0)<=ISNULL(sd.{costColumn},0)";
+            string countExpression = string.IsNullOrWhiteSpace(itemColumn) ? "1" : $"DISTINCT sd.{itemColumn}";
+            string condition = BuildNonProfitSaleCondition(costColumn, salePriceColumn);
 
             return Safe<int>(@"
 IF OBJECT_ID('SDetails','U') IS NULL SELECT 0
-ELSE SELECT COUNT(DISTINCT sd.ItemCode)
+ELSE SELECT COUNT(" + countExpression + @")
 FROM SDetails sd
 INNER JOIN SMaster sm ON sm.BillNo=sd.BillNo AND sm.BranchId=sd.BranchId AND sm.CompanyId=sd.CompanyId AND sm.FinYearId=sd.FinYearId
 WHERE " + salesAliasScope + @"
   AND ISNULL(sm.CancelFlag,0)=0
   AND " + condition + @";", p);
+        }
+
+        private decimal ReadNonProfitSalesAmount(string salesAliasScope, DynamicParameters p)
+        {
+            string costColumn = GetFirstExistingColumn("SDetails", "Cost", "CostPrice");
+            string salePriceColumn = GetFirstExistingColumn("SDetails", "UnitPrice", "Rate", "SellingPrice");
+            string qtyColumn = GetFirstExistingColumn("SDetails", "Qty", "Quantity");
+            string lineAmountColumn = GetFirstExistingColumn("SDetails", "TotalAmount", "Amount");
+
+            if (string.IsNullOrWhiteSpace(costColumn) || string.IsNullOrWhiteSpace(salePriceColumn))
+                return 0;
+
+            string amountExpression = !string.IsNullOrWhiteSpace(lineAmountColumn)
+                ? $"ISNULL(sd.{lineAmountColumn},0)"
+                : !string.IsNullOrWhiteSpace(qtyColumn)
+                    ? $"ISNULL(sd.{salePriceColumn},0) * ISNULL(sd.{qtyColumn},0)"
+                    : $"ISNULL(sd.{salePriceColumn},0)";
+            string condition = BuildNonProfitSaleCondition(costColumn, salePriceColumn);
+
+            return Safe<decimal>(@"
+IF OBJECT_ID('SDetails','U') IS NULL SELECT CAST(0 AS decimal(18,2))
+ELSE SELECT ISNULL(SUM(" + amountExpression + @"),0)
+FROM SDetails sd
+INNER JOIN SMaster sm ON sm.BillNo=sd.BillNo AND sm.BranchId=sd.BranchId AND sm.CompanyId=sd.CompanyId AND sm.FinYearId=sd.FinYearId
+WHERE " + salesAliasScope + @"
+  AND ISNULL(sm.CancelFlag,0)=0
+  AND " + condition + @";", p);
+        }
+
+        private string BuildNonProfitSaleCondition(string costColumn, string salePriceColumn)
+        {
+            return $"ISNULL(sd.{costColumn},0)>0 AND ISNULL(sd.{salePriceColumn},0)<=ISNULL(sd.{costColumn},0)";
         }
 
         private string GetSalesPaymentTable()
@@ -914,7 +946,7 @@ ORDER BY {nameColumn};";
             AddAmount(table, model, "Partial Payment", model.PartialPayment, "warn", model.PartialPaymentCount);
             AddAmount(table, model, "Purchase Return", model.PurchaseReturn, "currency", model.PurchaseReturnCount);
             AddAmount(table, model, "Sales Return", model.SalesReturn, "currency", model.SalesReturnCount);
-            AddCount(table, model, "Non-Profit Items", model.NonProfitItems, "warn");
+            AddAmount(table, model, "Non-Profit Items", model.NonProfitAmount, "warn", model.NonProfitItems);
             AddCount(table, model, "Excess Stock Items", model.ExcessStockItems, "warn");
             AddCount(table, model, "Out of Stock Items", model.OutOfStockItems, "loss");
             AddCount(table, model, "Discontinued Items", model.DiscontinuedItems, "neutral");
@@ -1013,6 +1045,7 @@ ORDER BY {nameColumn};";
         public int PurchaseReturnCount { get; set; }
         public decimal SalesReturn { get; set; }
         public int SalesReturnCount { get; set; }
+        public decimal NonProfitAmount { get; set; }
         public int NonProfitItems { get; set; }
         public int ExcessStockItems { get; set; }
         public int OutOfStockItems { get; set; }

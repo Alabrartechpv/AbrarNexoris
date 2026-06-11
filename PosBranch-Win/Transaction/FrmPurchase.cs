@@ -89,6 +89,12 @@ namespace PosBranch_Win.Transaction
         // Guard flag to allow internal Unit updates while keeping the cell locked for manual edits
         private bool _isApplyingUnitSelection = false;
         private bool _purchaseStatusRowHandlerAdded = false;
+        private bool _isLoadingPurchaseForActivitySnapshot = false;
+        private bool _isUpdatingPurchase = false;
+        private string _activityInvoiceNo = string.Empty;
+        private string _activityBilledBy = string.Empty;
+        private DateTime? _activityInvoiceDate;
+        private DateTime? _activityPurchaseDate;
 
         // Flag to track if the user manually changed label4 (Net Total) via ".." shortcut in txtBarcode
         private bool _isNetTotalManuallySet = false;
@@ -5518,52 +5524,61 @@ namespace PosBranch_Win.Transaction
         // Add Clear method to reset form after saving
         public void Clear()
         {
-            _originalSellingPrices.Clear();
-            // Generate and display next purchase number dynamically
-            GenerateAndDisplayPurchaseNumber();
+            _isLoadingPurchaseForActivitySnapshot = true;
+            try
+            {
+                _originalSellingPrices.Clear();
+                ClearPurchaseHeaderActivitySnapshot();
+                // Generate and display next purchase number dynamically
+                GenerateAndDisplayPurchaseNumber();
 
-            txtInvoiceNo.Clear();
-            txtInvoiceAmt.Clear();
-            txtBarcode.Clear();
-            txtBilledBy.Clear();
-            textBox1.Clear(); // Clear vendor ID textBox
+                txtInvoiceNo.Clear();
+                txtInvoiceAmt.Clear();
+                txtBarcode.Clear();
+                txtBilledBy.Clear();
+                textBox1.Clear(); // Clear vendor ID textBox
 
-            txtRoundOff.Clear();
+                txtRoundOff.Clear();
 
-            // Reset dates to current date
-            dtpPurchaseDate.Value = DateTime.Today;
-            DtpInoviceDate.Value = DateTime.Today;
+                // Reset dates to current date
+                dtpPurchaseDate.Value = DateTime.Today;
+                DtpInoviceDate.Value = DateTime.Today;
 
-            // Reset grid
-            ClearUltraGrid1Contents();
-            ClearUltraGrid2Contents();
+                // Reset grid
+                ClearUltraGrid1Contents();
+                ClearUltraGrid2Contents();
 
-            // Reset calculation values
-            SubTotal = 0;
-            NetTotal = 0;
-            OriginalNetTotal = 0;
-            LblPid.Text = "";
-            lblVoucherId.Text = "";
-            lblSubTotalAmt.Text = "0.00";
+                // Reset calculation values
+                SubTotal = 0;
+                NetTotal = 0;
+                OriginalNetTotal = 0;
+                LblPid.Text = "";
+                lblVoucherId.Text = "";
+                lblSubTotalAmt.Text = "0.00";
 
-            label4.Text = "0.00";
-            label6.Text = "0.00";
-            textBox2.Text = "";
-            _isNetTotalManuallySet = false;
+                label4.Text = "0.00";
+                label6.Text = "0.00";
+                textBox2.Text = "";
+                _isNetTotalManuallySet = false;
 
-            // Reset panel visibility: show label4 panel, hide label6 panel
-            ultraPanel11.Visible = true;
-            ultraPanel12.Visible = false;
+                // Reset panel visibility: show label4 panel, hide label6 panel
+                ultraPanel11.Visible = true;
+                ultraPanel12.Visible = false;
 
-            // Reset button visibility
-            pbxSave.Visible = true;
-            ultraPictureBox4.Visible = false;
+                // Reset button visibility
+                pbxSave.Visible = true;
+                ultraPictureBox4.Visible = false;
 
-            // Highlight mandatory fields again
-            HighlightMandatoryFields();
+                // Highlight mandatory fields again
+                HighlightMandatoryFields();
 
-            // Set focus to barcode field
-            barcodeFocus();
+                // Set focus to barcode field
+                barcodeFocus();
+            }
+            finally
+            {
+                _isLoadingPurchaseForActivitySnapshot = false;
+            }
         }
 
         private void WireGridClearButton(string buttonName, Action clearAction)
@@ -6291,6 +6306,7 @@ namespace PosBranch_Win.Transaction
         {
             try
             {
+                _isLoadingPurchaseForActivitySnapshot = true;
                 _originalSellingPrices.Clear();
                 // First clear the grid
                 DataTable dt = ultraGrid1.DataSource as DataTable;
@@ -6573,6 +6589,8 @@ namespace PosBranch_Win.Transaction
                         UpdateGrossColumnVisibility();
 
                     }
+
+                    CapturePurchaseHeaderActivitySnapshot();
                 }
             }
             catch (Exception ex)
@@ -6581,11 +6599,21 @@ namespace PosBranch_Win.Transaction
                 System.Diagnostics.Debug.WriteLine("Error loading purchase data: " + ex.Message);
                 MessageBox.Show("Error loading purchase data: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+            finally
+            {
+                _isLoadingPurchaseForActivitySnapshot = false;
+            }
         }
 
         // Add UpdatePurchase method to handle update operation
         public void UpdatePurchase()
         {
+            if (_isUpdatingPurchase)
+            {
+                return;
+            }
+
+            _isUpdatingPurchase = true;
             try
             {
                 if (!ShiftSessionGuard.CanDoTransaction(out string transactionError))
@@ -6890,6 +6918,10 @@ namespace PosBranch_Win.Transaction
             catch (Exception ex)
             {
                 MessageBox.Show("Error updating purchase: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                _isUpdatingPurchase = false;
             }
         }
 
@@ -7303,6 +7335,74 @@ namespace PosBranch_Win.Transaction
             }
         }
 
+        private void CapturePurchaseHeaderActivitySnapshot()
+        {
+            _activityInvoiceNo = txtInvoiceNo.Text ?? string.Empty;
+            _activityBilledBy = txtBilledBy.Text ?? string.Empty;
+            _activityInvoiceDate = GetEditorDate(DtpInoviceDate);
+            _activityPurchaseDate = GetEditorDate(dtpPurchaseDate);
+        }
+
+        private void ClearPurchaseHeaderActivitySnapshot()
+        {
+            _activityInvoiceNo = string.Empty;
+            _activityBilledBy = string.Empty;
+            _activityInvoiceDate = null;
+            _activityPurchaseDate = null;
+        }
+
+        private bool TryGetCurrentPurchaseNo(out int purchaseNo)
+        {
+            purchaseNo = 0;
+            string raw = (txtPurchaseNo.Text ?? string.Empty).Replace("GRN-", string.Empty).Trim();
+            return int.TryParse(raw, out purchaseNo) && purchaseNo > 0;
+        }
+
+        private DateTime? GetEditorDate(Infragistics.Win.UltraWinEditors.UltraDateTimeEditor editor)
+        {
+            if (editor == null || editor.Value == null)
+            {
+                return null;
+            }
+
+            return Convert.ToDateTime(editor.Value).Date;
+        }
+
+        private void AddDateChange(List<string> changes, string caption, DateTime? oldValue, DateTime? newValue)
+        {
+            if (oldValue.GetValueOrDefault(DateTime.MinValue) == newValue.GetValueOrDefault(DateTime.MinValue))
+            {
+                return;
+            }
+
+            changes.Add($"{caption} changed from {FormatDate(oldValue)} to {FormatDate(newValue)}");
+        }
+
+        private void AddTextUpdate(List<string> changes, string caption, string oldValue, string newValue)
+        {
+            oldValue = (oldValue ?? string.Empty).Trim();
+            newValue = (newValue ?? string.Empty).Trim();
+            if (!string.Equals(oldValue, newValue, StringComparison.OrdinalIgnoreCase))
+            {
+                changes.Add($"{caption} updated to {FormatTextValue(newValue)} (was {FormatTextValue(oldValue)})");
+            }
+        }
+
+        private void AddDateUpdate(List<string> changes, string caption, DateTime? oldValue, DateTime? newValue)
+        {
+            if (oldValue.GetValueOrDefault(DateTime.MinValue) == newValue.GetValueOrDefault(DateTime.MinValue))
+            {
+                return;
+            }
+
+            changes.Add($"{caption} updated to {FormatDate(newValue)} (was {FormatDate(oldValue)})");
+        }
+
+        private string FormatDate(DateTime? value)
+        {
+            return value.HasValue ? value.Value.ToString("dd MMM yyyy") : "(blank)";
+        }
+
         private void GetPurchaseLogColumnSummary(
             out decimal sellingPrice,
             out decimal taxAmt,
@@ -7397,12 +7497,17 @@ namespace PosBranch_Win.Transaction
         {
             var changes = new List<string>();
             var updatedItemNames = new List<string>();
+            var purchaseItemNames = new List<string>();
             PurchaseMaster oldMaster = oldPurchase != null && oldPurchase.Listpmaster != null ? oldPurchase.Listpmaster.FirstOrDefault() : null;
 
             if (oldMaster != null)
             {
                 AddTextChange(changes, "Vendor", oldMaster.VendorName, CmboVendor.Text);
                 AddTextChange(changes, "Paymode", oldMaster.Paymode, CmboPayment.Text);
+                AddTextUpdate(changes, "txtInvoiceNo", oldMaster.InvoiceNo, txtInvoiceNo.Text);
+                AddTextUpdate(changes, "txtBilledBy", oldMaster.BilledBy, txtBilledBy.Text);
+                AddDateUpdate(changes, "DtpInoviceDate", oldMaster.InvoiceDate.Date, GetEditorDate(DtpInoviceDate));
+                AddDateUpdate(changes, "dtpPurchaseDate", oldMaster.PurchaseDate.Date, GetEditorDate(dtpPurchaseDate));
             }
 
             var oldRows = oldPurchase != null && oldPurchase.Listpdetails != null
@@ -7425,9 +7530,14 @@ namespace PosBranch_Win.Transaction
                         itemName = oldRow.ItemName;
                     }
 
+                    if (!string.IsNullOrWhiteSpace(itemName))
+                    {
+                        purchaseItemNames.Add(FormatItemName(itemName));
+                    }
+
                     if (oldRow == null)
                     {
-                        changes.Add($"Added with Qty {FormatAmount(GetCellDecimal(row, "Qty"))}");
+                        changes.Add($"Added item \"{FormatItemName(itemName)}\" with {BuildPurchaseItemSummary(row)}");
                         updatedItemNames.Add(FormatItemName(itemName));
                         continue;
                     }
@@ -7459,7 +7569,7 @@ namespace PosBranch_Win.Transaction
 
                     if (itemChanges.Count > 0)
                     {
-                        changes.AddRange(itemChanges);
+                        changes.Add($"{FormatItemName(itemName)}: {string.Join("; ", itemChanges)}");
                         updatedItemNames.Add(FormatItemName(itemName));
                     }
                 }
@@ -7467,7 +7577,7 @@ namespace PosBranch_Win.Transaction
 
             foreach (var remaining in oldRows)
             {
-                changes.Add("Removed");
+                changes.Add($"Removed item \"{FormatItemName(remaining.ItemName)}\"");
                 updatedItemNames.Add(FormatItemName(remaining.ItemName));
             }
 
@@ -7478,12 +7588,48 @@ namespace PosBranch_Win.Transaction
 
             changes.Add($"Net amount = {FormatAmount(netAmount)}");
 
-            var uniqueItemNames = updatedItemNames.Distinct().Select(x => $"\"{x}\"").ToList();
-            string itemHeader = uniqueItemNames.Count > 0
-                ? $"{Environment.NewLine}{string.Join(", ", uniqueItemNames)}"
+            var sourceItemNames = purchaseItemNames.Count > 0 ? purchaseItemNames : updatedItemNames;
+            var uniqueItemNames = sourceItemNames
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Select(x => $"- \"{x}\"")
+                .ToList();
+            string itemSection = uniqueItemNames.Count > 0
+                ? $"{Environment.NewLine}Items:{Environment.NewLine}{string.Join(Environment.NewLine, uniqueItemNames)}"
                 : string.Empty;
 
-            return $"Purchase invoice GRN-{purchaseNo} updated.{itemHeader}{Environment.NewLine}Changes:{Environment.NewLine}- {string.Join(Environment.NewLine + "- ", changes)}";
+            return $"Purchase invoice GRN-{purchaseNo} updated.{itemSection}{Environment.NewLine}Changes:{Environment.NewLine}- {string.Join(Environment.NewLine + "- ", changes)}";
+        }
+
+        private string BuildPurchaseItemSummary(DataGridViewRow row)
+        {
+            if (row == null)
+            {
+                return "item details unavailable";
+            }
+
+            var parts = new List<string>
+            {
+                $"Qty {FormatAmount(GetCellDecimal(row, "Qty"))}",
+                $"Cost {FormatAmount(GetCellDecimal(row, "Cost"))}",
+                $"Selling price {FormatAmount(GetCellDecimal(row, "SellingPrice"))}",
+                $"TaxAmt {FormatAmount(GetCellDecimal(row, "TaxAmt"))}",
+                $"NetAmt {FormatAmount(GetCellDecimal(row, "NetAmt"))}"
+            };
+
+            string unit = GetCellString(row, "Unit");
+            if (!string.IsNullOrWhiteSpace(unit))
+            {
+                parts.Add($"Unit {unit}");
+            }
+
+            string barcode = GetCellString(row, "BarCode");
+            if (!string.IsNullOrWhiteSpace(barcode))
+            {
+                parts.Add($"Barcode {barcode}");
+            }
+
+            return string.Join(", ", parts);
         }
 
         private PurchaseDetails TakeMatchingPurchaseSnapshot(List<PurchaseDetails> oldRows, DataGridViewRow newRow)
@@ -7698,6 +7844,71 @@ namespace PosBranch_Win.Transaction
         {
             string baseText = $"Purchase invoice GRN-{purchaseNo} {activityType.ToLowerInvariant()}d.";
             DataTable table = ultraGrid1.DataSource as DataTable;
+            if (string.Equals(activityType, "SAVE", StringComparison.OrdinalIgnoreCase))
+            {
+                var lines = new List<string>
+                {
+                    baseText,
+                    "Header:",
+                    $"- txtInvoiceNo: {FormatTextValue(txtInvoiceNo.Text)}",
+                    $"- txtBilledBy: {FormatTextValue(txtBilledBy.Text)}",
+                    $"- DtpInoviceDate: {FormatDate(GetEditorDate(DtpInoviceDate))}",
+                    $"- dtpPurchaseDate: {FormatDate(GetEditorDate(dtpPurchaseDate))}",
+                    $"- Vendor: {FormatTextValue(CmboVendor.Text)}",
+                    $"- Paymode: {FormatTextValue(CmboPayment.Text)}",
+                    $"- Net amount: {FormatAmount(netAmount)}",
+                    "Purchased items:"
+                };
+
+                if (table == null || table.Rows.Count == 0)
+                {
+                    lines.Add("- No item rows available.");
+                    return string.Join(Environment.NewLine, lines);
+                }
+
+                int itemNo = 1;
+                foreach (DataRow row in table.Rows)
+                {
+                    if (row.RowState == DataRowState.Deleted)
+                    {
+                        continue;
+                    }
+
+                    string itemName = GetString(row, "Description");
+                    if (string.IsNullOrWhiteSpace(itemName))
+                    {
+                        itemName = "Item";
+                    }
+
+                    var itemParts = new List<string>
+                    {
+                        $"{itemNo}. {itemName}",
+                        $"Qty: {FormatAmount(GetDecimal(row, "Qty"))}",
+                        $"Cost: {FormatAmount(GetDecimal(row, "Cost"))}",
+                        $"Selling price: {FormatAmount(GetDecimal(row, "SellingPrice"))}",
+                        $"TaxAmt: {FormatAmount(GetDecimal(row, "TaxAmt"))}",
+                        $"NetAmt: {FormatAmount(GetDecimal(row, "NetAmt"))}"
+                    };
+
+                    string unit = GetString(row, "Unit");
+                    if (!string.IsNullOrWhiteSpace(unit))
+                    {
+                        itemParts.Add($"Unit: {unit}");
+                    }
+
+                    string barcode = GetString(row, "BarCode");
+                    if (!string.IsNullOrWhiteSpace(barcode))
+                    {
+                        itemParts.Add($"Barcode: {barcode}");
+                    }
+
+                    lines.Add("- " + string.Join(", ", itemParts));
+                    itemNo++;
+                }
+
+                return string.Join(Environment.NewLine, lines);
+            }
+
             if (table == null || table.Rows.Count == 0)
             {
                 return $"{baseText} Net amount = {netAmount:0.##}.";
