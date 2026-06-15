@@ -105,6 +105,8 @@ namespace Repository.ReportRepository
                                 TotalDirectExpenses = summaryRow["TotalDirectExpenses"] != DBNull.Value ? Convert.ToDecimal(summaryRow["TotalDirectExpenses"]) : 0,
                                 TotalDirectIncomes = summaryRow["TotalDirectIncomes"] != DBNull.Value ? Convert.ToDecimal(summaryRow["TotalDirectIncomes"]) : 0,
                                 TotalStockInHand = summaryRow["TotalStockInHand"] != DBNull.Value ? Convert.ToDecimal(summaryRow["TotalStockInHand"]) : 0,
+                                OpeningStock = summaryRow["OpeningStock"] != DBNull.Value ? Convert.ToDecimal(summaryRow["OpeningStock"]) : 0,
+                                ClosingStock = summaryRow["ClosingStock"] != DBNull.Value ? Convert.ToDecimal(summaryRow["ClosingStock"]) : 0,
                                 GrossProfit = summaryRow["GrossProfit"] != DBNull.Value ? Convert.ToDecimal(summaryRow["GrossProfit"]) : 0,
                                 TotalIndirectExpenses = summaryRow["TotalIndirectExpenses"] != DBNull.Value ? Convert.ToDecimal(summaryRow["TotalIndirectExpenses"]) : 0,
                                 TotalIndirectIncomes = summaryRow["TotalIndirectIncomes"] != DBNull.Value ? Convert.ToDecimal(summaryRow["TotalIndirectIncomes"]) : 0,

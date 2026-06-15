@@ -12,7 +12,7 @@ using Repository.ReportRepository;
 
 namespace PosBranch_Win.Reports.FinancialReports
 {
-    public partial class FrmTradingPLAccount : Form
+    public partial class FrmTradingAccount : Form
     {
         #region Private Fields
         private TradingPLRepository reportRepository;
@@ -20,7 +20,7 @@ namespace PosBranch_Win.Reports.FinancialReports
         #endregion
 
         #region Constructor
-        public FrmTradingPLAccount()
+        public FrmTradingAccount()
         {
             InitializeComponent();
             InitializeForm();
@@ -369,7 +369,7 @@ namespace PosBranch_Win.Reports.FinancialReports
         #endregion
 
         #region Button Events
-        private void FrmTradingPLAccount_Load(object sender, EventArgs e)
+        private void FrmTradingAccount_Load(object sender, EventArgs e)
         {
             LoadReport();
         }

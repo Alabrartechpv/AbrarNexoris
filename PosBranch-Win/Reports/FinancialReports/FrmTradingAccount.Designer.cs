@@ -1,6 +1,6 @@
 namespace PosBranch_Win.Reports.FinancialReports
 {
-    partial class FrmTradingPLAccount
+    partial class FrmTradingAccount
     {
         /// <summary>
         /// Required designer variable.
@@ -300,15 +300,15 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.lblFromDate.TabIndex = 0;
             this.lblFromDate.Text = "From Date";
             // 
-            // FrmTradingPLAccount
+            // FrmTradingAccount
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1100, 700);
             this.Controls.Add(this.ultraPanelMain);
-            this.Name = "FrmTradingPLAccount";
+            this.Name = "FrmTradingAccount";
             this.Text = "Trading Account";
-            this.Load += new System.EventHandler(this.FrmTradingPLAccount_Load);
+            this.Load += new System.EventHandler(this.FrmTradingAccount_Load);
             this.ultraPanelMain.ClientArea.ResumeLayout(false);
             this.ultraPanelMain.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.ultraGroupBoxTrading)).EndInit();

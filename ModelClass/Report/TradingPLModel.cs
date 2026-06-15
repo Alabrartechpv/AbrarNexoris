@@ -43,6 +43,8 @@ namespace ModelClass.Report
         public decimal TotalDirectExpenses { get; set; }
         public decimal TotalDirectIncomes { get; set; }
         public decimal TotalStockInHand { get; set; }
+        public decimal OpeningStock { get; set; }
+        public decimal ClosingStock { get; set; }
         public decimal GrossProfit { get; set; }
         public decimal TotalIndirectExpenses { get; set; }
         public decimal TotalIndirectIncomes { get; set; }

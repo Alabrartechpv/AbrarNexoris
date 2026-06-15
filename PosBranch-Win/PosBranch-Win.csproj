@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -1105,6 +1105,18 @@
     <Compile Include="Reports\FinancialReports\FrmTradingPLAccount.Designer.cs">
       <DependentUpon>FrmTradingPLAccount.cs</DependentUpon>
     </Compile>
+    <Compile Include="Reports\FinancialReports\FrmTradingAccount.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reports\FinancialReports\FrmTradingAccount.Designer.cs">
+      <DependentUpon>FrmTradingAccount.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Reports\FinancialReports\FrmProfitLossAccount.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reports\FinancialReports\FrmProfitLossAccount.Designer.cs">
+      <DependentUpon>FrmProfitLossAccount.cs</DependentUpon>
+    </Compile>
     <Compile Include="Reports\FinancialReports\FrmBalanceSheet.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1555,6 +1567,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Reports\FinancialReports\FrmTradingPLAccount.resx">
       <DependentUpon>FrmTradingPLAccount.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Reports\FinancialReports\FrmTradingAccount.resx">
+      <DependentUpon>FrmTradingAccount.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Reports\FinancialReports\FrmProfitLossAccount.resx">
+      <DependentUpon>FrmProfitLossAccount.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Reports\FinancialReports\frmVendorPaymentReport.resx">
       <DependentUpon>frmVendorPaymentReport.cs</DependentUpon>

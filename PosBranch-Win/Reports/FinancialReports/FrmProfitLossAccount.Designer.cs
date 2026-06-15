@@ -1,6 +1,6 @@
 namespace PosBranch_Win.Reports.FinancialReports
 {
-    partial class FrmTradingPLAccount
+    partial class FrmProfitLossAccount
     {
         /// <summary>
         /// Required designer variable.
@@ -30,20 +30,18 @@ namespace PosBranch_Win.Reports.FinancialReports
         {
             Infragistics.Win.Appearance appearance1 = new Infragistics.Win.Appearance();
             this.ultraPanelMain = new Infragistics.Win.Misc.UltraPanel();
-            this.ultraGroupBoxTrading = new Infragistics.Win.Misc.UltraGroupBox();
-            this.ultraGridTrading = new Infragistics.Win.UltraWinGrid.UltraGrid();
-            this.panelGrossProfit = new Infragistics.Win.Misc.UltraPanel();
-            this.lblGrossProfitCaption = new Infragistics.Win.Misc.UltraLabel();
-            this.lblGrossProfitValue = new Infragistics.Win.Misc.UltraLabel();
+            this.ultraGroupBoxPL = new Infragistics.Win.Misc.UltraGroupBox();
+            this.ultraGridProfitLoss = new Infragistics.Win.UltraWinGrid.UltraGrid();
+            this.panelNetProfit = new Infragistics.Win.Misc.UltraPanel();
+            this.lblNetProfitCaption = new Infragistics.Win.Misc.UltraLabel();
+            this.lblNetProfitValue = new Infragistics.Win.Misc.UltraLabel();
             this.ultraPanelSummary = new Infragistics.Win.Misc.UltraPanel();
-            this.lblClosingStockValue = new Infragistics.Win.Misc.UltraLabel();
-            this.lblClosingStockCaption = new Infragistics.Win.Misc.UltraLabel();
-            this.lblOpeningStockValue = new Infragistics.Win.Misc.UltraLabel();
-            this.lblOpeningStockCaption = new Infragistics.Win.Misc.UltraLabel();
-            this.lblTotalPurchasesValue = new Infragistics.Win.Misc.UltraLabel();
-            this.lblTotalPurchasesCaption = new Infragistics.Win.Misc.UltraLabel();
-            this.lblTotalSalesValue = new Infragistics.Win.Misc.UltraLabel();
-            this.lblTotalSalesCaption = new Infragistics.Win.Misc.UltraLabel();
+            this.lblIndirectExpensesValue = new Infragistics.Win.Misc.UltraLabel();
+            this.lblIndirectExpensesCaption = new Infragistics.Win.Misc.UltraLabel();
+            this.lblIndirectIncomesValue = new Infragistics.Win.Misc.UltraLabel();
+            this.lblIndirectIncomesCaption = new Infragistics.Win.Misc.UltraLabel();
+            this.lblGrossProfitBfValue = new Infragistics.Win.Misc.UltraLabel();
+            this.lblGrossProfitBfCaption = new Infragistics.Win.Misc.UltraLabel();
             this.ultraGroupBoxFilters = new Infragistics.Win.Misc.UltraGroupBox();
             this.btnClose = new Infragistics.Win.Misc.UltraButton();
             this.btnPrint = new Infragistics.Win.Misc.UltraButton();
@@ -55,11 +53,11 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.lblFromDate = new System.Windows.Forms.Label();
             this.ultraPanelMain.ClientArea.SuspendLayout();
             this.ultraPanelMain.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.ultraGroupBoxTrading)).BeginInit();
-            this.ultraGroupBoxTrading.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.ultraGridTrading)).BeginInit();
-            this.panelGrossProfit.ClientArea.SuspendLayout();
-            this.panelGrossProfit.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraGroupBoxPL)).BeginInit();
+            this.ultraGroupBoxPL.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraGridProfitLoss)).BeginInit();
+            this.panelNetProfit.ClientArea.SuspendLayout();
+            this.panelNetProfit.SuspendLayout();
             this.ultraPanelSummary.ClientArea.SuspendLayout();
             this.ultraPanelSummary.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.ultraGroupBoxFilters)).BeginInit();
@@ -75,7 +73,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             // 
             // ultraPanelMain.ClientArea
             // 
-            this.ultraPanelMain.ClientArea.Controls.Add(this.ultraGroupBoxTrading);
+            this.ultraPanelMain.ClientArea.Controls.Add(this.ultraGroupBoxPL);
             this.ultraPanelMain.ClientArea.Controls.Add(this.ultraPanelSummary);
             this.ultraPanelMain.ClientArea.Controls.Add(this.ultraGroupBoxFilters);
             this.ultraPanelMain.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -84,136 +82,118 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.ultraPanelMain.Size = new System.Drawing.Size(1100, 700);
             this.ultraPanelMain.TabIndex = 0;
             // 
-            // ultraGroupBoxTrading
+            // ultraGroupBoxPL
             // 
-            this.ultraGroupBoxTrading.Controls.Add(this.ultraGridTrading);
-            this.ultraGroupBoxTrading.Controls.Add(this.panelGrossProfit);
-            this.ultraGroupBoxTrading.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ultraGroupBoxTrading.Location = new System.Drawing.Point(0, 80);
-            this.ultraGroupBoxTrading.Name = "ultraGroupBoxTrading";
-            this.ultraGroupBoxTrading.Size = new System.Drawing.Size(1100, 550);
-            this.ultraGroupBoxTrading.TabIndex = 1;
-            this.ultraGroupBoxTrading.Text = "Trading Account Details";
+            this.ultraGroupBoxPL.Controls.Add(this.ultraGridProfitLoss);
+            this.ultraGroupBoxPL.Controls.Add(this.panelNetProfit);
+            this.ultraGroupBoxPL.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ultraGroupBoxPL.Location = new System.Drawing.Point(0, 80);
+            this.ultraGroupBoxPL.Name = "ultraGroupBoxPL";
+            this.ultraGroupBoxPL.Size = new System.Drawing.Size(1100, 550);
+            this.ultraGroupBoxPL.TabIndex = 1;
+            this.ultraGroupBoxPL.Text = "Profit & Loss Details";
             // 
-            // ultraGridTrading
+            // ultraGridProfitLoss
             // 
-            this.ultraGridTrading.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ultraGridTrading.Location = new System.Drawing.Point(3, 19);
-            this.ultraGridTrading.Name = "ultraGridTrading";
-            this.ultraGridTrading.Size = new System.Drawing.Size(1094, 483);
-            this.ultraGridTrading.TabIndex = 0;
+            this.ultraGridProfitLoss.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ultraGridProfitLoss.Location = new System.Drawing.Point(3, 19);
+            this.ultraGridProfitLoss.Name = "ultraGridProfitLoss";
+            this.ultraGridProfitLoss.Size = new System.Drawing.Size(1094, 478);
+            this.ultraGridProfitLoss.TabIndex = 0;
             // 
-            // panelGrossProfit
+            // panelNetProfit
             // 
             // 
-            // panelGrossProfit.ClientArea
+            // panelNetProfit.ClientArea
             // 
-            this.panelGrossProfit.ClientArea.Controls.Add(this.lblGrossProfitCaption);
-            this.panelGrossProfit.ClientArea.Controls.Add(this.lblGrossProfitValue);
-            this.panelGrossProfit.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panelGrossProfit.Location = new System.Drawing.Point(3, 502);
-            this.panelGrossProfit.Name = "panelGrossProfit";
-            this.panelGrossProfit.Size = new System.Drawing.Size(1094, 45);
-            this.panelGrossProfit.TabIndex = 1;
+            this.panelNetProfit.ClientArea.Controls.Add(this.lblNetProfitCaption);
+            this.panelNetProfit.ClientArea.Controls.Add(this.lblNetProfitValue);
+            this.panelNetProfit.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.panelNetProfit.Location = new System.Drawing.Point(3, 497);
+            this.panelNetProfit.Name = "panelNetProfit";
+            this.panelNetProfit.Size = new System.Drawing.Size(1094, 50);
+            this.panelNetProfit.TabIndex = 1;
             // 
-            // lblGrossProfitCaption
+            // lblNetProfitCaption
             // 
-            this.lblGrossProfitCaption.Location = new System.Drawing.Point(20, 12);
-            this.lblGrossProfitCaption.Name = "lblGrossProfitCaption";
-            this.lblGrossProfitCaption.Size = new System.Drawing.Size(200, 22);
-            this.lblGrossProfitCaption.TabIndex = 0;
-            this.lblGrossProfitCaption.Text = "GROSS PROFIT:";
+            this.lblNetProfitCaption.Location = new System.Drawing.Point(20, 15);
+            this.lblNetProfitCaption.Name = "lblNetProfitCaption";
+            this.lblNetProfitCaption.Size = new System.Drawing.Size(200, 22);
+            this.lblNetProfitCaption.TabIndex = 0;
+            this.lblNetProfitCaption.Text = "★ NET PROFIT:";
             // 
-            // lblGrossProfitValue
+            // lblNetProfitValue
             // 
-            this.lblGrossProfitValue.Location = new System.Drawing.Point(220, 9);
-            this.lblGrossProfitValue.Name = "lblGrossProfitValue";
-            this.lblGrossProfitValue.Size = new System.Drawing.Size(250, 28);
-            this.lblGrossProfitValue.TabIndex = 1;
-            this.lblGrossProfitValue.Text = "₹ 0.00";
+            this.lblNetProfitValue.Location = new System.Drawing.Point(220, 12);
+            this.lblNetProfitValue.Name = "lblNetProfitValue";
+            this.lblNetProfitValue.Size = new System.Drawing.Size(250, 28);
+            this.lblNetProfitValue.TabIndex = 1;
+            this.lblNetProfitValue.Text = "₹ 0.00";
             // 
             // ultraPanelSummary
             // 
             // 
             // ultraPanelSummary.ClientArea
             // 
-            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblClosingStockValue);
-            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblClosingStockCaption);
-            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblOpeningStockValue);
-            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblOpeningStockCaption);
-            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblTotalPurchasesValue);
-            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblTotalPurchasesCaption);
-            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblTotalSalesValue);
-            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblTotalSalesCaption);
+            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblIndirectExpensesValue);
+            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblIndirectExpensesCaption);
+            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblIndirectIncomesValue);
+            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblIndirectIncomesCaption);
+            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblGrossProfitBfValue);
+            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblGrossProfitBfCaption);
             this.ultraPanelSummary.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.ultraPanelSummary.Location = new System.Drawing.Point(0, 630);
             this.ultraPanelSummary.Name = "ultraPanelSummary";
             this.ultraPanelSummary.Size = new System.Drawing.Size(1100, 70);
             this.ultraPanelSummary.TabIndex = 2;
             // 
-            // lblClosingStockValue
+            // lblIndirectExpensesValue
             // 
-            this.lblClosingStockValue.Location = new System.Drawing.Point(820, 31);
-            this.lblClosingStockValue.Name = "lblClosingStockValue";
-            this.lblClosingStockValue.Size = new System.Drawing.Size(180, 28);
-            this.lblClosingStockValue.TabIndex = 7;
-            this.lblClosingStockValue.Text = "₹ 0.00";
+            this.lblIndirectExpensesValue.Location = new System.Drawing.Point(650, 31);
+            this.lblIndirectExpensesValue.Name = "lblIndirectExpensesValue";
+            this.lblIndirectExpensesValue.Size = new System.Drawing.Size(180, 28);
+            this.lblIndirectExpensesValue.TabIndex = 5;
+            this.lblIndirectExpensesValue.Text = "₹ 0.00";
             // 
-            // lblClosingStockCaption
+            // lblIndirectExpensesCaption
             // 
-            this.lblClosingStockCaption.Location = new System.Drawing.Point(820, 10);
-            this.lblClosingStockCaption.Name = "lblClosingStockCaption";
-            this.lblClosingStockCaption.Size = new System.Drawing.Size(140, 18);
-            this.lblClosingStockCaption.TabIndex = 6;
-            this.lblClosingStockCaption.Text = "Closing Stock:";
+            this.lblIndirectExpensesCaption.Location = new System.Drawing.Point(650, 10);
+            this.lblIndirectExpensesCaption.Name = "lblIndirectExpensesCaption";
+            this.lblIndirectExpensesCaption.Size = new System.Drawing.Size(140, 18);
+            this.lblIndirectExpensesCaption.TabIndex = 4;
+            this.lblIndirectExpensesCaption.Text = "Indirect Expenses:";
             // 
-            // lblOpeningStockValue
+            // lblIndirectIncomesValue
             // 
-            this.lblOpeningStockValue.Location = new System.Drawing.Point(50, 31);
-            this.lblOpeningStockValue.Name = "lblOpeningStockValue";
-            this.lblOpeningStockValue.Size = new System.Drawing.Size(180, 28);
-            this.lblOpeningStockValue.TabIndex = 5;
-            this.lblOpeningStockValue.Text = "₹ 0.00";
+            this.lblIndirectIncomesValue.Location = new System.Drawing.Point(380, 31);
+            this.lblIndirectIncomesValue.Name = "lblIndirectIncomesValue";
+            this.lblIndirectIncomesValue.Size = new System.Drawing.Size(180, 28);
+            this.lblIndirectIncomesValue.TabIndex = 3;
+            this.lblIndirectIncomesValue.Text = "₹ 0.00";
             // 
-            // lblOpeningStockCaption
+            // lblIndirectIncomesCaption
             // 
-            this.lblOpeningStockCaption.Location = new System.Drawing.Point(50, 10);
-            this.lblOpeningStockCaption.Name = "lblOpeningStockCaption";
-            this.lblOpeningStockCaption.Size = new System.Drawing.Size(140, 18);
-            this.lblOpeningStockCaption.TabIndex = 4;
-            this.lblOpeningStockCaption.Text = "Opening Stock:";
+            this.lblIndirectIncomesCaption.Location = new System.Drawing.Point(380, 10);
+            this.lblIndirectIncomesCaption.Name = "lblIndirectIncomesCaption";
+            this.lblIndirectIncomesCaption.Size = new System.Drawing.Size(140, 18);
+            this.lblIndirectIncomesCaption.TabIndex = 2;
+            this.lblIndirectIncomesCaption.Text = "Indirect Incomes:";
             // 
-            // lblTotalPurchasesValue
+            // lblGrossProfitBfValue
             // 
-            this.lblTotalPurchasesValue.Location = new System.Drawing.Point(300, 31);
-            this.lblTotalPurchasesValue.Name = "lblTotalPurchasesValue";
-            this.lblTotalPurchasesValue.Size = new System.Drawing.Size(180, 28);
-            this.lblTotalPurchasesValue.TabIndex = 3;
-            this.lblTotalPurchasesValue.Text = "₹ 0.00";
+            this.lblGrossProfitBfValue.Location = new System.Drawing.Point(100, 31);
+            this.lblGrossProfitBfValue.Name = "lblGrossProfitBfValue";
+            this.lblGrossProfitBfValue.Size = new System.Drawing.Size(180, 28);
+            this.lblGrossProfitBfValue.TabIndex = 1;
+            this.lblGrossProfitBfValue.Text = "₹ 0.00";
             // 
-            // lblTotalPurchasesCaption
+            // lblGrossProfitBfCaption
             // 
-            this.lblTotalPurchasesCaption.Location = new System.Drawing.Point(300, 10);
-            this.lblTotalPurchasesCaption.Name = "lblTotalPurchasesCaption";
-            this.lblTotalPurchasesCaption.Size = new System.Drawing.Size(140, 18);
-            this.lblTotalPurchasesCaption.TabIndex = 2;
-            this.lblTotalPurchasesCaption.Text = "Total Purchases:";
-            // 
-            // lblTotalSalesValue
-            // 
-            this.lblTotalSalesValue.Location = new System.Drawing.Point(560, 31);
-            this.lblTotalSalesValue.Name = "lblTotalSalesValue";
-            this.lblTotalSalesValue.Size = new System.Drawing.Size(180, 28);
-            this.lblTotalSalesValue.TabIndex = 1;
-            this.lblTotalSalesValue.Text = "₹ 0.00";
-            // 
-            // lblTotalSalesCaption
-            // 
-            this.lblTotalSalesCaption.Location = new System.Drawing.Point(560, 10);
-            this.lblTotalSalesCaption.Name = "lblTotalSalesCaption";
-            this.lblTotalSalesCaption.Size = new System.Drawing.Size(120, 18);
-            this.lblTotalSalesCaption.TabIndex = 0;
-            this.lblTotalSalesCaption.Text = "Total Sales:";
+            this.lblGrossProfitBfCaption.Location = new System.Drawing.Point(100, 10);
+            this.lblGrossProfitBfCaption.Name = "lblGrossProfitBfCaption";
+            this.lblGrossProfitBfCaption.Size = new System.Drawing.Size(200, 18);
+            this.lblGrossProfitBfCaption.TabIndex = 0;
+            this.lblGrossProfitBfCaption.Text = "Gross Profit (B/F):";
             // 
             // ultraGroupBoxFilters
             // 
@@ -300,22 +280,22 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.lblFromDate.TabIndex = 0;
             this.lblFromDate.Text = "From Date";
             // 
-            // FrmTradingPLAccount
+            // FrmProfitLossAccount
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1100, 700);
             this.Controls.Add(this.ultraPanelMain);
-            this.Name = "FrmTradingPLAccount";
-            this.Text = "Trading Account";
-            this.Load += new System.EventHandler(this.FrmTradingPLAccount_Load);
+            this.Name = "FrmProfitLossAccount";
+            this.Text = "Profit & Loss Account";
+            this.Load += new System.EventHandler(this.FrmProfitLossAccount_Load);
             this.ultraPanelMain.ClientArea.ResumeLayout(false);
             this.ultraPanelMain.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.ultraGroupBoxTrading)).EndInit();
-            this.ultraGroupBoxTrading.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.ultraGridTrading)).EndInit();
-            this.panelGrossProfit.ClientArea.ResumeLayout(false);
-            this.panelGrossProfit.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.ultraGroupBoxPL)).EndInit();
+            this.ultraGroupBoxPL.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.ultraGridProfitLoss)).EndInit();
+            this.panelNetProfit.ClientArea.ResumeLayout(false);
+            this.panelNetProfit.ResumeLayout(false);
             this.ultraPanelSummary.ClientArea.ResumeLayout(false);
             this.ultraPanelSummary.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.ultraGroupBoxFilters)).EndInit();
@@ -340,18 +320,16 @@ namespace PosBranch_Win.Reports.FinancialReports
         private Infragistics.Win.Misc.UltraButton btnPrint;
         private Infragistics.Win.Misc.UltraButton btnClose;
         private Infragistics.Win.Misc.UltraPanel ultraPanelSummary;
-        private Infragistics.Win.Misc.UltraLabel lblTotalSalesCaption;
-        private Infragistics.Win.Misc.UltraLabel lblTotalSalesValue;
-        private Infragistics.Win.Misc.UltraLabel lblTotalPurchasesCaption;
-        private Infragistics.Win.Misc.UltraLabel lblTotalPurchasesValue;
-        private Infragistics.Win.Misc.UltraLabel lblOpeningStockCaption;
-        private Infragistics.Win.Misc.UltraLabel lblOpeningStockValue;
-        private Infragistics.Win.Misc.UltraLabel lblClosingStockCaption;
-        private Infragistics.Win.Misc.UltraLabel lblClosingStockValue;
-        private Infragistics.Win.Misc.UltraGroupBox ultraGroupBoxTrading;
-        private Infragistics.Win.UltraWinGrid.UltraGrid ultraGridTrading;
-        private Infragistics.Win.Misc.UltraPanel panelGrossProfit;
-        private Infragistics.Win.Misc.UltraLabel lblGrossProfitCaption;
-        private Infragistics.Win.Misc.UltraLabel lblGrossProfitValue;
+        private Infragistics.Win.Misc.UltraLabel lblGrossProfitBfCaption;
+        private Infragistics.Win.Misc.UltraLabel lblGrossProfitBfValue;
+        private Infragistics.Win.Misc.UltraLabel lblIndirectIncomesCaption;
+        private Infragistics.Win.Misc.UltraLabel lblIndirectIncomesValue;
+        private Infragistics.Win.Misc.UltraLabel lblIndirectExpensesCaption;
+        private Infragistics.Win.Misc.UltraLabel lblIndirectExpensesValue;
+        private Infragistics.Win.Misc.UltraGroupBox ultraGroupBoxPL;
+        private Infragistics.Win.UltraWinGrid.UltraGrid ultraGridProfitLoss;
+        private Infragistics.Win.Misc.UltraPanel panelNetProfit;
+        private Infragistics.Win.Misc.UltraLabel lblNetProfitCaption;
+        private Infragistics.Win.Misc.UltraLabel lblNetProfitValue;
     }
 }
