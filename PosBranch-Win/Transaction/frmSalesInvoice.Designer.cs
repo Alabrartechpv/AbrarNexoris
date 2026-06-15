@@ -375,7 +375,7 @@ namespace PosBranch_Win.Transaction
             this.ultraPictureBox4.BorderStyle = Infragistics.Win.UIElementBorderStyle.Rounded1Etched;
             this.ultraPictureBox4.Cursor = System.Windows.Forms.Cursors.Hand;
             this.ultraPictureBox4.Image = ((object)(resources.GetObject("ultraPictureBox4.Image")));
-            this.ultraPictureBox4.Location = new System.Drawing.Point(48, 40);
+            this.ultraPictureBox4.Location = new System.Drawing.Point(11, 26);
             this.ultraPictureBox4.Name = "ultraPictureBox4";
             this.ultraPictureBox4.Size = new System.Drawing.Size(53, 56);
             this.ultraPictureBox4.TabIndex = 31;

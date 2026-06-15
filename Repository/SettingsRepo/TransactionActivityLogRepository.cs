@@ -108,21 +108,10 @@ SELECT
 FROM dbo.{tableName}
 WHERE CreatedOn >= @FromDate
   AND CreatedOn < DATEADD(DAY, 1, @ToDate)
-  AND (@UserName = '' OR ISNULL(UserName, '') = @UserName)
-  AND (@ActivityType = '' OR ISNULL(ActivityType, '') = @ActivityType)
-  AND (
-        @SearchText = ''
-        OR CONVERT(NVARCHAR(50), TransactionNo) LIKE '%' + @SearchText + '%'
-        OR ISNULL(InvoiceNo, '') LIKE '%' + @SearchText + '%'
-        OR ISNULL(PartyName, '') LIKE '%' + @SearchText + '%'
-      )
 ORDER BY CreatedOn DESC, ActivityLogId DESC;", (SqlConnection)DataConnection))
                 {
                     cmd.Parameters.AddWithValue("@FromDate", fromDate.Date);
                     cmd.Parameters.AddWithValue("@ToDate", toDate.Date);
-                    cmd.Parameters.AddWithValue("@UserName", userName ?? string.Empty);
-                    cmd.Parameters.AddWithValue("@ActivityType", activityType ?? string.Empty);
-                    cmd.Parameters.AddWithValue("@SearchText", searchText ?? string.Empty);
 
                     using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
                     {
@@ -130,8 +119,12 @@ ORDER BY CreatedOn DESC, ActivityLogId DESC;", (SqlConnection)DataConnection))
                     }
                 }
 
-                AppendRecoveredTransactionRows(result, logType, fromDate, toDate, userName, activityType, searchText);
-                result.DefaultView.Sort = "CreatedOn DESC, ActivityLogId DESC";
+                AppendRecoveredTransactionRows(result, logType, fromDate, toDate, string.Empty, string.Empty, string.Empty);
+                ApplyPersistentDisplayLogNumbers(result);
+                result = FilterActivityRows(result, userName, activityType, searchText);
+                result.DefaultView.Sort = result.Columns.Contains("DisplayLogNo")
+                    ? "DisplayLogNo DESC"
+                    : "CreatedOn DESC, ActivityLogId DESC";
                 result = result.DefaultView.ToTable();
             }
             finally
@@ -302,9 +295,113 @@ ORDER BY Value;", (SqlConnection)DataConnection))
             return result;
         }
 
+        private static void ApplyPersistentDisplayLogNumbers(DataTable table)
+        {
+            if (table == null)
+            {
+                return;
+            }
+
+            const string displayColumn = "DisplayLogNo";
+            if (!table.Columns.Contains(displayColumn))
+            {
+                table.Columns.Add(displayColumn, typeof(int));
+            }
+
+            int maxRealLogId = 0;
+            foreach (DataRow row in table.Rows)
+            {
+                int activityLogId = row["ActivityLogId"] == DBNull.Value ? 0 : Convert.ToInt32(row["ActivityLogId"]);
+                if (activityLogId > maxRealLogId)
+                {
+                    maxRealLogId = activityLogId;
+                }
+            }
+
+            DataView chronologicalView = new DataView(table)
+            {
+                Sort = "CreatedOn ASC, ActivityLogId ASC, TransactionNo ASC"
+            };
+
+            int syntheticLogNo = maxRealLogId + 1;
+            foreach (DataRowView rowView in chronologicalView)
+            {
+                int activityLogId = rowView.Row["ActivityLogId"] == DBNull.Value ? 0 : Convert.ToInt32(rowView.Row["ActivityLogId"]);
+                rowView.Row[displayColumn] = activityLogId > 0 ? activityLogId : syntheticLogNo++;
+            }
+        }
+
+        private static DataTable FilterActivityRows(DataTable source, string userName, string activityType, string searchText)
+        {
+            if (source == null)
+            {
+                return new DataTable();
+            }
+
+            DataTable filtered = source.Clone();
+            string userFilter = userName ?? string.Empty;
+            string activityFilter = activityType ?? string.Empty;
+            string textFilter = searchText ?? string.Empty;
+
+            foreach (DataRow row in source.Rows)
+            {
+                if (!string.IsNullOrWhiteSpace(userFilter) &&
+                    !string.Equals(Convert.ToString(row["UserName"]), userFilter, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                string rowActivity = Convert.ToString(row["ActivityType"]);
+                if (!string.IsNullOrWhiteSpace(activityFilter) &&
+                    !string.Equals(rowActivity, activityFilter, StringComparison.OrdinalIgnoreCase) &&
+                    !(IsHoldActivityFilter(activityFilter) && IsHoldActivityRow(rowActivity)))
+                {
+                    continue;
+                }
+
+                if (!MatchesActivitySearch(row, textFilter))
+                {
+                    continue;
+                }
+
+                filtered.ImportRow(row);
+            }
+
+            return filtered;
+        }
+
+        private static bool IsHoldActivityRow(string activityType)
+        {
+            return string.Equals(activityType, "HOLD UPDATE", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(activityType, "HOLD COMPLETED", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(activityType, "Hold bill updated", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(activityType, "Hold bill saved", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool MatchesActivitySearch(DataRow row, string searchText)
+        {
+            if (string.IsNullOrWhiteSpace(searchText))
+            {
+                return true;
+            }
+
+            return ContainsText(Convert.ToString(row["TransactionNo"]), searchText) ||
+                   ContainsText(Convert.ToString(row["InvoiceNo"]), searchText) ||
+                   ContainsText(Convert.ToString(row["PartyName"]), searchText);
+        }
+
+        private static bool ContainsText(string value, string searchText)
+        {
+            return !string.IsNullOrEmpty(value) &&
+                   value.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
         private void AppendRecoveredTransactionRows(DataTable result, string logType, DateTime fromDate, DateTime toDate, string userName, string activityType, string searchText)
         {
-            if (!string.IsNullOrWhiteSpace(activityType) && !string.Equals(activityType, "SAVE", StringComparison.OrdinalIgnoreCase))
+            bool isSalesLog = string.Equals(logType, "Sales", StringComparison.OrdinalIgnoreCase);
+            if (!string.IsNullOrWhiteSpace(activityType) &&
+                !string.Equals(activityType, "SAVE", StringComparison.OrdinalIgnoreCase) &&
+                !(isSalesLog && IsHoldActivityFilter(activityType)))
             {
                 return;
             }
@@ -322,6 +419,7 @@ ORDER BY Value;", (SqlConnection)DataConnection))
             {
                 cmd.Parameters.AddWithValue("@FromDate", fromDate.Date);
                 cmd.Parameters.AddWithValue("@ToDate", toDate.Date);
+                cmd.Parameters.AddWithValue("@ActivityType", activityType ?? string.Empty);
                 cmd.Parameters.AddWithValue("@SearchText", searchText ?? string.Empty);
 
                 using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
@@ -329,6 +427,11 @@ ORDER BY Value;", (SqlConnection)DataConnection))
                     adapter.Fill(result);
                 }
             }
+        }
+
+        private static bool IsHoldActivityFilter(string activityType)
+        {
+            return string.Equals(activityType, "HOLD", StringComparison.OrdinalIgnoreCase);
         }
 
         private int CountRecoveredTransactions(string logType, DateTime fromDate, DateTime toDate)
@@ -384,19 +487,19 @@ IF OBJECT_ID('dbo.SMaster', 'U') IS NULL
         CAST(0 AS bigint) AS CounterSessionId
 ELSE
     SELECT
-        CAST(0 AS int) AS ActivityLogId,
+        CAST(-sm.BillNo AS int) AS ActivityLogId,
         sm.BillDate AS CreatedOn,
-        CAST(CASE WHEN ISNULL(sm.UserId, 0) = 0 THEN NULL ELSE 'User ' + CONVERT(nvarchar(20), sm.UserId) END AS nvarchar(150)) AS UserName,
-        CAST('SAVE' AS nvarchar(50)) AS ActivityType,
+        CAST(COALESCE(NULLIF(u.UserName, ''), CASE WHEN ISNULL(sm.UserId, 0) = 0 THEN NULL ELSE 'User ' + CONVERT(nvarchar(20), sm.UserId) END) AS nvarchar(150)) AS UserName,
+        CAST(CASE WHEN ISNULL(sm.Status, '') = 'Hold' THEN 'HOLD' ELSE 'SAVE' END AS nvarchar(50)) AS ActivityType,
         CAST(sm.BillNo AS bigint) AS TransactionNo,
         CONVERT(nvarchar(100), sm.BillNo) AS InvoiceNo,
         CAST(sm.CustomerName AS nvarchar(250)) AS PartyName,
-        CAST(sm.PaymodeName AS nvarchar(100)) AS PaymentMode,
+        CAST(CASE WHEN ISNULL(sm.PaymodeName, '') = 'Credit' AND ISNULL(sm.CreditDays, 0) > 0 THEN CONVERT(nvarchar(20), sm.CreditDays) ELSE sm.PaymodeName END AS nvarchar(100)) AS PaymentMode,
         CAST(ISNULL(sm.NetAmount, 0) AS decimal(18,4)) AS NetAmount,
         d.Qty,
         d.Cost,
         d.Unit,
-            CAST(NULL AS nvarchar(100)) AS Barcode,
+        d.Barcode,
         d.SPrice,
         d.TaxAmt,
         d.TaxPer,
@@ -407,7 +510,11 @@ ELSE
         CAST(NULL AS decimal(18,4)) AS UnitSP,
         CAST(NULL AS nvarchar(50)) AS TaxType,
         CAST(NULL AS decimal(18,4)) AS Gross,
-        CAST('Recovered from saved sales invoice.' AS nvarchar(MAX)) AS ActivityDetails,
+        CAST(
+            CASE WHEN ISNULL(sm.Status, '') = 'Hold'
+                THEN 'Sales invoice #' + CONVERT(nvarchar(50), sm.BillNo) + ' hold processed.' + CHAR(13) + CHAR(10) + 'Holded items:' + ISNULL(d.ItemLines, '')
+                ELSE 'Sales invoice #' + CONVERT(nvarchar(50), sm.BillNo) + ' saved.' + CHAR(13) + CHAR(10) + 'Items:' + ISNULL(d.ItemLines, '')
+            END AS nvarchar(MAX)) AS ActivityDetails,
         CAST(ISNULL(sm.CompanyId, 0) AS int) AS CompanyId,
         CAST(ISNULL(sm.BranchId, 0) AS int) AS BranchId,
         CAST(ISNULL(sm.FinYearId, 0) AS int) AS FinYearId,
@@ -416,16 +523,37 @@ ELSE
         CAST(ISNULL(sm.CounterId, 0) AS int) AS CounterId,
         CAST(ISNULL(sm.CounterSessionId, 0) AS bigint) AS CounterSessionId
     FROM dbo.SMaster sm
+    LEFT JOIN dbo.Users u
+      ON u.UserID = sm.UserId
     OUTER APPLY
     (
         SELECT
             CAST(SUM(ISNULL(sd.Qty, 0)) AS decimal(18,4)) AS Qty,
             CAST(SUM(ISNULL(sd.Cost, 0) * ISNULL(sd.Qty, 0)) AS decimal(18,4)) AS Cost,
             CAST(MAX(sd.Unit) AS nvarchar(50)) AS Unit,
+            CAST(MAX(sd.Barcode) AS nvarchar(100)) AS Barcode,
             CAST(MAX(sd.UnitPrice) AS decimal(18,4)) AS SPrice,
             CAST(SUM(ISNULL(sd.TaxAmt, 0)) AS decimal(18,4)) AS TaxAmt,
             CAST(MAX(sd.TaxPer) AS decimal(18,4)) AS TaxPer,
-            CAST(SUM(ISNULL(sd.BaseAmount, 0)) AS decimal(18,4)) AS BaseAmount
+            CAST(SUM(ISNULL(sd.BaseAmount, 0)) AS decimal(18,4)) AS BaseAmount,
+            CAST(
+                (
+                    SELECT CHAR(13) + CHAR(10)
+                        + '- ""' + ISNULL(sd2.ItemName, 'Item') + '""'
+                        + ', Qty: ' + CONVERT(nvarchar(50), CAST(ISNULL(sd2.Qty, 0) AS decimal(18,4)))
+                        + ', S/Price: ' + CONVERT(nvarchar(50), CAST(ISNULL(sd2.UnitPrice, 0) AS decimal(18,4)))
+                        + ', TaxAmt: ' + CONVERT(nvarchar(50), CAST(ISNULL(sd2.TaxAmt, 0) AS decimal(18,4)))
+                        + ', TotalAmount: ' + CONVERT(nvarchar(50), CAST(ISNULL(sd2.TotalAmount, 0) AS decimal(18,4)))
+                        + CASE WHEN ISNULL(sd2.Unit, '') <> '' THEN ', Unit: ' + sd2.Unit ELSE '' END
+                        + CASE WHEN ISNULL(sd2.Barcode, '') <> '' THEN ', Barcode: ' + sd2.Barcode ELSE '' END
+                    FROM dbo.SDetails sd2
+                    WHERE sd2.BillNo = sm.BillNo
+                      AND sd2.BranchId = sm.BranchId
+                      AND sd2.CompanyId = sm.CompanyId
+                      AND sd2.FinYearId = sm.FinYearId
+                    ORDER BY sd2.SlNO
+                    FOR XML PATH(''), TYPE
+                ).value('.', 'nvarchar(max)') AS nvarchar(MAX)) AS ItemLines
         FROM dbo.SDetails sd
         WHERE sd.BillNo = sm.BillNo
           AND sd.BranchId = sm.BranchId
@@ -440,8 +568,11 @@ ELSE
           SELECT 1
           FROM dbo.SalesActivityLog sal
           WHERE sal.TransactionNo = sm.BillNo
-            AND ISNULL(sal.ActivityType, '') = 'SAVE'
       )
+      AND (
+            @ActivityType = ''
+            OR CASE WHEN ISNULL(sm.Status, '') = 'Hold' THEN 'HOLD' ELSE 'SAVE' END = @ActivityType
+          )
       AND (
             @SearchText = ''
             OR CONVERT(nvarchar(50), sm.BillNo) LIKE '%' + @SearchText + '%'
@@ -575,7 +706,6 @@ ELSE
           SELECT 1
           FROM dbo.SalesActivityLog sal
           WHERE sal.TransactionNo = sm.BillNo
-            AND ISNULL(sal.ActivityType, '') = 'SAVE'
       );";
         }
 
