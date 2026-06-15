@@ -364,6 +364,11 @@ namespace PosBranch_Win.Utilities
             bool autoGenerateBarcodes = chkAutoGenerateBarcodes.Checked;
 
             // Run validation
+            btnPreview.Enabled = false;
+            btnImport.Enabled = false;
+            btnBrowse.Enabled = false;
+            btnLoad.Enabled = false;
+
             lblProgress.Text = "Validating data...";
             progressBarImport.Value = 0;
             bgWorkerValidate.RunWorkerAsync(new object[] { duplicateBehavior, autoCreate, autoGenerateBarcodes });
@@ -530,6 +535,10 @@ namespace PosBranch_Win.Utilities
                 MessageBox.Show($"Validation completed with {errors} errors. Rows highlighted in red have errors that prevent import.", 
                                 "Validation Summary", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
+
+            btnPreview.Enabled = true;
+            btnBrowse.Enabled = true;
+            btnLoad.Enabled = true;
 
             // Enable import if we have at least one row without error
             btnImport.Enabled = (total - errors) > 0;
