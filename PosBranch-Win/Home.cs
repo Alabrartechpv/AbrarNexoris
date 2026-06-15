@@ -1473,6 +1473,13 @@ namespace PosBranch_Win
                 return;
             }
 
+            if (toolKey == "ExcelImport")
+            {
+                Utilities.FrmExcelImport importForm = new Utilities.FrmExcelImport();
+                OpenFormInTabSafe(importForm, "Excel Import/Export");
+                return;
+            }
+
             // Map aliases to permission keys
             string permissionKey = toolKey;
             if (toolKey == "Roles") permissionKey = "RolePermissions";

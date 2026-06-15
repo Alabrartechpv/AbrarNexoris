@@ -333,6 +333,16 @@ namespace PosBranch_Win.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap import_export {
+            get {
+                object obj = ResourceManager.GetObject("import-export", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap languages__2_ {
             get {
                 object obj = ResourceManager.GetObject("languages__2_", resourceCulture);

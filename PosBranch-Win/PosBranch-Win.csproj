@@ -1220,6 +1220,12 @@
     <Compile Include="Utilities\frmBarcode.Designer.cs">
       <DependentUpon>frmBarcode.cs</DependentUpon>
     </Compile>
+    <Compile Include="Utilities\FrmExcelImport.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Utilities\FrmExcelImport.Designer.cs">
+      <DependentUpon>FrmExcelImport.cs</DependentUpon>
+    </Compile>
     <Compile Include="Utilities\frmClosing.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1631,6 +1637,9 @@
     <EmbeddedResource Include="Utilities\frmClosing.resx">
       <DependentUpon>frmClosing.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Utilities\FrmExcelImport.resx">
+      <DependentUpon>FrmExcelImport.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Utilities\FrmNexorisAI.resx">
       <DependentUpon>FrmNexorisAI.cs</DependentUpon>
     </EmbeddedResource>
@@ -1790,6 +1799,7 @@
     <None Include="Resources\debit.png" />
     <None Include="Resources\exit.png" />
     <None Include="Resources\icons8-report-50.png" />
+    <None Include="Resources\import-export.png" />
     <Content Include="Resources\languages %282%29.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
