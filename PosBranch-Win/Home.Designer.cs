@@ -347,8 +347,8 @@ namespace PosBranch_Win
             this.Menu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.menuToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ultraRadialMenu1 = new Infragistics.Win.UltraWinRadialMenu.UltraRadialMenu(this.components);
-            this.ultraToolbarsManager1 = new Infragistics.Win.UltraWinToolbars.UltraToolbarsManager(this.components);
             this._Home_Toolbars_Dock_Area_Right = new Infragistics.Win.UltraWinToolbars.UltraToolbarsDockArea();
+            this.ultraToolbarsManager1 = new Infragistics.Win.UltraWinToolbars.UltraToolbarsManager(this.components);
             this._Home_Toolbars_Dock_Area_Left = new Infragistics.Win.UltraWinToolbars.UltraToolbarsDockArea();
             this._Home_Toolbars_Dock_Area_Bottom = new Infragistics.Win.UltraWinToolbars.UltraToolbarsDockArea();
             this._Home_Toolbars_Dock_Area_Top = new Infragistics.Win.UltraWinToolbars.UltraToolbarsDockArea();
@@ -457,6 +457,18 @@ namespace PosBranch_Win
             radialMenuTool1.Tools.Add(radialMenuTool5);
             this.ultraRadialMenu1.CenterTool = radialMenuTool1;
             this.ultraRadialMenu1.OwningControl = this;
+            // 
+            // _Home_Toolbars_Dock_Area_Right
+            // 
+            this._Home_Toolbars_Dock_Area_Right.AccessibleRole = System.Windows.Forms.AccessibleRole.Grouping;
+            this._Home_Toolbars_Dock_Area_Right.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
+            this._Home_Toolbars_Dock_Area_Right.DockedPosition = Infragistics.Win.UltraWinToolbars.DockedPosition.Right;
+            this._Home_Toolbars_Dock_Area_Right.ForeColor = System.Drawing.SystemColors.ControlText;
+            this._Home_Toolbars_Dock_Area_Right.InitialResizeAreaExtent = 8;
+            this._Home_Toolbars_Dock_Area_Right.Location = new System.Drawing.Point(1356, 162);
+            this._Home_Toolbars_Dock_Area_Right.Name = "_Home_Toolbars_Dock_Area_Right";
+            this._Home_Toolbars_Dock_Area_Right.Size = new System.Drawing.Size(8, 375);
+            this._Home_Toolbars_Dock_Area_Right.ToolbarsManager = this.ultraToolbarsManager1;
             // 
             // ultraToolbarsManager1
             // 
@@ -1175,18 +1187,6 @@ namespace PosBranch_Win
             buttonToolGeneralReceipt,
             buttonToolBankReconciliation});
             this.ultraToolbarsManager1.ToolClick += new Infragistics.Win.UltraWinToolbars.ToolClickEventHandler(this.ultraToolbarsManager1_ToolClick_1);
-            // 
-            // _Home_Toolbars_Dock_Area_Right
-            // 
-            this._Home_Toolbars_Dock_Area_Right.AccessibleRole = System.Windows.Forms.AccessibleRole.Grouping;
-            this._Home_Toolbars_Dock_Area_Right.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            this._Home_Toolbars_Dock_Area_Right.DockedPosition = Infragistics.Win.UltraWinToolbars.DockedPosition.Right;
-            this._Home_Toolbars_Dock_Area_Right.ForeColor = System.Drawing.SystemColors.ControlText;
-            this._Home_Toolbars_Dock_Area_Right.InitialResizeAreaExtent = 8;
-            this._Home_Toolbars_Dock_Area_Right.Location = new System.Drawing.Point(1356, 162);
-            this._Home_Toolbars_Dock_Area_Right.Name = "_Home_Toolbars_Dock_Area_Right";
-            this._Home_Toolbars_Dock_Area_Right.Size = new System.Drawing.Size(8, 375);
-            this._Home_Toolbars_Dock_Area_Right.ToolbarsManager = this.ultraToolbarsManager1;
             // 
             // _Home_Toolbars_Dock_Area_Left
             // 

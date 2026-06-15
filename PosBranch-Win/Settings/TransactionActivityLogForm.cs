@@ -330,6 +330,7 @@ namespace PosBranch_Win.Settings
             cmbActivityType.Items.Add("All Activities");
             cmbAction.Items.Add("All Actions");
             cmbAction.Items.Add("SAVE");
+            cmbAction.Items.Add("HOLD");
             cmbAction.Items.Add("UPDATE");
             cmbAction.Items.Add("DELETE");
 
@@ -380,6 +381,7 @@ namespace PosBranch_Win.Settings
                         txtSearch.Text.Trim());
                 }
 
+                ApplyDisplayLogNumbers();
                 gridActivity.DataSource = currentData;
                 ConfigureGridColumns();
                 UpdateSummaryCards();
@@ -389,6 +391,34 @@ namespace PosBranch_Win.Settings
             {
                 MessageBox.Show("Unable to load activity log: " + ex.Message, title, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void ApplyDisplayLogNumbers()
+        {
+            if (currentData == null)
+            {
+                return;
+            }
+
+            const string displayColumn = "DisplayLogNo";
+            if (currentData.Columns.Contains(displayColumn))
+            {
+                currentData.Columns[displayColumn].SetOrdinal(0);
+                return;
+            }
+
+            if (!currentData.Columns.Contains(displayColumn))
+            {
+                currentData.Columns.Add(displayColumn, typeof(int));
+            }
+
+            int logNo = currentData.Rows.Count;
+            foreach (DataRow row in currentData.Rows)
+            {
+                row[displayColumn] = logNo--;
+            }
+
+            currentData.Columns[displayColumn].SetOrdinal(0);
         }
 
         private void UpdateSummaryCards()
@@ -423,7 +453,7 @@ namespace PosBranch_Win.Settings
                 return;
             }
 
-            SetColumn("ActivityLogId", "#", 55);
+            SetColumn("DisplayLogNo", "#", 55);
             SetColumn("CreatedOn", "Date & Time", 155);
             SetColumn("UserName", "User", 115);
             SetColumn("UserId", "User ID", 75);
@@ -457,6 +487,7 @@ namespace PosBranch_Win.Settings
             HideColumn("CompanyId");
             HideColumn("BranchId");
             HideColumn("FinYearId");
+            HideColumn("ActivityLogId");
 
             if (logType == "Sales")
             {

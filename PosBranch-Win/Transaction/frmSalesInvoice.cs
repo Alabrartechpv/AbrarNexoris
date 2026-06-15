@@ -3051,6 +3051,13 @@ namespace PosBranch_Win.Transaction
             long billNumber;
             if (!string.IsNullOrEmpty(message) && long.TryParse(message, out billNumber))
             {
+                SaveSalesActivityLog(
+                    "HOLD",
+                    billNumber,
+                    sales,
+                    $"Sales invoice #{billNumber} held.",
+                    false);
+
                 MessageBox.Show("Bill successfully held with number: " + message, "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.Clear();
             }
@@ -3080,21 +3087,27 @@ namespace PosBranch_Win.Transaction
 
                 DataGridView tempGrid = PrepareGridData();
                 string updateActivityDetails = null;
+                salesGrid oldSaleForLog = null;
+                bool wasHoldBill = false;
                 if (isUpdate && existingBillNo > 0)
                 {
+                    oldSaleForLog = GetOldSalesForLog(existingBillNo);
+                    wasHoldBill = IsHoldSalesSnapshot(oldSaleForLog);
                     updateActivityDetails = BuildSalesUpdateActivityDetails(
                         existingBillNo,
-                        GetOldSalesForLog(existingBillNo),
+                        oldSaleForLog,
                         tempGrid,
                         sales != null ? Convert.ToDecimal(sales.NetAmount) : ParseDecimal(txtNetTotal.Text));
                 }
+                bool completedHeldBill = wasHoldBill &&
+                    !string.Equals(sales != null ? sales.Status : string.Empty, STATUS_HOLD, StringComparison.OrdinalIgnoreCase);
 
                 string message = SaveOrUpdateSales(isUpdate, tempGrid);
 
                 // Determine if we should show success message based on operation type
                 // Show message if it's NOT a payment panel flow OR if it's a CREDIT SALE
                 bool showMessage = !My.StartsWith(PAYMENT_PANEL_PREFIX) || isCreditMode;
-                HandleSaveResult(isUpdate, message, showMessage, updateActivityDetails);
+                HandleSaveResult(isUpdate, message, showMessage, updateActivityDetails, wasHoldBill, completedHeldBill);
             }
             catch (Exception ex)
             {
@@ -3257,21 +3270,41 @@ namespace PosBranch_Win.Transaction
             }
         }
 
-        private void HandleSaveResult(bool isUpdate, string message, bool showMessage = true, string updateActivityDetails = null)
+        private bool IsHoldSalesSnapshot(salesGrid oldSale)
+        {
+            SalesMaster oldMaster = oldSale != null && oldSale.ListSales != null
+                ? oldSale.ListSales.FirstOrDefault()
+                : null;
+            return oldMaster != null &&
+                string.Equals(oldMaster.Status, STATUS_HOLD, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void HandleSaveResult(
+            bool isUpdate,
+            string message,
+            bool showMessage = true,
+            string updateActivityDetails = null,
+            bool wasHoldBill = false,
+            bool completedHeldBill = false)
         {
             if (!string.IsNullOrEmpty(message) && message != "0")
             {
                 System.Diagnostics.Debug.WriteLine($"{(isUpdate ? "UpdateSales" : "SaveSales")} succeeded! Returned message: {message}");
                 string actionText = isUpdate ? "updated" : "saved";
                 long loggedBillNo = ParseLong(message, sales != null ? sales.BillNo : 0);
+                string activityType = isUpdate && completedHeldBill
+                    ? "HOLD COMPLETED"
+                    : isUpdate && (wasHoldBill || isEditingHoldBill)
+                        ? "HOLD UPDATE"
+                        : isUpdate ? "UPDATE" : "SAVE";
                 SaveSalesActivityLog(
-                    isUpdate ? "UPDATE" : "SAVE",
+                    activityType,
                     loggedBillNo,
                     sales,
                     updateActivityDetails ?? $"Sales invoice #{loggedBillNo} {actionText}.",
                     isUpdate && !string.IsNullOrWhiteSpace(updateActivityDetails));
 
-                if (isUpdate && isEditingHoldBill)
+                if (isUpdate && (wasHoldBill || isEditingHoldBill) && !completedHeldBill)
                 {
                     MessageBox.Show($"Hold bill #{message} updated successfully.", "Hold Bill Updated", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
@@ -3288,7 +3321,7 @@ namespace PosBranch_Win.Transaction
                 label20.Text = txtNetTotal.Text;
                 label21.Text = DEFAULT_CHANGE_AMOUNT;
 
-                if (!(isUpdate && isEditingHoldBill))
+                if (!(isUpdate && (wasHoldBill || isEditingHoldBill) && !completedHeldBill))
                 {
                     ultraPanel7.Visible = true;
                 }
@@ -5252,7 +5285,7 @@ namespace PosBranch_Win.Transaction
                     {
                         long savedBillNoForLog = ParseLong(billNoResult, sales != null ? sales.BillNo : 0);
                         SaveSalesActivityLog(
-                            isCompletingHeldBill ? "UPDATE" : "SAVE",
+                            isCompletingHeldBill ? "HOLD COMPLETED" : "SAVE",
                             savedBillNoForLog,
                             sales,
                             updateActivityDetails ?? $"Sales invoice #{savedBillNoForLog} processed.",
@@ -5481,7 +5514,7 @@ namespace PosBranch_Win.Transaction
             try
             {
                 string customerName = salesMaster != null ? salesMaster.CustomerName : txtCustomer.Text;
-                string paymentMode = salesMaster != null ? salesMaster.PaymodeName : string.Empty;
+                string paymentMode = salesMaster != null ? GetSalesMasterPaymentLogText(salesMaster) : GetCurrentPaymentLogText();
                 decimal netAmount = salesMaster != null ? Convert.ToDecimal(salesMaster.NetAmount) : ParseDecimal(txtNetTotal.Text);
                 decimal qty;
                 decimal cost;
@@ -5622,12 +5655,13 @@ namespace PosBranch_Win.Transaction
                 return $"{baseText}. Net amount = {netAmount:0.##}.";
             }
 
-            if (string.Equals(activityType, "SAVE", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(activityType, "SAVE", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(activityType, "HOLD", StringComparison.OrdinalIgnoreCase))
             {
                 var lines = new List<string>
                 {
                     $"{baseText}.",
-                    "Items:"
+                    string.Equals(activityType, "HOLD", StringComparison.OrdinalIgnoreCase) ? "Holded items:" : "Items:"
                 };
 
                 foreach (DataRow row in table.Rows)
@@ -5693,6 +5727,15 @@ namespace PosBranch_Win.Transaction
             var updatedItemNames = new List<string>();
             var saleItemNames = new List<string>();
             SalesMaster oldMaster = oldSale != null && oldSale.ListSales != null ? oldSale.ListSales.FirstOrDefault() : null;
+            bool isCompletingHeldBill = oldMaster != null
+                && string.Equals(oldMaster.Status, STATUS_HOLD, StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(sales != null ? sales.Status : string.Empty, STATUS_HOLD, StringComparison.OrdinalIgnoreCase);
+
+            if (isCompletingHeldBill)
+            {
+                changes.Add("holded item updated");
+            }
+
             AddTextChange(changes, "txtCustomer", oldMaster != null ? oldMaster.CustomerName : _activityCustomer, sales != null ? sales.CustomerName : txtCustomer.Text);
             AddTextChange(changes, "cmpPrice", _activityPriceLevel, GetCurrentPriceLevelText());
             AddTextChange(changes, "cmbPaymt", oldMaster != null ? GetSalesMasterPaymentLogText(oldMaster) : _activityPaymentMode, GetSalesMasterPaymentLogText(sales));
@@ -5724,6 +5767,11 @@ namespace PosBranch_Win.Transaction
                     if (!string.IsNullOrWhiteSpace(itemName))
                     {
                         saleItemNames.Add(FormatItemName(itemName));
+                    }
+
+                    if (isCompletingHeldBill)
+                    {
+                        changes.Add($"item selled \"{FormatItemName(itemName)}\" with {BuildSalesItemSummary(row)}");
                     }
 
                     if (oldRow == null)
@@ -5776,8 +5824,13 @@ namespace PosBranch_Win.Transaction
             string itemHeader = uniqueItemNames.Count > 0
                 ? $"{Environment.NewLine}Items:{Environment.NewLine}{string.Join(Environment.NewLine, uniqueItemNames)}"
                 : string.Empty;
+            string heading = isCompletingHeldBill
+                ? $"Hold bill #{billNo} completed."
+                : isEditingHoldBill
+                    ? $"Hold bill #{billNo} updated."
+                    : $"Sales invoice #{billNo} updated.";
 
-            return $"Sales invoice #{billNo} updated.{itemHeader}{Environment.NewLine}Changes:{Environment.NewLine}- {string.Join(Environment.NewLine + "- ", changes)}";
+            return $"{heading}{itemHeader}{Environment.NewLine}Changes:{Environment.NewLine}- {string.Join(Environment.NewLine + "- ", changes)}";
         }
 
         private string BuildSalesItemSummary(DataRow row)
