@@ -78,11 +78,11 @@ namespace PosBranch_Win.Reports.FinancialReports
             ultraPanelSummary.Appearance.BackColor = Color.FromArgb(38, 50, 56);
             
             // Net Profit Panel
-            panelNetProfit.Appearance.BackColor = Color.FromArgb(227, 242, 253);
-            lblNetProfitCaption.Appearance.ForeColor = Color.FromArgb(13, 71, 161);
+            panelNetProfit.Appearance.BackColor = Color.FromArgb(232, 245, 233);
+            lblNetProfitCaption.Appearance.ForeColor = Color.FromArgb(27, 94, 32);
             lblNetProfitCaption.Appearance.FontData.Bold = DefaultableBoolean.True;
             lblNetProfitCaption.Appearance.FontData.SizeInPoints = 12;
-            lblNetProfitValue.Appearance.ForeColor = Color.FromArgb(13, 71, 161);
+            lblNetProfitValue.Appearance.ForeColor = Color.FromArgb(27, 94, 32);
             lblNetProfitValue.Appearance.FontData.Bold = DefaultableBoolean.True;
             lblNetProfitValue.Appearance.FontData.SizeInPoints = 16;
 
@@ -175,6 +175,7 @@ namespace PosBranch_Win.Reports.FinancialReports
 
         private void ApplyGridBaseSettings(UltraGrid grid)
         {
+            grid.UseOsThemes = DefaultableBoolean.False; // Bypass OS theming to allow custom header appearance
             grid.DisplayLayout.Override.AllowAddNew = AllowAddNew.No;
             grid.DisplayLayout.Override.AllowDelete = DefaultableBoolean.False;
             grid.DisplayLayout.Override.AllowUpdate = DefaultableBoolean.False;
@@ -204,28 +205,37 @@ namespace PosBranch_Win.Reports.FinancialReports
         private void UltraGridProfitLoss_InitializeLayout(object sender, InitializeLayoutEventArgs e)
         {
             var band = e.Layout.Bands[0];
+            band.ColHeadersVisible = true; // Force column headers to be visible
             
             foreach (var col in band.Columns)
             {
                 col.Hidden = true;
             }
 
+            // Show and configure required columns
+            ConfigureColumn(band, "LedgerName", "Particulars", 300, HAlign.Left);
+            band.Columns["LedgerName"].Header.VisiblePosition = 0;
+
+            ConfigureColumn(band, "GroupName", "Account Group", 200, HAlign.Left);
+            band.Columns["GroupName"].Header.VisiblePosition = 1;
+
             ConfigureColumn(band, "Category", "Category", 160, HAlign.Left);
+            band.Columns["Category"].Header.VisiblePosition = 2;
             band.Columns["Category"].CellAppearance.FontData.Bold = DefaultableBoolean.True;
             band.Columns["Category"].CellAppearance.ForeColor = Color.FromArgb(74, 20, 140);
-
-            ConfigureColumn(band, "LedgerName", "Particulars", 300, HAlign.Left);
-            ConfigureColumn(band, "GroupName", "Account Group", 200, HAlign.Left);
             
             ConfigureColumn(band, "TotalDebit", "Debit (₹)", 130, HAlign.Right);
+            band.Columns["TotalDebit"].Header.VisiblePosition = 3;
             band.Columns["TotalDebit"].Format = "N2";
             band.Columns["TotalDebit"].CellAppearance.ForeColor = Color.FromArgb(198, 40, 40);
 
             ConfigureColumn(band, "TotalCredit", "Credit (₹)", 130, HAlign.Right);
+            band.Columns["TotalCredit"].Header.VisiblePosition = 4;
             band.Columns["TotalCredit"].Format = "N2";
             band.Columns["TotalCredit"].CellAppearance.ForeColor = Color.FromArgb(27, 94, 32);
 
             ConfigureColumn(band, "EffectiveAmount", "Amount (₹)", 140, HAlign.Right);
+            band.Columns["EffectiveAmount"].Header.VisiblePosition = 5;
             band.Columns["EffectiveAmount"].Format = "N2";
             band.Columns["EffectiveAmount"].CellAppearance.FontData.Bold = DefaultableBoolean.True;
             
@@ -364,7 +374,13 @@ namespace PosBranch_Win.Reports.FinancialReports
             var s = currentReport.Summary;
 
             // Summary bar
-            lblGrossProfitBfValue.Text = $"₹ {s.GrossProfit:N2}";
+            lblGrossProfitBfValue.Text = $"₹ {Math.Abs(s.GrossProfit):N2}";
+            lblGrossProfitBfCaption.Text = s.GrossProfit >= 0
+                ? "Gross Profit (B/F):"
+                : "Gross Loss (B/F):";
+            lblGrossProfitBfValue.Appearance.ForeColor = s.GrossProfit >= 0
+                ? Color.FromArgb(102, 187, 106)
+                : Color.FromArgb(239, 83, 80);
             lblIndirectIncomesValue.Text = $"₹ {s.TotalIndirectIncomes:N2}";
             lblIndirectExpensesValue.Text = $"₹ {s.TotalIndirectExpenses:N2}";
 
@@ -372,9 +388,9 @@ namespace PosBranch_Win.Reports.FinancialReports
             lblNetProfitValue.Text = $"₹ {Math.Abs(s.NetProfit):N2}";
             if (s.NetProfit >= 0)
             {
-                lblNetProfitValue.Appearance.ForeColor = Color.FromArgb(13, 71, 161);
+                lblNetProfitValue.Appearance.ForeColor = Color.FromArgb(27, 94, 32);
                 lblNetProfitCaption.Text = "★ NET PROFIT:";
-                panelNetProfit.Appearance.BackColor = Color.FromArgb(227, 242, 253);
+                panelNetProfit.Appearance.BackColor = Color.FromArgb(232, 245, 233);
             }
             else
             {

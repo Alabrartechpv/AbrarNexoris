@@ -165,11 +165,11 @@ namespace PosBranch_Win.Reports.FinancialReports
                 e.Row.Appearance.FontData.Bold = DefaultableBoolean.True;
                 e.Row.Appearance.BackColor = Color.FromArgb(245, 245, 245);
 
-                if (category == "Closing Stock" || category == "Gross Loss c/o")
+                if (category == "Closing Stock" || category == "Gross Profit c/o")
                 {
                     e.Row.Cells["LedgerName"].Appearance.ForeColor = Color.FromArgb(27, 94, 32); // Dark Green
                 }
-                else // Opening Stock or Gross Profit c/o
+                else // Opening Stock or Gross Loss c/o
                 {
                     e.Row.Cells["LedgerName"].Appearance.ForeColor = Color.FromArgb(198, 40, 40); // Dark Red
                 }
@@ -178,6 +178,7 @@ namespace PosBranch_Win.Reports.FinancialReports
 
         private void ApplyGridBaseSettings(UltraGrid grid)
         {
+            grid.UseOsThemes = DefaultableBoolean.False; // Bypass OS theming to allow custom header appearance
             grid.DisplayLayout.Override.AllowAddNew = AllowAddNew.No;
             grid.DisplayLayout.Override.AllowDelete = DefaultableBoolean.False;
             grid.DisplayLayout.Override.AllowUpdate = DefaultableBoolean.False;
@@ -207,6 +208,7 @@ namespace PosBranch_Win.Reports.FinancialReports
         private void UltraGridTrading_InitializeLayout(object sender, InitializeLayoutEventArgs e)
         {
             var band = e.Layout.Bands[0];
+            band.ColHeadersVisible = true; // Force column headers to be visible
             
             // Hide unwanted columns if binding to an object directly
             foreach (var col in band.Columns)
@@ -215,22 +217,29 @@ namespace PosBranch_Win.Reports.FinancialReports
             }
 
             // Show and configure required columns
+            ConfigureColumn(band, "LedgerName", "Particulars", 300, HAlign.Left);
+            band.Columns["LedgerName"].Header.VisiblePosition = 0;
+
+            ConfigureColumn(band, "GroupName", "Account Group", 200, HAlign.Left);
+            band.Columns["GroupName"].Header.VisiblePosition = 1;
+
             ConfigureColumn(band, "Category", "Category", 160, HAlign.Left);
+            band.Columns["Category"].Header.VisiblePosition = 2;
             band.Columns["Category"].CellAppearance.FontData.Bold = DefaultableBoolean.True;
             band.Columns["Category"].CellAppearance.ForeColor = Color.FromArgb(21, 101, 192);
-
-            ConfigureColumn(band, "LedgerName", "Particulars", 300, HAlign.Left);
-            ConfigureColumn(band, "GroupName", "Account Group", 200, HAlign.Left);
             
             ConfigureColumn(band, "TotalDebit", "Debit (₹)", 130, HAlign.Right);
+            band.Columns["TotalDebit"].Header.VisiblePosition = 3;
             band.Columns["TotalDebit"].Format = "N2";
             band.Columns["TotalDebit"].CellAppearance.ForeColor = Color.FromArgb(198, 40, 40);
 
             ConfigureColumn(band, "TotalCredit", "Credit (₹)", 130, HAlign.Right);
+            band.Columns["TotalCredit"].Header.VisiblePosition = 4;
             band.Columns["TotalCredit"].Format = "N2";
             band.Columns["TotalCredit"].CellAppearance.ForeColor = Color.FromArgb(27, 94, 32);
 
             ConfigureColumn(band, "EffectiveAmount", "Amount (₹)", 140, HAlign.Right);
+            band.Columns["EffectiveAmount"].Header.VisiblePosition = 5;
             band.Columns["EffectiveAmount"].Format = "N2";
             band.Columns["EffectiveAmount"].CellAppearance.FontData.Bold = DefaultableBoolean.True;
             

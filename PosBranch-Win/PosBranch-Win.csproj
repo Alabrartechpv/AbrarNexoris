@@ -1105,12 +1105,7 @@
     <Compile Include="Reports\FinancialReports\FrmTradingPLAccount.Designer.cs">
       <DependentUpon>FrmTradingPLAccount.cs</DependentUpon>
     </Compile>
-    <Compile Include="Reports\FinancialReports\FrmTradingAccount.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Reports\FinancialReports\FrmTradingAccount.Designer.cs">
-      <DependentUpon>FrmTradingAccount.cs</DependentUpon>
-    </Compile>
+
     <Compile Include="Reports\FinancialReports\FrmProfitLossAccount.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1568,9 +1563,7 @@
     <EmbeddedResource Include="Reports\FinancialReports\FrmTradingPLAccount.resx">
       <DependentUpon>FrmTradingPLAccount.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Reports\FinancialReports\FrmTradingAccount.resx">
-      <DependentUpon>FrmTradingAccount.cs</DependentUpon>
-    </EmbeddedResource>
+
     <EmbeddedResource Include="Reports\FinancialReports\FrmProfitLossAccount.resx">
       <DependentUpon>FrmProfitLossAccount.cs</DependentUpon>
     </EmbeddedResource>
@@ -1826,6 +1819,7 @@
     <None Include="Resources\report1.png" />
     <None Include="Resources\payment-method.png" />
     <None Include="Resources\payment-method1.png" />
+    <None Include="Resources\revenue.png" />
     <Content Include="Resources\splash_logo.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
