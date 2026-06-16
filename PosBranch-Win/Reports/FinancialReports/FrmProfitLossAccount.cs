@@ -12,7 +12,7 @@ using Repository.ReportRepository;
 
 namespace PosBranch_Win.Reports.FinancialReports
 {
-    public partial class FrmTradingPLAccount : Form
+    public partial class FrmProfitLossAccount : Form
     {
         #region Private Fields
         private TradingPLRepository reportRepository;
@@ -20,7 +20,7 @@ namespace PosBranch_Win.Reports.FinancialReports
         #endregion
 
         #region Constructor
-        public FrmTradingPLAccount()
+        public FrmProfitLossAccount()
         {
             InitializeComponent();
             InitializeForm();
@@ -35,7 +35,7 @@ namespace PosBranch_Win.Reports.FinancialReports
                 reportRepository = new TradingPLRepository();
 
                 // Form Properties
-                this.Text = "Trading Account";
+                this.Text = "Profit & Loss Account";
                 this.WindowState = FormWindowState.Maximized;
                 this.StartPosition = FormStartPosition.CenterScreen;
 
@@ -55,7 +55,7 @@ namespace PosBranch_Win.Reports.FinancialReports
                 InitializePanels();
 
                 // Setup Grid
-                SetupTradingGrid();
+                SetupProfitLossGrid();
 
                 // Button Styling
                 StyleButtons();
@@ -70,34 +70,31 @@ namespace PosBranch_Win.Reports.FinancialReports
         private void InitializePanels()
         {
             // Set panel colors
-            ultraGroupBoxTrading.Appearance.BackColor = Color.FromArgb(21, 101, 192);
-            ultraGroupBoxTrading.Appearance.ForeColor = Color.White;
-            ultraGroupBoxTrading.Appearance.FontData.Bold = DefaultableBoolean.True;
-            ultraGroupBoxTrading.Appearance.FontData.SizeInPoints = 11;
+            ultraGroupBoxPL.Appearance.BackColor = Color.FromArgb(74, 20, 140);
+            ultraGroupBoxPL.Appearance.ForeColor = Color.White;
+            ultraGroupBoxPL.Appearance.FontData.Bold = DefaultableBoolean.True;
+            ultraGroupBoxPL.Appearance.FontData.SizeInPoints = 11;
 
             ultraPanelSummary.Appearance.BackColor = Color.FromArgb(38, 50, 56);
             
-            // Gross Profit Panel
-            panelGrossProfit.Appearance.BackColor = Color.FromArgb(232, 245, 233);
-            lblGrossProfitCaption.Appearance.ForeColor = Color.FromArgb(27, 94, 32);
-            lblGrossProfitCaption.Appearance.FontData.Bold = DefaultableBoolean.True;
-            lblGrossProfitCaption.Appearance.FontData.SizeInPoints = 11;
-            lblGrossProfitValue.Appearance.ForeColor = Color.FromArgb(27, 94, 32);
-            lblGrossProfitValue.Appearance.FontData.Bold = DefaultableBoolean.True;
-            lblGrossProfitValue.Appearance.FontData.SizeInPoints = 14;
+            // Net Profit Panel
+            panelNetProfit.Appearance.BackColor = Color.FromArgb(232, 245, 233);
+            lblNetProfitCaption.Appearance.ForeColor = Color.FromArgb(27, 94, 32);
+            lblNetProfitCaption.Appearance.FontData.Bold = DefaultableBoolean.True;
+            lblNetProfitCaption.Appearance.FontData.SizeInPoints = 12;
+            lblNetProfitValue.Appearance.ForeColor = Color.FromArgb(27, 94, 32);
+            lblNetProfitValue.Appearance.FontData.Bold = DefaultableBoolean.True;
+            lblNetProfitValue.Appearance.FontData.SizeInPoints = 16;
 
             // Summary Bottom Panel
-            StyleSummaryLabel(lblOpeningStockCaption, Color.FromArgb(176, 190, 197), false);
-            StyleSummaryValueLabel(lblOpeningStockValue, Color.FromArgb(102, 187, 106), 12);
-
-            StyleSummaryLabel(lblTotalPurchasesCaption, Color.FromArgb(176, 190, 197), false);
-            StyleSummaryValueLabel(lblTotalPurchasesValue, Color.FromArgb(239, 83, 80), 12);
-
-            StyleSummaryLabel(lblTotalSalesCaption, Color.FromArgb(176, 190, 197), false);
-            StyleSummaryValueLabel(lblTotalSalesValue, Color.FromArgb(102, 187, 106), 12);
+            StyleSummaryLabel(lblGrossProfitBfCaption, Color.FromArgb(176, 190, 197), false);
+            StyleSummaryValueLabel(lblGrossProfitBfValue, Color.FromArgb(102, 187, 106), 12);
             
-            StyleSummaryLabel(lblClosingStockCaption, Color.FromArgb(176, 190, 197), false);
-            StyleSummaryValueLabel(lblClosingStockValue, Color.FromArgb(102, 187, 106), 12);
+            StyleSummaryLabel(lblIndirectIncomesCaption, Color.FromArgb(176, 190, 197), false);
+            StyleSummaryValueLabel(lblIndirectIncomesValue, Color.FromArgb(102, 187, 106), 12);
+
+            StyleSummaryLabel(lblIndirectExpensesCaption, Color.FromArgb(176, 190, 197), false);
+            StyleSummaryValueLabel(lblIndirectExpensesValue, Color.FromArgb(239, 83, 80), 12);
         }
 
         private void StyleSummaryLabel(Infragistics.Win.Misc.UltraLabel label, Color foreColor, bool isBold)
@@ -136,40 +133,40 @@ namespace PosBranch_Win.Reports.FinancialReports
             btn.HotTrackAppearance.BorderColor = backColor;
         }
 
-        private void SetupTradingGrid()
+        private void SetupProfitLossGrid()
         {
             // Reset grid
-            ultraGridTrading.DisplayLayout.Reset();
+            ultraGridProfitLoss.DisplayLayout.Reset();
             
             // Basic settings
-            ApplyGridBaseSettings(ultraGridTrading);
+            ApplyGridBaseSettings(ultraGridProfitLoss);
             
             // Header colors
-            ultraGridTrading.DisplayLayout.Override.HeaderAppearance.BackColor = Color.FromArgb(55, 71, 79);
-            ultraGridTrading.DisplayLayout.Override.HeaderAppearance.BackColor2 = Color.FromArgb(69, 90, 100);
+            ultraGridProfitLoss.DisplayLayout.Override.HeaderAppearance.BackColor = Color.FromArgb(74, 20, 140);
+            ultraGridProfitLoss.DisplayLayout.Override.HeaderAppearance.BackColor2 = Color.FromArgb(106, 27, 154);
             
             // Highlight cells
-            ultraGridTrading.DisplayLayout.Override.SelectedRowAppearance.BackColor = Color.FromArgb(227, 242, 253);
+            ultraGridProfitLoss.DisplayLayout.Override.SelectedRowAppearance.BackColor = Color.FromArgb(243, 229, 245);
             
-            ultraGridTrading.InitializeLayout += UltraGridTrading_InitializeLayout;
-            ultraGridTrading.InitializeRow += UltraGridTrading_InitializeRow;
+            ultraGridProfitLoss.InitializeLayout += UltraGridProfitLoss_InitializeLayout;
+            ultraGridProfitLoss.InitializeRow += UltraGridProfitLoss_InitializeRow;
         }
 
-        private void UltraGridTrading_InitializeRow(object sender, InitializeRowEventArgs e)
+        private void UltraGridProfitLoss_InitializeRow(object sender, InitializeRowEventArgs e)
         {
             if (!e.Row.IsDataRow) return;
 
             string category = e.Row.Cells["Category"].Value?.ToString();
-            if (category == "Opening Stock" || category == "Closing Stock" || category == "Gross Profit c/o" || category == "Gross Loss c/o")
+            if (category == "Gross Profit b/f" || category == "Gross Loss b/f" || category == "Net Profit" || category == "Net Loss")
             {
                 e.Row.Appearance.FontData.Bold = DefaultableBoolean.True;
                 e.Row.Appearance.BackColor = Color.FromArgb(245, 245, 245);
-
-                if (category == "Closing Stock" || category == "Gross Profit c/o")
+                
+                if (category == "Gross Profit b/f" || category == "Net Profit")
                 {
                     e.Row.Cells["LedgerName"].Appearance.ForeColor = Color.FromArgb(27, 94, 32); // Dark Green
                 }
-                else // Opening Stock or Gross Loss c/o
+                else
                 {
                     e.Row.Cells["LedgerName"].Appearance.ForeColor = Color.FromArgb(198, 40, 40); // Dark Red
                 }
@@ -205,12 +202,11 @@ namespace PosBranch_Win.Reports.FinancialReports
             grid.DisplayLayout.Override.HeaderAppearance.TextHAlign = HAlign.Center;
         }
 
-        private void UltraGridTrading_InitializeLayout(object sender, InitializeLayoutEventArgs e)
+        private void UltraGridProfitLoss_InitializeLayout(object sender, InitializeLayoutEventArgs e)
         {
             var band = e.Layout.Bands[0];
             band.ColHeadersVisible = true; // Force column headers to be visible
             
-            // Hide unwanted columns if binding to an object directly
             foreach (var col in band.Columns)
             {
                 col.Hidden = true;
@@ -226,7 +222,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             ConfigureColumn(band, "Category", "Category", 160, HAlign.Left);
             band.Columns["Category"].Header.VisiblePosition = 2;
             band.Columns["Category"].CellAppearance.FontData.Bold = DefaultableBoolean.True;
-            band.Columns["Category"].CellAppearance.ForeColor = Color.FromArgb(21, 101, 192);
+            band.Columns["Category"].CellAppearance.ForeColor = Color.FromArgb(74, 20, 140);
             
             ConfigureColumn(band, "TotalDebit", "Debit (₹)", 130, HAlign.Right);
             band.Columns["TotalDebit"].Header.VisiblePosition = 3;
@@ -275,50 +271,82 @@ namespace PosBranch_Win.Reports.FinancialReports
                 if (currentReport != null)
                 {
                     // Copy list to avoid modifying repository cache
-                    var tradingItems = new List<TradingPLLineItem>(currentReport.TradingItems);
+                    var plItems = new List<TradingPLLineItem>(currentReport.ProfitLossItems);
 
-                    // Add Gross Profit/Loss balancing row
+                    // Add Gross Profit/Loss brought forward (b/f) row at index 0
                     if (currentReport.Summary.GrossProfit >= 0)
                     {
-                        tradingItems.Add(new TradingPLLineItem
+                        plItems.Insert(0, new TradingPLLineItem
                         {
                             LedgerID = 0,
-                            LedgerName = "Gross Profit c/o",
+                            LedgerName = "Gross Profit b/f",
                             GroupID = 99,
                             GroupName = "TRADING SUMMARY",
-                            Category = "Gross Profit c/o",
-                            NormalBalance = "DEBIT",
-                            TotalDebit = currentReport.Summary.GrossProfit,
-                            TotalCredit = 0,
+                            Category = "Gross Profit b/f",
+                            NormalBalance = "CREDIT",
+                            TotalDebit = 0,
+                            TotalCredit = currentReport.Summary.GrossProfit,
                             NetBalance = currentReport.Summary.GrossProfit
                         });
                     }
                     else
                     {
-                        tradingItems.Add(new TradingPLLineItem
+                        plItems.Insert(0, new TradingPLLineItem
                         {
                             LedgerID = 0,
-                            LedgerName = "Gross Loss c/o",
+                            LedgerName = "Gross Loss b/f",
                             GroupID = 99,
                             GroupName = "TRADING SUMMARY",
-                            Category = "Gross Loss c/o",
-                            NormalBalance = "CREDIT",
-                            TotalDebit = 0,
-                            TotalCredit = Math.Abs(currentReport.Summary.GrossProfit),
+                            Category = "Gross Loss b/f",
+                            NormalBalance = "DEBIT",
+                            TotalDebit = Math.Abs(currentReport.Summary.GrossProfit),
+                            TotalCredit = 0,
                             NetBalance = -Math.Abs(currentReport.Summary.GrossProfit)
                         });
                     }
 
-                    // Bind Trading Account grid
-                    ultraGridTrading.DataSource = tradingItems;
-                    ultraGridTrading.DataBind();
+                    // Add Net Profit/Loss balancing row at the end
+                    if (currentReport.Summary.NetProfit >= 0)
+                    {
+                        plItems.Add(new TradingPLLineItem
+                        {
+                            LedgerID = 0,
+                            LedgerName = "Net Profit",
+                            GroupID = 100,
+                            GroupName = "PL SUMMARY",
+                            Category = "Net Profit",
+                            NormalBalance = "DEBIT",
+                            TotalDebit = currentReport.Summary.NetProfit,
+                            TotalCredit = 0,
+                            NetBalance = currentReport.Summary.NetProfit
+                        });
+                    }
+                    else
+                    {
+                        plItems.Add(new TradingPLLineItem
+                        {
+                            LedgerID = 0,
+                            LedgerName = "Net Loss",
+                            GroupID = 100,
+                            GroupName = "PL SUMMARY",
+                            Category = "Net Loss",
+                            NormalBalance = "CREDIT",
+                            TotalDebit = 0,
+                            TotalCredit = Math.Abs(currentReport.Summary.NetProfit),
+                            NetBalance = -Math.Abs(currentReport.Summary.NetProfit)
+                        });
+                    }
+
+                    // Bind Profit & Loss grid
+                    ultraGridProfitLoss.DataSource = plItems;
+                    ultraGridProfitLoss.DataBind();
 
                     // Update summary
                     UpdateSummary();
                 }
                 else
                 {
-                    ultraGridTrading.DataSource = null;
+                    ultraGridProfitLoss.DataSource = null;
                     ClearSummary();
                     MessageBox.Show("No data found for the selected period.", "Information",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -346,39 +374,43 @@ namespace PosBranch_Win.Reports.FinancialReports
             var s = currentReport.Summary;
 
             // Summary bar
-            lblOpeningStockValue.Text = $"₹ {s.OpeningStock:N2}";
-            lblClosingStockValue.Text = $"₹ {s.ClosingStock:N2}";
-            lblTotalSalesValue.Text = $"₹ {s.TotalSales:N2}";
-            lblTotalPurchasesValue.Text = $"₹ {s.TotalPurchases:N2}";
+            lblGrossProfitBfValue.Text = $"₹ {Math.Abs(s.GrossProfit):N2}";
+            lblGrossProfitBfCaption.Text = s.GrossProfit >= 0
+                ? "Gross Profit (B/F):"
+                : "Gross Loss (B/F):";
+            lblGrossProfitBfValue.Appearance.ForeColor = s.GrossProfit >= 0
+                ? Color.FromArgb(102, 187, 106)
+                : Color.FromArgb(239, 83, 80);
+            lblIndirectIncomesValue.Text = $"₹ {s.TotalIndirectIncomes:N2}";
+            lblIndirectExpensesValue.Text = $"₹ {s.TotalIndirectExpenses:N2}";
 
-            // Gross Profit
-            lblGrossProfitValue.Text = $"₹ {Math.Abs(s.GrossProfit):N2}";
-            if (s.GrossProfit >= 0)
+            // Net Profit
+            lblNetProfitValue.Text = $"₹ {Math.Abs(s.NetProfit):N2}";
+            if (s.NetProfit >= 0)
             {
-                lblGrossProfitValue.Appearance.ForeColor = Color.FromArgb(27, 94, 32);
-                lblGrossProfitCaption.Text = "GROSS PROFIT:";
-                panelGrossProfit.Appearance.BackColor = Color.FromArgb(232, 245, 233);
+                lblNetProfitValue.Appearance.ForeColor = Color.FromArgb(27, 94, 32);
+                lblNetProfitCaption.Text = "★ NET PROFIT:";
+                panelNetProfit.Appearance.BackColor = Color.FromArgb(232, 245, 233);
             }
             else
             {
-                lblGrossProfitValue.Appearance.ForeColor = Color.FromArgb(183, 28, 28);
-                lblGrossProfitCaption.Text = "GROSS LOSS:";
-                panelGrossProfit.Appearance.BackColor = Color.FromArgb(255, 235, 238);
+                lblNetProfitValue.Appearance.ForeColor = Color.FromArgb(183, 28, 28);
+                lblNetProfitCaption.Text = "★ NET LOSS:";
+                panelNetProfit.Appearance.BackColor = Color.FromArgb(255, 235, 238);
             }
         }
 
         private void ClearSummary()
         {
-            lblOpeningStockValue.Text = "₹ 0.00";
-            lblClosingStockValue.Text = "₹ 0.00";
-            lblTotalSalesValue.Text = "₹ 0.00";
-            lblTotalPurchasesValue.Text = "₹ 0.00";
-            lblGrossProfitValue.Text = "₹ 0.00";
+            lblGrossProfitBfValue.Text = "₹ 0.00";
+            lblIndirectIncomesValue.Text = "₹ 0.00";
+            lblIndirectExpensesValue.Text = "₹ 0.00";
+            lblNetProfitValue.Text = "₹ 0.00";
         }
         #endregion
 
         #region Button Events
-        private void FrmTradingPLAccount_Load(object sender, EventArgs e)
+        private void FrmProfitLossAccount_Load(object sender, EventArgs e)
         {
             LoadReport();
         }
@@ -392,7 +424,7 @@ namespace PosBranch_Win.Reports.FinancialReports
         {
             try
             {
-                var items = ultraGridTrading.DataSource as List<TradingPLLineItem>;
+                var items = ultraGridProfitLoss.DataSource as List<TradingPLLineItem>;
                 if (items == null || items.Count == 0)
                 {
                     MessageBox.Show("No data to export.", "Information",
@@ -403,14 +435,14 @@ namespace PosBranch_Win.Reports.FinancialReports
                 using (SaveFileDialog sfd = new SaveFileDialog())
                 {
                     sfd.Filter = "CSV Files (*.csv)|*.csv";
-                    sfd.FileName = $"TradingAccount_{ultraDateTimeFrom.DateTime:yyyyMMdd}_to_{ultraDateTimeTo.DateTime:yyyyMMdd}.csv";
+                    sfd.FileName = $"ProfitLossAccount_{ultraDateTimeFrom.DateTime:yyyyMMdd}_to_{ultraDateTimeTo.DateTime:yyyyMMdd}.csv";
 
                     if (sfd.ShowDialog() == DialogResult.OK)
                     {
                         StringBuilder sb = new StringBuilder();
 
                         // Header Info
-                        sb.AppendLine($"Trading Account");
+                        sb.AppendLine($"Profit & Loss Account");
                         sb.AppendLine($"Period: {ultraDateTimeFrom.DateTime:dd/MM/yyyy} to {ultraDateTimeTo.DateTime:dd/MM/yyyy}");
                         sb.AppendLine();
 
@@ -419,7 +451,7 @@ namespace PosBranch_Win.Reports.FinancialReports
                         {
                             sb.AppendLine($"\"{item.Category}\",\"{item.LedgerName}\",\"{item.GroupName}\",{item.TotalDebit:N2},{item.TotalCredit:N2},{item.EffectiveAmount:N2}");
                         }
-                        sb.AppendLine($",,,,Gross Profit/Loss:,{currentReport.Summary.GrossProfit:N2}");
+                        sb.AppendLine($",,,,Net Profit/Loss:,{currentReport.Summary.NetProfit:N2}");
 
                         File.WriteAllText(sfd.FileName, sb.ToString());
                         MessageBox.Show("Report exported successfully!", "Success",
@@ -441,13 +473,13 @@ namespace PosBranch_Win.Reports.FinancialReports
         {
             try
             {
-                if (currentReport == null || currentReport.TradingItems.Count == 0)
+                if (currentReport == null || currentReport.ProfitLossItems.Count == 0)
                 {
                     MessageBox.Show("No data to print.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
 
-                ultraGridTrading.Print();
+                ultraGridProfitLoss.Print();
             }
             catch (Exception ex)
             {

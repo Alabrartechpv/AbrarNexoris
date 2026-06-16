@@ -77,7 +77,8 @@ namespace PosBranch_Win
             new ReportNavigatorDefinition("Customer", "Customer Receipt Report", "CustomerReceiptReport"),
             new ReportNavigatorDefinition("Vendor", "Vendor Outstanding Listing", "VendorOutstandingReport"),
             new ReportNavigatorDefinition("Vendor", "DN/payment", "VendorDNPaymentReport"),
-            new ReportNavigatorDefinition("Analysis", "Trading & P/L Account", "TradingPLAccount"),
+            new ReportNavigatorDefinition("Analysis", "Trading Account", "TradingAccount"),
+            new ReportNavigatorDefinition("Analysis", "Profit & Loss Account", "ProfitLossAccount"),
             new ReportNavigatorDefinition("Analysis", "Balance Sheet", "BalanceSheet"),
             new ReportNavigatorDefinition("Analysis", "Trial Balance", "TrialBalance"),
             new ReportNavigatorDefinition("Analysis", "Cash & Bank Book", "CashBankBook"),
@@ -193,6 +194,7 @@ namespace PosBranch_Win
             {
                 // If reflection fails, continue without close buttons
             }
+
         }
 
         private void MainWorkspace_MouseEnter(object sender, EventArgs e)
@@ -1863,8 +1865,18 @@ namespace PosBranch_Win
             }
             if (e.Tool.Key == "TradingPLAccount")
             {
-                PosBranch_Win.Reports.FinancialReports.FrmTradingPLAccount plAccount = new PosBranch_Win.Reports.FinancialReports.FrmTradingPLAccount();
-                OpenFormInTab(plAccount, "Trading & P/L Account");
+                PosBranch_Win.Reports.FinancialReports.FrmTradingPLAccount tradingAccount = new PosBranch_Win.Reports.FinancialReports.FrmTradingPLAccount();
+                OpenFormInTab(tradingAccount, "Trading Account");
+            }
+            if (e.Tool.Key == "TradingAccount")
+            {
+                PosBranch_Win.Reports.FinancialReports.FrmTradingPLAccount tradingAccount = new PosBranch_Win.Reports.FinancialReports.FrmTradingPLAccount();
+                OpenFormInTab(tradingAccount, "Trading Account");
+            }
+            if (e.Tool.Key == "ProfitLossAccount")
+            {
+                PosBranch_Win.Reports.FinancialReports.FrmProfitLossAccount plAccount = new PosBranch_Win.Reports.FinancialReports.FrmProfitLossAccount();
+                OpenFormInTab(plAccount, "Profit & Loss Account");
             }
             if (e.Tool.Key == "BalanceSheet")
             {
@@ -3709,7 +3721,9 @@ namespace PosBranch_Win
                     keyToExecute == "VendorDNPaymentReport" ||
                     keyToExecute == "CustomerReceiptReport" ||
                     keyToExecute == "SalesmanIncentiveReport" ||
-                    keyToExecute == "CounterReport")
+                    keyToExecute == "CounterReport" ||
+                    keyToExecute == "TradingAccount" ||
+                    keyToExecute == "ProfitLossAccount")
                 {
                     Infragistics.Win.UltraWinToolbars.ToolBase toolToExecute;
 
