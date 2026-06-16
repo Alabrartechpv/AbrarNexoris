@@ -650,6 +650,60 @@ WHERE SessionId = @SessionId
             return historyList;
         }
 
+        /// <summary>
+        /// Get shift closing denominations by shift closing ID
+        /// </summary>
+        public List<CashDetail> GetClosingDenominations(int shiftClosingId)
+        {
+            List<CashDetail> details = new List<CashDetail>();
+
+            try
+            {
+                if (DataConnection.State != ConnectionState.Open)
+                    DataConnection.Open();
+
+                using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_ShiftClosing, (SqlConnection)DataConnection))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@_Operation", "GETBYID");
+                    cmd.Parameters.AddWithValue("@ShiftClosingId", shiftClosingId);
+
+                    using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+                    {
+                        DataSet ds = new DataSet();
+                        adapter.Fill(ds);
+
+                        if (ds.Tables.Count > 1 && ds.Tables[1].Rows.Count > 0)
+                        {
+                            foreach (DataRow row in ds.Tables[1].Rows)
+                            {
+                                details.Add(new CashDetail
+                                {
+                                    ShiftClosingId = Convert.ToInt32(row["ShiftClosingId"]),
+                                    No = Convert.ToInt32(row["No"]),
+                                    Denomination = Convert.ToDecimal(row["Denomination"]),
+                                    Quantity = Convert.ToInt32(row["Quantity"])
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error getting closing denominations: {ex.Message}");
+                throw;
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                    DataConnection.Close();
+            }
+
+            return details;
+        }
+
+
         private int GetClosingLedgerId()
         {
             try

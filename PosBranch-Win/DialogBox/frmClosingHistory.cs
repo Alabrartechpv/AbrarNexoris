@@ -8,6 +8,8 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using System.Drawing.Printing;
+
 
 namespace PosBranch_Win.DialogBox
 {
@@ -76,7 +78,9 @@ namespace PosBranch_Win.DialogBox
                 Text = "Closing History";
             }
 
-            ultraPanel4.Visible = false; // Hide New/Edit button for history
+            // Configure ultraPanel4 as a Print button
+            label4.Text = "Print";
+            ultraPanel4.Visible = true;
             LoadClosingHistory();
             this.BeginInvoke(new Action(() =>
             {
@@ -795,6 +799,10 @@ namespace PosBranch_Win.DialogBox
             ultraPanel6.Click += (s, e) => this.Close(); // Close
             ultraPictureBox2.Click += (s, e) => this.Close();
             label3.Click += (s, e) => this.Close();
+
+            ultraPanel4.Click += PrintSelectedClosingReport;
+            ultraPictureBox3.Click += PrintSelectedClosingReport;
+            label4.Click += PrintSelectedClosingReport;
         }
 
         private void MoveRowUp(object sender, EventArgs e)
@@ -950,6 +958,223 @@ namespace PosBranch_Win.DialogBox
             {
                 ultraGridCountry.Selected.Rows.Clear();
                 ultraGridCountry.Selected.Rows.Add(ultraGridCountry.ActiveRow);
+            }
+        }
+
+        private void PrintSelectedClosingReport(object sender, EventArgs e)
+        {
+            if (ultraGridCountry.ActiveRow == null)
+            {
+                MessageBox.Show("Please select a closing record first.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            try
+            {
+                var selectedModel = ultraGridCountry.ActiveRow.ListObject as ClosingModel;
+                if (selectedModel == null)
+                {
+                    MessageBox.Show("Selected item is not a valid closing record.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                this.Cursor = Cursors.WaitCursor;
+
+                // Load denominations
+                var denominations = _repo.GetClosingDenominations(selectedModel.ShiftClosingId);
+                selectedModel.CashDetails = denominations;
+
+                // Trigger print
+                PrintDocument printDocument = new PrintDocument();
+                printDocument.DocumentName = $"Closing Report - {selectedModel.DocNo}";
+
+                printDocument.PrintPage += (s, ev) =>
+                {
+                    try
+                    {
+                        Font titleFont = new Font("Arial", 14, FontStyle.Bold);
+                        Font subtitleFont = new Font("Arial", 11, FontStyle.Bold);
+                        Font headerFont = new Font("Arial", 9.5f, FontStyle.Bold);
+                        Font dataFont = new Font("Arial", 9);
+                        Font boldFont = new Font("Arial", 9, FontStyle.Bold);
+                        Font totalFont = new Font("Arial", 10.5f, FontStyle.Bold);
+
+                        float y = 40;
+                        float margin = 40;
+                        float width = ev.PageBounds.Width - 80;
+
+                        // 1. Header
+                        string title = "SHIFT CLOSING AUDIT REPORT";
+                        SizeF titleSize = ev.Graphics.MeasureString(title, titleFont);
+                        ev.Graphics.DrawString(title, titleFont, Brushes.Black, (width - titleSize.Width) / 2 + margin, y);
+                        y += 30;
+
+                        ev.Graphics.DrawLine(Pens.Black, margin, y, width + margin, y);
+                        y += 10;
+
+                        // 2. Metadata (Two columns)
+                        float colWidth = width / 2;
+                        ev.Graphics.DrawString($"Doc No: {selectedModel.DocNo}", boldFont, Brushes.Black, margin, y);
+                        ev.Graphics.DrawString($"Counter: {selectedModel.Counter}", dataFont, Brushes.Black, margin + colWidth, y);
+                        y += 18;
+
+                        ev.Graphics.DrawString($"Closing Date: {selectedModel.TransactionDate:dd-MMM-yyyy HH:mm}", dataFont, Brushes.Black, margin, y);
+                        ev.Graphics.DrawString($"Status: {selectedModel.Status}", dataFont, Brushes.Black, margin + colWidth, y);
+                        y += 18;
+
+                        ev.Graphics.DrawString($"Report Selection: {selectedModel.ReportSelection}", dataFont, Brushes.Black, margin, y);
+                        y += 15;
+
+                        ev.Graphics.DrawLine(Pens.Gray, margin, y, width + margin, y);
+                        y += 15;
+
+                        // 3. Financial Summary
+                        ev.Graphics.DrawString("FINANCIAL SUMMARY", subtitleFont, Brushes.Black, margin, y);
+                        y += 20;
+
+                        float labelX = margin + 10;
+                        float valX = margin + 260;
+
+                        ev.Graphics.DrawString("Total Gross Sales:", dataFont, Brushes.Black, labelX, y);
+                        ev.Graphics.DrawString($"₹ {selectedModel.TotalGrossSales:N2}", dataFont, Brushes.Black, valX, y);
+                        y += 18;
+
+                        ev.Graphics.DrawString("Total Discount Given:", dataFont, Brushes.Black, labelX, y);
+                        ev.Graphics.DrawString($"₹ {selectedModel.TotalDiscount:N2}", dataFont, Brushes.Black, valX, y);
+                        y += 18;
+
+                        ev.Graphics.DrawString("Total Returns:", dataFont, Brushes.Black, labelX, y);
+                        ev.Graphics.DrawString($"₹ {selectedModel.TotalReturn:N2}", dataFont, Brushes.Black, valX, y);
+                        y += 18;
+
+                        ev.Graphics.DrawString("Net Sales:", boldFont, Brushes.Black, labelX, y);
+                        ev.Graphics.DrawString($"₹ {selectedModel.NetSales:N2}", boldFont, Brushes.Black, valX, y);
+                        y += 22;
+
+                        ev.Graphics.DrawLine(Pens.LightGray, margin, y, width + margin, y);
+                        y += 10;
+
+                        // 4. Collection Breakdown
+                        ev.Graphics.DrawString("COLLECTIONS BREAKDOWN", subtitleFont, Brushes.Black, margin, y);
+                        y += 20;
+
+                        ev.Graphics.DrawString("Cash Sales Collection:", dataFont, Brushes.Black, labelX, y);
+                        ev.Graphics.DrawString($"₹ {selectedModel.CashSale:N2}", dataFont, Brushes.Black, valX, y);
+                        y += 18;
+
+                        ev.Graphics.DrawString("Card Sales Collection:", dataFont, Brushes.Black, labelX, y);
+                        ev.Graphics.DrawString($"₹ {selectedModel.CardSale:N2}", dataFont, Brushes.Black, valX, y);
+                        y += 18;
+
+                        ev.Graphics.DrawString("UPI Sales Collection:", dataFont, Brushes.Black, labelX, y);
+                        ev.Graphics.DrawString($"₹ {selectedModel.UpiSale:N2}", dataFont, Brushes.Black, valX, y);
+                        y += 18;
+
+                        ev.Graphics.DrawString("Credit Sales (Unpaid):", dataFont, Brushes.Black, labelX, y);
+                        ev.Graphics.DrawString($"₹ {selectedModel.CreditSale:N2}", dataFont, Brushes.Black, valX, y);
+                        y += 18;
+
+                        ev.Graphics.DrawString("Customer Receipts (Cash/Bank):", dataFont, Brushes.Black, labelX, y);
+                        ev.Graphics.DrawString($"₹ {selectedModel.CustomerReceipt:N2}", dataFont, Brushes.Black, valX, y);
+                        y += 18;
+
+                        ev.Graphics.DrawString("Total Collected Amount:", boldFont, Brushes.Black, labelX, y);
+                        ev.Graphics.DrawString($"₹ {selectedModel.TotalCollection:N2}", boldFont, Brushes.Black, valX, y);
+                        y += 22;
+
+                        ev.Graphics.DrawLine(Pens.LightGray, margin, y, width + margin, y);
+                        y += 10;
+
+                        // 5. Cash Drawer Reconciliation
+                        ev.Graphics.DrawString("CASH RECONCILIATION & VARIANCE", subtitleFont, Brushes.Black, margin, y);
+                        y += 20;
+
+                        ev.Graphics.DrawString("System Expected Cash:", dataFont, Brushes.Black, labelX, y);
+                        ev.Graphics.DrawString($"₹ {selectedModel.SystemExpectedCash:N2}", dataFont, Brushes.Black, valX, y);
+                        y += 18;
+
+                        ev.Graphics.DrawString("Physical Cash Counted:", boldFont, Brushes.Black, labelX, y);
+                        ev.Graphics.DrawString($"₹ {selectedModel.PhysicalCashCounted:N2}", boldFont, Brushes.Black, valX, y);
+                        y += 18;
+
+                        string diffText = selectedModel.CashDifference >= 0 ? "Cash Excess (Surplus):" : "Cash Shortage (Deficit):";
+                        Color diffColor = selectedModel.CashDifference >= 0 ? Color.Green : Color.Red;
+                        using (Brush diffBrush = new SolidBrush(diffColor))
+                        {
+                            ev.Graphics.DrawString(diffText, boldFont, diffBrush, labelX, y);
+                            ev.Graphics.DrawString($"₹ {Math.Abs(selectedModel.CashDifference):N2}", boldFont, diffBrush, valX, y);
+                        }
+                        y += 18;
+
+                        if (!string.IsNullOrWhiteSpace(selectedModel.DifferenceReason))
+                        {
+                            ev.Graphics.DrawString($"Reason: {selectedModel.DifferenceReason}", dataFont, Brushes.Black, labelX, y);
+                            y += 18;
+                        }
+                        y += 22;
+
+                        ev.Graphics.DrawLine(Pens.Black, margin, y, width + margin, y);
+                        y += 15;
+
+                        // 6. Denominations Table
+                        if (selectedModel.CashDetails != null && selectedModel.CashDetails.Any())
+                        {
+                            ev.Graphics.DrawString("CASH DENOMINATIONS DETAILS", subtitleFont, Brushes.Black, margin, y);
+                            y += 25;
+
+                            float dCol1 = margin;
+                            float dCol2 = margin + 120;
+                            float dCol3 = margin + 220;
+                            float dCol4 = margin + 320;
+
+                            ev.Graphics.DrawString("#", headerFont, Brushes.Black, dCol1, y);
+                            ev.Graphics.DrawString("Denomination", headerFont, Brushes.Black, dCol2, y);
+                            ev.Graphics.DrawString("Quantity", headerFont, Brushes.Black, dCol3, y);
+                            ev.Graphics.DrawString("Amount", headerFont, Brushes.Black, dCol4, y);
+                            y += 20;
+
+                            ev.Graphics.DrawLine(Pens.Gray, margin, y, width + margin, y);
+                            y += 10;
+
+                            int rowNum = 1;
+                            foreach (var detail in selectedModel.CashDetails)
+                            {
+                                ev.Graphics.DrawString(rowNum.ToString(), dataFont, Brushes.Black, dCol1, y);
+                                ev.Graphics.DrawString($"₹{detail.Denomination:N2}", dataFont, Brushes.Black, dCol2, y);
+                                ev.Graphics.DrawString(detail.Quantity.ToString(), dataFont, Brushes.Black, dCol3, y);
+                                ev.Graphics.DrawString($"₹{detail.Amount:N2}", dataFont, Brushes.Black, dCol4, y);
+                                y += 18;
+                                rowNum++;
+                            }
+
+                            y += 10;
+                            ev.Graphics.DrawLine(Pens.Black, margin, y, width + margin, y);
+                            y += 15;
+                        }
+
+                        // Footer
+                        ev.Graphics.DrawString($"Printed on: {DateTime.Now:dd-MMM-yyyy HH:mm:ss} by Auditor", dataFont, Brushes.Gray, margin, y);
+                    }
+                    catch (Exception ex)
+                    {
+                        ev.Graphics.DrawString($"Error drawing report page: {ex.Message}", new Font("Arial", 9), Brushes.Red, 50, 50);
+                    }
+                };
+
+                PrintDialog printDialog = new PrintDialog();
+                printDialog.Document = printDocument;
+
+                if (printDialog.ShowDialog(this) == DialogResult.OK)
+                {
+                    printDocument.Print();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error printing report: {ex.Message}", "Print Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                this.Cursor = Cursors.Default;
             }
         }
     }
