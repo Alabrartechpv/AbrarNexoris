@@ -1,8 +1,11 @@
-/*
-Fixes the Shift Closing History screen crash:
-- Adds the 'Counter' column to the SHIFTHISTORY result set returned by POS_ShiftClosing.
-- This prevents the IndexOutOfRangeException when the C# repository tries to read reader["Counter"].
-*/
+USE [RambaiTest]
+GO
+/****** Object:  StoredProcedure [dbo].[POS_ShiftClosing]    Script Date: 16-06-2026 11:22:47 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+/* Shift closing: exact CounterSessionId + split-payment aware summary. */
 ALTER PROCEDURE [dbo].[POS_ShiftClosing]
 (
     @ShiftClosingId INT = NULL,
