@@ -327,15 +327,16 @@ namespace PosBranch_Win
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolOverview = new Infragistics.Win.UltraWinToolbars.ButtonTool("Overview");
             Infragistics.Win.Appearance appearance83 = new Infragistics.Win.Appearance();
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolBusinessSummary = new Infragistics.Win.UltraWinToolbars.ButtonTool("BusinessSummary");
-            Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool131 = new Infragistics.Win.UltraWinToolbars.ButtonTool("ActivityLog ");
             Infragistics.Win.Appearance appearance84 = new Infragistics.Win.Appearance();
+            Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool131 = new Infragistics.Win.UltraWinToolbars.ButtonTool("ActivityLog ");
+            Infragistics.Win.Appearance appearance85 = new Infragistics.Win.Appearance();
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool132 = new Infragistics.Win.UltraWinToolbars.ButtonTool("ButtonTool6");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolGeneralPayment = new Infragistics.Win.UltraWinToolbars.ButtonTool("GeneralPayment");
-            Infragistics.Win.Appearance appearance85 = new Infragistics.Win.Appearance();
-            Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolGeneralReceipt = new Infragistics.Win.UltraWinToolbars.ButtonTool("GeneralReceipt");
             Infragistics.Win.Appearance appearance86 = new Infragistics.Win.Appearance();
-            Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolBankReconciliation = new Infragistics.Win.UltraWinToolbars.ButtonTool("BankReconciliation");
+            Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolGeneralReceipt = new Infragistics.Win.UltraWinToolbars.ButtonTool("GeneralReceipt");
             Infragistics.Win.Appearance appearance87 = new Infragistics.Win.Appearance();
+            Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolBankReconciliation = new Infragistics.Win.UltraWinToolbars.ButtonTool("BankReconciliation");
+            Infragistics.Win.Appearance appearance88 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance3 = new Infragistics.Win.Appearance();
             Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarGroup ultraExplorerBarGroup1 = new Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarGroup();
             Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarItem ultraExplorerBarItem1 = new Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarItem();
@@ -760,7 +761,8 @@ namespace PosBranch_Win
             buttonTool88.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonTool61.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonTool100.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
-            buttonTool114.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
+            buttonTool114.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Normal;
+            buttonTool114.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Normal;
             ribbonGroup28.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonTool75,
             buttonTool88,
@@ -1090,23 +1092,25 @@ namespace PosBranch_Win
             buttonToolOverview.SharedPropsInternal.Caption = "Overview";
             buttonToolOverview.SharedPropsInternal.DisplayStyle = Infragistics.Win.UltraWinToolbars.ToolDisplayStyle.ImageAndText;
             buttonToolOverview.SharedPropsInternal.ToolTipTitle = "Business Dashboard";
+            appearance84.Image = ((object)(resources.GetObject("appearance84.Image")));
+            buttonToolBusinessSummary.SharedPropsInternal.AppearancesLarge.Appearance = appearance84;
             buttonToolBusinessSummary.SharedPropsInternal.Caption = "Business Summary";
             buttonToolBusinessSummary.SharedPropsInternal.DisplayStyle = Infragistics.Win.UltraWinToolbars.ToolDisplayStyle.ImageAndText;
             buttonToolBusinessSummary.SharedPropsInternal.ToolTipTitle = "Final Analysis - Business Summary";
-            appearance84.Image = ((object)(resources.GetObject("appearance84.Image")));
-            buttonTool131.SharedPropsInternal.AppearancesLarge.Appearance = appearance84;
+            appearance85.Image = ((object)(resources.GetObject("appearance85.Image")));
+            buttonTool131.SharedPropsInternal.AppearancesLarge.Appearance = appearance85;
             buttonTool131.SharedPropsInternal.Caption = "ActivityLog ";
             buttonTool132.SharedPropsInternal.Caption = "ButtonTool6";
-            appearance85.Image = global::PosBranch_Win.Properties.Resources.payment_method1;
-            buttonToolGeneralPayment.SharedPropsInternal.AppearancesLarge.Appearance = appearance85;
+            appearance86.Image = global::PosBranch_Win.Properties.Resources.payment_method1;
+            buttonToolGeneralPayment.SharedPropsInternal.AppearancesLarge.Appearance = appearance86;
             buttonToolGeneralPayment.SharedPropsInternal.Caption = "Accounts Payment";
             buttonToolGeneralPayment.SharedPropsInternal.DisplayStyle = Infragistics.Win.UltraWinToolbars.ToolDisplayStyle.ImageAndText;
-            appearance86.Image = global::PosBranch_Win.Properties.Resources.bill__1_;
-            buttonToolGeneralReceipt.SharedPropsInternal.AppearancesLarge.Appearance = appearance86;
+            appearance87.Image = global::PosBranch_Win.Properties.Resources.bill__1_;
+            buttonToolGeneralReceipt.SharedPropsInternal.AppearancesLarge.Appearance = appearance87;
             buttonToolGeneralReceipt.SharedPropsInternal.Caption = "Accounts Receipt";
             buttonToolGeneralReceipt.SharedPropsInternal.DisplayStyle = Infragistics.Win.UltraWinToolbars.ToolDisplayStyle.ImageAndText;
-            appearance87.Image = global::PosBranch_Win.Properties.Resources.bank2;
-            buttonToolBankReconciliation.SharedPropsInternal.AppearancesLarge.Appearance = appearance87;
+            appearance88.Image = global::PosBranch_Win.Properties.Resources.bank2;
+            buttonToolBankReconciliation.SharedPropsInternal.AppearancesLarge.Appearance = appearance88;
             buttonToolBankReconciliation.SharedPropsInternal.Caption = "Bank Reconciliation";
             buttonToolBankReconciliation.SharedPropsInternal.DisplayStyle = Infragistics.Win.UltraWinToolbars.ToolDisplayStyle.ImageAndText;
             this.ultraToolbarsManager1.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
