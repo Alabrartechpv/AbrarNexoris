@@ -766,7 +766,8 @@ namespace PosBranch_Win
             buttonTool88.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonTool61.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonTool100.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
-            buttonTool114.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
+            buttonTool114.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Normal;
+            buttonTool114.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Normal;
             ribbonGroup28.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonTool75,
             buttonTool88,
@@ -1103,6 +1104,8 @@ namespace PosBranch_Win
             buttonToolOverview.SharedPropsInternal.Caption = "Overview";
             buttonToolOverview.SharedPropsInternal.DisplayStyle = Infragistics.Win.UltraWinToolbars.ToolDisplayStyle.ImageAndText;
             buttonToolOverview.SharedPropsInternal.ToolTipTitle = "Business Dashboard";
+            appearance84.Image = ((object)(resources.GetObject("appearance84.Image")));
+            buttonToolBusinessSummary.SharedPropsInternal.AppearancesLarge.Appearance = appearance84;
             buttonToolBusinessSummary.SharedPropsInternal.Caption = "Business Summary";
             buttonToolBusinessSummary.SharedPropsInternal.DisplayStyle = Infragistics.Win.UltraWinToolbars.ToolDisplayStyle.ImageAndText;
             buttonToolBusinessSummary.SharedPropsInternal.ToolTipTitle = "Final Analysis - Business Summary";
