@@ -528,7 +528,7 @@ namespace Repository.Accounts
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@CustomerLedgerId", customerLedgerId);
                     cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
-                    cmd.Parameters.AddWithValue("@_Operation", "GETALLINVOICES");
+                    cmd.Parameters.AddWithValue("@_Operation", "GETOUTSTANDING");
 
                     DataTable dt = new DataTable();
                     using (SqlDataAdapter da = new SqlDataAdapter(cmd))
