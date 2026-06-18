@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -1129,6 +1129,12 @@
     <Compile Include="Reports\FinancialReports\FrmTrialBalance.Designer.cs">
       <DependentUpon>FrmTrialBalance.cs</DependentUpon>
     </Compile>
+    <Compile Include="Reports\FinancialReports\FrmShiftReconciliationReport.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reports\FinancialReports\FrmShiftReconciliationReport.Designer.cs">
+      <DependentUpon>FrmShiftReconciliationReport.cs</DependentUpon>
+    </Compile>
     <Compile Include="Reports\FinancialReports\FrmCashBankBook.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1570,6 +1576,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Reports\FinancialReports\FrmProfitLossAccount.resx">
       <DependentUpon>FrmProfitLossAccount.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Reports\FinancialReports\FrmShiftReconciliationReport.resx">
+      <DependentUpon>FrmShiftReconciliationReport.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Reports\FinancialReports\frmVendorPaymentReport.resx">
       <DependentUpon>frmVendorPaymentReport.cs</DependentUpon>

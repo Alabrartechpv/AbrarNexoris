@@ -8864,14 +8864,3 @@ namespace PosBranch_Win.Transaction
         #endregion
     }
 }
-
-
-
-
-
-
-
-
-
-
-
