@@ -523,35 +523,28 @@ namespace Repository.Accounts
             DataConnection.Open();
             try
             {
-                using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE._CustomerReceiptMaster, (SqlConnection)DataConnection))
+                string query = @"
+                    SELECT ISNULL(
+                        (SELECT (ISNULL(LM.OpnDebit, 0) - ISNULL(LM.OpnCredit, 0) + ISNULL(SUM(ISNULL(V.Debit, 0)), 0) - ISNULL(SUM(ISNULL(V.Credit, 0)), 0))
+                         FROM LedgerMaster AS LM
+                         LEFT JOIN Vouchers AS V ON LM.LedgerID = V.LedgerID AND LM.BranchID = V.BranchID AND V.CancelFlag = 0
+                         WHERE LM.BranchID = @BranchId AND LM.LedgerID = @CustomerLedgerId
+                         GROUP BY LM.LedgerID, LM.OpnDebit, LM.OpnCredit
+                        ), 0);";
+
+                using (SqlCommand cmd = new SqlCommand(query, (SqlConnection)DataConnection))
                 {
-                    cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@CustomerLedgerId", customerLedgerId);
                     cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
-                    cmd.Parameters.AddWithValue("@_Operation", "GETOUTSTANDING");
 
-                    DataTable dt = new DataTable();
-                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                    object result = cmd.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)
                     {
-                        da.Fill(dt);
-                    }
-
-                    NormalizeInvoiceBalances(dt);
-
-                    if (dt.Columns.Contains("Balance"))
-                    {
-                        foreach (DataRow row in dt.Rows)
-                        {
-                            decimal balance = GetRowDecimal(row, "Balance");
-                            if (balance > 0m)
-                            {
-                                outstandingTotal += balance;
-                            }
-                        }
+                        outstandingTotal = Convert.ToDecimal(result);
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw;
             }

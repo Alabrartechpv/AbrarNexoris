@@ -478,6 +478,20 @@ namespace PosBranch_Win.Accounts
                     row.SetColumnError("LedgerID", "Select ledger.");
                     valid = false;
                 }
+                else
+                {
+                    string accType = ledgerRepository.GetLedgerAccountType(ledgerId);
+                    if (accType == "CUSTOMER")
+                    {
+                        row.SetColumnError("LedgerID", "Please use Customer Receipt screen for customer payments.");
+                        valid = false;
+                    }
+                    else if (accType == "SUPPLIER")
+                    {
+                        row.SetColumnError("LedgerID", "Please use Vendor Payment screen for supplier payments.");
+                        valid = false;
+                    }
+                }
 
                 if (debit < 0 || credit < 0)
                 {
@@ -762,6 +776,29 @@ namespace PosBranch_Win.Accounts
             {
                 rowView.Row.ClearErrors();
                 rowView.Row.RowError = string.Empty;
+
+                if (e.Cell.Column.Key == "LedgerID")
+                {
+                    long ledgerId = GetLongValue(e.Cell.Value);
+                    if (ledgerId > 0)
+                    {
+                        string accType = ledgerRepository.GetLedgerAccountType(ledgerId);
+                        if (accType == "CUSTOMER")
+                        {
+                            MessageBox.Show("Please use Customer Receipt screen for customer payments.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            isBinding = true;
+                            e.Cell.Value = DBNull.Value;
+                            isBinding = false;
+                        }
+                        else if (accType == "SUPPLIER")
+                        {
+                            MessageBox.Show("Please use Vendor Payment screen for supplier payments.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            isBinding = true;
+                            e.Cell.Value = DBNull.Value;
+                            isBinding = false;
+                        }
+                    }
+                }
             }
 
             UpdateTotals();
