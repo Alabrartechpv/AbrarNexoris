@@ -18,6 +18,7 @@ using ModelClass.TransactionModels;
 using System.Data.SqlClient;
 using System.Reflection;
 using System.IO;
+using Repository.SettingsRepo;
 
 namespace PosBranch_Win.Transaction
 {
@@ -4418,6 +4419,8 @@ namespace PosBranch_Win.Transaction
 
                     // Call the method to save details
                     UpdatePurchaseReturnDetails(returnedPrNo);
+                    prMaster.PReturnNo = returnedPrNo;
+                    SavePurchaseReturnActivityLog("SAVE", prMaster);
 
                     // Generate and display debit note preview
                     DebitNote debitNote = GenerateDebitNote(prMaster, returnedPrNo);
@@ -4447,6 +4450,33 @@ namespace PosBranch_Win.Transaction
             {
                 // Reset cursor
                 Cursor.Current = Cursors.Default;
+            }
+        }
+
+        private void SavePurchaseReturnActivityLog(string activityType, PReturnMaster purchaseReturn)
+        {
+            if (purchaseReturn == null || purchaseReturn.PReturnNo <= 0)
+            {
+                return;
+            }
+
+            try
+            {
+                using (var repo = new TransactionActivityLogRepository())
+                {
+                    repo.SavePurchaseReturnActivity(
+                        purchaseReturn.PReturnNo,
+                        purchaseReturn.InvoiceNo,
+                        purchaseReturn.VendorName,
+                        purchaseReturn.Paymode,
+                        Convert.ToDecimal(purchaseReturn.GrandTotal),
+                        activityType,
+                        $"Purchase Return No: {purchaseReturn.PReturnNo}, Vendor: {purchaseReturn.VendorName}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Unable to save purchase return activity log: " + ex.Message);
             }
         }
 
@@ -7747,6 +7777,7 @@ namespace PosBranch_Win.Transaction
                             System.Diagnostics.Debug.WriteLine($"Updating purchase return details for PR#{prNo}");
                             UpdatePurchaseReturnDetails(prNo);
                             System.Diagnostics.Debug.WriteLine($"Successfully updated purchase return details for PR#{prNo}");
+                            SavePurchaseReturnActivityLog("UPDATE", pr);
                         }
                         catch (Exception detailsEx)
                         {

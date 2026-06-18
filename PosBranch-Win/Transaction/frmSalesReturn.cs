@@ -4,6 +4,7 @@ using ModelClass;
 using ModelClass.TransactionModels;
 using PosBranch_Win.DialogBox;
 using Repository;
+using Repository.SettingsRepo;
 using Repository.TransactionRepository;
 using System;
 using System.Collections.Generic;
@@ -856,6 +857,7 @@ namespace PosBranch_Win.Transaction
                 // Clear the form for next entry after successful save/update
                 if (message.Contains("Successfully") || message.Contains("success"))
                 {
+                    SaveSalesReturnActivityLog(isUpdate ? "UPDATE" : "SAVE", SReturn, message);
                     ClearForm();
                 }
             }
@@ -863,6 +865,74 @@ namespace PosBranch_Win.Transaction
             {
                 MessageBox.Show("Error saving sales return: " + ex.Message);
             }
+        }
+
+        private void SaveSalesReturnActivityLog(string activityType, SalesReturn salesReturn, string saveMessage)
+        {
+            if (salesReturn == null)
+            {
+                return;
+            }
+
+            int returnNo = salesReturn.SReturnNo > 0
+                ? salesReturn.SReturnNo
+                : ExtractSalesReturnNo(saveMessage);
+
+            if (returnNo <= 0)
+            {
+                return;
+            }
+
+            try
+            {
+                using (var repo = new TransactionActivityLogRepository())
+                {
+                    repo.SaveSalesReturnActivity(
+                        returnNo,
+                        salesReturn.InvoiceNo,
+                        salesReturn.CustomerName,
+                        salesReturn.Paymode,
+                        Convert.ToDecimal(salesReturn.GrandTotal),
+                        activityType,
+                        $"Sales Return No: {returnNo}, Customer: {salesReturn.CustomerName}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Unable to save sales return activity log: " + ex.Message);
+            }
+        }
+
+        private static int ExtractSalesReturnNo(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return 0;
+            }
+
+            int hashIndex = message.IndexOf('#');
+            if (hashIndex >= 0)
+            {
+                int start = hashIndex + 1;
+                while (start < message.Length && char.IsWhiteSpace(message[start]))
+                {
+                    start++;
+                }
+
+                int end = start;
+                while (end < message.Length && char.IsDigit(message[end]))
+                {
+                    end++;
+                }
+
+                int parsed;
+                if (end > start && int.TryParse(message.Substring(start, end - start), out parsed))
+                {
+                    return parsed;
+                }
+            }
+
+            return 0;
         }
 
         private void pbxSave_Click(object sender, EventArgs e)
@@ -4747,6 +4817,7 @@ namespace PosBranch_Win.Transaction
                     // Reset form for next entry if update was successful
                     if (message.Contains("success"))
                     {
+                        SaveSalesReturnActivityLog("UPDATE", SReturn, message);
                         ClearForm();
                     }
                 }
@@ -5633,6 +5704,8 @@ namespace PosBranch_Win.Transaction
                         {
                         }
                     }
+
+                    SaveSalesReturnActivityLog(isUpdate ? "UPDATE" : "SAVE", SReturn, message);
 
                     // Generate and display credit note
                     CreditNote creditNote = GenerateCreditNote(SReturn);
