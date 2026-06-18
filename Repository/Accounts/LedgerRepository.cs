@@ -447,5 +447,60 @@ GROUP BY l.LedgerID, ag.GroupType, ag.GroupID, l.OpnDebit, l.OpnCredit;";
 
             return exists;
         }
+
+        // Method to recursively get the account type (CUSTOMER, SUPPLIER, or OTHER) using CTE
+        public string GetLedgerAccountType(long ledgerId)
+        {
+            string accountType = "OTHER";
+
+            if (DataConnection.State == ConnectionState.Open)
+            {
+                DataConnection.Close();
+            }
+
+            DataConnection.Open();
+
+            try
+            {
+                string query = @"
+WITH GroupHierarchy AS (
+    SELECT GroupID, ParentGroupID
+    FROM AccountGroupMaster
+    WHERE GroupID = (SELECT GroupID FROM LedgerMaster WHERE LedgerID = @LedgerID)
+    UNION ALL
+    SELECT p.GroupID, p.ParentGroupID
+    FROM GroupHierarchy h
+    INNER JOIN AccountGroupMaster p ON h.ParentGroupID = p.GroupID
+)
+SELECT 
+    CASE 
+        WHEN EXISTS (SELECT 1 FROM GroupHierarchy WHERE GroupID = 16) THEN 'CUSTOMER'
+        WHEN EXISTS (SELECT 1 FROM GroupHierarchy WHERE GroupID = 17) THEN 'SUPPLIER'
+        ELSE 'OTHER'
+    END AS AccountType;";
+
+                using (SqlCommand cmd = new SqlCommand(query, (SqlConnection)DataConnection))
+                {
+                    cmd.Parameters.AddWithValue("@LedgerID", ledgerId);
+                    object result = cmd.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)
+                    {
+                        accountType = result.ToString().Trim().ToUpper();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                    DataConnection.Close();
+            }
+
+            return accountType;
+        }
     }
 }
+
