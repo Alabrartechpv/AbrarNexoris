@@ -917,6 +917,17 @@ namespace PosBranch_Win.Transaction
         {
             try
             {
+                // Lock down salesperson field (Administrators are exempt from lock)
+                bool isAdmin = string.Equals(SessionContext.UserLevel, "Administrator", StringComparison.OrdinalIgnoreCase);
+                if (txtSalesPerson != null)
+                {
+                    txtSalesPerson.ReadOnly = !isAdmin;
+                }
+                if (button2 != null)
+                {
+                    button2.Enabled = isAdmin;
+                }
+
                 // Hide the update button by default - only show when loading existing data
                 updtbtn.Visible = false;
 
@@ -7667,6 +7678,12 @@ namespace PosBranch_Win.Transaction
         }
         private void ShowSalesPersonDialog()
         {
+            bool isAdmin = string.Equals(SessionContext.UserLevel, "Administrator", StringComparison.OrdinalIgnoreCase);
+            if (!isAdmin)
+            {
+                return; // Only administrators can change the salesperson
+            }
+
             if (!isItemDialogOpen && canOpenDialog &&
                 (DateTime.Now - lastDialogCloseTime).TotalMilliseconds > DIALOG_COOLDOWN_MS)
             {

@@ -119,9 +119,12 @@ namespace PosBranch_Win.Transaction
 
             } else if (e.KeyCode == Keys.F6)
             {
-                frmSalesPersonDial salesperson = new frmSalesPersonDial();
-                salesperson.ShowDialog();
-
+                bool isAdmin = string.Equals(SessionContext.UserLevel, "Administrator", StringComparison.OrdinalIgnoreCase);
+                if (isAdmin)
+                {
+                    frmSalesPersonDial salesperson = new frmSalesPersonDial();
+                    salesperson.ShowDialog();
+                }
             }
             else if (e.KeyCode == Keys.F7)
             {
@@ -195,6 +198,12 @@ namespace PosBranch_Win.Transaction
             sales.LedgerID = led.LedgerID;
             lblledger.Text = led.LedgerID.ToString();
             txtSalesPerson.Text = DataBase.UserName;
+            bool isAdmin = string.Equals(SessionContext.UserLevel, "Administrator", StringComparison.OrdinalIgnoreCase);
+            txtSalesPerson.ReadOnly = !isAdmin;
+            if (button2 != null)
+            {
+                button2.Enabled = isAdmin;
+            }
             this.FormatGrid();
             DataTable dt = this.getPriceLevel();
            

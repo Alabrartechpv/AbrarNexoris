@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -142,6 +142,7 @@ namespace ModelClass
         public string SaleType { get; set; }
         public int BranchId { get; set; }
         public int UserId { get; set; }
+        public int CounterId { get; set; }
     }
     public class GetHoldBillGrid
     {
