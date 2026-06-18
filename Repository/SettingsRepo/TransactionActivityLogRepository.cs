@@ -59,6 +59,58 @@ namespace Repository.SettingsRepo
             SaveActivity("Sales", transactionNo, invoiceNo, partyName, paymentMode, netAmount, activityType, activityDetails, qty, cost, unit, barcode, sPrice, taxAmt, taxPer, baseAmount, packing, retailPrice, free, unitSP, taxType, gross);
         }
 
+        public void SavePurchaseReturnActivity(
+            long transactionNo,
+            string invoiceNo,
+            string partyName,
+            string paymentMode,
+            decimal netAmount,
+            string activityType,
+            string activityDetails,
+            decimal? qty = null,
+            decimal? cost = null,
+            string unit = null,
+            string barcode = null,
+            decimal? sPrice = null,
+            decimal? taxAmt = null,
+            decimal? taxPer = null,
+            decimal? baseAmount = null,
+            decimal? packing = null,
+            decimal? retailPrice = null,
+            decimal? free = null,
+            decimal? unitSP = null,
+            string taxType = null,
+            decimal? gross = null)
+        {
+            SaveActivity("Purchase Return", transactionNo, invoiceNo, partyName, paymentMode, netAmount, activityType, activityDetails, qty, cost, unit, barcode, sPrice, taxAmt, taxPer, baseAmount, packing, retailPrice, free, unitSP, taxType, gross);
+        }
+
+        public void SaveSalesReturnActivity(
+            long transactionNo,
+            string invoiceNo,
+            string partyName,
+            string paymentMode,
+            decimal netAmount,
+            string activityType,
+            string activityDetails,
+            decimal? qty = null,
+            decimal? cost = null,
+            string unit = null,
+            string barcode = null,
+            decimal? sPrice = null,
+            decimal? taxAmt = null,
+            decimal? taxPer = null,
+            decimal? baseAmount = null,
+            decimal? packing = null,
+            decimal? retailPrice = null,
+            decimal? free = null,
+            decimal? unitSP = null,
+            string taxType = null,
+            decimal? gross = null)
+        {
+            SaveActivity("Sales Return", transactionNo, invoiceNo, partyName, paymentMode, netAmount, activityType, activityDetails, qty, cost, unit, barcode, sPrice, taxAmt, taxPer, baseAmount, packing, retailPrice, free, unitSP, taxType, gross);
+        }
+
         public DataTable GetActivityLog(string logType, DateTime fromDate, DateTime toDate, string userName, string activityType, string searchText)
         {
             DataTable result = new DataTable();
@@ -399,6 +451,12 @@ ORDER BY Value;", (SqlConnection)DataConnection))
         private void AppendRecoveredTransactionRows(DataTable result, string logType, DateTime fromDate, DateTime toDate, string userName, string activityType, string searchText)
         {
             bool isSalesLog = string.Equals(logType, "Sales", StringComparison.OrdinalIgnoreCase);
+            bool isPurchaseLog = string.Equals(logType, "Purchase", StringComparison.OrdinalIgnoreCase);
+            if (!isSalesLog && !isPurchaseLog)
+            {
+                return;
+            }
+
             if (!string.IsNullOrWhiteSpace(activityType) &&
                 !string.Equals(activityType, "SAVE", StringComparison.OrdinalIgnoreCase) &&
                 !(isSalesLog && IsHoldActivityFilter(activityType)))
@@ -436,6 +494,12 @@ ORDER BY Value;", (SqlConnection)DataConnection))
 
         private int CountRecoveredTransactions(string logType, DateTime fromDate, DateTime toDate)
         {
+            if (!string.Equals(logType, "Sales", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(logType, "Purchase", StringComparison.OrdinalIgnoreCase))
+            {
+                return 0;
+            }
+
             string sql = string.Equals(logType, "Purchase", StringComparison.OrdinalIgnoreCase)
                 ? BuildRecoveredPurchaseCountSql()
                 : BuildRecoveredSalesCountSql();
@@ -927,6 +991,10 @@ BEGIN
         SET @TableName = N'PurchaseActivityLog';
     ELSE IF @LogType = N'Sales'
         SET @TableName = N'SalesActivityLog';
+    ELSE IF @LogType = N'Purchase Return'
+        SET @TableName = N'PurchaseReturnActivityLog';
+    ELSE IF @LogType = N'Sales Return'
+        SET @TableName = N'SalesReturnActivityLog';
     ELSE
     BEGIN
         RAISERROR('Unsupported transaction activity log type.', 16, 1);
@@ -983,6 +1051,16 @@ END;", (SqlConnection)DataConnection))
             if (string.Equals(logType, "Sales", StringComparison.OrdinalIgnoreCase))
             {
                 return "SalesActivityLog";
+            }
+
+            if (string.Equals(logType, "Purchase Return", StringComparison.OrdinalIgnoreCase))
+            {
+                return "PurchaseReturnActivityLog";
+            }
+
+            if (string.Equals(logType, "Sales Return", StringComparison.OrdinalIgnoreCase))
+            {
+                return "SalesReturnActivityLog";
             }
 
             throw new ArgumentException("Unsupported activity log type.", nameof(logType));
