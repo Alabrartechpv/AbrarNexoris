@@ -1104,7 +1104,6 @@ namespace PosBranch_Win
             buttonToolOverview.SharedPropsInternal.Caption = "Overview";
             buttonToolOverview.SharedPropsInternal.DisplayStyle = Infragistics.Win.UltraWinToolbars.ToolDisplayStyle.ImageAndText;
             buttonToolOverview.SharedPropsInternal.ToolTipTitle = "Business Dashboard";
-            appearance84.Image = ((object)(resources.GetObject("appearance84.Image")));
             buttonToolBusinessSummary.SharedPropsInternal.AppearancesLarge.Appearance = appearance84;
             buttonToolBusinessSummary.SharedPropsInternal.Caption = "Business Summary";
             buttonToolBusinessSummary.SharedPropsInternal.DisplayStyle = Infragistics.Win.UltraWinToolbars.ToolDisplayStyle.ImageAndText;
