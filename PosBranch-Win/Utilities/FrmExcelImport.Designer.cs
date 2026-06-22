@@ -59,7 +59,6 @@ namespace PosBranch_Win.Utilities
             this.txtFilePath = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.lblFilePath = new Infragistics.Win.Misc.UltraLabel();
             this.tabExport = new System.Windows.Forms.TabPage();
-            this.pnlExportAction = new Infragistics.Win.Misc.UltraPanel();
             this.lblProgressExport = new Infragistics.Win.Misc.UltraLabel();
             this.progressBarExport = new System.Windows.Forms.ProgressBar();
             this.btnExport = new Infragistics.Win.Misc.UltraButton();
@@ -70,9 +69,15 @@ namespace PosBranch_Win.Utilities
             this.lblExportBrand = new Infragistics.Win.Misc.UltraLabel();
             this.cmbExportCategory = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
             this.lblExportCategory = new Infragistics.Win.Misc.UltraLabel();
+            this.lblExportSearch = new Infragistics.Win.Misc.UltraLabel();
+            this.txtExportSearch = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.btnLoadPreview = new Infragistics.Win.Misc.UltraButton();
+            this.grpExportPreview = new Infragistics.Win.Misc.UltraGroupBox();
+            this.ultraGridExportPreview = new Infragistics.Win.UltraWinGrid.UltraGrid();
             this.bgWorkerValidate = new System.ComponentModel.BackgroundWorker();
             this.bgWorkerImport = new System.ComponentModel.BackgroundWorker();
             this.bgWorkerExport = new System.ComponentModel.BackgroundWorker();
+            this.bgWorkerExportPreview = new System.ComponentModel.BackgroundWorker();
             this.tabControlMain.SuspendLayout();
             this.tabImport.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainerImport)).BeginInit();
@@ -100,13 +105,15 @@ namespace PosBranch_Win.Utilities
             this.pnlFileSelection.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.txtFilePath)).BeginInit();
             this.tabExport.SuspendLayout();
-            this.pnlExportAction.ClientArea.SuspendLayout();
-            this.pnlExportAction.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grpFilters)).BeginInit();
             this.grpFilters.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.cmbExportGroup)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.cmbExportBrand)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.cmbExportCategory)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtExportSearch)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.grpExportPreview)).BeginInit();
+            this.grpExportPreview.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraGridExportPreview)).BeginInit();
             this.SuspendLayout();
             // 
             // tabControlMain
@@ -503,7 +510,7 @@ namespace PosBranch_Win.Utilities
             // 
             // tabExport
             // 
-            this.tabExport.Controls.Add(this.pnlExportAction);
+            this.tabExport.Controls.Add(this.grpExportPreview);
             this.tabExport.Controls.Add(this.grpFilters);
             this.tabExport.Location = new System.Drawing.Point(4, 26);
             this.tabExport.Name = "tabExport";
@@ -513,36 +520,36 @@ namespace PosBranch_Win.Utilities
             this.tabExport.Text = "Export Products";
             this.tabExport.UseVisualStyleBackColor = true;
             // 
-            // pnlExportAction
+            // btnLoadPreview
             // 
-            // 
-            // pnlExportAction.ClientArea
-            // 
-            this.pnlExportAction.ClientArea.Controls.Add(this.lblProgressExport);
-            this.pnlExportAction.ClientArea.Controls.Add(this.progressBarExport);
-            this.pnlExportAction.ClientArea.Controls.Add(this.btnExport);
-            this.pnlExportAction.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pnlExportAction.Location = new System.Drawing.Point(10, 200);
-            this.pnlExportAction.Name = "pnlExportAction";
-            this.pnlExportAction.Size = new System.Drawing.Size(922, 100);
-            this.pnlExportAction.TabIndex = 1;
+            this.btnLoadPreview.Appearance.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(41)))), ((int)(((byte)(128)))), ((int)(((byte)(185)))));
+            this.btnLoadPreview.Appearance.ForeColor = System.Drawing.Color.White;
+            this.btnLoadPreview.ButtonStyle = Infragistics.Win.UIElementButtonStyle.Flat;
+            this.btnLoadPreview.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnLoadPreview.Location = new System.Drawing.Point(450, 40);
+            this.btnLoadPreview.Name = "btnLoadPreview";
+            this.btnLoadPreview.Size = new System.Drawing.Size(140, 35);
+            this.btnLoadPreview.TabIndex = 8;
+            this.btnLoadPreview.Text = "Load Preview";
+            this.btnLoadPreview.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+            this.btnLoadPreview.Click += new System.EventHandler(this.btnLoadPreview_Click);
             // 
             // lblProgressExport
             // 
             this.lblProgressExport.AutoSize = true;
             this.lblProgressExport.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblProgressExport.Location = new System.Drawing.Point(152, 60);
+            this.lblProgressExport.Location = new System.Drawing.Point(450, 165);
             this.lblProgressExport.Name = "lblProgressExport";
-            this.lblProgressExport.Size = new System.Drawing.Size(38, 18);
-            this.lblProgressExport.TabIndex = 2;
+            this.lblProgressExport.Size = new System.Drawing.Size(350, 20);
+            this.lblProgressExport.TabIndex = 11;
             this.lblProgressExport.Text = "Ready";
             // 
             // progressBarExport
             // 
-            this.progressBarExport.Location = new System.Drawing.Point(152, 30);
+            this.progressBarExport.Location = new System.Drawing.Point(450, 140);
             this.progressBarExport.Name = "progressBarExport";
-            this.progressBarExport.Size = new System.Drawing.Size(400, 20);
-            this.progressBarExport.TabIndex = 1;
+            this.progressBarExport.Size = new System.Drawing.Size(350, 20);
+            this.progressBarExport.TabIndex = 10;
             // 
             // btnExport
             // 
@@ -553,16 +560,22 @@ namespace PosBranch_Win.Utilities
             this.btnExport.Appearance = appearance12;
             this.btnExport.ButtonStyle = Infragistics.Win.UIElementButtonStyle.Flat;
             this.btnExport.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnExport.Location = new System.Drawing.Point(13, 25);
+            this.btnExport.Location = new System.Drawing.Point(450, 90);
             this.btnExport.Name = "btnExport";
-            this.btnExport.Size = new System.Drawing.Size(127, 30);
-            this.btnExport.TabIndex = 0;
+            this.btnExport.Size = new System.Drawing.Size(140, 35);
+            this.btnExport.TabIndex = 9;
             this.btnExport.Text = "Export Products";
             this.btnExport.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             this.btnExport.Click += new System.EventHandler(this.btnExport_Click);
             // 
             // grpFilters
             // 
+            this.grpFilters.Controls.Add(this.btnExport);
+            this.grpFilters.Controls.Add(this.btnLoadPreview);
+            this.grpFilters.Controls.Add(this.progressBarExport);
+            this.grpFilters.Controls.Add(this.lblProgressExport);
+            this.grpFilters.Controls.Add(this.txtExportSearch);
+            this.grpFilters.Controls.Add(this.lblExportSearch);
             this.grpFilters.Controls.Add(this.cmbExportGroup);
             this.grpFilters.Controls.Add(this.lblExportGroup);
             this.grpFilters.Controls.Add(this.cmbExportBrand);
@@ -573,9 +586,55 @@ namespace PosBranch_Win.Utilities
             this.grpFilters.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.grpFilters.Location = new System.Drawing.Point(10, 10);
             this.grpFilters.Name = "grpFilters";
-            this.grpFilters.Size = new System.Drawing.Size(922, 190);
+            this.grpFilters.Size = new System.Drawing.Size(922, 210);
             this.grpFilters.TabIndex = 0;
             this.grpFilters.Text = "Export Filters";
+            // 
+            // txtExportSearch
+            // 
+            this.txtExportSearch.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtExportSearch.Location = new System.Drawing.Point(115, 160);
+            this.txtExportSearch.Name = "txtExportSearch";
+            this.txtExportSearch.Size = new System.Drawing.Size(250, 25);
+            this.txtExportSearch.TabIndex = 7;
+            // 
+            // lblExportSearch
+            // 
+            this.lblExportSearch.AutoSize = true;
+            this.lblExportSearch.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblExportSearch.Location = new System.Drawing.Point(20, 163);
+            this.lblExportSearch.Name = "lblExportSearch";
+            this.lblExportSearch.Size = new System.Drawing.Size(90, 18);
+            this.lblExportSearch.TabIndex = 6;
+            this.lblExportSearch.Text = "Search Name/BC:";
+            // 
+            // grpExportPreview
+            // 
+            this.grpExportPreview.Controls.Add(this.ultraGridExportPreview);
+            this.grpExportPreview.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.grpExportPreview.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.grpExportPreview.Location = new System.Drawing.Point(10, 220);
+            this.grpExportPreview.Name = "grpExportPreview";
+            this.grpExportPreview.Padding = new System.Windows.Forms.Padding(8);
+            this.grpExportPreview.Size = new System.Drawing.Size(922, 340);
+            this.grpExportPreview.TabIndex = 2;
+            this.grpExportPreview.Text = "Export Products Preview";
+            // 
+            // ultraGridExportPreview
+            // 
+            this.ultraGridExportPreview.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ultraGridExportPreview.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ultraGridExportPreview.Location = new System.Drawing.Point(3, 21);
+            this.ultraGridExportPreview.Name = "ultraGridExportPreview";
+            this.ultraGridExportPreview.Size = new System.Drawing.Size(916, 216);
+            this.ultraGridExportPreview.TabIndex = 0;
+            this.ultraGridExportPreview.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+            this.ultraGridExportPreview.InitializeLayout += new Infragistics.Win.UltraWinGrid.InitializeLayoutEventHandler(this.ultraGridExportPreview_InitializeLayout);
+            // 
+            // bgWorkerExportPreview
+            // 
+            this.bgWorkerExportPreview.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bgWorkerExportPreview_DoWork);
+            this.bgWorkerExportPreview.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.bgWorkerExportPreview_RunWorkerCompleted);
             // 
             // cmbExportGroup
             // 
@@ -690,16 +749,16 @@ namespace PosBranch_Win.Utilities
             this.pnlFileSelection.ClientArea.PerformLayout();
             this.pnlFileSelection.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.txtFilePath)).EndInit();
-            this.tabExport.ResumeLayout(false);
-            this.pnlExportAction.ClientArea.ResumeLayout(false);
-            this.pnlExportAction.ClientArea.PerformLayout();
-            this.pnlExportAction.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.grpFilters)).EndInit();
             this.grpFilters.ResumeLayout(false);
             this.grpFilters.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.cmbExportGroup)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.cmbExportBrand)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.cmbExportCategory)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtExportSearch)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.grpExportPreview)).EndInit();
+            this.grpExportPreview.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.ultraGridExportPreview)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -742,7 +801,6 @@ namespace PosBranch_Win.Utilities
         private Infragistics.Win.Misc.UltraLabel lblExportBrand;
         private Infragistics.Win.UltraWinEditors.UltraComboEditor cmbExportCategory;
         private Infragistics.Win.Misc.UltraLabel lblExportCategory;
-        private Infragistics.Win.Misc.UltraPanel pnlExportAction;
         private Infragistics.Win.Misc.UltraButton btnExport;
         private System.Windows.Forms.ProgressBar progressBarExport;
         private Infragistics.Win.Misc.UltraLabel lblProgressExport;
@@ -750,5 +808,11 @@ namespace PosBranch_Win.Utilities
         private System.ComponentModel.BackgroundWorker bgWorkerValidate;
         private System.ComponentModel.BackgroundWorker bgWorkerImport;
         private System.ComponentModel.BackgroundWorker bgWorkerExport;
+        private Infragistics.Win.Misc.UltraLabel lblExportSearch;
+        private Infragistics.Win.UltraWinEditors.UltraTextEditor txtExportSearch;
+        private Infragistics.Win.Misc.UltraButton btnLoadPreview;
+        private Infragistics.Win.Misc.UltraGroupBox grpExportPreview;
+        private Infragistics.Win.UltraWinGrid.UltraGrid ultraGridExportPreview;
+        private System.ComponentModel.BackgroundWorker bgWorkerExportPreview;
     }
 }

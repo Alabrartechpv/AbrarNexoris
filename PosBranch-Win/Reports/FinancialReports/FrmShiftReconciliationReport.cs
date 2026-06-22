@@ -103,7 +103,12 @@ namespace PosBranch_Win.Reports.FinancialReports
             ultraComboPreset.Items.Add("Custom", "Custom Range");
             ultraComboPreset.Value = "ThisMonth";
 
-            txtSearch.NullText = "Search Doc No...";
+            lblSearch.Visible = false;
+            txtSearch.Visible = false;
+
+            lblPreset.Location = new Point(12, 52);
+            ultraComboPreset.Location = new Point(86, 49);
+
             txtCounterFilter.NullText = "Search Counter...";
         }
 
@@ -256,13 +261,6 @@ namespace PosBranch_Win.Reports.FinancialReports
             // Date filtering
             filtered = filtered.Where(x => x.TransactionDate >= fromDate && x.TransactionDate <= toDate);
 
-            // Search text filtering (DocNo)
-            string searchText = txtSearch.Text.Trim();
-            if (!string.IsNullOrWhiteSpace(searchText))
-            {
-                filtered = filtered.Where(x => x.DocNo != null && x.DocNo.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0);
-            }
-
             // Counter filter
             string counterText = txtCounterFilter.Text.Trim();
             if (!string.IsNullOrWhiteSpace(counterText))
@@ -364,12 +362,11 @@ namespace PosBranch_Win.Reports.FinancialReports
             if (rows == null) return;
 
             StringBuilder builder = new StringBuilder();
-            builder.AppendLine("Doc No,Closing Date,Counter,Gross Sales,Returns,Net Sales,Expected Cash,Physical Cash,Difference,Status");
+            builder.AppendLine("Closing Date,Counter,Gross Sales,Returns,Net Sales,Expected Cash,Physical Cash,Difference,Status");
 
             foreach (var row in rows)
             {
                 builder.AppendLine(string.Join(",",
-                    EscapeCsv(row.DocNo),
                     EscapeCsv(row.TransactionDate.ToString("yyyy-MM-dd HH:mm:ss")),
                     EscapeCsv(row.Counter),
                     row.TotalGrossSales.ToString("F2"),
@@ -420,7 +417,7 @@ namespace PosBranch_Win.Reports.FinancialReports
 
                 // Set up and trigger printed report document
                 PrintDocument printDoc = new PrintDocument();
-                printDoc.DocumentName = $"Z-Report - {selectedModel.DocNo}";
+                printDoc.DocumentName = $"Z-Report - Session {selectedModel.CounterSessionId}";
 
                 printDoc.PrintPage += (s, ev) =>
                 {
@@ -447,7 +444,7 @@ namespace PosBranch_Win.Reports.FinancialReports
 
                         // Info metadata
                         float colWidth = width / 2;
-                        ev.Graphics.DrawString($"Doc No: {selectedModel.DocNo}", boldFont, Brushes.Black, margin, y);
+                        ev.Graphics.DrawString($"Session ID: {selectedModel.CounterSessionId}", boldFont, Brushes.Black, margin, y);
                         ev.Graphics.DrawString($"Counter: {selectedModel.Counter}", dataFont, Brushes.Black, margin + colWidth, y);
                         y += 18;
 
@@ -740,7 +737,6 @@ namespace PosBranch_Win.Reports.FinancialReports
                 column.Hidden = true;
             }
 
-            ConfigureGridColumn(band, "DocNo", "Doc No", 120, null, HAlign.Left);
             ConfigureGridColumn(band, "TransactionDate", "Closing Date & Time", 150, "dd-MMM-yyyy hh:mm tt", HAlign.Left);
             ConfigureGridColumn(band, "Counter", "Counter Name", 120, null, HAlign.Left);
             ConfigureGridColumn(band, "TotalGrossSales", "Gross Sales", 110, "#,##0.00", HAlign.Right);
@@ -751,7 +747,6 @@ namespace PosBranch_Win.Reports.FinancialReports
             ConfigureGridColumn(band, "CashDifference", "Cash Variance", 115, "#,##0.00", HAlign.Right);
             ConfigureGridColumn(band, "Status", "Status", 90, null, HAlign.Center);
 
-            band.Columns["DocNo"].CellAppearance.FontData.Bold = DefaultableBoolean.True;
             band.Columns["NetSales"].CellAppearance.ForeColor = Color.FromArgb(13, 71, 161);
             band.Columns["PhysicalCashCounted"].CellAppearance.ForeColor = Color.FromArgb(27, 94, 32);
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace ModelClass.Settings
 {
@@ -112,6 +112,7 @@ namespace ModelClass.Settings
         public const string DefaultPriceLevel = "DefaultPriceLevel";
         public const string RoundingMethod = "RoundingMethod";
         public const string MaxDiscountPercent = "MaxDiscountPercent";
+        public const string AllowSaleBelowCost = "AllowSaleBelowCost";
 
         // Display Settings
         public const string ShowCostToUser = "ShowCostToUser";

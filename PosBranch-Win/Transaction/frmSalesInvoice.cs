@@ -1433,10 +1433,9 @@ namespace PosBranch_Win.Transaction
                         return;
                     }
 
-                    // Validate that unit price is not less than cost
-                    // Validate that unit price is not less than cost
+                    // Validate that unit price is not less than cost unless allowed
                     float cost = ParseFloat(e.Cell.Row.Cells["Cost"].Value, 0);
-                    if (price < cost)
+                    if (price < cost && !SessionContext.AllowSaleBelowCost)
                     {
                         MessageBox.Show($"Unit price cannot be less than cost price (â‚¹{cost:F2}).", "Price Below Cost", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         e.Cancel = true;
@@ -1475,10 +1474,9 @@ namespace PosBranch_Win.Transaction
                         return;
                     }
 
-                    // Validate that selling price is not less than cost
-                    // Validate that selling price is not less than cost
+                    // Validate that selling price is not less than cost unless allowed
                     float cost = ParseFloat(e.Cell.Row.Cells["Cost"].Value, 0);
-                    if (sellingPrice < cost)
+                    if (sellingPrice < cost && !SessionContext.AllowSaleBelowCost)
                     {
                         MessageBox.Show($"Selling price cannot be less than cost price (â‚¹{cost:F2}).", "Price Below Cost", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         e.Cancel = true;
@@ -2028,9 +2026,9 @@ namespace PosBranch_Win.Transaction
                 int activeRowIndex = ultraGrid1.ActiveRow.Index;
                 if (activeRowIndex >= 0)
                 {
-                    // Validate that selling price is not less than cost
+                    // Validate that selling price is not less than cost unless allowed
                     float cost = ParseFloat(ultraGrid1.Rows[activeRowIndex].Cells["Cost"].Value, 0);
-                    if (newPrice < cost)
+                    if (newPrice < cost && !SessionContext.AllowSaleBelowCost)
                     {
                         MessageBox.Show($"Selling price cannot be less than cost price (â‚¹{cost:F2}).", "Price Below Cost", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         txtBarcode.Clear();
@@ -4987,12 +4985,12 @@ namespace PosBranch_Win.Transaction
                                     {
                                         decimal newPrice = priceDialog.SellingPrice;
 
-                                        // Validate that selling price is not less than cost
+                                        // Validate that selling price is not less than cost unless allowed
                                         decimal cost = 0;
                                         if (e.Cell.Row.Cells["Cost"].Value != null)
                                             decimal.TryParse(e.Cell.Row.Cells["Cost"].Value.ToString(), out cost);
 
-                                        if (newPrice < cost)
+                                        if (newPrice < cost && !SessionContext.AllowSaleBelowCost)
                                         {
                                             MessageBox.Show($"Selling price cannot be less than cost price (â‚¹{cost:F2}).", "Price Below Cost", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                                             return;

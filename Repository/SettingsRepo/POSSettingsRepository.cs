@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -275,6 +275,9 @@ namespace Repository.SettingsRepo
 
             InitializeSettingIfNotExists(companyId, branchId, SettingKeys.MaxDiscountPercent,
                 "100", "Integer", "Maximum allowed discount percentage", "Sales");
+
+            InitializeSettingIfNotExists(companyId, branchId, SettingKeys.AllowSaleBelowCost,
+                "false", "Boolean", "Allow selling items below cost price", "Sales");
 
             InitializeSettingIfNotExists(companyId, branchId, SettingKeys.ShowCostToUser,
                 "false", "Boolean", "Show cost column to regular users", "Display");
