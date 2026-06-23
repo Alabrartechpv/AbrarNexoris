@@ -3981,7 +3981,7 @@ namespace PosBranch_Win.Master
         {
             // List of panel names to style
             string[] panelNames = { "ultraPanel2", "ultraPanel3", "ultraPanel4", "ultraPanel5",
-                                            "ultraPanel8", "ultraPanel9", "ultraPanel10", "ultraPanel11", "ultraPanel13" };
+                                            "ultraPanel8", "ultraPanel9", "ultraPanel10", "ultraPanel11", "ultraPanel12", "ultraPanel13" };
 
             foreach (string panelName in panelNames)
             {
@@ -4102,7 +4102,7 @@ namespace PosBranch_Win.Master
         {
             // Connect click events for panels
             string[] panelNames = { "ultraPanel2", "ultraPanel3", "ultraPanel4", "ultraPanel5",
-                                            "ultraPanel8", "ultraPanel9", "ultraPanel10", "ultraPanel11", "ultraPanel13" };
+                                            "ultraPanel8", "ultraPanel9", "ultraPanel10", "ultraPanel11", "ultraPanel12", "ultraPanel13" };
 
             foreach (string panelName in panelNames)
             {
@@ -4330,10 +4330,29 @@ namespace PosBranch_Win.Master
                 case "ultraPanel11":
                     CloneCurrentItemAsVariant();
                     break;
+                case "ultraPanel12":
+                    OpenInactiveActiveItemDialog();
+                    break;
                 case "ultraPanel13":
                     // Open the Barcode form in UltraTabControl
                     OpenBarcodeFormInTab();
                     break;
+            }
+        }
+
+        private void OpenInactiveActiveItemDialog()
+        {
+            try
+            {
+                using (inactiveactiveitemdig inactiveItemsDialog = new inactiveactiveitemdig())
+                {
+                    inactiveItemsDialog.StartPosition = FormStartPosition.CenterScreen;
+                    inactiveItemsDialog.ShowDialog(this);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error opening inactive items: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

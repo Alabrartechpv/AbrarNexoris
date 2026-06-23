@@ -177,6 +177,14 @@ namespace PosBranch_Win.Settings
                 decimal qtyDifference = stockIn != 0m || stockOut != 0m
                     ? stockIn - stockOut
                     : ToDecimalAny(row, "QtyDifference", "Qty Difference", "MovementQty");
+                if (qtyDifference == 0m && string.Equals(action, "Purchase Return", StringComparison.OrdinalIgnoreCase))
+                {
+                    decimal returnedQty = ToDecimalAny(row, "Returned", "ReturnedQty", "ReturnQty", "Returnqty", "Returned qty");
+                    if (returnedQty != 0m)
+                    {
+                        qtyDifference = 0m - Math.Abs(returnedQty);
+                    }
+                }
                 if (qtyDifference == 0m)
                 {
                     qtyDifference = ToDecimalAny(row, "Qty");

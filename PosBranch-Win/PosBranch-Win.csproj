@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -358,6 +358,12 @@
     </Compile>
     <Compile Include="DialogBox\FrmUsersList.Designer.cs">
       <DependentUpon>FrmUsersList.cs</DependentUpon>
+    </Compile>
+    <Compile Include="DialogBox\inactiveactiveitemdig.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DialogBox\inactiveactiveitemdig.Designer.cs">
+      <DependentUpon>inactiveactiveitemdig.cs</DependentUpon>
     </Compile>
     <Compile Include="Reports\AuditReport\frmAuditReport.cs">
       <SubType>Form</SubType>
@@ -1486,6 +1492,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="DialogBox\FrmViewReceipt.resx">
       <DependentUpon>FrmViewReceipt.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DialogBox\inactiveactiveitemdig.resx">
+      <DependentUpon>inactiveactiveitemdig.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="DialogBox\OfficialReceiptList.resx">
       <DependentUpon>OfficialReceiptList.cs</DependentUpon>

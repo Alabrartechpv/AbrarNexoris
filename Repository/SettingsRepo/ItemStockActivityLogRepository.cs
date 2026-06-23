@@ -2,6 +2,7 @@ using ModelClass;
 using System;
 using System.Data;
 using System.Data.SqlClient;
+using System.Collections.Generic;
 
 namespace Repository.SettingsRepo
 {
@@ -12,6 +13,7 @@ namespace Repository.SettingsRepo
             DataTable result = ExecuteTable("GET", fromDate, toDate, userName, action, itemSearch);
             AppendRecoveredPurchaseRows(result, fromDate, toDate, userName, action, itemSearch);
             ApplyActivityLogMetadata(result, fromDate, toDate);
+            NormalizePurchaseReturnMovements(result);
             result = SortActivityTable(result);
             ApplyStableStockTimeline(result);
             return result;
@@ -359,6 +361,130 @@ WHERE ISNULL(pm.UserName, N'') <> N''
                     DataConnection.Close();
                 }
             }
+        }
+
+        private void NormalizePurchaseReturnMovements(DataTable rows)
+        {
+            if (rows == null || rows.Rows.Count == 0 || !rows.Columns.Contains("Action"))
+            {
+                return;
+            }
+
+            EnsureColumn(rows, "StockIn", typeof(decimal));
+            EnsureColumn(rows, "StockOut", typeof(decimal));
+            EnsureColumn(rows, "MovementQty", typeof(decimal));
+            EnsureColumn(rows, "QtyDifference", typeof(decimal));
+
+            foreach (DataRow row in rows.Rows)
+            {
+                if (!string.Equals(Convert.ToString(row["Action"]), "Purchase Return", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                decimal returnQty = GetPurchaseReturnQty(row);
+                if (returnQty <= 0m)
+                {
+                    continue;
+                }
+
+                row["StockIn"] = 0m;
+                row["StockOut"] = returnQty;
+                row["MovementQty"] = 0m - returnQty;
+                row["QtyDifference"] = 0m - returnQty;
+            }
+        }
+
+        private decimal GetPurchaseReturnQty(DataRow row)
+        {
+            decimal returnQty = FirstNonZeroDecimal(row, "Returned", "ReturnedQty", "ReturnQty", "Returnqty", "Returned qty");
+            if (returnQty > 0m)
+            {
+                return returnQty;
+            }
+
+            return LookupPurchaseReturnQty(row);
+        }
+
+        private decimal LookupPurchaseReturnQty(DataRow row)
+        {
+            long purchaseReturnNo = ToLong(row, "TransactionNo");
+            long itemId = ToLong(row, "ItemId");
+            long slNo = ToLong(row, "SlNo");
+            if (purchaseReturnNo <= 0)
+            {
+                return 0m;
+            }
+
+            ConnectionState originalState = DataConnection.State;
+            try
+            {
+                if (DataConnection.State != ConnectionState.Open)
+                {
+                    DataConnection.Open();
+                }
+
+                if (!TableExists("PReturnDetails"))
+                {
+                    return 0m;
+                }
+
+                string itemFilter = itemId > 0 ? " AND ISNULL(ItemID, 0) = @ItemId" : string.Empty;
+                string slNoFilter = slNo > 0 ? " AND ISNULL(SlNo, 0) = @SlNo" : string.Empty;
+                using (SqlCommand cmd = new SqlCommand(@"
+SELECT ISNULL(SUM(ISNULL(Returned, 0)), 0)
+FROM dbo.PReturnDetails
+WHERE PReturnNo = @PReturnNo
+  AND (@CompanyId = 0 OR ISNULL(CompanyId, 0) = @CompanyId)
+  AND (@BranchId = 0 OR ISNULL(BranchID, 0) = @BranchId)
+  AND (@FinYearId = 0 OR ISNULL(FinYearId, 0) = @FinYearId)" + itemFilter + slNoFilter + ";", (SqlConnection)DataConnection))
+                {
+                    cmd.Parameters.AddWithValue("@PReturnNo", purchaseReturnNo);
+                    cmd.Parameters.AddWithValue("@CompanyId", SessionContext.CompanyId);
+                    cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
+                    cmd.Parameters.AddWithValue("@FinYearId", SessionContext.FinYearId);
+                    if (itemId > 0)
+                    {
+                        cmd.Parameters.AddWithValue("@ItemId", itemId);
+                    }
+                    if (slNo > 0)
+                    {
+                        cmd.Parameters.AddWithValue("@SlNo", slNo);
+                    }
+
+                    object value = cmd.ExecuteScalar();
+                    decimal parsed;
+                    return value == null || value == DBNull.Value || !decimal.TryParse(Convert.ToString(value), out parsed)
+                        ? 0m
+                        : Math.Abs(parsed);
+                }
+            }
+            catch (SqlException ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Unable to normalize purchase return qty: " + ex.Message);
+                return 0m;
+            }
+            finally
+            {
+                if (originalState != ConnectionState.Open && DataConnection.State == ConnectionState.Open)
+                {
+                    DataConnection.Close();
+                }
+            }
+        }
+
+        private static decimal FirstNonZeroDecimal(DataRow row, params string[] columnNames)
+        {
+            foreach (string columnName in columnNames)
+            {
+                decimal value = ToDecimal(row, columnName);
+                if (value != 0m)
+                {
+                    return Math.Abs(value);
+                }
+            }
+
+            return 0m;
         }
 
         private void ApplyActivityLogMetadata(DataTable rows, DateTime fromDate, DateTime toDate)
@@ -868,9 +994,7 @@ SELECT ISNULL(@Latest, CONVERT(datetime, '19000101', 112));", (SqlConnection)Dat
         {
             if (table == null ||
                 table.Rows.Count == 0 ||
-                !table.Columns.Contains("ItemId") ||
-                !table.Columns.Contains("UnitId") ||
-                !table.Columns.Contains("BranchId"))
+                !table.Columns.Contains("ItemId"))
             {
                 return;
             }
@@ -878,36 +1002,62 @@ SELECT ISNULL(@Latest, CONVERT(datetime, '19000101', 112));", (SqlConnection)Dat
             EnsureColumn(table, "Stock", typeof(decimal));
             EnsureColumn(table, "Available", typeof(decimal));
 
-            DataTable currentStock = GetCurrentStockSnapshots();
-            if (currentStock.Rows.Count == 0)
-            {
-                return;
-            }
-
+            Dictionary<string, decimal> runningStockByItem = new Dictionary<string, decimal>();
+            List<DataRow> rows = new List<DataRow>();
             foreach (DataRow row in table.Rows)
             {
+                rows.Add(row);
+            }
+
+            rows.Sort(CompareRowsByLedgerOrder);
+
+            foreach (DataRow row in rows)
+            {
                 long itemId = ToLong(row, "ItemId");
-                long unitId = ToLong(row, "UnitId");
-                long branchId = ToLong(row, "BranchId");
                 if (itemId <= 0)
                 {
                     continue;
                 }
 
-                decimal currentStockValue;
-                decimal holdQty;
-                if (!TryGetCurrentStock(currentStock, itemId, unitId, branchId, out currentStockValue, out holdQty))
-                {
-                    continue;
-                }
+                string key = BuildStockTimelineKey(row);
+                decimal runningStock;
+                runningStockByItem.TryGetValue(key, out runningStock);
 
-                decimal newerMovement = GetNewerMovementTotal(table, row, itemId, unitId, branchId);
-                decimal rowStock = currentStockValue - newerMovement;
-                row["Stock"] = rowStock;
-                row["Available"] = rowStock - holdQty;
+                runningStock += GetSignedMovement(row);
+                runningStockByItem[key] = runningStock;
+
+                row["Stock"] = runningStock;
+                row["Available"] = runningStock - ToDecimal(row, "Hold");
             }
         }
 
+        private static int CompareRowsByLedgerOrder(DataRow left, DataRow right)
+        {
+            int dateCompare = ToDateTime(left, "CreatedOn").CompareTo(ToDateTime(right, "CreatedOn"));
+            if (dateCompare != 0)
+            {
+                return dateCompare;
+            }
+
+            int logCompare = ToLong(left, "ActivityLogId").CompareTo(ToLong(right, "ActivityLogId"));
+            if (logCompare != 0)
+            {
+                return logCompare;
+            }
+
+            int transactionCompare = ToLong(left, "TransactionNo").CompareTo(ToLong(right, "TransactionNo"));
+            if (transactionCompare != 0)
+            {
+                return transactionCompare;
+            }
+
+            return ToLong(left, "SlNo").CompareTo(ToLong(right, "SlNo"));
+        }
+
+        private static string BuildStockTimelineKey(DataRow row)
+        {
+            return ToLong(row, "ItemId") + "|" + ToLong(row, "BranchId");
+        }
         private DataTable GetCurrentStockSnapshots()
         {
             DataTable result = new DataTable();

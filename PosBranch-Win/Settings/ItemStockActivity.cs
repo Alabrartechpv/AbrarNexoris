@@ -405,6 +405,14 @@ namespace PosBranch_Win.Settings
                 {
                     qtyDifference = FirstDecimal(row, "AdjustmentQty", "Adjustment Qty");
                 }
+                if (qtyDifference == 0m && string.Equals(action, "Purchase Return", StringComparison.OrdinalIgnoreCase))
+                {
+                    decimal returnedQty = FirstDecimal(row, "Returned", "ReturnedQty", "ReturnQty", "Returnqty", "Returned qty");
+                    if (returnedQty != 0m)
+                    {
+                        qtyDifference = 0m - Math.Abs(returnedQty);
+                    }
+                }
                 if (qtyDifference == 0m)
                 {
                     qtyDifference = FirstDecimal(row, "Qty");
