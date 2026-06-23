@@ -2,6 +2,7 @@
 using ModelClass.TransactionModels;
 using PosBranch_Win.DialogBox;
 using Repository;
+using Repository.SettingsRepo;
 using Repository.TransactionRepository;
 using System;
 using System.Collections.Generic;
@@ -1027,6 +1028,7 @@ namespace PosBranch_Win.Transaction
                 // 6. Handle results
                 if (result == "success")
                 {
+                    SaveStockAdjustmentActivityLog("SAVE", stockadjsmaster);
                     frmSuccesMsg success = new frmSuccesMsg();
                     success.FormClosed += (s, args) =>
                     {
@@ -1050,6 +1052,28 @@ namespace PosBranch_Win.Transaction
             finally
             {
                 Cursor.Current = Cursors.Default;
+            }
+        }
+
+        private void SaveStockAdjustmentActivityLog(string activityType, StockAdjMaster stockAdjustment)
+        {
+            try
+            {
+                using (var repo = new TransactionActivityLogRepository())
+                {
+                    repo.SaveStockAdjustmentActivity(
+                        stockAdjustment.StockAdjustmentNo,
+                        Convert.ToString(stockAdjustment.StockAdjustmentNo),
+                        stockAdjustment.LedgerName,
+                        "PhysicalStock",
+                        0,
+                        activityType,
+                        $"Stock Adjustment No: {stockAdjustment.StockAdjustmentNo}, Reason: {stockAdjustment.LedgerName}, Remarks: {stockAdjustment.Comments}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Stock adjustment activity log save failed: {ex.Message}");
             }
         }
 
@@ -1181,6 +1205,7 @@ namespace PosBranch_Win.Transaction
                 // 6. Handle results
                 if (result == "success")
                 {
+                    SaveStockAdjustmentActivityLog("UPDATE", stockadjsmaster);
                     frmSuccesMsg success = new frmSuccesMsg();
                     success.FormClosed += (s, args) =>
                     {
