@@ -3307,8 +3307,8 @@ namespace PosBranch_Win.DialogBox
                 // This prevents the SynchronizeBaseUnitWithGrid from clearing the grid
                 ItemMaster.txt_BaseUnit.Text = getItem.UnitName;
 
-                // Load saved alias/alternative barcodes into ultraGrid3 when that grid exists on the target form.
-                // Newer ItemMaster versions keep alias barcodes in the UOM grid, so this is a safe no-op if ultraGrid3 is absent.
+                // Load saved alternative barcodes into ultraGrid3 when that grid exists on the target form.
+                // Alias barcodes are kept in the UOM grid and must not be copied into ALT PLU.
                 try
                 {
                     Infragistics.Win.UltraWinGrid.UltraGrid altGrid =
@@ -3327,32 +3327,21 @@ namespace PosBranch_Win.DialogBox
                         dtAlt.Rows.Clear();
 
                         HashSet<string> addedAlternativeBarcodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                        HashSet<string> aliasBarcodes = new HashSet<string>((getItem.List ?? new ItemMasterPriceSettings[0])
+                            .Select(priceRow => priceRow?.AliasBarcode?.Trim() ?? string.Empty)
+                            .Where(aliasBarcode => !string.IsNullOrWhiteSpace(aliasBarcode)), StringComparer.OrdinalIgnoreCase);
 
                         // Preserve the pasted-code path that loads saved alternative barcodes directly.
                         foreach (var altBarcode in (getItem.ListAlternativeBarcodes ?? new ItemAlternativeBarcode[0]))
                         {
                             string barcodeValue = altBarcode?.Barcode?.Trim();
-                            if (string.IsNullOrWhiteSpace(barcodeValue) || !addedAlternativeBarcodes.Add(barcodeValue))
+                            if (string.IsNullOrWhiteSpace(barcodeValue) || aliasBarcodes.Contains(barcodeValue) || !addedAlternativeBarcodes.Add(barcodeValue))
                             {
                                 continue;
                             }
 
                             DataRow altRow = dtAlt.NewRow();
                             altRow["Barcode"] = barcodeValue;
-                            dtAlt.Rows.Add(altRow);
-                        }
-
-                        // Keep the newer repo behavior too, so alias barcodes stored on UOM rows are not lost.
-                        foreach (var priceRow in (getItem.List ?? new ItemMasterPriceSettings[0]))
-                        {
-                            string aliasBarcode = priceRow?.AliasBarcode?.Trim();
-                            if (string.IsNullOrWhiteSpace(aliasBarcode) || !addedAlternativeBarcodes.Add(aliasBarcode))
-                            {
-                                continue;
-                            }
-
-                            DataRow altRow = dtAlt.NewRow();
-                            altRow["Barcode"] = aliasBarcode;
                             dtAlt.Rows.Add(altRow);
                         }
 
