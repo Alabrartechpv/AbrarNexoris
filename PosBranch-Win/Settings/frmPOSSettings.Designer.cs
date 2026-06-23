@@ -1,4 +1,4 @@
-﻿
+
 namespace PosBranch_Win.Settings
 {
     partial class frmPOSSettings
@@ -41,6 +41,7 @@ namespace PosBranch_Win.Settings
             this.cmbDefaultCreditDays = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
             this.lblDefaultCreditDays = new Infragistics.Win.Misc.UltraLabel();
             this.chkAllowNegativeStock = new Infragistics.Win.UltraWinEditors.UltraCheckEditor();
+            this.chkAllowSaleBelowCost = new Infragistics.Win.UltraWinEditors.UltraCheckEditor();
             this.cmbDuplicateItemBehavior = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
             this.lblDuplicateItemBehavior = new Infragistics.Win.Misc.UltraLabel();
             this.grpDisplaySettings = new Infragistics.Win.Misc.UltraGroupBox();
@@ -64,6 +65,7 @@ namespace PosBranch_Win.Settings
             ((System.ComponentModel.ISupportInitialize)(this.cmbDefaultPriceLevel)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.cmbDefaultCreditDays)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.chkAllowNegativeStock)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.chkAllowSaleBelowCost)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.cmbDuplicateItemBehavior)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.grpDisplaySettings)).BeginInit();
             this.grpDisplaySettings.SuspendLayout();
@@ -92,6 +94,7 @@ namespace PosBranch_Win.Settings
             this.grpSalesSettings.Controls.Add(this.cmbDefaultCreditDays);
             this.grpSalesSettings.Controls.Add(this.lblDefaultCreditDays);
             this.grpSalesSettings.Controls.Add(this.chkAllowNegativeStock);
+            this.grpSalesSettings.Controls.Add(this.chkAllowSaleBelowCost);
             this.grpSalesSettings.Controls.Add(this.cmbDuplicateItemBehavior);
             this.grpSalesSettings.Controls.Add(this.lblDuplicateItemBehavior);
             this.grpSalesSettings.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
@@ -198,6 +201,15 @@ namespace PosBranch_Win.Settings
             this.chkAllowNegativeStock.Size = new System.Drawing.Size(138, 19);
             this.chkAllowNegativeStock.TabIndex = 12;
             this.chkAllowNegativeStock.Text = "Allow Negative Stock";
+            // 
+            // chkAllowSaleBelowCost
+            // 
+            this.chkAllowSaleBelowCost.AutoSize = true;
+            this.chkAllowSaleBelowCost.Location = new System.Drawing.Point(20, 267);
+            this.chkAllowSaleBelowCost.Name = "chkAllowSaleBelowCost";
+            this.chkAllowSaleBelowCost.Size = new System.Drawing.Size(148, 19);
+            this.chkAllowSaleBelowCost.TabIndex = 13;
+            this.chkAllowSaleBelowCost.Text = "Allow Sale Below Cost";
             // 
             // cmbDuplicateItemBehavior
             // 
@@ -401,6 +413,7 @@ namespace PosBranch_Win.Settings
             ((System.ComponentModel.ISupportInitialize)(this.cmbDefaultPriceLevel)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.cmbDefaultCreditDays)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.chkAllowNegativeStock)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.chkAllowSaleBelowCost)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.cmbDuplicateItemBehavior)).EndInit();
             this.grpDisplaySettings.ResumeLayout(false);
             this.grpDisplaySettings.PerformLayout();
@@ -422,6 +435,7 @@ namespace PosBranch_Win.Settings
         private Infragistics.Win.Misc.UltraLabel lblDuplicateItemBehavior;
         private Infragistics.Win.UltraWinEditors.UltraComboEditor cmbDuplicateItemBehavior;
         private Infragistics.Win.UltraWinEditors.UltraCheckEditor chkAllowNegativeStock;
+        private Infragistics.Win.UltraWinEditors.UltraCheckEditor chkAllowSaleBelowCost;
         private Infragistics.Win.Misc.UltraLabel lblDefaultSaleType;
         private Infragistics.Win.UltraWinEditors.UltraComboEditor cmbDefaultSaleType;
         private Infragistics.Win.Misc.UltraLabel lblDefaultPriceLevel;

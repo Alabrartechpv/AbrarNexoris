@@ -70,6 +70,7 @@ namespace PosBranch_Win.Utilities
                 // Category filter
                 cmbExportCategory.Items.Clear();
                 cmbExportCategory.Items.Add(new ComboBoxItem("All Categories", 0));
+                cmbExportCategory.Items.Add(new ComboBoxItem("[No Category]", -1));
                 foreach (var kvp in _importRepo.CategoryCache.OrderBy(k => k.Key))
                     cmbExportCategory.Items.Add(new ComboBoxItem(kvp.Key, kvp.Value));
                 cmbExportCategory.SelectedIndex = 0;
@@ -77,6 +78,7 @@ namespace PosBranch_Win.Utilities
                 // Brand filter
                 cmbExportBrand.Items.Clear();
                 cmbExportBrand.Items.Add(new ComboBoxItem("All Brands", 0));
+                cmbExportBrand.Items.Add(new ComboBoxItem("[No Brand]", -1));
                 foreach (var kvp in _importRepo.BrandCache.OrderBy(k => k.Key))
                     cmbExportBrand.Items.Add(new ComboBoxItem(kvp.Key, kvp.Value));
                 cmbExportBrand.SelectedIndex = 0;
@@ -84,6 +86,7 @@ namespace PosBranch_Win.Utilities
                 // Group filter
                 cmbExportGroup.Items.Clear();
                 cmbExportGroup.Items.Add(new ComboBoxItem("All Groups", 0));
+                cmbExportGroup.Items.Add(new ComboBoxItem("[No Group]", -1));
                 foreach (var kvp in _importRepo.GroupCache.OrderBy(k => k.Key))
                     cmbExportGroup.Items.Add(new ComboBoxItem(kvp.Key, kvp.Value));
                 cmbExportGroup.SelectedIndex = 0;
@@ -818,6 +821,7 @@ namespace PosBranch_Win.Utilities
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
                     btnExport.Enabled = false;
+                    btnLoadPreview.Enabled = false;
                     progressBarExport.Value = 0;
                     lblProgressExport.Text = "Exporting items...";
 
@@ -847,8 +851,9 @@ namespace PosBranch_Win.Utilities
                     }
 
                     string filePath = sfd.FileName;
+                    string searchPattern = txtExportSearch.Text;
 
-                    bgWorkerExport.RunWorkerAsync(new object[] { categoryId, brandId, groupId, filePath });
+                    bgWorkerExport.RunWorkerAsync(new object[] { categoryId, brandId, groupId, filePath, searchPattern });
                 }
             }
         }
@@ -860,8 +865,9 @@ namespace PosBranch_Win.Utilities
             int brandId = (int)args[1];
             int groupId = (int)args[2];
             string filePath = (string)args[3];
+            string searchPattern = (string)args[4];
 
-            DataTable dt = _importRepo.GetProductsForExport(categoryId, brandId, groupId);
+            DataTable dt = _importRepo.GetProductsForExport(categoryId, brandId, groupId, searchPattern);
             ExcelImportRepository.CSVHelper.WriteCSV(dt, filePath);
             
             e.Result = dt.Rows.Count;
@@ -870,6 +876,7 @@ namespace PosBranch_Win.Utilities
         private void bgWorkerExport_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             btnExport.Enabled = true;
+            btnLoadPreview.Enabled = true;
             progressBarExport.Value = 100;
 
             if (e.Error != null)
@@ -883,6 +890,121 @@ namespace PosBranch_Win.Utilities
                 lblProgressExport.Text = $"Exported {count} items successfully.";
                 MessageBox.Show($"Successfully exported {count} records!", "Export Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
+        }
+
+        private void btnLoadPreview_Click(object sender, EventArgs e)
+        {
+            btnLoadPreview.Enabled = false;
+            btnExport.Enabled = false;
+            progressBarExport.Value = 0;
+            lblProgressExport.Text = "Loading preview...";
+
+            // Get filter parameters
+            int categoryId = 0;
+            var catSelectedItem = cmbExportCategory.SelectedItem;
+            if (catSelectedItem != null)
+            {
+                object catVal = (catSelectedItem is Infragistics.Win.ValueListItem catVli) ? catVli.DataValue : catSelectedItem;
+                if (catVal is ComboBoxItem catItem) categoryId = catItem.Value;
+            }
+
+            int brandId = 0;
+            var brandSelectedItem = cmbExportBrand.SelectedItem;
+            if (brandSelectedItem != null)
+            {
+                object brandVal = (brandSelectedItem is Infragistics.Win.ValueListItem brandVli) ? brandVli.DataValue : brandSelectedItem;
+                if (brandVal is ComboBoxItem brandItem) brandId = brandItem.Value;
+            }
+
+            int groupId = 0;
+            var groupSelectedItem = cmbExportGroup.SelectedItem;
+            if (groupSelectedItem != null)
+            {
+                object groupVal = (groupSelectedItem is Infragistics.Win.ValueListItem groupVli) ? groupVli.DataValue : groupSelectedItem;
+                if (groupVal is ComboBoxItem groupItem) groupId = groupItem.Value;
+            }
+
+            string searchPattern = txtExportSearch.Text;
+
+            bgWorkerExportPreview.RunWorkerAsync(new object[] { categoryId, brandId, groupId, searchPattern });
+        }
+
+        private void bgWorkerExportPreview_DoWork(object sender, DoWorkEventArgs e)
+        {
+            object[] args = (object[])e.Argument;
+            int categoryId = (int)args[0];
+            int brandId = (int)args[1];
+            int groupId = (int)args[2];
+            string searchPattern = (string)args[3];
+
+            DataTable dt = _importRepo.GetProductsForExport(categoryId, brandId, groupId, searchPattern);
+            e.Result = dt;
+        }
+
+        private void bgWorkerExportPreview_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            btnLoadPreview.Enabled = true;
+            btnExport.Enabled = true;
+            progressBarExport.Value = 100;
+
+            if (e.Error != null)
+            {
+                lblProgressExport.Text = "Load failed.";
+                MessageBox.Show($"Error loading products: {e.Error.Message}", "Preview Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            else
+            {
+                DataTable dt = e.Result as DataTable;
+                ultraGridExportPreview.DataSource = dt;
+                
+                int count = dt?.Rows.Count ?? 0;
+                lblProgressExport.Text = $"Loaded {count} items for preview.";
+            }
+        }
+
+        private void ultraGridExportPreview_InitializeLayout(object sender, InitializeLayoutEventArgs e)
+        {
+            UltraGridLayout layout = e.Layout;
+            layout.Override.AllowUpdate = DefaultableBoolean.False;
+            layout.Override.RowSelectors = DefaultableBoolean.False;
+            layout.Override.HeaderStyle = HeaderStyle.XPThemed;
+
+            // Header appearance
+            layout.Override.HeaderAppearance.BackColor = Color.FromArgb(41, 128, 185);
+            layout.Override.HeaderAppearance.ForeColor = Color.White;
+            layout.Override.HeaderAppearance.FontData.Bold = DefaultableBoolean.True;
+            layout.Override.HeaderAppearance.FontData.Name = "Segoe UI Semibold";
+            layout.Override.HeaderAppearance.FontData.SizeInPoints = 9.5F;
+
+            // Row appearance
+            layout.Override.RowAppearance.FontData.Name = "Segoe UI";
+            layout.Override.RowAppearance.FontData.SizeInPoints = 9F;
+            layout.Override.RowSpacingBefore = 1;
+            layout.Override.RowSpacingAfter = 1;
+
+            // Alternating row colors
+            layout.Override.RowAlternateAppearance.BackColor = Color.FromArgb(248, 249, 250);
+
+            // Selection colors
+            layout.Override.SelectedRowAppearance.BackColor = Color.FromArgb(52, 152, 219);
+            layout.Override.SelectedRowAppearance.ForeColor = Color.White;
+
+            // Cell border style
+            layout.Override.CellAppearance.BorderColor = Color.LightGray;
+            layout.Override.BorderStyleCell = UIElementBorderStyle.Dotted;
+
+            // Auto-size columns to fill available space
+            layout.Override.DefaultColWidth = 100;
+            foreach (UltraGridColumn col in layout.Bands[0].Columns)
+            {
+                col.CellActivation = Activation.NoEdit;
+            }
+
+            // Auto resize important columns if they exist
+            if (layout.Bands[0].Columns.Exists("Description"))
+                layout.Bands[0].Columns["Description"].Width = 200;
+            if (layout.Bands[0].Columns.Exists("Barcode"))
+                layout.Bands[0].Columns["Barcode"].Width = 150;
         }
 
         // Helper structure for Dropdown Items — works with UltraComboEditor.Items.Add(object)

@@ -4992,12 +4992,22 @@ namespace PosBranch_Win.Master
                         if (altGrid != null && altGrid.DataSource is DataTable dtAlt)
                         {
                             dtAlt.Rows.Clear();
+                            HashSet<string> aliasBarcodesForItem = BuildAliasBarcodeSet(getItem.List);
+                            HashSet<string> addedAlternativeBarcodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                             if (getItem.ListAlternativeBarcodes != null)
                             {
                                 foreach (var altBcode in getItem.ListAlternativeBarcodes)
                                 {
+                                    string alternativeBarcode = altBcode?.Barcode?.Trim() ?? string.Empty;
+                                    if (string.IsNullOrWhiteSpace(alternativeBarcode) ||
+                                        aliasBarcodesForItem.Contains(alternativeBarcode) ||
+                                        !addedAlternativeBarcodes.Add(alternativeBarcode))
+                                    {
+                                        continue;
+                                    }
+
                                     DataRow newRow = dtAlt.NewRow();
-                                    newRow["Barcode"] = altBcode.Barcode;
+                                    newRow["Barcode"] = alternativeBarcode;
                                     dtAlt.Rows.Add(newRow);
                                 }
                             }
@@ -12660,6 +12670,61 @@ namespace PosBranch_Win.Master
             grid.Focus();
         }
 
+        private HashSet<string> BuildAliasBarcodeSet(IEnumerable<ItemMasterPriceSettings> priceSettings)
+        {
+            HashSet<string> aliasBarcodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            if (priceSettings == null)
+            {
+                return aliasBarcodes;
+            }
+
+            foreach (var priceSetting in priceSettings)
+            {
+                string aliasBarcode = priceSetting?.AliasBarcode?.Trim() ?? string.Empty;
+                if (!string.IsNullOrWhiteSpace(aliasBarcode))
+                {
+                    aliasBarcodes.Add(aliasBarcode);
+                }
+            }
+
+            return aliasBarcodes;
+        }
+
+        private HashSet<string> GetCurrentAliasBarcodeSet()
+        {
+            HashSet<string> aliasBarcodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            try
+            {
+                DataTable uomTable = ultraGrid1?.DataSource as DataTable;
+                if (uomTable == null || !uomTable.Columns.Contains("AliasBarcode"))
+                {
+                    return aliasBarcodes;
+                }
+
+                foreach (DataRow row in uomTable.Rows)
+                {
+                    if (row == null || row.RowState == DataRowState.Deleted)
+                    {
+                        continue;
+                    }
+
+                    string aliasBarcode = row["AliasBarcode"]?.ToString()?.Trim() ?? string.Empty;
+                    if (!string.IsNullOrWhiteSpace(aliasBarcode))
+                    {
+                        aliasBarcodes.Add(aliasBarcode);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error reading alias barcodes: {ex.Message}");
+            }
+
+            return aliasBarcodes;
+        }
+
         private bool ValidateMainAndAlternativeBarcodeUniqueness(string mainBarcode, int excludeItemId, bool validateMainBarcodeConflicts = true)
         {
             try
@@ -12701,6 +12766,7 @@ namespace PosBranch_Win.Master
                 }
 
                 HashSet<string> currentAlternativeBarcodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                HashSet<string> currentAliasBarcodes = GetCurrentAliasBarcodeSet();
 
                 for (int rowIndex = 0; rowIndex < dt.Rows.Count; rowIndex++)
                 {
@@ -12720,6 +12786,13 @@ namespace PosBranch_Win.Master
                         alternativeBarcode.Equals(normalizedMainBarcode, StringComparison.OrdinalIgnoreCase))
                     {
                         MessageBox.Show($"Alternative barcode '{alternativeBarcode}' cannot be the same as the main barcode.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        FocusAlternativeBarcodeRow(rowIndex);
+                        return false;
+                    }
+
+                    if (currentAliasBarcodes.Contains(alternativeBarcode))
+                    {
+                        MessageBox.Show($"Alternative barcode '{alternativeBarcode}' cannot be the same as an alias barcode.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         FocusAlternativeBarcodeRow(rowIndex);
                         return false;
                     }
@@ -12823,6 +12896,9 @@ namespace PosBranch_Win.Master
                 tempDgv.AllowUserToAddRows = false;
                 tempDgv.Columns.Add("Barcode", "Barcode");
 
+                HashSet<string> aliasBarcodes = GetCurrentAliasBarcodeSet();
+                HashSet<string> addedAlternativeBarcodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
                 foreach (DataRow row in dt.Rows)
                 {
                     if (row.RowState == DataRowState.Deleted)
@@ -12831,7 +12907,9 @@ namespace PosBranch_Win.Master
                     }
 
                     string bcode = row["Barcode"]?.ToString()?.Trim();
-                    if (!string.IsNullOrWhiteSpace(bcode))
+                    if (!string.IsNullOrWhiteSpace(bcode) &&
+                        !aliasBarcodes.Contains(bcode) &&
+                        addedAlternativeBarcodes.Add(bcode))
                     {
                         tempDgv.Rows.Add(bcode);
                     }

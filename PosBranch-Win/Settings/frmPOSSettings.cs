@@ -1,4 +1,4 @@
-﻿using ModelClass;
+using ModelClass;
 using ModelClass.Settings;
 using Repository.SettingsRepo;
 using System;
@@ -124,6 +124,7 @@ namespace PosBranch_Win.Settings
             cmbDefaultPriceLevel.ValueChanged += OnSettingChanged;
             cmbDefaultCreditDays.ValueChanged += OnSettingChanged;
             chkAllowNegativeStock.CheckedChanged += OnSettingChanged;
+            chkAllowSaleBelowCost.CheckedChanged += OnSettingChanged;
             chkAutoPrintAfterSave.CheckedChanged += OnSettingChanged;
             chkShowCostToUser.CheckedChanged += OnSettingChanged;
             chkShowMarginColumn.CheckedChanged += OnSettingChanged;
@@ -185,6 +186,10 @@ namespace PosBranch_Win.Settings
                     chkAllowNegativeStock.Checked = setting.GetBoolValue(false);
                     break;
 
+                case SettingKeys.AllowSaleBelowCost:
+                    chkAllowSaleBelowCost.Checked = setting.GetBoolValue(false);
+                    break;
+
                 case SettingKeys.AutoPrintAfterSave:
                     chkAutoPrintAfterSave.Checked = setting.GetBoolValue(true);
                     break;
@@ -240,6 +245,7 @@ namespace PosBranch_Win.Settings
         {
             if (cmbDuplicateItemBehavior.Items.Count > 0) cmbDuplicateItemBehavior.SelectedIndex = 0; // MergeQuantity
             chkAllowNegativeStock.Checked = false;
+            chkAllowSaleBelowCost.Checked = false;
             chkAutoPrintAfterSave.Checked = true;
             if (cmbDefaultSaleType.Items.Count > 0) cmbDefaultSaleType.SelectedIndex = 0; // Cash
             if (cmbDefaultPriceLevel.Items.Count > 0) cmbDefaultPriceLevel.SelectedIndex = 0; // RetailPrice
@@ -277,6 +283,11 @@ namespace PosBranch_Win.Settings
                     SettingKeys.AllowNegativeStock,
                     chkAllowNegativeStock.Checked.ToString().ToLower(),
                     "Boolean", "Allow selling items with negative stock", "Inventory");
+
+                _settingsRepository.SaveSetting(companyId, branchId,
+                    SettingKeys.AllowSaleBelowCost,
+                    chkAllowSaleBelowCost.Checked.ToString().ToLower(),
+                    "Boolean", "Allow selling items below cost price", "Sales");
 
                 _settingsRepository.SaveSetting(companyId, branchId,
                     SettingKeys.AutoPrintAfterSave,

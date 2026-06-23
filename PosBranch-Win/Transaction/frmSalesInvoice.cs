@@ -917,6 +917,17 @@ namespace PosBranch_Win.Transaction
         {
             try
             {
+                // Lock down salesperson field (Administrators are exempt from lock)
+                bool isAdmin = string.Equals(SessionContext.UserLevel, "Administrator", StringComparison.OrdinalIgnoreCase);
+                if (txtSalesPerson != null)
+                {
+                    txtSalesPerson.ReadOnly = !isAdmin;
+                }
+                if (button2 != null)
+                {
+                    button2.Enabled = isAdmin;
+                }
+
                 // Hide the update button by default - only show when loading existing data
                 updtbtn.Visible = false;
 
@@ -1422,10 +1433,9 @@ namespace PosBranch_Win.Transaction
                         return;
                     }
 
-                    // Validate that unit price is not less than cost
-                    // Validate that unit price is not less than cost
+                    // Validate that unit price is not less than cost unless allowed
                     float cost = ParseFloat(e.Cell.Row.Cells["Cost"].Value, 0);
-                    if (price < cost)
+                    if (price < cost && !SessionContext.AllowSaleBelowCost)
                     {
                         MessageBox.Show($"Unit price cannot be less than cost price (â‚¹{cost:F2}).", "Price Below Cost", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         e.Cancel = true;
@@ -1464,10 +1474,9 @@ namespace PosBranch_Win.Transaction
                         return;
                     }
 
-                    // Validate that selling price is not less than cost
-                    // Validate that selling price is not less than cost
+                    // Validate that selling price is not less than cost unless allowed
                     float cost = ParseFloat(e.Cell.Row.Cells["Cost"].Value, 0);
-                    if (sellingPrice < cost)
+                    if (sellingPrice < cost && !SessionContext.AllowSaleBelowCost)
                     {
                         MessageBox.Show($"Selling price cannot be less than cost price (â‚¹{cost:F2}).", "Price Below Cost", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         e.Cancel = true;
@@ -2017,9 +2026,9 @@ namespace PosBranch_Win.Transaction
                 int activeRowIndex = ultraGrid1.ActiveRow.Index;
                 if (activeRowIndex >= 0)
                 {
-                    // Validate that selling price is not less than cost
+                    // Validate that selling price is not less than cost unless allowed
                     float cost = ParseFloat(ultraGrid1.Rows[activeRowIndex].Cells["Cost"].Value, 0);
-                    if (newPrice < cost)
+                    if (newPrice < cost && !SessionContext.AllowSaleBelowCost)
                     {
                         MessageBox.Show($"Selling price cannot be less than cost price (â‚¹{cost:F2}).", "Price Below Cost", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         txtBarcode.Clear();
@@ -4976,12 +4985,12 @@ namespace PosBranch_Win.Transaction
                                     {
                                         decimal newPrice = priceDialog.SellingPrice;
 
-                                        // Validate that selling price is not less than cost
+                                        // Validate that selling price is not less than cost unless allowed
                                         decimal cost = 0;
                                         if (e.Cell.Row.Cells["Cost"].Value != null)
                                             decimal.TryParse(e.Cell.Row.Cells["Cost"].Value.ToString(), out cost);
 
-                                        if (newPrice < cost)
+                                        if (newPrice < cost && !SessionContext.AllowSaleBelowCost)
                                         {
                                             MessageBox.Show($"Selling price cannot be less than cost price (â‚¹{cost:F2}).", "Price Below Cost", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                                             return;
@@ -7667,6 +7676,12 @@ namespace PosBranch_Win.Transaction
         }
         private void ShowSalesPersonDialog()
         {
+            bool isAdmin = string.Equals(SessionContext.UserLevel, "Administrator", StringComparison.OrdinalIgnoreCase);
+            if (!isAdmin)
+            {
+                return; // Only administrators can change the salesperson
+            }
+
             if (!isItemDialogOpen && canOpenDialog &&
                 (DateTime.Now - lastDialogCloseTime).TotalMilliseconds > DIALOG_COOLDOWN_MS)
             {
@@ -8847,14 +8862,3 @@ namespace PosBranch_Win.Transaction
         #endregion
     }
 }
-
-
-
-
-
-
-
-
-
-
-

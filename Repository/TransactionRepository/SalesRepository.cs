@@ -1676,12 +1676,14 @@ namespace Repository.TransactionRepository
 
             try
             {
+                bool isAdmin = string.Equals(SessionContext.UserLevel, "Administrator", StringComparison.OrdinalIgnoreCase);
                 using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_dropdown, (SqlConnection)DataConnection))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
                     cmd.Parameters.AddWithValue("@CompanyId", SessionContext.CompanyId);
                     cmd.Parameters.AddWithValue("@Operation", "GetHold");
+                    cmd.Parameters.AddWithValue("@CounterId", isAdmin ? 0 : SessionContext.CounterId);
                     using (SqlDataAdapter adapt = new SqlDataAdapter(cmd))
                     {
                         DataSet ds = new DataSet();
@@ -1690,10 +1692,9 @@ namespace Repository.TransactionRepository
                         {
                             var allHoldBills = ds.Tables[0].ToListOfObject<GetHoldBill>();
 
-                            // Filter by BranchId to ensure data separation between branches
-                            // All users in the same branch can see held bills
+                            // Filter by BranchId and CounterId to ensure data separation between counters/branches (Admins bypass CounterId filter)
                             item.List = allHoldBills
-                                .Where(bill => bill.BranchId == SessionContext.BranchId)
+                                .Where(bill => bill.BranchId == SessionContext.BranchId && (isAdmin || bill.CounterId == SessionContext.CounterId))
                                 .ToList();
                         }
                     }
@@ -1720,6 +1721,7 @@ namespace Repository.TransactionRepository
             {
                 DataConnection.Open();
 
+                bool isAdmin = string.Equals(SessionContext.UserLevel, "Administrator", StringComparison.OrdinalIgnoreCase);
                 // Use _POS_Sales_Win stored procedure with GETALL operation
                 using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE._POS_Sales_Win, (SqlConnection)DataConnection))
                 {
@@ -1727,6 +1729,7 @@ namespace Repository.TransactionRepository
                     cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
                     cmd.Parameters.AddWithValue("@CompanyId", SessionContext.CompanyId);
                     cmd.Parameters.AddWithValue("@FinYearId", SessionContext.FinYearId);
+                    cmd.Parameters.AddWithValue("@CounterId", isAdmin ? 0 : SessionContext.CounterId);
                     cmd.Parameters.AddWithValue("@_Operation", "GETALL");
                     using (SqlDataAdapter adapt = new SqlDataAdapter(cmd))
                     {
@@ -1766,6 +1769,10 @@ namespace Repository.TransactionRepository
                                     if (ds.Tables[0].Columns.Contains("Status") && row["Status"] != DBNull.Value)
                                         status = row["Status"].ToString();
 
+                                    int counterId = 0;
+                                    if (ds.Tables[0].Columns.Contains("CounterId") && row["CounterId"] != DBNull.Value)
+                                        counterId = Convert.ToInt32(row["CounterId"]);
+
                                     string saleType;
                                     if (!string.IsNullOrWhiteSpace(paymodeName))
                                     {
@@ -1796,7 +1803,8 @@ namespace Repository.TransactionRepository
                                         BillNo = Convert.ToInt64(row["BillNo"]),
                                         CustomerName = row["CustomerName"] != DBNull.Value ? row["CustomerName"].ToString() : "Default Customer",
                                         NetAmount = row["NetAmount"] != DBNull.Value ? Convert.ToDouble(row["NetAmount"]) : 0,
-                                        SaleType = saleType
+                                        SaleType = saleType,
+                                        CounterId = counterId
                                     };
                                     bills.Add(bill);
                                 }
@@ -1806,7 +1814,10 @@ namespace Repository.TransactionRepository
                                 }
                             }
 
-                            item.List = bills;
+                            // Filter by CounterId in C# as double-safety (Admins bypass)
+                            item.List = bills
+                                .Where(bill => isAdmin || bill.CounterId == SessionContext.CounterId)
+                                .ToList();
                         }
                         else
                         {

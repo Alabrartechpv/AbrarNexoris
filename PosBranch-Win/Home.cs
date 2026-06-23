@@ -71,6 +71,7 @@ namespace PosBranch_Win
             new ReportNavigatorDefinition("Sales", "Salesman Incentive Report", "SalesmanIncentiveReport"),
             new ReportNavigatorDefinition("Sales", "Daily Sales", "DSales"),
             new ReportNavigatorDefinition("Sales", "Counter Report", "CounterReport"),
+            new ReportNavigatorDefinition("Sales", "Shift Reconciliation (Z-Report)", "ShiftReconciliationReport"),
             new ReportNavigatorDefinition("Purchase", "Purchase Details", "Purchase Details"),
             new ReportNavigatorDefinition("Purchase", "Purchase Return Report", "PurchaseReturn"),
             new ReportNavigatorDefinition("Customer", "Customer Outstanding Listing", "CustomerOutstandingReport"),
@@ -2129,6 +2130,11 @@ namespace PosBranch_Win
                 Reports.SalesReports.frmCounterReport frmCounterReport = new Reports.SalesReports.frmCounterReport();
                 OpenFormInTab(frmCounterReport, "Counter Report");
             }
+            if (e.Tool.Key == "ShiftReconciliationReport")
+            {
+                Reports.FinancialReports.FrmShiftReconciliationReport shiftReconciliation = new Reports.FinancialReports.FrmShiftReconciliationReport();
+                OpenFormInTab(shiftReconciliation, "Shift Reconciliation");
+            }
 
             // Activity Log
             if (toolKey == "ActivityLog")
@@ -3723,7 +3729,8 @@ namespace PosBranch_Win
                     keyToExecute == "SalesmanIncentiveReport" ||
                     keyToExecute == "CounterReport" ||
                     keyToExecute == "TradingAccount" ||
-                    keyToExecute == "ProfitLossAccount")
+                    keyToExecute == "ProfitLossAccount" ||
+                    keyToExecute == "ShiftReconciliationReport")
                 {
                     Infragistics.Win.UltraWinToolbars.ToolBase toolToExecute;
 

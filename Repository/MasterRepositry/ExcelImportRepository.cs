@@ -1124,7 +1124,7 @@ namespace Repository.MasterRepositry
         }
 
         // Fetch product list and format it into a DataTable for Excel/CSV export
-        public DataTable GetProductsForExport(int categoryId, int brandId, int groupId)
+        public DataTable GetProductsForExport(int categoryId, int brandId, int groupId, string searchPattern)
         {
             DataTable dt = new DataTable("Products");
             
@@ -1199,15 +1199,35 @@ namespace Repository.MasterRepositry
                     sql.Append(" AND IM.CategoryId = @CategoryId");
                     parameters.Add("CategoryId", categoryId);
                 }
+                else if (categoryId == -1)
+                {
+                    sql.Append(" AND (IM.CategoryId IS NULL OR IM.CategoryId = 0)");
+                }
+
                 if (brandId > 0)
                 {
                     sql.Append(" AND IM.BrandId = @BrandId");
                     parameters.Add("BrandId", brandId);
                 }
+                else if (brandId == -1)
+                {
+                    sql.Append(" AND (IM.BrandId IS NULL OR IM.BrandId = 0)");
+                }
+
                 if (groupId > 0)
                 {
                     sql.Append(" AND IM.GroupId = @GroupId");
                     parameters.Add("GroupId", groupId);
+                }
+                else if (groupId == -1)
+                {
+                    sql.Append(" AND (IM.GroupId IS NULL OR IM.GroupId = 0)");
+                }
+
+                if (!string.IsNullOrWhiteSpace(searchPattern))
+                {
+                    sql.Append(" AND (IM.Description LIKE @SearchPattern OR PS.BarCode LIKE @SearchPattern OR PS.AliasBarcode LIKE @SearchPattern)");
+                    parameters.Add("SearchPattern", $"%{searchPattern.Trim()}%");
                 }
 
                 sql.Append(" ORDER BY IM.Description, PS.Packing");

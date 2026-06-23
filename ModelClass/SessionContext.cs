@@ -244,6 +244,11 @@ namespace ModelClass
         /// </summary>
         public static int MaxDiscountPercent { get; set; } = 100;
 
+        /// <summary>
+        /// Allow selling items below cost price
+        /// </summary>
+        public static bool AllowSaleBelowCost { get; set; } = false;
+
         // Display Settings
         /// <summary>
         /// Show cost column to regular users
@@ -599,6 +604,10 @@ namespace ModelClass
                     MaxDiscountPercent = int.TryParse(value, out var maxDisc) ? maxDisc : 100;
                     break;
 
+                case "AllowSaleBelowCost":
+                    AllowSaleBelowCost = bool.TryParse(value, out var saleBelowCost) && saleBelowCost;
+                    break;
+
                 // Display Settings
                 case "ShowCostToUser":
                     ShowCostToUser = bool.TryParse(value, out var showCost) && showCost;
@@ -641,6 +650,7 @@ namespace ModelClass
             DefaultCreditDays = 30;
             RoundingMethod = "None";
             MaxDiscountPercent = 100;
+            AllowSaleBelowCost = false;
             ShowCostToUser = false;
             ShowMarginColumn = false;
             PrintCopies = 1;
