@@ -9,6 +9,61 @@ namespace Repository.SettingsRepo
     {
         public DataTable GetItemStockActivityLog(DateTime fromDate, DateTime toDate, string userName, string action, string itemSearch)
         {
+            DataTable result = ExecuteTable("GET", fromDate, toDate, userName, action, itemSearch);
+            AppendRecoveredPurchaseRows(result, fromDate, toDate, userName, action, itemSearch);
+            ApplyActivityLogMetadata(result, fromDate, toDate);
+            result = SortActivityTable(result);
+            ApplyStableStockTimeline(result);
+            return result;
+        }
+
+        public DataTable GetItemStockHistoryLog(string searchText)
+        {
+            return GetItemStockActivityLog(new DateTime(2000, 1, 1), DateTime.Today.AddYears(5), string.Empty, string.Empty, searchText);
+        }
+
+        public DataTable GetItemStockActivityUsers()
+        {
+            DataTable users = ExecuteTable("GETUSERS", DateTime.MinValue, DateTime.MinValue, string.Empty, string.Empty, string.Empty);
+            AppendRecoveredPurchaseUsers(users);
+            return SortDistinctValues(users);
+        }
+
+        public DataTable GetItemStockActivityActions()
+        {
+            DataTable table = ExecuteTable("GETACTIONS", DateTime.MinValue, DateTime.MinValue, string.Empty, string.Empty, string.Empty);
+            if (table.Rows.Count > 0)
+            {
+                return table;
+            }
+
+            table.Columns.Add("Value", typeof(string));
+            table.Rows.Add("Sales");
+            table.Rows.Add("Purchase");
+            table.Rows.Add("Sales Return");
+            table.Rows.Add("Purchase Return");
+            table.Rows.Add("Stock IN");
+            table.Rows.Add("Stock OUT");
+            return table;
+        }
+
+        public int CountItemStockActivity(DateTime fromDate, DateTime toDate)
+        {
+            return GetItemStockActivityLog(fromDate, toDate, string.Empty, string.Empty, string.Empty).Rows.Count;
+        }
+
+        public DateTime GetLatestActivityStamp()
+        {
+            object value = ExecuteScalar("LATESTSTAMP", DateTime.MinValue, DateTime.MinValue, string.Empty, string.Empty, string.Empty);
+            DateTime latest = value == null || value == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(value);
+            DateTime purchaseLatest = GetRecoveredPurchaseLatestStamp();
+            DateTime activityLatest = GetLatestTransactionActivityStamp();
+            latest = purchaseLatest > latest ? purchaseLatest : latest;
+            return activityLatest > latest ? activityLatest : latest;
+        }
+
+        private DataTable ExecuteTable(string operation, DateTime fromDate, DateTime toDate, string userName, string action, string itemSearch)
+        {
             DataTable result = new DataTable();
             try
             {
@@ -17,14 +72,15 @@ namespace Repository.SettingsRepo
                     DataConnection.Open();
                 }
 
-                using (SqlCommand cmd = new SqlCommand(BuildActivitySql(false), (SqlConnection)DataConnection))
+                using (SqlCommand cmd = CreateCommand(operation, fromDate, toDate, userName, action, itemSearch))
+                using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
                 {
-                    AddFilterParameters(cmd, fromDate, toDate, userName, action, itemSearch);
-                    using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
-                    {
-                        adapter.Fill(result);
-                    }
+                    adapter.Fill(result);
                 }
+            }
+            catch (SqlException ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Item stock activity procedure failed: " + ex.Message);
             }
             finally
             {
@@ -37,14 +93,8 @@ namespace Repository.SettingsRepo
             return result;
         }
 
-        public DataTable GetItemStockHistoryLog(string searchText)
+        private object ExecuteScalar(string operation, DateTime fromDate, DateTime toDate, string userName, string action, string itemSearch)
         {
-            return GetItemStockActivityLog(new DateTime(2000, 1, 1), DateTime.Today.AddYears(5), string.Empty, string.Empty, searchText);
-        }
-
-        public DataTable GetItemStockActivityUsers()
-        {
-            DataTable result = new DataTable();
             try
             {
                 if (DataConnection.State != ConnectionState.Open)
@@ -52,28 +102,193 @@ namespace Repository.SettingsRepo
                     DataConnection.Open();
                 }
 
+                using (SqlCommand cmd = CreateCommand(operation, fromDate, toDate, userName, action, itemSearch))
+                {
+                    return cmd.ExecuteScalar();
+                }
+            }
+            catch (SqlException ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Item stock activity scalar procedure failed: " + ex.Message);
+                return null;
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                {
+                    DataConnection.Close();
+                }
+            }
+        }
+
+        private SqlCommand CreateCommand(string operation, DateTime fromDate, DateTime toDate, string userName, string action, string itemSearch)
+        {
+            SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_ItemStockActivityLog, (SqlConnection)DataConnection);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@_Operation", operation);
+            cmd.Parameters.AddWithValue("@FromDate", fromDate == DateTime.MinValue ? (object)DBNull.Value : fromDate.Date);
+            cmd.Parameters.AddWithValue("@ToDate", toDate == DateTime.MinValue ? (object)DBNull.Value : toDate.Date);
+            cmd.Parameters.AddWithValue("@UserName", userName ?? string.Empty);
+            cmd.Parameters.AddWithValue("@Action", action ?? string.Empty);
+            cmd.Parameters.AddWithValue("@ItemSearch", itemSearch ?? string.Empty);
+            cmd.Parameters.AddWithValue("@CompanyId", SessionContext.CompanyId);
+            cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
+            cmd.Parameters.AddWithValue("@FinYearId", SessionContext.FinYearId);
+            return cmd;
+        }
+
+        private void AppendRecoveredPurchaseRows(DataTable target, DateTime fromDate, DateTime toDate, string userName, string action, string itemSearch)
+        {
+            if (target == null ||
+                (!string.IsNullOrWhiteSpace(action) && !string.Equals(action, "Purchase", StringComparison.OrdinalIgnoreCase)))
+            {
+                return;
+            }
+
+            DataTable purchaseRows = GetRecoveredPurchaseRows(fromDate, toDate, userName, itemSearch);
+            if (purchaseRows == null || purchaseRows.Rows.Count == 0)
+            {
+                return;
+            }
+
+            AddMissingColumns(target, purchaseRows);
+
+            foreach (DataRow purchaseRow in purchaseRows.Rows)
+            {
+                DataRow existing = FindExistingPurchaseRow(target, purchaseRow);
+                if (existing == null)
+                {
+                    target.ImportRow(purchaseRow);
+                    continue;
+                }
+
+                FillPurchaseRowGaps(existing, purchaseRow);
+            }
+        }
+
+        private DataTable GetRecoveredPurchaseRows(DateTime fromDate, DateTime toDate, string userName, string itemSearch)
+        {
+            DataTable result = new DataTable();
+
+            try
+            {
+                if (DataConnection.State != ConnectionState.Open)
+                {
+                    DataConnection.Open();
+                }
+
+                if (!TableExists("PMaster") || !TableExists("PDetails"))
+                {
+                    return result;
+                }
+
+                string purchaseActivityApply = TableExists("PurchaseActivityLog")
+                    ? @"
+    OUTER APPLY
+    (
+        SELECT TOP 1
+            pal.ActivityLogId,
+            pal.CreatedOn,
+            pal.UserName,
+            pal.UserId,
+            pal.CounterName,
+            pal.CounterId,
+            pal.CounterSessionId
+        FROM dbo.PurchaseActivityLog pal
+        WHERE pal.TransactionNo = pm.PurchaseNo
+          AND (ISNULL(pal.CompanyId, 0) = 0 OR ISNULL(pal.CompanyId, 0) = ISNULL(pm.CompanyId, 0))
+          AND (ISNULL(pal.BranchId, 0) = 0 OR ISNULL(pal.BranchId, 0) = ISNULL(pm.BranchId, 0))
+          AND (ISNULL(pal.FinYearId, 0) = 0 OR ISNULL(pal.FinYearId, 0) = ISNULL(pm.FinYearId, 0))
+          AND ISNULL(pal.ActivityType, N'') IN (N'SAVE', N'UPDATE')
+        ORDER BY pal.CreatedOn DESC, pal.ActivityLogId DESC
+    ) pal"
+                    : @"
+    OUTER APPLY
+    (
+        SELECT
+            CAST(0 AS bigint) AS ActivityLogId,
+            CAST(NULL AS datetime) AS CreatedOn,
+            CAST(NULL AS nvarchar(150)) AS UserName,
+            CAST(0 AS int) AS UserId,
+            CAST(NULL AS nvarchar(150)) AS CounterName,
+            CAST(0 AS int) AS CounterId,
+            CAST(0 AS bigint) AS CounterSessionId
+    ) pal";
+
                 using (SqlCommand cmd = new SqlCommand(@"
-CREATE TABLE #Users(Value NVARCHAR(150) NULL);
-IF OBJECT_ID('dbo.SMaster', 'U') IS NOT NULL
-BEGIN
-    IF OBJECT_ID('dbo.Users', 'U') IS NOT NULL
-        EXEC(N'INSERT INTO #Users SELECT DISTINCT COALESCE(NULLIF(u.UserName, ''''), NULLIF(CONVERT(nvarchar(150), sm.UserId), ''0'')) FROM dbo.SMaster sm LEFT JOIN dbo.Users u ON u.UserID = sm.UserId WHERE ISNULL(sm.UserId, 0) <> 0');
-    ELSE
-        EXEC(N'INSERT INTO #Users SELECT DISTINCT NULLIF(CONVERT(nvarchar(150), UserId), ''0'') FROM dbo.SMaster WHERE ISNULL(UserId, 0) <> 0');
-END
-IF OBJECT_ID('dbo.PMaster', 'U') IS NOT NULL
-    EXEC(N'INSERT INTO #Users SELECT DISTINCT NULLIF(UserName, '''') FROM dbo.PMaster WHERE ISNULL(UserName, '''') <> ''''');
-IF OBJECT_ID('dbo.SReturnMaster', 'U') IS NOT NULL
-    EXEC(N'INSERT INTO #Users SELECT DISTINCT NULLIF(UserName, '''') FROM dbo.SReturnMaster WHERE ISNULL(UserName, '''') <> ''''');
-IF OBJECT_ID('dbo.PReturnMaster', 'U') IS NOT NULL
-    EXEC(N'INSERT INTO #Users SELECT DISTINCT NULLIF(UserName, '''') FROM dbo.PReturnMaster WHERE ISNULL(UserName, '''') <> ''''');
-IF OBJECT_ID('dbo.SalesReturnActivityLog', 'U') IS NOT NULL
-    EXEC(N'INSERT INTO #Users SELECT DISTINCT NULLIF(UserName, '''') FROM dbo.SalesReturnActivityLog WHERE ISNULL(UserName, '''') <> ''''');
-IF OBJECT_ID('dbo.PurchaseReturnActivityLog', 'U') IS NOT NULL
-    EXEC(N'INSERT INTO #Users SELECT DISTINCT NULLIF(UserName, '''') FROM dbo.PurchaseReturnActivityLog WHERE ISNULL(UserName, '''') <> ''''');
-SELECT DISTINCT Value FROM #Users WHERE ISNULL(Value, '') <> '' ORDER BY Value;", (SqlConnection)DataConnection))
+SELECT
+    COALESCE(pal.CreatedOn, CAST(CAST(pm.PurchaseDate AS date) AS datetime)) AS CreatedOn,
+    COALESCE(NULLIF(pal.UserName, N''), NULLIF(pm.UserName, N'')) AS UserName,
+    N'Purchase' AS Action,
+    CAST(2 AS int) AS ActionSort,
+    CAST(pm.PurchaseNo AS bigint) AS TransactionNo,
+    CAST(pm.InvoiceNo AS nvarchar(100)) AS InvoiceNo,
+    CAST(NULL AS nvarchar(100)) AS SalesBillNo,
+    CONVERT(nvarchar(100), pm.PurchaseNo) AS PurchaseNo,
+    COALESCE(NULLIF(pd.ItemName, N''), im.Description) AS ItemName,
+    COALESCE(ps.BarCode, im.BarCode) AS Barcode,
+    CAST(pd.Unit AS nvarchar(50)) AS UOM,
+    CAST(ISNULL(pd.Qty, 0) AS decimal(18,4)) AS Qty,
+    CAST(ISNULL(pd.Qty, 0) AS decimal(18,4)) AS MovementQty,
+    CAST(ISNULL(pd.Cost, 0) AS decimal(18,4)) AS UnitPrice,
+    CAST(ISNULL(pd.SalesPrice, 0) AS decimal(18,4)) AS SellingPrice,
+    CAST(ISNULL(ps.Stock, 0) AS decimal(18,4)) AS Stock,
+    CAST(ISNULL(pd.Qty, 0) AS decimal(18,4)) AS StockIn,
+    CAST(0 AS decimal(18,4)) AS StockOut,
+    CAST(NULL AS decimal(18,4)) AS AdjustmentQty,
+    CAST(NULL AS decimal(18,4)) AS NewBalance,
+    CAST(ISNULL(pd.Qty, 0) AS decimal(18,4)) AS QtyDifference,
+    CAST(NULL AS nvarchar(500)) AS Reason,
+    CAST(ISNULL(ps.Stock, 0) AS decimal(18,4)) AS Available,
+    CAST(0 AS decimal(18,4)) AS Hold,
+    ISNULL(im.Order_Cycle_Days, 0) AS Cycle,
+    ISNULL(im.Box_Quantity, 0) AS BoxQty,
+    N'Purchase No: ' + CONVERT(nvarchar(50), pm.PurchaseNo) + N', Vendor: ' + ISNULL(pm.VendorName, N'') AS ActivityDetails,
+    ISNULL(pm.CompanyId, 0) AS CompanyId,
+    ISNULL(pm.BranchId, 0) AS BranchId,
+    ISNULL(pm.FinYearId, 0) AS FinYearId,
+    COALESCE(NULLIF(pal.UserId, 0), ISNULL(pm.UserID, 0)) AS UserId,
+    COALESCE(NULLIF(pal.CounterName, N''), CASE WHEN ISNULL(pal.CounterId, 0) > 0 THEN N'Counter ' + CONVERT(nvarchar(20), pal.CounterId) ELSE NULL END) AS CounterName,
+    ISNULL(pal.CounterId, 0) AS CounterId,
+    ISNULL(pal.CounterSessionId, 0) AS CounterSessionId,
+    ISNULL(pal.ActivityLogId, 0) AS ActivityLogId,
+    ISNULL(pd.SlNo, 0) AS SlNo,
+    ISNULL(pd.ItemID, 0) AS ItemId,
+    ISNULL(pd.UnitId, 0) AS UnitId
+FROM dbo.PMaster pm
+INNER JOIN dbo.PDetails pd ON pd.PurchaseNo = pm.PurchaseNo
+    AND (ISNULL(pd.CompanyId, 0) = 0 OR ISNULL(pd.CompanyId, 0) = ISNULL(pm.CompanyId, 0))
+    AND (ISNULL(pd.BranchID, 0) = 0 OR ISNULL(pd.BranchID, 0) = ISNULL(pm.BranchId, 0))
+    AND (ISNULL(pd.FinYearId, 0) = 0 OR ISNULL(pd.FinYearId, 0) = ISNULL(pm.FinYearId, 0))
+LEFT JOIN dbo.ItemMaster im ON im.ItemId = pd.ItemID
+" + purchaseActivityApply + @"
+OUTER APPLY
+(
+    SELECT TOP 1 ps.*
+    FROM dbo.PriceSettings ps
+    WHERE ps.ItemId = pd.ItemID
+    ORDER BY
+        CASE WHEN ISNULL(ps.BranchId, 0) = ISNULL(pm.BranchId, 0) THEN 0 ELSE 1 END,
+        CASE WHEN ISNULL(ps.UnitId, 0) = ISNULL(pd.UnitId, 0) THEN 0 ELSE 1 END,
+        ps.UnitId
+) ps
+WHERE ISNULL(pm.CancelFlag, 0) = 0
+  AND COALESCE(pal.CreatedOn, CAST(CAST(pm.PurchaseDate AS date) AS datetime)) >= @FromDate
+  AND COALESCE(pal.CreatedOn, CAST(CAST(pm.PurchaseDate AS date) AS datetime)) < DATEADD(DAY, 1, @ToDate)
+  AND (@CompanyId = 0 OR ISNULL(pm.CompanyId, 0) = @CompanyId)
+  AND (@BranchId = 0 OR ISNULL(pm.BranchId, 0) = @BranchId)
+  AND (@FinYearId = 0 OR ISNULL(pm.FinYearId, 0) = @FinYearId)
+  AND (@UserName = N'' OR COALESCE(NULLIF(pal.UserName, N''), pm.UserName, N'') = @UserName)
+  AND (@ItemSearch = N'' OR COALESCE(NULLIF(pd.ItemName, N''), im.Description, N'') LIKE N'%' + @ItemSearch + N'%' OR COALESCE(ps.BarCode, im.BarCode, N'') LIKE N'%' + @ItemSearch + N'%');", (SqlConnection)DataConnection))
                 using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
                 {
+                    cmd.Parameters.AddWithValue("@FromDate", fromDate.Date);
+                    cmd.Parameters.AddWithValue("@ToDate", toDate.Date);
+                    cmd.Parameters.AddWithValue("@UserName", userName ?? string.Empty);
+                    cmd.Parameters.AddWithValue("@ItemSearch", itemSearch ?? string.Empty);
+                    cmd.Parameters.AddWithValue("@CompanyId", SessionContext.CompanyId);
+                    cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
+                    cmd.Parameters.AddWithValue("@FinYearId", SessionContext.FinYearId);
                     adapter.Fill(result);
                 }
             }
@@ -88,19 +303,18 @@ SELECT DISTINCT Value FROM #Users WHERE ISNULL(Value, '') <> '' ORDER BY Value;"
             return result;
         }
 
-        public DataTable GetItemStockActivityActions()
+        private void AppendRecoveredPurchaseUsers(DataTable users)
         {
-            DataTable table = new DataTable();
-            table.Columns.Add("Value", typeof(string));
-            table.Rows.Add("Sales");
-            table.Rows.Add("Purchase");
-            table.Rows.Add("Sales Return");
-            table.Rows.Add("Purchase Return");
-            return table;
-        }
+            if (users == null)
+            {
+                return;
+            }
 
-        public int CountItemStockActivity(DateTime fromDate, DateTime toDate)
-        {
+            if (!users.Columns.Contains("Value"))
+            {
+                users.Columns.Add("Value", typeof(string));
+            }
+
             try
             {
                 if (DataConnection.State != ConnectionState.Open)
@@ -108,11 +322,34 @@ SELECT DISTINCT Value FROM #Users WHERE ISNULL(Value, '') <> '' ORDER BY Value;"
                     DataConnection.Open();
                 }
 
-                using (SqlCommand cmd = new SqlCommand(BuildActivitySql(true), (SqlConnection)DataConnection))
+                if (!TableExists("PMaster"))
                 {
-                    AddFilterParameters(cmd, fromDate, toDate, string.Empty, string.Empty, string.Empty);
-                    object value = cmd.ExecuteScalar();
-                    return value == null || value == DBNull.Value ? 0 : Convert.ToInt32(value);
+                    return;
+                }
+
+                using (SqlCommand cmd = new SqlCommand(@"
+SELECT DISTINCT NULLIF(pm.UserName, N'') AS Value
+FROM dbo.PMaster pm
+WHERE ISNULL(pm.UserName, N'') <> N''
+  AND (@CompanyId = 0 OR ISNULL(pm.CompanyId, 0) = @CompanyId)
+  AND (@BranchId = 0 OR ISNULL(pm.BranchId, 0) = @BranchId)
+  AND (@FinYearId = 0 OR ISNULL(pm.FinYearId, 0) = @FinYearId);", (SqlConnection)DataConnection))
+                using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+                {
+                    cmd.Parameters.AddWithValue("@CompanyId", SessionContext.CompanyId);
+                    cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
+                    cmd.Parameters.AddWithValue("@FinYearId", SessionContext.FinYearId);
+                    DataTable purchaseUsers = new DataTable();
+                    adapter.Fill(purchaseUsers);
+
+                    foreach (DataRow row in purchaseUsers.Rows)
+                    {
+                        string value = Convert.ToString(row["Value"]);
+                        if (!string.IsNullOrWhiteSpace(value) && !ContainsValue(users, value))
+                        {
+                            users.Rows.Add(value);
+                        }
+                    }
                 }
             }
             finally
@@ -124,7 +361,163 @@ SELECT DISTINCT Value FROM #Users WHERE ISNULL(Value, '') <> '' ORDER BY Value;"
             }
         }
 
-        public DateTime GetLatestActivityStamp()
+        private void ApplyActivityLogMetadata(DataTable rows, DateTime fromDate, DateTime toDate)
+        {
+            if (rows == null || rows.Rows.Count == 0 || !rows.Columns.Contains("Action") || !rows.Columns.Contains("TransactionNo"))
+            {
+                return;
+            }
+
+            AddActivityMetadataColumns(rows);
+
+            DataTable activityRows = GetActivityLogMetadata(fromDate, toDate);
+            if (activityRows.Rows.Count == 0)
+            {
+                return;
+            }
+
+            foreach (DataRow row in rows.Rows)
+            {
+                string action = GetMetadataAction(Convert.ToString(row["Action"]));
+                long transactionNo = ToLong(row, "TransactionNo");
+                if (string.IsNullOrWhiteSpace(action) || transactionNo <= 0)
+                {
+                    continue;
+                }
+
+                DataRow metadata = FindActivityMetadata(activityRows, action, transactionNo);
+                if (metadata == null)
+                {
+                    continue;
+                }
+
+                CopyIfColumnExists(row, metadata, "CreatedOn");
+                CopyIfColumnExists(row, metadata, "UserName");
+                CopyIfColumnExists(row, metadata, "UserId");
+                CopyIfColumnExists(row, metadata, "CounterName");
+                CopyIfColumnExists(row, metadata, "CounterId");
+                CopyIfColumnExists(row, metadata, "CounterSessionId");
+                CopyIfColumnExists(row, metadata, "ActivityLogId");
+            }
+        }
+
+        private DataTable GetActivityLogMetadata(DateTime fromDate, DateTime toDate)
+        {
+            DataTable result = CreateActivityMetadataTable();
+
+            try
+            {
+                if (DataConnection.State != ConnectionState.Open)
+                {
+                    DataConnection.Open();
+                }
+
+                string sql = BuildActivityMetadataSql();
+                if (string.IsNullOrWhiteSpace(sql))
+                {
+                    return result;
+                }
+
+                using (SqlCommand cmd = new SqlCommand(sql, (SqlConnection)DataConnection))
+                using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+                {
+                    cmd.Parameters.AddWithValue("@FromDate", fromDate.Date);
+                    cmd.Parameters.AddWithValue("@ToDate", toDate.Date);
+                    cmd.Parameters.AddWithValue("@CompanyId", SessionContext.CompanyId);
+                    cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
+                    cmd.Parameters.AddWithValue("@FinYearId", SessionContext.FinYearId);
+                    adapter.Fill(result);
+                }
+            }
+            catch (SqlException ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Unable to load activity log metadata: " + ex.Message);
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                {
+                    DataConnection.Close();
+                }
+            }
+
+            return result;
+        }
+
+        private string BuildActivityMetadataSql()
+        {
+            string unionSql = string.Empty;
+            AppendActivityMetadataSelect(ref unionSql, "PurchaseActivityLog", "Purchase");
+            AppendActivityMetadataSelect(ref unionSql, "SalesActivityLog", "Sales");
+            AppendActivityMetadataSelect(ref unionSql, "SalesReturnActivityLog", "Sales Return");
+            AppendActivityMetadataSelect(ref unionSql, "PurchaseReturnActivityLog", "Purchase Return");
+            AppendActivityMetadataSelect(ref unionSql, "StockAdjustmentActivityLog", "Stock Adjustment");
+
+            if (string.IsNullOrWhiteSpace(unionSql))
+            {
+                return string.Empty;
+            }
+
+            return @"
+WITH ActivityRows AS
+(
+" + unionSql + @"
+),
+RankedRows AS
+(
+    SELECT
+        *,
+        ROW_NUMBER() OVER (PARTITION BY Action, TransactionNo ORDER BY CreatedOn DESC, ActivityLogId DESC) AS RowNo
+    FROM ActivityRows
+)
+SELECT
+    Action,
+    TransactionNo,
+    ActivityLogId,
+    CreatedOn,
+    UserName,
+    UserId,
+    CounterName,
+    CounterId,
+    CounterSessionId
+FROM RankedRows
+WHERE RowNo = 1;";
+        }
+
+        private void AppendActivityMetadataSelect(ref string unionSql, string tableName, string action)
+        {
+            if (!TableExists(tableName))
+            {
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(unionSql))
+            {
+                unionSql += @"
+UNION ALL
+";
+            }
+
+            unionSql += @"
+    SELECT
+        CAST(N'" + action.Replace("'", "''") + @"' AS nvarchar(50)) AS Action,
+        CAST(TransactionNo AS bigint) AS TransactionNo,
+        CAST(ActivityLogId AS int) AS ActivityLogId,
+        CreatedOn,
+        CAST(UserName AS nvarchar(150)) AS UserName,
+        CAST(UserId AS int) AS UserId,
+        CAST(CounterName AS nvarchar(150)) AS CounterName,
+        CAST(CounterId AS int) AS CounterId,
+        CAST(CounterSessionId AS bigint) AS CounterSessionId
+    FROM dbo." + tableName + @"
+    WHERE CreatedOn >= @FromDate
+      AND CreatedOn < DATEADD(DAY, 1, @ToDate)
+      AND (@CompanyId = 0 OR ISNULL(CompanyId, 0) = @CompanyId)
+      AND (@BranchId = 0 OR ISNULL(BranchId, 0) = @BranchId)
+      AND (@FinYearId = 0 OR ISNULL(FinYearId, 0) = @FinYearId)";
+        }
+
+        private DateTime GetLatestTransactionActivityStamp()
         {
             try
             {
@@ -133,8 +526,106 @@ SELECT DISTINCT Value FROM #Users WHERE ISNULL(Value, '') <> '' ORDER BY Value;"
                     DataConnection.Open();
                 }
 
-                using (SqlCommand cmd = new SqlCommand(BuildLatestStampSql(), (SqlConnection)DataConnection))
+                string sql = BuildLatestTransactionActivitySql();
+                if (string.IsNullOrWhiteSpace(sql))
                 {
+                    return DateTime.MinValue;
+                }
+
+                using (SqlCommand cmd = new SqlCommand(sql, (SqlConnection)DataConnection))
+                {
+                    cmd.Parameters.AddWithValue("@CompanyId", SessionContext.CompanyId);
+                    cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
+                    cmd.Parameters.AddWithValue("@FinYearId", SessionContext.FinYearId);
+                    object value = cmd.ExecuteScalar();
+                    return value == null || value == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(value);
+                }
+            }
+            catch (SqlException ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Unable to load latest transaction activity stamp: " + ex.Message);
+                return DateTime.MinValue;
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                {
+                    DataConnection.Close();
+                }
+            }
+        }
+
+        private string BuildLatestTransactionActivitySql()
+        {
+            string unionSql = string.Empty;
+            AppendLatestActivitySelect(ref unionSql, "PurchaseActivityLog");
+            AppendLatestActivitySelect(ref unionSql, "SalesActivityLog");
+            AppendLatestActivitySelect(ref unionSql, "SalesReturnActivityLog");
+            AppendLatestActivitySelect(ref unionSql, "PurchaseReturnActivityLog");
+            AppendLatestActivitySelect(ref unionSql, "StockAdjustmentActivityLog");
+
+            if (string.IsNullOrWhiteSpace(unionSql))
+            {
+                return string.Empty;
+            }
+
+            return "SELECT ISNULL(MAX(CreatedOn), CONVERT(datetime, '19000101', 112)) FROM (" + unionSql + ") ActivityStamps;";
+        }
+
+        private void AppendLatestActivitySelect(ref string unionSql, string tableName)
+        {
+            if (!TableExists(tableName))
+            {
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(unionSql))
+            {
+                unionSql += " UNION ALL ";
+            }
+
+            unionSql += "SELECT CreatedOn FROM dbo." + tableName + " WHERE (@CompanyId = 0 OR ISNULL(CompanyId, 0) = @CompanyId) AND (@BranchId = 0 OR ISNULL(BranchId, 0) = @BranchId) AND (@FinYearId = 0 OR ISNULL(FinYearId, 0) = @FinYearId)";
+        }
+
+        private DateTime GetRecoveredPurchaseLatestStamp()
+        {
+            try
+            {
+                if (DataConnection.State != ConnectionState.Open)
+                {
+                    DataConnection.Open();
+                }
+
+                if (!TableExists("PMaster"))
+                {
+                    return DateTime.MinValue;
+                }
+
+                string activitySelect = TableExists("PurchaseActivityLog")
+                    ? @"SELECT @Latest = CASE WHEN @Latest IS NULL OR MAX(pal.CreatedOn) > @Latest THEN MAX(pal.CreatedOn) ELSE @Latest END
+FROM dbo.PurchaseActivityLog pal
+WHERE (@CompanyId = 0 OR ISNULL(pal.CompanyId, 0) = @CompanyId)
+  AND (@BranchId = 0 OR ISNULL(pal.BranchId, 0) = @BranchId)
+  AND (@FinYearId = 0 OR ISNULL(pal.FinYearId, 0) = @FinYearId);"
+                    : string.Empty;
+
+                using (SqlCommand cmd = new SqlCommand(@"
+DECLARE @Latest datetime = NULL;
+
+SELECT @Latest = MAX(CAST(CAST(pm.PurchaseDate AS date) AS datetime))
+FROM dbo.PMaster pm
+WHERE ISNULL(pm.CancelFlag, 0) = 0
+  AND (@CompanyId = 0 OR ISNULL(pm.CompanyId, 0) = @CompanyId)
+  AND (@BranchId = 0 OR ISNULL(pm.BranchId, 0) = @BranchId)
+  AND (@FinYearId = 0 OR ISNULL(pm.FinYearId, 0) = @FinYearId);
+
+" + activitySelect + @"
+
+SELECT ISNULL(@Latest, CONVERT(datetime, '19000101', 112));", (SqlConnection)DataConnection))
+                {
+                    cmd.Parameters.AddWithValue("@CompanyId", SessionContext.CompanyId);
+                    cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
+                    cmd.Parameters.AddWithValue("@FinYearId", SessionContext.FinYearId);
                     object value = cmd.ExecuteScalar();
                     return value == null || value == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(value);
                 }
@@ -148,582 +639,523 @@ SELECT DISTINCT Value FROM #Users WHERE ISNULL(Value, '') <> '' ORDER BY Value;"
             }
         }
 
-        private static void AddFilterParameters(SqlCommand cmd, DateTime fromDate, DateTime toDate, string userName, string action, string itemSearch)
+        private bool TableExists(string tableName)
         {
-            cmd.Parameters.AddWithValue("@FromDate", fromDate.Date);
-            cmd.Parameters.AddWithValue("@ToDate", toDate.Date);
-            cmd.Parameters.AddWithValue("@UserName", userName ?? string.Empty);
-            cmd.Parameters.AddWithValue("@Action", action ?? string.Empty);
-            cmd.Parameters.AddWithValue("@ItemSearch", itemSearch ?? string.Empty);
+            using (SqlCommand cmd = new SqlCommand("SELECT CASE WHEN OBJECT_ID(@TableName, 'U') IS NULL THEN 0 ELSE 1 END;", (SqlConnection)DataConnection))
+            {
+                cmd.Parameters.AddWithValue("@TableName", "dbo." + tableName);
+                return Convert.ToInt32(cmd.ExecuteScalar()) == 1;
+            }
         }
 
-        private static string BuildActivitySql(bool countOnly)
+        private static void AddMissingColumns(DataTable target, DataTable source)
         {
-            string finalSelect = countOnly
-                ? "SELECT COUNT(1) FROM #ItemStockActivity WHERE MatchesFilter = 1;"
-                : @"
-;WITH StockTimeline AS
-(
-    SELECT
-        a.*,
-        ISNULL(a.Stock, 0) - ISNULL(
-            SUM(ISNULL(a.MovementQty, 0)) OVER (
-                PARTITION BY a.ItemId, a.BranchId
-                ORDER BY a.CreatedOn DESC, a.ActivityLogId DESC, a.ActionSort, a.TransactionNo DESC, a.SlNo DESC
-                ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
-            ), 0) AS TimelineStock
-    FROM #ItemStockActivity a
-)
-SELECT
-    ROW_NUMBER() OVER (ORDER BY CreatedOn DESC, ActivityLogId DESC, ActionSort, TransactionNo DESC, SlNo DESC) AS DisplayLogNo,
-    CreatedOn,
-    UserName,
-    Action,
-    TransactionNo,
-    InvoiceNo,
-    SalesBillNo,
-    PurchaseNo,
-    ItemName,
-    Barcode,
-    UOM,
-    Qty,
-    UnitPrice,
-    SellingPrice,
-    TimelineStock AS Stock,
-    TimelineStock - ISNULL((
-        SELECT SUM(ISNULL(hd.Qty, 0))
-        FROM dbo.SMaster hm
-        INNER JOIN dbo.SDetails hd ON hd.BillNo = hm.BillNo
-        WHERE ISNULL(hm.Status, '') = 'Hold'
-          AND hd.ItemId = StockTimeline.ItemId
-          AND ISNULL(hm.CompanyId, 0) = ISNULL(StockTimeline.CompanyId, 0)
-          AND ISNULL(hm.BranchId, 0) = ISNULL(StockTimeline.BranchId, 0)
-          AND ISNULL(hm.FinYearId, 0) = ISNULL(StockTimeline.FinYearId, 0)
-    ), 0) AS Available,
-    Hold,
-    Cycle,
-    BoxQty,
-    ActivityDetails,
-    CompanyId,
-    BranchId,
-    FinYearId,
-    UserId,
-    CounterName,
-    CounterId,
-    CounterSessionId,
-    ItemId
-FROM StockTimeline
-WHERE MatchesFilter = 1
-ORDER BY CreatedOn DESC, ActivityLogId DESC, ActionSort, TransactionNo DESC, SlNo DESC;";
-
-            return @"
-CREATE TABLE #ItemStockActivity
-(
-    CreatedOn DATETIME NOT NULL,
-    UserName NVARCHAR(150) NULL,
-    Action NVARCHAR(50) NOT NULL,
-    ActionSort INT NOT NULL,
-    TransactionNo BIGINT NOT NULL DEFAULT(0),
-    InvoiceNo NVARCHAR(100) NULL,
-    SalesBillNo NVARCHAR(100) NULL,
-    PurchaseNo NVARCHAR(100) NULL,
-    ItemName NVARCHAR(250) NULL,
-    Barcode NVARCHAR(100) NULL,
-    UOM NVARCHAR(50) NULL,
-    Qty DECIMAL(18,4) NULL,
-    MovementQty DECIMAL(18,4) NULL,
-    UnitPrice DECIMAL(18,4) NULL,
-    SellingPrice DECIMAL(18,4) NULL,
-    Stock DECIMAL(18,4) NULL,
-    Available DECIMAL(18,4) NULL,
-    Hold DECIMAL(18,4) NULL,
-    Cycle INT NULL,
-    BoxQty INT NULL,
-    ActivityDetails NVARCHAR(MAX) NULL,
-    CompanyId INT NOT NULL DEFAULT(0),
-    BranchId INT NOT NULL DEFAULT(0),
-    FinYearId INT NOT NULL DEFAULT(0),
-    UserId INT NOT NULL DEFAULT(0),
-    CounterName NVARCHAR(150) NULL,
-    CounterId INT NOT NULL DEFAULT(0),
-    CounterSessionId BIGINT NOT NULL DEFAULT(0),
-    ActivityLogId BIGINT NOT NULL DEFAULT(0),
-    SlNo INT NOT NULL DEFAULT(0),
-    ItemId BIGINT NOT NULL DEFAULT(0),
-    UnitId INT NOT NULL DEFAULT(0),
-    MatchesFilter BIT NOT NULL DEFAULT(0)
-);
-
-DECLARE @PriceBarcodeExpression nvarchar(100) =
-    CASE
-        WHEN COL_LENGTH('dbo.PriceSettings', 'BarCode') IS NOT NULL THEN N'ps.BarCode'
-        WHEN COL_LENGTH('dbo.PriceSettings', 'Barcode') IS NOT NULL THEN N'ps.Barcode'
-        ELSE N'CAST(NULL AS nvarchar(100))'
-    END;
-
-DECLARE @ItemBarcodeExpression nvarchar(100) =
-    CASE
-        WHEN COL_LENGTH('dbo.ItemMaster', 'Barcode') IS NOT NULL THEN N'im.Barcode'
-        WHEN COL_LENGTH('dbo.ItemMaster', 'BarCode') IS NOT NULL THEN N'im.BarCode'
-        ELSE N'CAST(NULL AS nvarchar(100))'
-    END;
-
-DECLARE @BarcodeExpression nvarchar(250) = N'COALESCE(' + @PriceBarcodeExpression + N', ' + @ItemBarcodeExpression + N')';
-DECLARE @SalesUserJoin nvarchar(300) =
-    CASE WHEN OBJECT_ID('dbo.Users', 'U') IS NOT NULL
-         THEN N'LEFT JOIN dbo.Users usr ON usr.UserID = sm.UserId'
-         ELSE N''
-    END;
-DECLARE @SalesUserExpression nvarchar(300) =
-    CASE WHEN OBJECT_ID('dbo.Users', 'U') IS NOT NULL
-         THEN N'COALESCE(NULLIF(usr.UserName, ''''), NULLIF(CONVERT(nvarchar(150), sm.UserId), ''0''))'
-         ELSE N'NULLIF(CONVERT(nvarchar(150), sm.UserId), ''0'')'
-    END;
-DECLARE @CounterJoin nvarchar(300) =
-    CASE WHEN OBJECT_ID('dbo.CounterMaster', 'U') IS NOT NULL
-         THEN N'LEFT JOIN dbo.CounterMaster cm ON cm.CounterID = sm.CounterId'
-         ELSE N''
-    END;
-DECLARE @CounterNameExpression nvarchar(300) =
-    CASE WHEN OBJECT_ID('dbo.CounterMaster', 'U') IS NOT NULL
-         THEN N'COALESCE(NULLIF(cm.CounterName, ''''), CASE WHEN ISNULL(sm.CounterId, 0) > 0 THEN N''Counter '' + CONVERT(nvarchar(20), sm.CounterId) ELSE NULL END)'
-         ELSE N'CASE WHEN ISNULL(sm.CounterId, 0) > 0 THEN N''Counter '' + CONVERT(nvarchar(20), sm.CounterId) ELSE NULL END'
-    END;
-DECLARE @SalesActivityApply nvarchar(max) =
-    CASE WHEN OBJECT_ID('dbo.SalesActivityLog', 'U') IS NOT NULL
-         THEN N'OUTER APPLY (
-    SELECT TOP 1 sal.ActivityLogId, sal.CreatedOn, sal.UserName, sal.UserId, sal.CounterName, sal.CounterId, sal.CounterSessionId
-    FROM dbo.SalesActivityLog sal
-    WHERE sal.TransactionNo = sm.BillNo
-      AND ISNULL(sal.CompanyId, 0) = ISNULL(sm.CompanyId, 0)
-      AND ISNULL(sal.BranchId, 0) = ISNULL(sm.BranchId, 0)
-      AND ISNULL(sal.FinYearId, 0) = ISNULL(sm.FinYearId, 0)
-      AND ISNULL(sal.ActivityType, '''') IN (N''SAVE'', N''UPDATE'', N''COMPLETE HOLD'')
-    ORDER BY sal.CreatedOn DESC, sal.ActivityLogId DESC
-) sal'
-         ELSE N'OUTER APPLY (
-    SELECT
-        CAST(0 AS bigint) AS ActivityLogId,
-        CAST(NULL AS datetime) AS CreatedOn,
-        CAST(NULL AS nvarchar(150)) AS UserName,
-        CAST(0 AS int) AS UserId,
-        CAST(NULL AS nvarchar(150)) AS CounterName,
-        CAST(0 AS int) AS CounterId,
-        CAST(0 AS bigint) AS CounterSessionId
-) sal'
-    END;
-DECLARE @PurchaseActivityApply nvarchar(max) =
-    CASE WHEN OBJECT_ID('dbo.PurchaseActivityLog', 'U') IS NOT NULL
-         THEN N'OUTER APPLY (
-    SELECT TOP 1 pal.ActivityLogId, pal.CreatedOn, pal.UserName, pal.UserId, pal.CounterName, pal.CounterId, pal.CounterSessionId
-    FROM dbo.PurchaseActivityLog pal
-    WHERE pal.TransactionNo = pm.PurchaseNo
-      AND ISNULL(pal.CompanyId, 0) = ISNULL(pm.CompanyId, 0)
-      AND ISNULL(pal.BranchId, 0) = ISNULL(pm.BranchId, 0)
-      AND ISNULL(pal.FinYearId, 0) = ISNULL(pm.FinYearId, 0)
-      AND ISNULL(pal.ActivityType, '''') IN (N''SAVE'', N''UPDATE'')
-    ORDER BY pal.CreatedOn DESC, pal.ActivityLogId DESC
-) pal'
-         ELSE N'OUTER APPLY (
-    SELECT
-        CAST(0 AS bigint) AS ActivityLogId,
-        CAST(NULL AS datetime) AS CreatedOn,
-        CAST(NULL AS nvarchar(150)) AS UserName,
-        CAST(0 AS int) AS UserId,
-        CAST(NULL AS nvarchar(150)) AS CounterName,
-        CAST(0 AS int) AS CounterId,
-        CAST(0 AS bigint) AS CounterSessionId
-) pal'
-    END;
-DECLARE @SalesReturnActivityApply nvarchar(max) =
-    CASE WHEN OBJECT_ID('dbo.SalesReturnActivityLog', 'U') IS NOT NULL
-         THEN N'OUTER APPLY (
-    SELECT TOP 1 sral.ActivityLogId, sral.CreatedOn, sral.UserName, sral.UserId, sral.CounterName, sral.CounterId, sral.CounterSessionId
-    FROM dbo.SalesReturnActivityLog sral
-    WHERE sral.TransactionNo = srm.SReturnNo
-      AND ISNULL(sral.CompanyId, 0) = ISNULL(srm.CompanyId, 0)
-      AND ISNULL(sral.BranchId, 0) = ISNULL(srm.BranchId, 0)
-      AND ISNULL(sral.FinYearId, 0) = ISNULL(srm.FinYearId, 0)
-      AND ISNULL(sral.ActivityType, '''') IN (N''SAVE'', N''UPDATE'')
-    ORDER BY sral.CreatedOn DESC, sral.ActivityLogId DESC
-) sral'
-         ELSE N'OUTER APPLY (
-    SELECT
-        CAST(0 AS bigint) AS ActivityLogId,
-        CAST(NULL AS datetime) AS CreatedOn,
-        CAST(NULL AS nvarchar(150)) AS UserName,
-        CAST(0 AS int) AS UserId,
-        CAST(NULL AS nvarchar(150)) AS CounterName,
-        CAST(0 AS int) AS CounterId,
-        CAST(0 AS bigint) AS CounterSessionId
-) sral'
-    END;
-DECLARE @PurchaseReturnActivityApply nvarchar(max) =
-    CASE WHEN OBJECT_ID('dbo.PurchaseReturnActivityLog', 'U') IS NOT NULL
-         THEN N'OUTER APPLY (
-    SELECT TOP 1 pral.ActivityLogId, pral.CreatedOn, pral.UserName, pral.UserId, pral.CounterName, pral.CounterId, pral.CounterSessionId
-    FROM dbo.PurchaseReturnActivityLog pral
-    WHERE pral.TransactionNo = prm.PReturnNo
-      AND ISNULL(pral.CompanyId, 0) = ISNULL(prm.CompanyId, 0)
-      AND ISNULL(pral.BranchId, 0) = ISNULL(prm.BranchId, 0)
-      AND ISNULL(pral.FinYearId, 0) = ISNULL(prm.FinYearId, 0)
-      AND ISNULL(pral.ActivityType, '''') IN (N''SAVE'', N''UPDATE'')
-    ORDER BY pral.CreatedOn DESC, pral.ActivityLogId DESC
-) pral'
-         ELSE N'OUTER APPLY (
-    SELECT
-        CAST(0 AS bigint) AS ActivityLogId,
-        CAST(NULL AS datetime) AS CreatedOn,
-        CAST(NULL AS nvarchar(150)) AS UserName,
-        CAST(0 AS int) AS UserId,
-        CAST(NULL AS nvarchar(150)) AS CounterName,
-        CAST(0 AS int) AS CounterId,
-        CAST(0 AS bigint) AS CounterSessionId
-) pral'
-    END;
-DECLARE @SalesReturnVoucherApply nvarchar(max) =
-    CASE WHEN OBJECT_ID('dbo.Vouchers', 'U') IS NOT NULL
-           AND COL_LENGTH('dbo.Vouchers', 'VoucherID') IS NOT NULL
-           AND COL_LENGTH('dbo.Vouchers', 'UserDate') IS NOT NULL
-           AND COL_LENGTH('dbo.Vouchers', 'CompanyID') IS NOT NULL
-           AND COL_LENGTH('dbo.Vouchers', 'BranchID') IS NOT NULL
-           AND COL_LENGTH('dbo.Vouchers', 'FinYearID') IS NOT NULL
-         THEN N'OUTER APPLY (
-    SELECT MAX(v.UserDate) AS UserDate
-    FROM dbo.Vouchers v
-    WHERE v.VoucherID = srm.VoucherID
-      AND ISNULL(v.CompanyID, 0) = ISNULL(srm.CompanyId, 0)
-      AND ISNULL(v.BranchID, 0) = ISNULL(srm.BranchId, 0)
-      AND ISNULL(v.FinYearID, 0) = ISNULL(srm.FinYearId, 0)
-) srv'
-         ELSE N'OUTER APPLY (
-    SELECT CAST(NULL AS datetime) AS UserDate
-) srv'
-    END;
-DECLARE @PurchaseReturnVoucherApply nvarchar(max) =
-    CASE WHEN OBJECT_ID('dbo.Vouchers', 'U') IS NOT NULL
-           AND COL_LENGTH('dbo.Vouchers', 'VoucherID') IS NOT NULL
-           AND COL_LENGTH('dbo.Vouchers', 'UserDate') IS NOT NULL
-           AND COL_LENGTH('dbo.Vouchers', 'CompanyID') IS NOT NULL
-           AND COL_LENGTH('dbo.Vouchers', 'BranchID') IS NOT NULL
-           AND COL_LENGTH('dbo.Vouchers', 'FinYearID') IS NOT NULL
-         THEN N'OUTER APPLY (
-    SELECT MAX(v.UserDate) AS UserDate
-    FROM dbo.Vouchers v
-    WHERE v.VoucherID = prm.VoucherID
-      AND ISNULL(v.CompanyID, 0) = ISNULL(prm.CompanyId, 0)
-      AND ISNULL(v.BranchID, 0) = ISNULL(prm.BranchId, 0)
-      AND ISNULL(v.FinYearID, 0) = ISNULL(prm.FinYearId, 0)
-) prv'
-         ELSE N'OUTER APPLY (
-    SELECT CAST(NULL AS datetime) AS UserDate
-) prv'
-    END;
-
-IF OBJECT_ID('dbo.SMaster', 'U') IS NOT NULL AND OBJECT_ID('dbo.SDetails', 'U') IS NOT NULL
-BEGIN
-    DECLARE @SalesSql nvarchar(max) = N'
-INSERT INTO #ItemStockActivity
-SELECT
-    COALESCE(sal.CreatedOn, sm.BillDate),
-    COALESCE(NULLIF(sal.UserName, ''''), ' + @SalesUserExpression + N'),
-    N''Sales'',
-    1,
-    sm.BillNo,
-    CONVERT(nvarchar(100), sm.BillNo),
-    CONVERT(nvarchar(100), sm.BillNo),
-    NULL,
-    COALESCE(NULLIF(sd.ItemName, ''''), im.Description),
-    ' + @BarcodeExpression + N',
-    sd.Unit,
-    CAST(ISNULL(sd.Qty, 0) AS decimal(18,4)),
-    CAST(CASE WHEN ISNULL(sm.Status, '''') = N''Hold'' THEN 0 ELSE 0 - ISNULL(sd.Qty, 0) END AS decimal(18,4)),
-    CAST(ISNULL(ps.Cost, 0) AS decimal(18,4)),
-    CAST(ISNULL(ps.RetailPrice, 0) AS decimal(18,4)),
-    CAST(ISNULL(ps.Stock, 0) AS decimal(18,4)),
-    CAST(ISNULL(ps.Stock, 0) - CASE WHEN ISNULL(sm.Status, '''') = N''Hold'' THEN ISNULL(sd.Qty, 0) ELSE 0 END AS decimal(18,4)),
-    CAST(CASE WHEN ISNULL(sm.Status, '''') = N''Hold'' THEN ISNULL(sd.Qty, 0) ELSE 0 END AS decimal(18,4)),
-    ISNULL(im.Order_Cycle_Days, 0),
-    ISNULL(im.Box_Quantity, 0),
-    N''Sales Bill No: '' + CONVERT(nvarchar(50), sm.BillNo) + N'', Customer: '' + ISNULL(sm.CustomerName, ''''),
-    ISNULL(sm.CompanyId, 0),
-    ISNULL(sm.BranchId, 0),
-    ISNULL(sm.FinYearId, 0),
-    COALESCE(NULLIF(sal.UserId, 0), ISNULL(sm.UserId, 0)),
-    COALESCE(NULLIF(sal.CounterName, ''''), ' + @CounterNameExpression + N'),
-    COALESCE(NULLIF(sal.CounterId, 0), ISNULL(sm.CounterId, 0)),
-    COALESCE(NULLIF(sal.CounterSessionId, 0), ISNULL(sm.CounterSessionId, 0)),
-    ISNULL(sal.ActivityLogId, 0),
-    ISNULL(sd.SlNO, 0),
-    ISNULL(sd.ItemId, 0),
-    ISNULL(sd.UnitId, 0),
-    1
-FROM dbo.SMaster sm
-INNER JOIN dbo.SDetails sd ON sd.BillNo = sm.BillNo AND sd.BranchID = sm.BranchId AND sd.CompanyId = sm.CompanyId AND sd.FinYearId = sm.FinYearId
-LEFT JOIN dbo.ItemMaster im ON im.ItemId = sd.ItemId
-' + @SalesUserJoin + N'
-' + @CounterJoin + N'
-' + @SalesActivityApply + N'
-OUTER APPLY (
-    SELECT TOP 1 ps.*
-    FROM dbo.PriceSettings ps
-    WHERE ps.ItemId = sd.ItemId
-    ORDER BY
-        CASE WHEN ISNULL(ps.BranchId, 0) = ISNULL(sm.BranchId, 0) THEN 0 ELSE 1 END,
-        CASE WHEN ISNULL(ps.UnitId, 0) = ISNULL(sd.UnitId, 0) THEN 0 ELSE 1 END,
-        ps.UnitId
-) ps
-WHERE ISNULL(sm.CancelFlag, 0) = 0
-  AND COALESCE(sal.CreatedOn, sm.BillDate) >= @FromDate AND COALESCE(sal.CreatedOn, sm.BillDate) < DATEADD(DAY, 1, @ToDate)
-  AND (@UserName = '''' OR COALESCE(NULLIF(sal.UserName, ''''), ' + @SalesUserExpression + N', NULLIF(CONVERT(nvarchar(150), sm.UserId), ''0'')) = @UserName)
-  AND (@Action = '''' OR @Action = N''Sales'')
-  AND (@ItemSearch = '''' OR COALESCE(NULLIF(sd.ItemName, ''''), im.Description, '''') LIKE N''%'' + @ItemSearch + N''%'' OR COALESCE(' + @BarcodeExpression + N', '''') LIKE N''%'' + @ItemSearch + N''%'');';
-
-    EXEC sp_executesql @SalesSql,
-    N'@FromDate date, @ToDate date, @UserName nvarchar(150), @Action nvarchar(50), @ItemSearch nvarchar(250)',
-    @FromDate, @ToDate, @UserName, @Action, @ItemSearch;
-END
-
-IF OBJECT_ID('dbo.PMaster', 'U') IS NOT NULL AND OBJECT_ID('dbo.PDetails', 'U') IS NOT NULL
-BEGIN
-    DECLARE @PurchaseSql nvarchar(max) = N'
-INSERT INTO #ItemStockActivity
-SELECT
-    COALESCE(pal.CreatedOn, pm.PurchaseDate),
-    COALESCE(NULLIF(pal.UserName, ''''), pm.UserName),
-    N''Purchase'',
-    2,
-    pm.PurchaseNo,
-    pm.InvoiceNo,
-    NULL,
-    CONVERT(nvarchar(100), pm.PurchaseNo),
-    COALESCE(NULLIF(pd.ItemName, ''''), im.Description),
-    ' + @BarcodeExpression + N',
-    pd.Unit,
-    CAST(ISNULL(pd.Qty, 0) AS decimal(18,4)),
-    CAST(ISNULL(pd.Qty, 0) AS decimal(18,4)),
-    CAST(ISNULL(pd.Cost, 0) AS decimal(18,4)),
-    CAST(ISNULL(pd.SalesPrice, 0) AS decimal(18,4)),
-    CAST(ISNULL(ps.Stock, 0) AS decimal(18,4)),
-    CAST(ISNULL(ps.Stock, 0) AS decimal(18,4)),
-    CAST(0 AS decimal(18,4)),
-    ISNULL(im.Order_Cycle_Days, 0),
-    ISNULL(im.Box_Quantity, 0),
-    N''Purchase No: '' + CONVERT(nvarchar(50), pm.PurchaseNo) + N'', Vendor: '' + ISNULL(pm.VendorName, ''''),
-    ISNULL(pm.CompanyId, 0),
-    ISNULL(pm.BranchId, 0),
-    ISNULL(pm.FinYearId, 0),
-    COALESCE(NULLIF(pal.UserId, 0), ISNULL(pm.UserID, 0)),
-    COALESCE(NULLIF(pal.CounterName, ''''), CASE WHEN ISNULL(pal.CounterId, 0) > 0 THEN N''Counter '' + CONVERT(nvarchar(20), pal.CounterId) ELSE NULL END),
-    ISNULL(pal.CounterId, 0),
-    ISNULL(pal.CounterSessionId, 0),
-    ISNULL(pal.ActivityLogId, 0),
-    ISNULL(pd.SlNo, 0),
-    ISNULL(pd.ItemID, 0),
-    ISNULL(pd.UnitId, 0),
-    1
-FROM dbo.PMaster pm
-INNER JOIN dbo.PDetails pd ON pd.PurchaseNo = pm.PurchaseNo AND pd.BranchID = pm.BranchID AND pd.CompanyId = pm.CompanyId AND pd.FinYearId = pm.FinYearId
-LEFT JOIN dbo.ItemMaster im ON im.ItemId = pd.ItemID
-' + @PurchaseActivityApply + N'
-OUTER APPLY (
-    SELECT TOP 1 ps.*
-    FROM dbo.PriceSettings ps
-    WHERE ps.ItemId = pd.ItemID
-    ORDER BY
-        CASE WHEN ISNULL(ps.BranchId, 0) = ISNULL(pm.BranchId, 0) THEN 0 ELSE 1 END,
-        CASE WHEN ISNULL(ps.UnitId, 0) = ISNULL(pd.UnitId, 0) THEN 0 ELSE 1 END,
-        ps.UnitId
-) ps
-WHERE ISNULL(pm.CancelFlag, 0) = 0
-  AND COALESCE(pal.CreatedOn, pm.PurchaseDate) >= @FromDate AND COALESCE(pal.CreatedOn, pm.PurchaseDate) < DATEADD(DAY, 1, @ToDate)
-  AND (@UserName = '''' OR COALESCE(NULLIF(pal.UserName, ''''), pm.UserName, '''') = @UserName)
-  AND (@Action = '''' OR @Action = N''Purchase'')
-  AND (@ItemSearch = '''' OR COALESCE(NULLIF(pd.ItemName, ''''), im.Description, '''') LIKE N''%'' + @ItemSearch + N''%'' OR COALESCE(' + @BarcodeExpression + N', '''') LIKE N''%'' + @ItemSearch + N''%'');';
-
-    EXEC sp_executesql @PurchaseSql,
-    N'@FromDate date, @ToDate date, @UserName nvarchar(150), @Action nvarchar(50), @ItemSearch nvarchar(250)',
-    @FromDate, @ToDate, @UserName, @Action, @ItemSearch;
-END
-
-IF OBJECT_ID('dbo.SReturnMaster', 'U') IS NOT NULL AND OBJECT_ID('dbo.SReturnDetails', 'U') IS NOT NULL
-BEGIN
-    DECLARE @SalesReturnSql nvarchar(max) = N'
-INSERT INTO #ItemStockActivity
-SELECT
-    COALESCE(sral.CreatedOn, srv.UserDate, srm.SReturnDate),
-    COALESCE(NULLIF(sral.UserName, ''''), srm.UserName),
-    N''Sales Return'',
-    3,
-    srm.SReturnNo,
-    srm.InvoiceNo,
-    srm.InvoiceNo,
-    NULL,
-    COALESCE(NULLIF(srd.ItemName, ''''), im.Description),
-    ' + @BarcodeExpression + N',
-    srd.Unit,
-    CAST(ISNULL(NULLIF(srd.ReturnQty, 0), srd.Qty) AS decimal(18,4)),
-    CAST(ISNULL(NULLIF(srd.ReturnQty, 0), srd.Qty) AS decimal(18,4)),
-    CAST(ISNULL(srd.SalesPrice, 0) AS decimal(18,4)),
-    CAST(ISNULL(srd.SalesPrice, 0) AS decimal(18,4)),
-    CAST(ISNULL(ps.Stock, 0) AS decimal(18,4)),
-    CAST(ISNULL(ps.Stock, 0) AS decimal(18,4)),
-    CAST(0 AS decimal(18,4)),
-    ISNULL(im.Order_Cycle_Days, 0),
-    ISNULL(im.Box_Quantity, 0),
-    N''Sales Return No: '' + CONVERT(nvarchar(50), srm.SReturnNo) + N'', Customer: '' + ISNULL(srm.CustomerName, ''''),
-    ISNULL(srm.CompanyId, 0),
-    ISNULL(srm.BranchId, 0),
-    ISNULL(srm.FinYearId, 0),
-    COALESCE(NULLIF(sral.UserId, 0), ISNULL(srm.UserID, 0)),
-    COALESCE(NULLIF(sral.CounterName, ''''), CASE WHEN ISNULL(sral.CounterId, 0) > 0 THEN N''Counter '' + CONVERT(nvarchar(20), sral.CounterId) ELSE NULL END),
-    ISNULL(sral.CounterId, 0),
-    ISNULL(sral.CounterSessionId, 0),
-    ISNULL(sral.ActivityLogId, 0),
-    ISNULL(srd.SlNo, 0),
-    ISNULL(srd.ItemId, 0),
-    ISNULL(srd.UnitId, 0),
-    1
-FROM dbo.SReturnMaster srm
-INNER JOIN dbo.SReturnDetails srd ON srd.SReturnNo = srm.SReturnNo AND srd.BranchID = srm.BranchId AND srd.CompanyId = srm.CompanyId AND srd.FinYearId = srm.FinYearId
-LEFT JOIN dbo.ItemMaster im ON im.ItemId = srd.ItemId
-' + @SalesReturnActivityApply + N'
-' + @SalesReturnVoucherApply + N'
-OUTER APPLY (
-    SELECT TOP 1 ps.*
-    FROM dbo.PriceSettings ps
-    WHERE ps.ItemId = srd.ItemId
-    ORDER BY
-        CASE WHEN ISNULL(ps.BranchId, 0) = ISNULL(srm.BranchId, 0) THEN 0 ELSE 1 END,
-        CASE WHEN ISNULL(ps.UnitId, 0) = ISNULL(srd.UnitId, 0) THEN 0 ELSE 1 END,
-        ps.UnitId
-) ps
-WHERE ISNULL(srm.CancelFlag, 0) = 0
-  AND COALESCE(sral.CreatedOn, srv.UserDate, srm.SReturnDate) >= @FromDate AND COALESCE(sral.CreatedOn, srv.UserDate, srm.SReturnDate) < DATEADD(DAY, 1, @ToDate)
-  AND (@UserName = '''' OR COALESCE(NULLIF(sral.UserName, ''''), srm.UserName, '''') = @UserName)
-  AND (@Action = '''' OR @Action = N''Sales Return'')
-  AND (@ItemSearch = '''' OR COALESCE(NULLIF(srd.ItemName, ''''), im.Description, '''') LIKE N''%'' + @ItemSearch + N''%'' OR COALESCE(' + @BarcodeExpression + N', '''') LIKE N''%'' + @ItemSearch + N''%'');';
-
-    EXEC sp_executesql @SalesReturnSql,
-    N'@FromDate date, @ToDate date, @UserName nvarchar(150), @Action nvarchar(50), @ItemSearch nvarchar(250)',
-    @FromDate, @ToDate, @UserName, @Action, @ItemSearch;
-END
-
-IF OBJECT_ID('dbo.PReturnMaster', 'U') IS NOT NULL AND OBJECT_ID('dbo.PReturnDetails', 'U') IS NOT NULL
-BEGIN
-    DECLARE @PurchaseReturnQtyExpression nvarchar(120) =
-        CASE WHEN COL_LENGTH('dbo.PReturnDetails', 'Returned') IS NOT NULL
-             THEN N'ISNULL(NULLIF(prd.Returned, 0), prd.Qty)'
-             ELSE N'ISNULL(prd.Qty, 0)'
-        END;
-
-    DECLARE @PurchaseReturnSql nvarchar(max) = N'
-INSERT INTO #ItemStockActivity
-SELECT
-    COALESCE(pral.CreatedOn, prv.UserDate, prm.PReturnDate),
-    COALESCE(NULLIF(pral.UserName, ''''), prm.UserName),
-    N''Purchase Return'',
-    4,
-    prm.PReturnNo,
-    prm.InvoiceNo,
-    NULL,
-    prm.InvoiceNo,
-    im.Description,
-    ' + @BarcodeExpression + N',
-    COALESCE(ps.Unit, ''''),
-    CAST(' + @PurchaseReturnQtyExpression + N' AS decimal(18,4)),
-    CAST(0 - (' + @PurchaseReturnQtyExpression + N') AS decimal(18,4)),
-    CAST(ISNULL(prd.Cost, 0) AS decimal(18,4)),
-    CAST(ISNULL(prd.SalesPrice, 0) AS decimal(18,4)),
-    CAST(ISNULL(ps.Stock, 0) AS decimal(18,4)),
-    CAST(ISNULL(ps.Stock, 0) AS decimal(18,4)),
-    CAST(0 AS decimal(18,4)),
-    ISNULL(im.Order_Cycle_Days, 0),
-    ISNULL(im.Box_Quantity, 0),
-    N''Purchase Return No: '' + CONVERT(nvarchar(50), prm.PReturnNo) + N'', Vendor: '' + ISNULL(prm.VendorName, ''''),
-    ISNULL(prm.CompanyId, 0),
-    ISNULL(prm.BranchId, 0),
-    ISNULL(prm.FinYearId, 0),
-    COALESCE(NULLIF(pral.UserId, 0), ISNULL(prm.UserID, 0)),
-    COALESCE(NULLIF(pral.CounterName, ''''), CASE WHEN ISNULL(pral.CounterId, 0) > 0 THEN N''Counter '' + CONVERT(nvarchar(20), pral.CounterId) ELSE NULL END),
-    ISNULL(pral.CounterId, 0),
-    ISNULL(pral.CounterSessionId, 0),
-    ISNULL(pral.ActivityLogId, 0),
-    ISNULL(prd.SlNo, 0),
-    ISNULL(prd.ItemID, 0),
-    ISNULL(prd.UnitId, 0),
-    1
-FROM dbo.PReturnMaster prm
-INNER JOIN dbo.PReturnDetails prd ON prd.PReturnNo = prm.PReturnNo AND prd.BranchID = prm.BranchId AND prd.CompanyId = prm.CompanyId AND prd.FinYearId = prm.FinYearId
-LEFT JOIN dbo.ItemMaster im ON im.ItemId = prd.ItemID
-' + @PurchaseReturnActivityApply + N'
-' + @PurchaseReturnVoucherApply + N'
-OUTER APPLY (
-    SELECT TOP 1 ps.*
-    FROM dbo.PriceSettings ps
-    WHERE ps.ItemId = prd.ItemID
-    ORDER BY
-        CASE WHEN ISNULL(ps.BranchId, 0) = ISNULL(prm.BranchId, 0) THEN 0 ELSE 1 END,
-        CASE WHEN ISNULL(ps.UnitId, 0) = ISNULL(prd.UnitId, 0) THEN 0 ELSE 1 END,
-        ps.UnitId
-) ps
-WHERE ISNULL(prm.CancelFlag, 0) = 0
-  AND COALESCE(pral.CreatedOn, prv.UserDate, prm.PReturnDate) >= @FromDate AND COALESCE(pral.CreatedOn, prv.UserDate, prm.PReturnDate) < DATEADD(DAY, 1, @ToDate)
-  AND (@UserName = '''' OR COALESCE(NULLIF(pral.UserName, ''''), prm.UserName, '''') = @UserName)
-  AND (@Action = '''' OR @Action = N''Purchase Return'')
-  AND (@ItemSearch = '''' OR ISNULL(im.Description, '''') LIKE N''%'' + @ItemSearch + N''%'' OR COALESCE(' + @BarcodeExpression + N', '''') LIKE N''%'' + @ItemSearch + N''%'');';
-
-    EXEC sp_executesql @PurchaseReturnSql,
-        N'@FromDate date, @ToDate date, @UserName nvarchar(150), @Action nvarchar(50), @ItemSearch nvarchar(250)',
-        @FromDate, @ToDate, @UserName, @Action, @ItemSearch;
-END
-
-" + finalSelect;
+            foreach (DataColumn column in source.Columns)
+            {
+                if (!target.Columns.Contains(column.ColumnName))
+                {
+                    target.Columns.Add(column.ColumnName, column.DataType);
+                }
+            }
         }
 
-        private static string BuildLatestStampSql()
+        private static DataRow FindExistingPurchaseRow(DataTable target, DataRow purchaseRow)
         {
-            return @"
-DECLARE @Latest datetime = NULL;
-IF OBJECT_ID('dbo.SMaster', 'U') IS NOT NULL
-    SELECT @Latest = MAX(BillDate) FROM dbo.SMaster WHERE ISNULL(CancelFlag, 0) = 0;
-IF OBJECT_ID('dbo.PMaster', 'U') IS NOT NULL
-    SELECT @Latest = CASE WHEN @Latest IS NULL OR MAX(PurchaseDate) > @Latest THEN MAX(PurchaseDate) ELSE @Latest END FROM dbo.PMaster WHERE ISNULL(CancelFlag, 0) = 0;
-IF OBJECT_ID('dbo.SalesActivityLog', 'U') IS NOT NULL
-    SELECT @Latest = CASE WHEN @Latest IS NULL OR MAX(CreatedOn) > @Latest THEN MAX(CreatedOn) ELSE @Latest END FROM dbo.SalesActivityLog;
-IF OBJECT_ID('dbo.PurchaseActivityLog', 'U') IS NOT NULL
-    SELECT @Latest = CASE WHEN @Latest IS NULL OR MAX(CreatedOn) > @Latest THEN MAX(CreatedOn) ELSE @Latest END FROM dbo.PurchaseActivityLog;
-IF OBJECT_ID('dbo.SReturnMaster', 'U') IS NOT NULL
-    SELECT @Latest = CASE WHEN @Latest IS NULL OR MAX(SReturnDate) > @Latest THEN MAX(SReturnDate) ELSE @Latest END FROM dbo.SReturnMaster WHERE ISNULL(CancelFlag, 0) = 0;
-IF OBJECT_ID('dbo.PReturnMaster', 'U') IS NOT NULL
-    SELECT @Latest = CASE WHEN @Latest IS NULL OR MAX(PReturnDate) > @Latest THEN MAX(PReturnDate) ELSE @Latest END FROM dbo.PReturnMaster WHERE ISNULL(CancelFlag, 0) = 0;
-IF OBJECT_ID('dbo.SReturnMaster', 'U') IS NOT NULL AND OBJECT_ID('dbo.Vouchers', 'U') IS NOT NULL
-   AND COL_LENGTH('dbo.Vouchers', 'VoucherID') IS NOT NULL AND COL_LENGTH('dbo.Vouchers', 'UserDate') IS NOT NULL
-   AND COL_LENGTH('dbo.Vouchers', 'CompanyID') IS NOT NULL AND COL_LENGTH('dbo.Vouchers', 'BranchID') IS NOT NULL
-   AND COL_LENGTH('dbo.Vouchers', 'FinYearID') IS NOT NULL
-    SELECT @Latest = CASE WHEN @Latest IS NULL OR MAX(v.UserDate) > @Latest THEN MAX(v.UserDate) ELSE @Latest END
-    FROM dbo.SReturnMaster srm
-    INNER JOIN dbo.Vouchers v ON v.VoucherID = srm.VoucherID
-        AND ISNULL(v.CompanyID, 0) = ISNULL(srm.CompanyId, 0)
-        AND ISNULL(v.BranchID, 0) = ISNULL(srm.BranchId, 0)
-        AND ISNULL(v.FinYearID, 0) = ISNULL(srm.FinYearId, 0)
-    WHERE ISNULL(srm.CancelFlag, 0) = 0;
-IF OBJECT_ID('dbo.PReturnMaster', 'U') IS NOT NULL AND OBJECT_ID('dbo.Vouchers', 'U') IS NOT NULL
-   AND COL_LENGTH('dbo.Vouchers', 'VoucherID') IS NOT NULL AND COL_LENGTH('dbo.Vouchers', 'UserDate') IS NOT NULL
-   AND COL_LENGTH('dbo.Vouchers', 'CompanyID') IS NOT NULL AND COL_LENGTH('dbo.Vouchers', 'BranchID') IS NOT NULL
-   AND COL_LENGTH('dbo.Vouchers', 'FinYearID') IS NOT NULL
-    SELECT @Latest = CASE WHEN @Latest IS NULL OR MAX(v.UserDate) > @Latest THEN MAX(v.UserDate) ELSE @Latest END
-    FROM dbo.PReturnMaster prm
-    INNER JOIN dbo.Vouchers v ON v.VoucherID = prm.VoucherID
-        AND ISNULL(v.CompanyID, 0) = ISNULL(prm.CompanyId, 0)
-        AND ISNULL(v.BranchID, 0) = ISNULL(prm.BranchId, 0)
-        AND ISNULL(v.FinYearID, 0) = ISNULL(prm.FinYearId, 0)
-    WHERE ISNULL(prm.CancelFlag, 0) = 0;
-IF OBJECT_ID('dbo.SalesReturnActivityLog', 'U') IS NOT NULL
-    SELECT @Latest = CASE WHEN @Latest IS NULL OR MAX(CreatedOn) > @Latest THEN MAX(CreatedOn) ELSE @Latest END FROM dbo.SalesReturnActivityLog;
-IF OBJECT_ID('dbo.PurchaseReturnActivityLog', 'U') IS NOT NULL
-    SELECT @Latest = CASE WHEN @Latest IS NULL OR MAX(CreatedOn) > @Latest THEN MAX(CreatedOn) ELSE @Latest END FROM dbo.PurchaseReturnActivityLog;
-SELECT ISNULL(@Latest, CONVERT(datetime, '19000101', 112));";
+            foreach (DataRow row in target.Rows)
+            {
+                if (string.Equals(Convert.ToString(row["Action"]), "Purchase", StringComparison.OrdinalIgnoreCase) &&
+                    ToLong(row, "TransactionNo") == ToLong(purchaseRow, "TransactionNo") &&
+                    ToLong(row, "SlNo") == ToLong(purchaseRow, "SlNo") &&
+                    ToLong(row, "ItemId") == ToLong(purchaseRow, "ItemId"))
+                {
+                    return row;
+                }
+            }
+
+            return null;
+        }
+
+        private static void FillPurchaseRowGaps(DataRow target, DataRow source)
+        {
+            foreach (DataColumn column in source.Table.Columns)
+            {
+                if (!target.Table.Columns.Contains(column.ColumnName))
+                {
+                    continue;
+                }
+
+                bool sourceHasActivityLog = ToLong(source, "ActivityLogId") > 0;
+                bool shouldPreferActivityLogValue =
+                    sourceHasActivityLog &&
+                    (string.Equals(column.ColumnName, "CreatedOn", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(column.ColumnName, "UserName", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(column.ColumnName, "UserId", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(column.ColumnName, "CounterName", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(column.ColumnName, "CounterId", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(column.ColumnName, "CounterSessionId", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(column.ColumnName, "ActivityLogId", StringComparison.OrdinalIgnoreCase));
+
+                bool targetBlank = target[column.ColumnName] == DBNull.Value ||
+                                   string.IsNullOrWhiteSpace(Convert.ToString(target[column.ColumnName])) ||
+                                   IsZeroNumber(target[column.ColumnName]);
+                if (shouldPreferActivityLogValue || targetBlank)
+                {
+                    target[column.ColumnName] = source[column.ColumnName];
+                }
+            }
+        }
+
+        private static void AddActivityMetadataColumns(DataTable table)
+        {
+            EnsureColumn(table, "CreatedOn", typeof(DateTime));
+            EnsureColumn(table, "UserName", typeof(string));
+            EnsureColumn(table, "UserId", typeof(int));
+            EnsureColumn(table, "CounterName", typeof(string));
+            EnsureColumn(table, "CounterId", typeof(int));
+            EnsureColumn(table, "CounterSessionId", typeof(long));
+            EnsureColumn(table, "ActivityLogId", typeof(int));
+        }
+
+        private static void EnsureColumn(DataTable table, string columnName, Type dataType)
+        {
+            if (table != null && !table.Columns.Contains(columnName))
+            {
+                table.Columns.Add(columnName, dataType);
+            }
+        }
+
+        private static DataTable CreateActivityMetadataTable()
+        {
+            DataTable table = new DataTable();
+            table.Columns.Add("Action", typeof(string));
+            table.Columns.Add("TransactionNo", typeof(long));
+            table.Columns.Add("ActivityLogId", typeof(int));
+            table.Columns.Add("CreatedOn", typeof(DateTime));
+            table.Columns.Add("UserName", typeof(string));
+            table.Columns.Add("UserId", typeof(int));
+            table.Columns.Add("CounterName", typeof(string));
+            table.Columns.Add("CounterId", typeof(int));
+            table.Columns.Add("CounterSessionId", typeof(long));
+            return table;
+        }
+
+        private static string GetMetadataAction(string action)
+        {
+            if (string.Equals(action, "Stock IN", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(action, "Stock In", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(action, "Stock OUT", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(action, "Stock Out", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Stock Adjustment";
+            }
+
+            return action ?? string.Empty;
+        }
+
+        private static DataRow FindActivityMetadata(DataTable metadataRows, string action, long transactionNo)
+        {
+            foreach (DataRow metadata in metadataRows.Rows)
+            {
+                if (string.Equals(Convert.ToString(metadata["Action"]), action, StringComparison.OrdinalIgnoreCase) &&
+                    ToLong(metadata, "TransactionNo") == transactionNo)
+                {
+                    return metadata;
+                }
+            }
+
+            return null;
+        }
+
+        private static void CopyIfColumnExists(DataRow target, DataRow source, string columnName)
+        {
+            if (target.Table.Columns.Contains(columnName) &&
+                source.Table.Columns.Contains(columnName) &&
+                source[columnName] != DBNull.Value)
+            {
+                target[columnName] = source[columnName];
+            }
+        }
+
+        private static DataTable SortDistinctValues(DataTable table)
+        {
+            if (table == null || !table.Columns.Contains("Value"))
+            {
+                return table;
+            }
+
+            DataView view = table.DefaultView;
+            view.Sort = "Value ASC";
+            return view.ToTable(true, "Value");
+        }
+
+        private static bool ContainsValue(DataTable table, string value)
+        {
+            foreach (DataRow row in table.Rows)
+            {
+                if (string.Equals(Convert.ToString(row["Value"]), value, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static long ToLong(DataRow row, string columnName)
+        {
+            if (row == null || !row.Table.Columns.Contains(columnName) || row[columnName] == DBNull.Value)
+            {
+                return 0;
+            }
+
+            long value;
+            return long.TryParse(Convert.ToString(row[columnName]), out value) ? value : 0;
+        }
+
+        private static bool IsZeroNumber(object value)
+        {
+            decimal number;
+            return value != null && decimal.TryParse(Convert.ToString(value), out number) && number == 0m;
+        }
+
+        private static DataTable SortActivityTable(DataTable table)
+        {
+            if (table == null || table.Rows.Count == 0 || !table.Columns.Contains("CreatedOn"))
+            {
+                return table;
+            }
+
+            string sort = "CreatedOn DESC";
+            if (table.Columns.Contains("ActivityLogId"))
+            {
+                sort += ", ActivityLogId DESC";
+            }
+            if (table.Columns.Contains("TransactionNo"))
+            {
+                sort += ", TransactionNo DESC";
+            }
+            if (table.Columns.Contains("SlNo"))
+            {
+                sort += ", SlNo DESC";
+            }
+
+            DataView view = table.DefaultView;
+            view.Sort = sort;
+            DataTable sorted = view.ToTable();
+            AssignDisplayLogNumbers(sorted);
+            return sorted;
+        }
+
+        private static void AssignDisplayLogNumbers(DataTable table)
+        {
+            if (table == null)
+            {
+                return;
+            }
+
+            if (!table.Columns.Contains("DisplayLogNo"))
+            {
+                table.Columns.Add("DisplayLogNo", typeof(int));
+            }
+
+            for (int index = 0; index < table.Rows.Count; index++)
+            {
+                table.Rows[index]["DisplayLogNo"] = index + 1;
+            }
+        }
+
+        private void ApplyStableStockTimeline(DataTable table)
+        {
+            if (table == null ||
+                table.Rows.Count == 0 ||
+                !table.Columns.Contains("ItemId") ||
+                !table.Columns.Contains("UnitId") ||
+                !table.Columns.Contains("BranchId"))
+            {
+                return;
+            }
+
+            EnsureColumn(table, "Stock", typeof(decimal));
+            EnsureColumn(table, "Available", typeof(decimal));
+
+            DataTable currentStock = GetCurrentStockSnapshots();
+            if (currentStock.Rows.Count == 0)
+            {
+                return;
+            }
+
+            foreach (DataRow row in table.Rows)
+            {
+                long itemId = ToLong(row, "ItemId");
+                long unitId = ToLong(row, "UnitId");
+                long branchId = ToLong(row, "BranchId");
+                if (itemId <= 0)
+                {
+                    continue;
+                }
+
+                decimal currentStockValue;
+                decimal holdQty;
+                if (!TryGetCurrentStock(currentStock, itemId, unitId, branchId, out currentStockValue, out holdQty))
+                {
+                    continue;
+                }
+
+                decimal newerMovement = GetNewerMovementTotal(table, row, itemId, unitId, branchId);
+                decimal rowStock = currentStockValue - newerMovement;
+                row["Stock"] = rowStock;
+                row["Available"] = rowStock - holdQty;
+            }
+        }
+
+        private DataTable GetCurrentStockSnapshots()
+        {
+            DataTable result = new DataTable();
+            result.Columns.Add("ItemId", typeof(long));
+            result.Columns.Add("UnitId", typeof(long));
+            result.Columns.Add("BranchId", typeof(long));
+            result.Columns.Add("Stock", typeof(decimal));
+            result.Columns.Add("Hold", typeof(decimal));
+
+            try
+            {
+                if (DataConnection.State != ConnectionState.Open)
+                {
+                    DataConnection.Open();
+                }
+
+                if (!TableExists("PriceSettings"))
+                {
+                    return result;
+                }
+
+                string companyFilter = ColumnExists("PriceSettings", "CompanyId")
+                    ? "AND (@CompanyId = 0 OR ISNULL(ps.CompanyId, 0) = @CompanyId)"
+                    : string.Empty;
+                string branchColumn = ColumnExists("PriceSettings", "BranchId") ? "ps.BranchId" : "0";
+                string branchFilter = ColumnExists("PriceSettings", "BranchId")
+                    ? "AND (@BranchId = 0 OR ISNULL(ps.BranchId, 0) = @BranchId)"
+                    : string.Empty;
+                string unitColumn = ColumnExists("PriceSettings", "UnitId") ? "ps.UnitId" : "0";
+
+                string identityOrder = ColumnExists("PriceSettings", "PriceSettingsId")
+                    ? "ps.PriceSettingsId DESC"
+                    : (ColumnExists("PriceSettings", "Id") ? "ps.Id DESC" : "ps.ItemId");
+
+                using (SqlCommand cmd = new SqlCommand(@"
+SELECT
+    CAST(ps.ItemId AS bigint) AS ItemId,
+    CAST(" + unitColumn + @" AS bigint) AS UnitId,
+    CAST(" + branchColumn + @" AS bigint) AS BranchId,
+    CAST(ISNULL(ps.Stock, 0) AS decimal(18,4)) AS Stock,
+    CAST(ISNULL(hold.HoldQty, 0) AS decimal(18,4)) AS Hold
+FROM dbo.PriceSettings ps
+OUTER APPLY
+(
+    SELECT SUM(ISNULL(sd.Qty, 0)) AS HoldQty
+    FROM dbo.SMaster sm
+    INNER JOIN dbo.SDetails sd ON sd.BillNo = sm.BillNo
+    WHERE ISNULL(sm.Status, N'') = N'Hold'
+      AND ISNULL(sm.CancelFlag, 0) = 0
+      AND sd.ItemId = ps.ItemId
+      AND (@CompanyId = 0 OR ISNULL(sm.CompanyId, 0) = @CompanyId)
+      AND (@BranchId = 0 OR ISNULL(sm.BranchId, 0) = @BranchId)
+      AND (@FinYearId = 0 OR ISNULL(sm.FinYearId, 0) = @FinYearId)
+) hold
+WHERE ps.ItemId IS NOT NULL
+  " + companyFilter + @"
+  " + branchFilter + @"
+ORDER BY ps.ItemId, " + branchColumn + @", " + unitColumn + @", " + identityOrder + @";", (SqlConnection)DataConnection))
+                using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+                {
+                    cmd.Parameters.AddWithValue("@CompanyId", SessionContext.CompanyId);
+                    cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
+                    cmd.Parameters.AddWithValue("@FinYearId", SessionContext.FinYearId);
+                    adapter.Fill(result);
+                }
+            }
+            catch (SqlException ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Unable to load current stock snapshots: " + ex.Message);
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                {
+                    DataConnection.Close();
+                }
+            }
+
+            return result;
+        }
+
+        private bool ColumnExists(string tableName, string columnName)
+        {
+            using (SqlCommand cmd = new SqlCommand("SELECT CASE WHEN COL_LENGTH(@TableName, @ColumnName) IS NULL THEN 0 ELSE 1 END;", (SqlConnection)DataConnection))
+            {
+                cmd.Parameters.AddWithValue("@TableName", "dbo." + tableName);
+                cmd.Parameters.AddWithValue("@ColumnName", columnName);
+                return Convert.ToInt32(cmd.ExecuteScalar()) == 1;
+            }
+        }
+
+        private static bool TryGetCurrentStock(DataTable currentStock, long itemId, long unitId, long branchId, out decimal stock, out decimal hold)
+        {
+            stock = 0m;
+            hold = 0m;
+            DataRow fallback = null;
+            DataRow itemUnitFallback = null;
+
+            foreach (DataRow row in currentStock.Rows)
+            {
+                if (ToLong(row, "ItemId") != itemId)
+                {
+                    continue;
+                }
+
+                if (fallback == null)
+                {
+                    fallback = row;
+                }
+
+                bool exactUnit = unitId <= 0 || ToLong(row, "UnitId") == unitId;
+                bool exactBranch = branchId <= 0 || ToLong(row, "BranchId") == branchId;
+                if (exactUnit && itemUnitFallback == null)
+                {
+                    itemUnitFallback = row;
+                }
+
+                bool unitMatches = exactUnit || ToLong(row, "UnitId") == 0;
+                bool branchMatches = exactBranch || ToLong(row, "BranchId") == 0;
+                if (unitMatches && branchMatches)
+                {
+                    stock = ToDecimal(row, "Stock");
+                    hold = ToDecimal(row, "Hold");
+                    return true;
+                }
+            }
+
+            if (itemUnitFallback != null)
+            {
+                stock = ToDecimal(itemUnitFallback, "Stock");
+                hold = ToDecimal(itemUnitFallback, "Hold");
+                return true;
+            }
+
+            if (fallback != null)
+            {
+                stock = ToDecimal(fallback, "Stock");
+                hold = ToDecimal(fallback, "Hold");
+                return true;
+            }
+
+            return false;
+        }
+
+        private static decimal GetNewerMovementTotal(DataTable table, DataRow currentRow, long itemId, long unitId, long branchId)
+        {
+            decimal total = 0m;
+            DateTime currentCreatedOn = ToDateTime(currentRow, "CreatedOn");
+            long currentActivityLogId = ToLong(currentRow, "ActivityLogId");
+            long currentTransactionNo = ToLong(currentRow, "TransactionNo");
+            long currentSlNo = ToLong(currentRow, "SlNo");
+
+            foreach (DataRow row in table.Rows)
+            {
+                if (ReferenceEquals(row, currentRow) ||
+                    ToLong(row, "ItemId") != itemId ||
+                    (unitId > 0 && ToLong(row, "UnitId") != unitId) ||
+                    (branchId > 0 && ToLong(row, "BranchId") != branchId))
+                {
+                    continue;
+                }
+
+                if (IsRowNewer(row, currentCreatedOn, currentActivityLogId, currentTransactionNo, currentSlNo))
+                {
+                    total += GetSignedMovement(row);
+                }
+            }
+
+            return total;
+        }
+
+        private static decimal GetSignedMovement(DataRow row)
+        {
+            decimal stockIn = ToDecimal(row, "StockIn");
+            decimal stockOut = ToDecimal(row, "StockOut");
+            if (stockIn != 0m || stockOut != 0m)
+            {
+                return stockIn - stockOut;
+            }
+
+            decimal qtyDifference = ToDecimal(row, "QtyDifference");
+            if (qtyDifference != 0m)
+            {
+                return qtyDifference;
+            }
+
+            decimal movementQty = ToDecimal(row, "MovementQty");
+            if (movementQty != 0m)
+            {
+                return movementQty;
+            }
+
+            decimal qty = ToDecimal(row, "Qty");
+            string action = row.Table.Columns.Contains("Action") ? Convert.ToString(row["Action"]) : string.Empty;
+            if (string.Equals(action, "Sales", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(action, "Purchase Return", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(action, "Stock OUT", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(action, "Stock Out", StringComparison.OrdinalIgnoreCase))
+            {
+                return 0m - qty;
+            }
+
+            return qty;
+        }
+
+        private static bool IsRowNewer(DataRow row, DateTime createdOn, long activityLogId, long transactionNo, long slNo)
+        {
+            DateTime rowCreatedOn = ToDateTime(row, "CreatedOn");
+            if (rowCreatedOn != createdOn)
+            {
+                return rowCreatedOn > createdOn;
+            }
+
+            long rowActivityLogId = ToLong(row, "ActivityLogId");
+            if (rowActivityLogId != activityLogId)
+            {
+                return rowActivityLogId > activityLogId;
+            }
+
+            long rowTransactionNo = ToLong(row, "TransactionNo");
+            if (rowTransactionNo != transactionNo)
+            {
+                return rowTransactionNo > transactionNo;
+            }
+
+            return ToLong(row, "SlNo") > slNo;
+        }
+
+        private static decimal ToDecimal(DataRow row, string columnName)
+        {
+            if (row == null || !row.Table.Columns.Contains(columnName) || row[columnName] == DBNull.Value)
+            {
+                return 0m;
+            }
+
+            decimal value;
+            return decimal.TryParse(Convert.ToString(row[columnName]), out value) ? value : 0m;
+        }
+
+        private static DateTime ToDateTime(DataRow row, string columnName)
+        {
+            if (row == null || !row.Table.Columns.Contains(columnName) || row[columnName] == DBNull.Value)
+            {
+                return DateTime.MinValue;
+            }
+
+            DateTime value;
+            return DateTime.TryParse(Convert.ToString(row[columnName]), out value) ? value : DateTime.MinValue;
         }
     }
 }

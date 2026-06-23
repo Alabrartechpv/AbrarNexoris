@@ -298,7 +298,7 @@ namespace PosBranch_Win.Settings
 
                 using (var repo = new ItemStockActivityLogRepository())
                 {
-                    currentData = repo.GetItemStockActivityLog(GetDateValue(dtpFrom), GetDateValue(dtpTo), userName, action, txtItemSearch.Text.Trim());
+                    currentData = BuildDisplayTable(repo.GetItemStockActivityLog(GetDateValue(dtpFrom), GetDateValue(dtpTo), userName, action, txtItemSearch.Text.Trim()));
                     lastKnownActivityStamp = repo.GetLatestActivityStamp();
                 }
 
@@ -337,13 +337,20 @@ namespace PosBranch_Win.Settings
             SetColumn("UnitPrice", "Unit Price", 95);
             SetColumn("SellingPrice", "Selling Price", 105);
             SetColumn("Stock", "Stock", 85);
+            SetColumn("StockIn", "Stock In", 90);
+            SetColumn("StockOut", "Stock Out", 90);
+            SetColumn("AdjustmentQty", "Adjustment Qty", 115);
+            SetColumn("NewBalance", "New Balance", 105);
+            SetColumn("QtyDifference", "Qty Difference", 115);
             SetColumn("TransactionNo", "Doc No", 95);
+            SetColumn("DocNo", "Doc No", 95);
             SetColumn("InvoiceNo", "Invoice No", 120);
+            SetColumn("Reason", "Reason", 160);
             SetColumn("ActivityDetails", "Details", 360);
             SetColumn("CounterName", "Counter", 130);
             SetColumn("CounterSessionId", "Session", 90);
 
-            foreach (string name in new[] { "CompanyId", "BranchId", "FinYearId", "UserId", "CounterId", "Available", "Hold", "Cycle", "BoxQty" })
+            foreach (string name in new[] { "CompanyId", "BranchId", "FinYearId", "UserId", "CounterId", "Available", "Hold", "Cycle", "BoxQty", "ActivityLogId", "ActionSort", "SlNo", "ItemId", "UnitId", "Stock In", "Stock Out", "Adjustment Qty", "New Balance", "Qty Difference", "PhysicalStock", "Comments", "Remarks" })
             {
                 HideColumn(name);
             }
@@ -353,7 +360,7 @@ namespace PosBranch_Win.Settings
                 gridActivity.Columns["CreatedOn"].DefaultCellStyle.Format = "dd MMM yyyy hh:mm tt";
             }
 
-            foreach (string numericColumn in new[] { "Qty", "UnitPrice", "SellingPrice", "Stock", "Available", "Hold" })
+            foreach (string numericColumn in new[] { "Qty", "UnitPrice", "SellingPrice", "Stock", "StockIn", "StockOut", "AdjustmentQty", "NewBalance", "QtyDifference", "Available", "Hold" })
             {
                 if (gridActivity.Columns.Contains(numericColumn))
                 {
@@ -369,6 +376,158 @@ namespace PosBranch_Win.Settings
                     gridActivity.Columns[intColumn].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                 }
             }
+        }
+
+        private static DataTable BuildDisplayTable(DataTable source)
+        {
+            if (source == null)
+            {
+                return new DataTable();
+            }
+
+            DataTable display = source.Copy();
+            EnsureDecimalColumn(display, "StockIn");
+            EnsureDecimalColumn(display, "StockOut");
+            EnsureDecimalColumn(display, "AdjustmentQty");
+            EnsureDecimalColumn(display, "NewBalance");
+            EnsureDecimalColumn(display, "QtyDifference");
+            EnsureStringColumn(display, "Reason");
+
+            foreach (DataRow row in display.Rows)
+            {
+                string action = FirstText(row, "Action");
+                decimal stockIn = FirstDecimal(row, "StockIn", "Stock In");
+                decimal stockOut = FirstDecimal(row, "StockOut", "Stock Out");
+                decimal qtyDifference = stockIn != 0m || stockOut != 0m
+                    ? stockIn - stockOut
+                    : FirstDecimal(row, "QtyDifference", "Qty Difference", "MovementQty");
+                if (qtyDifference == 0m)
+                {
+                    qtyDifference = FirstDecimal(row, "AdjustmentQty", "Adjustment Qty");
+                }
+                if (qtyDifference == 0m)
+                {
+                    qtyDifference = FirstDecimal(row, "Qty");
+                    if (IsStockOutAction(action))
+                    {
+                        qtyDifference = 0m - qtyDifference;
+                    }
+                }
+
+                SetIfEmpty(row, "QtyDifference", qtyDifference);
+                decimal adjustmentQty = FirstDecimal(row, "AdjustmentQty", "Adjustment Qty");
+                if (adjustmentQty == 0m && IsManualStockAction(action))
+                {
+                    adjustmentQty = qtyDifference;
+                }
+                SetIfEmpty(row, "AdjustmentQty", adjustmentQty);
+                SetIfEmpty(row, "NewBalance", FirstDecimal(row, "NewBalance", "New Balance", "PhysicalStock"));
+
+                if (stockIn == 0m && IsStockInAction(action) && qtyDifference > 0m)
+                {
+                    stockIn = qtyDifference;
+                }
+                if (stockOut == 0m && IsStockOutAction(action) && qtyDifference < 0m)
+                {
+                    stockOut = Math.Abs(qtyDifference);
+                }
+
+                SetIfEmpty(row, "StockIn", stockIn);
+                SetIfEmpty(row, "StockOut", stockOut);
+                if (string.IsNullOrWhiteSpace(Convert.ToString(row["Reason"])))
+                {
+                    row["Reason"] = FirstText(row, "Reason", "Comments", "Remarks");
+                }
+            }
+
+            return display;
+        }
+
+        private static void EnsureDecimalColumn(DataTable table, string columnName)
+        {
+            if (!table.Columns.Contains(columnName))
+            {
+                table.Columns.Add(columnName, typeof(decimal));
+            }
+        }
+
+        private static void EnsureStringColumn(DataTable table, string columnName)
+        {
+            if (!table.Columns.Contains(columnName))
+            {
+                table.Columns.Add(columnName, typeof(string));
+            }
+        }
+
+        private static decimal FirstDecimal(DataRow row, params string[] columnNames)
+        {
+            foreach (string columnName in columnNames)
+            {
+                if (row.Table.Columns.Contains(columnName) && row[columnName] != DBNull.Value)
+                {
+                    decimal value;
+                    if (decimal.TryParse(Convert.ToString(row[columnName]), out value))
+                    {
+                        return value;
+                    }
+                }
+            }
+
+            return 0m;
+        }
+
+        private static string FirstText(DataRow row, params string[] columnNames)
+        {
+            foreach (string columnName in columnNames)
+            {
+                if (row.Table.Columns.Contains(columnName) && row[columnName] != DBNull.Value)
+                {
+                    string value = Convert.ToString(row[columnName]);
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        return value;
+                    }
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private static void SetIfEmpty(DataRow row, string columnName, decimal value)
+        {
+            if (!row.Table.Columns.Contains(columnName))
+            {
+                return;
+            }
+
+            if (row[columnName] == DBNull.Value || FirstDecimal(row, columnName) == 0m)
+            {
+                row[columnName] = value;
+            }
+        }
+
+        private static bool IsStockInAction(string action)
+        {
+            return string.Equals(action, "Stock IN", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(action, "Stock In", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(action, "Purchase", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(action, "Sales Return", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsManualStockAction(string action)
+        {
+            return string.Equals(action, "Stock IN", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(action, "Stock In", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(action, "Stock OUT", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(action, "Stock Out", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsStockOutAction(string action)
+        {
+            return string.Equals(action, "Stock OUT", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(action, "Stock Out", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(action, "Sales", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(action, "Purchase Return", StringComparison.OrdinalIgnoreCase);
         }
 
         private void UpdateSummaryCards()
@@ -737,6 +896,18 @@ namespace PosBranch_Win.Settings
             if (string.Equals(action, "Purchase Return", StringComparison.OrdinalIgnoreCase))
             {
                 return Color.FromArgb(35, 95, 190);
+            }
+
+            if (string.Equals(action, "Stock IN", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(action, "Stock In", StringComparison.OrdinalIgnoreCase))
+            {
+                return Color.FromArgb(24, 128, 70);
+            }
+
+            if (string.Equals(action, "Stock OUT", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(action, "Stock Out", StringComparison.OrdinalIgnoreCase))
+            {
+                return Color.FromArgb(190, 35, 35);
             }
 
             return Color.Empty;
