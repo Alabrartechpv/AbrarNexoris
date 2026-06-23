@@ -39,6 +39,7 @@ namespace Repository.MasterRepositry
             public string TaxType { get; set; }
             public double TaxPer { get; set; }
             public string HSNCode { get; set; }
+            public string AlternativeBarcodes { get; set; }
             
             // Validation output fields
             public bool HasError { get; set; }
@@ -1091,6 +1092,37 @@ namespace Repository.MasterRepositry
                         summary.SucceededCount++;
                     }
 
+                    // Save Alternative Barcodes if mapped
+                    string altBarcodesStr = uomRows
+                        .Select(r => r.AlternativeBarcodes)
+                        .FirstOrDefault(s => s != null);
+
+                    if (altBarcodesStr != null)
+                    {
+                        // Clean existing alternative barcodes for this Item
+                        DataConnection.Execute(
+                            "_POS_ItemAlternativeBarcode",
+                            new { ItemId = targetItemId, Barcode = "", _Operation = "DELETE" },
+                            dbTransaction,
+                            commandType: CommandType.StoredProcedure
+                        );
+
+                        var altBarcodesList = altBarcodesStr.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (var altBc in altBarcodesList)
+                        {
+                            var cleanAltBc = altBc.Trim();
+                            if (!string.IsNullOrWhiteSpace(cleanAltBc))
+                            {
+                                DataConnection.Execute(
+                                    "_POS_ItemAlternativeBarcode",
+                                    new { ItemId = targetItemId, Barcode = cleanAltBc, _Operation = "CREATE" },
+                                    dbTransaction,
+                                    commandType: CommandType.StoredProcedure
+                                );
+                            }
+                        }
+                    }
+
                     processedCount++;
                     progressCallback?.Invoke(processedCount, totalGroups);
                 }
@@ -1151,6 +1183,7 @@ namespace Repository.MasterRepositry
             dt.Columns.Add("TaxType", typeof(string));
             dt.Columns.Add("TaxPer", typeof(double));
             dt.Columns.Add("HSNCode", typeof(string));
+            dt.Columns.Add("AlternativeBarcodes", typeof(string));
 
             int branchId = GetBranchId();
 
@@ -1183,7 +1216,10 @@ namespace Repository.MasterRepositry
                         PS.ReOrder AS ReorderLevel,
                         PS.TaxType AS TaxType,
                         PS.TaxPer AS TaxPer,
-                        IM.HSNCode AS HSNCode
+                        IM.HSNCode AS HSNCode,
+                        CASE WHEN PS.IsBaseUnit = 'Y' THEN 
+                            COALESCE(STUFF((SELECT ',' + Barcode FROM ItemAlternativeBarcode WHERE ItemId = IM.ItemId FOR XML PATH('')), 1, 1, ''), '')
+                        ELSE '' END AS AlternativeBarcodes
                     FROM ItemMaster IM
                     INNER JOIN PriceSettings PS ON IM.ItemId = PS.ItemId
                     LEFT JOIN Category CG ON IM.CategoryId = CG.Id
@@ -1258,7 +1294,8 @@ namespace Repository.MasterRepositry
                         Convert.ToDouble(item.ReorderLevel),
                         Convert.ToString(item.TaxType),
                         Convert.ToDouble(item.TaxPer),
-                        Convert.ToString(item.HSNCode)
+                        Convert.ToString(item.HSNCode),
+                        Convert.ToString(item.AlternativeBarcodes)
                     );
                 }
             }

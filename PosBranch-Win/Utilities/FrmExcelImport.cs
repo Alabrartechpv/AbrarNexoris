@@ -230,7 +230,8 @@ namespace PosBranch_Win.Utilities
             {
                 "Barcode", "Description", "ItemType", "Category", "Brand", "Group", "Unit", "Packing",
                 "IsBaseUnit", "Cost", "RetailPrice", "WholeSalePrice", "MRP", "CardPrice", "CreditPrice",
-                "StaffPrice", "MinPrice", "OpeningStock", "ReorderLevel", "TaxType", "TaxPer", "HSNCode"
+                "StaffPrice", "MinPrice", "OpeningStock", "ReorderLevel", "TaxType", "TaxPer", "HSNCode",
+                "AlternativeBarcodes"
             };
 
             TableLayoutPanel tlp = new TableLayoutPanel();
@@ -293,6 +294,7 @@ namespace PosBranch_Win.Utilities
                 {
                     string option = cmb.Items[i].ToString().ToLower().Replace(" ", "").Replace("_", "");
                     if (option == target ||
+                        (target == "alternativebarcodes" && (option == "alternativebarcode" || option == "alternatebarcode" || option == "alternatebarcodes" || option == "altbarcodes" || option == "altbarcode")) ||
                         (target == "description" && (option == "itemname" || option == "name" || option == "desc" || option == "productname")) ||
                         (target == "retailprice" && (option == "sellingprice" || option == "price" || option == "retail" || option == "walkinprice")) ||
                         (target == "cost" && (option == "costprice" || option == "purchaseprice" || option == "unitcost")) ||
@@ -322,6 +324,8 @@ namespace PosBranch_Win.Utilities
 
             _validationRows.Clear();
             _failedRows.Clear();
+
+            bool altBarcodesMapped = _mappingDropdowns.TryGetValue("AlternativeBarcodes", out ComboBox altCmb) && altCmb.SelectedIndex > 0;
 
             // Populate rows from mapping
             for (int i = 0; i < _parsedFileData.Count; i++)
@@ -358,6 +362,7 @@ namespace PosBranch_Win.Utilities
                 row.TaxType = GetMappedValue("TaxType", fileRow);
                 row.TaxPer = ParseDoubleValue(GetMappedValue("TaxPer", fileRow), 0.0);
                 row.HSNCode = GetMappedValue("HSNCode", fileRow);
+                row.AlternativeBarcodes = altBarcodesMapped ? GetMappedValue("AlternativeBarcodes", fileRow) : null;
 
                 _validationRows.Add(row);
             }
@@ -793,10 +798,11 @@ namespace PosBranch_Win.Utilities
                         dt.Columns.Add("TaxType", typeof(string));
                         dt.Columns.Add("TaxPer", typeof(double));
                         dt.Columns.Add("HSNCode", typeof(string));
+                        dt.Columns.Add("AlternativeBarcodes", typeof(string));
 
                         // Add dummy row as example
-                        dt.Rows.Add("8801019203912", "Coca Cola 500ml", "STOCK ITEM", "Beverages", "Coke", "FMCG", "PCS", 1.0, "Y", 45.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 100.0, 10.0, "EXCL", 5.0, "2202");
-                        dt.Rows.Add("8801019203929", "Coca Cola 500ml", "STOCK ITEM", "Beverages", "Coke", "FMCG", "BOX", 24.0, "N", 1000.0, 1100.0, 1100.0, 1100.0, 1100.0, 1100.0, 1100.0, 1100.0, 5.0, 1.0, "EXCL", 5.0, "2202");
+                        dt.Rows.Add("8801019203912", "Coca Cola 500ml", "STOCK ITEM", "Beverages", "Coke", "FMCG", "PCS", 1.0, "Y", 45.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 100.0, 10.0, "EXCL", 5.0, "2202", "8801019203912A,8801019203912B");
+                        dt.Rows.Add("8801019203929", "Coca Cola 500ml", "STOCK ITEM", "Beverages", "Coke", "FMCG", "BOX", 24.0, "N", 1000.0, 1100.0, 1100.0, 1100.0, 1100.0, 1100.0, 1100.0, 1100.0, 5.0, 1.0, "EXCL", 5.0, "2202", "");
 
                         ExcelImportRepository.CSVHelper.WriteCSV(dt, sfd.FileName);
                         MessageBox.Show("Template spreadsheet saved successfully.", "Save Template Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
