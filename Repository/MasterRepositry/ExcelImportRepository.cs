@@ -1179,7 +1179,7 @@ namespace Repository.MasterRepositry
                         PS.CreditPrice AS CreditPrice,
                         PS.StaffPrice AS StaffPrice,
                         PS.MinPrice AS MinPrice,
-                        PS.OpnStk AS OpeningStock,
+                        ISNULL(PS.Stock, 0) AS OpeningStock,
                         PS.ReOrder AS ReorderLevel,
                         PS.TaxType AS TaxType,
                         PS.TaxPer AS TaxPer,
