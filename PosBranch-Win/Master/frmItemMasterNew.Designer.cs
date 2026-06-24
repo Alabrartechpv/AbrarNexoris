@@ -121,22 +121,24 @@
             Infragistics.Win.Appearance appearance90 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance91 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance92 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance93 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance94 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance95 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance96 = new Infragistics.Win.Appearance();
-            Infragistics.Win.UltraWinTabControl.UltraTab ultraTab5 = new Infragistics.Win.UltraWinTabControl.UltraTab();
             Infragistics.Win.Appearance appearance97 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance98 = new Infragistics.Win.Appearance();
-            Infragistics.Win.UltraWinTabControl.UltraTab ultraTab6 = new Infragistics.Win.UltraWinTabControl.UltraTab();
+            Infragistics.Win.UltraWinTabControl.UltraTab ultraTab5 = new Infragistics.Win.UltraWinTabControl.UltraTab();
             Infragistics.Win.Appearance appearance99 = new Infragistics.Win.Appearance();
-            Infragistics.Win.UltraWinTabControl.UltraTab ultraTab8 = new Infragistics.Win.UltraWinTabControl.UltraTab();
             Infragistics.Win.Appearance appearance100 = new Infragistics.Win.Appearance();
+            Infragistics.Win.UltraWinTabControl.UltraTab ultraTab6 = new Infragistics.Win.UltraWinTabControl.UltraTab();
+            Infragistics.Win.Appearance appearance101 = new Infragistics.Win.Appearance();
+            Infragistics.Win.UltraWinTabControl.UltraTab ultraTab8 = new Infragistics.Win.UltraWinTabControl.UltraTab();
+            Infragistics.Win.Appearance appearance102 = new Infragistics.Win.Appearance();
             Infragistics.Win.UltraWinTabControl.UltraTab ultraTab3 = new Infragistics.Win.UltraWinTabControl.UltraTab();
             Infragistics.Win.UltraWinTabControl.UltraTab ultraTab1 = new Infragistics.Win.UltraWinTabControl.UltraTab();
             Infragistics.Win.UltraWinTabControl.UltraTab ultraTab2 = new Infragistics.Win.UltraWinTabControl.UltraTab();
             Infragistics.Win.UltraWinTabControl.UltraTab ultraTab7 = new Infragistics.Win.UltraWinTabControl.UltraTab();
-            Infragistics.Win.Appearance appearance101 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance103 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance93 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance94 = new Infragistics.Win.Appearance();
             this.TabControll = new Infragistics.Win.UltraWinTabControl.UltraTabPageControl();
             this.button1 = new System.Windows.Forms.Button();
             this.label33 = new System.Windows.Forms.Label();
@@ -176,9 +178,6 @@
             this.label12 = new System.Windows.Forms.Label();
             this.label13 = new System.Windows.Forms.Label();
             this.label14 = new System.Windows.Forms.Label();
-            this.lblOrderCycle = new System.Windows.Forms.Label();
-            this.lblBoxQty = new System.Windows.Forms.Label();
-            this.lblPerishable = new System.Windows.Forms.Label();
             this.label16 = new System.Windows.Forms.Label();
             this.label11 = new System.Windows.Forms.Label();
             this.label15 = new System.Windows.Forms.Label();
@@ -197,6 +196,9 @@
             this.label20 = new System.Windows.Forms.Label();
             this.txt_CEP = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.ultraPanel7 = new Infragistics.Win.Misc.UltraPanel();
+            this.lblOrderCycle = new System.Windows.Forms.Label();
+            this.lblBoxQty = new System.Windows.Forms.Label();
+            this.lblPerishable = new System.Windows.Forms.Label();
             this.ultraOrderCycle = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.ultraBoxQty = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.ultraIsPerishable = new Infragistics.Win.UltraWinEditors.UltraCheckEditor();
@@ -312,6 +314,8 @@
             this.btn_ItemLoad = new System.Windows.Forms.Button();
             this.label34 = new System.Windows.Forms.Label();
             this.ultraTabControl1 = new Infragistics.Win.UltraWinTabControl.UltraTabControl();
+            this.ultraPanel12 = new Infragistics.Win.Misc.UltraPanel();
+            this.ultraPictureBox8 = new Infragistics.Win.UltraWinEditors.UltraPictureBox();
             this.TabControll.SuspendLayout();
             this.ultraPanel5.ClientArea.SuspendLayout();
             this.ultraPanel5.SuspendLayout();
@@ -379,6 +383,8 @@
             this.ultraPanel3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.ultraTabControl1)).BeginInit();
             this.ultraTabControl1.SuspendLayout();
+            this.ultraPanel12.ClientArea.SuspendLayout();
+            this.ultraPanel12.SuspendLayout();
             this.SuspendLayout();
             // 
             // TabControll
@@ -996,39 +1002,6 @@
             this.label14.Text = "Reorder";
             this.label14.Visible = false;
             // 
-            // lblOrderCycle
-            // 
-            this.lblOrderCycle.AutoSize = true;
-            this.lblOrderCycle.BackColor = System.Drawing.Color.Transparent;
-            this.lblOrderCycle.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblOrderCycle.Location = new System.Drawing.Point(372, 24);
-            this.lblOrderCycle.Name = "lblOrderCycle";
-            this.lblOrderCycle.Size = new System.Drawing.Size(119, 17);
-            this.lblOrderCycle.TabIndex = 198;
-            this.lblOrderCycle.Text = "Order Cycle Days";
-            // 
-            // lblBoxQty
-            // 
-            this.lblBoxQty.AutoSize = true;
-            this.lblBoxQty.BackColor = System.Drawing.Color.Transparent;
-            this.lblBoxQty.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblBoxQty.Location = new System.Drawing.Point(372, 59);
-            this.lblBoxQty.Name = "lblBoxQty";
-            this.lblBoxQty.Size = new System.Drawing.Size(88, 17);
-            this.lblBoxQty.TabIndex = 199;
-            this.lblBoxQty.Text = "Box Quantity";
-            // 
-            // lblPerishable
-            // 
-            this.lblPerishable.AutoSize = true;
-            this.lblPerishable.BackColor = System.Drawing.Color.Transparent;
-            this.lblPerishable.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblPerishable.Location = new System.Drawing.Point(372, 93);
-            this.lblPerishable.Name = "lblPerishable";
-            this.lblPerishable.Size = new System.Drawing.Size(89, 17);
-            this.lblPerishable.TabIndex = 200;
-            this.lblPerishable.Text = "Is Perishable";
-            // 
             // label16
             // 
             this.label16.AutoSize = true;
@@ -1289,6 +1262,39 @@
             this.ultraPanel7.Size = new System.Drawing.Size(644, 334);
             this.ultraPanel7.TabIndex = 194;
             this.ultraPanel7.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+            // 
+            // lblOrderCycle
+            // 
+            this.lblOrderCycle.AutoSize = true;
+            this.lblOrderCycle.BackColor = System.Drawing.Color.Transparent;
+            this.lblOrderCycle.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblOrderCycle.Location = new System.Drawing.Point(372, 24);
+            this.lblOrderCycle.Name = "lblOrderCycle";
+            this.lblOrderCycle.Size = new System.Drawing.Size(119, 17);
+            this.lblOrderCycle.TabIndex = 198;
+            this.lblOrderCycle.Text = "Order Cycle Days";
+            // 
+            // lblBoxQty
+            // 
+            this.lblBoxQty.AutoSize = true;
+            this.lblBoxQty.BackColor = System.Drawing.Color.Transparent;
+            this.lblBoxQty.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblBoxQty.Location = new System.Drawing.Point(372, 59);
+            this.lblBoxQty.Name = "lblBoxQty";
+            this.lblBoxQty.Size = new System.Drawing.Size(88, 17);
+            this.lblBoxQty.TabIndex = 199;
+            this.lblBoxQty.Text = "Box Quantity";
+            // 
+            // lblPerishable
+            // 
+            this.lblPerishable.AutoSize = true;
+            this.lblPerishable.BackColor = System.Drawing.Color.Transparent;
+            this.lblPerishable.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblPerishable.Location = new System.Drawing.Point(372, 93);
+            this.lblPerishable.Name = "lblPerishable";
+            this.lblPerishable.Size = new System.Drawing.Size(89, 17);
+            this.lblPerishable.TabIndex = 200;
+            this.lblPerishable.Text = "Is Perishable";
             // 
             // ultraOrderCycle
             // 
@@ -2723,6 +2729,7 @@
             // 
             // ultraPanel1.ClientArea
             // 
+            this.ultraPanel1.ClientArea.Controls.Add(this.ultraPanel12);
             this.ultraPanel1.ClientArea.Controls.Add(this.btnIemLoad_ById);
             this.ultraPanel1.ClientArea.Controls.Add(this.label28);
             this.ultraPanel1.ClientArea.Controls.Add(this.textBox4);
@@ -2919,10 +2926,10 @@
             // 
             // ultraPanel3
             // 
-            appearance93.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(174)))), ((int)(((byte)(239)))));
-            appearance93.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(116)))), ((int)(((byte)(217)))));
-            appearance93.BackGradientStyle = Infragistics.Win.GradientStyle.GlassTop50;
-            this.ultraPanel3.Appearance = appearance93;
+            appearance95.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(174)))), ((int)(((byte)(239)))));
+            appearance95.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(116)))), ((int)(((byte)(217)))));
+            appearance95.BackGradientStyle = Infragistics.Win.GradientStyle.GlassTop50;
+            this.ultraPanel3.Appearance = appearance95;
             this.ultraPanel3.BorderStyle = Infragistics.Win.UIElementBorderStyle.Rounded1;
             // 
             // ultraPanel3.ClientArea
@@ -2936,10 +2943,10 @@
             // 
             // ultraPictureBox2
             // 
-            appearance94.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            appearance94.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            appearance94.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            this.ultraPictureBox2.Appearance = appearance94;
+            appearance96.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
+            appearance96.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            appearance96.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            this.ultraPictureBox2.Appearance = appearance96;
             this.ultraPictureBox2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.ultraPictureBox2.BackColorInternal = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.ultraPictureBox2.BorderShadowColor = System.Drawing.Color.Empty;
@@ -2980,20 +2987,20 @@
             // 
             // ultraTabControl1
             // 
-            appearance95.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(116)))), ((int)(((byte)(217)))));
-            appearance95.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(127)))), ((int)(((byte)(219)))), ((int)(((byte)(255)))));
-            appearance95.BackGradientStyle = Infragistics.Win.GradientStyle.GlassTop50;
-            appearance95.ForeColor = System.Drawing.Color.White;
-            this.ultraTabControl1.ActiveTabAppearance = appearance95;
+            appearance97.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(116)))), ((int)(((byte)(217)))));
+            appearance97.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(127)))), ((int)(((byte)(219)))), ((int)(((byte)(255)))));
+            appearance97.BackGradientStyle = Infragistics.Win.GradientStyle.GlassTop50;
+            appearance97.ForeColor = System.Drawing.Color.White;
+            this.ultraTabControl1.ActiveTabAppearance = appearance97;
             this.ultraTabControl1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            appearance96.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            appearance96.BackColorDisabled = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            appearance96.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(174)))), ((int)(((byte)(239)))));
-            appearance96.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(174)))), ((int)(((byte)(239)))));
-            appearance96.ForeColor = System.Drawing.Color.Black;
-            this.ultraTabControl1.Appearance = appearance96;
+            appearance98.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            appearance98.BackColorDisabled = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            appearance98.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(174)))), ((int)(((byte)(239)))));
+            appearance98.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(174)))), ((int)(((byte)(239)))));
+            appearance98.ForeColor = System.Drawing.Color.Black;
+            this.ultraTabControl1.Appearance = appearance98;
             this.ultraTabControl1.Controls.Add(this.ultraTabSharedControlsPage2);
             this.ultraTabControl1.Controls.Add(this.ultraTabPageControl6);
             this.ultraTabControl1.Controls.Add(this.ultraTabPageControl7);
@@ -3007,19 +3014,19 @@
             this.ultraTabControl1.SharedControlsPage = this.ultraTabSharedControlsPage1;
             this.ultraTabControl1.Size = new System.Drawing.Size(1241, 416);
             this.ultraTabControl1.TabIndex = 50;
-            appearance97.FontData.BoldAsString = "True";
-            ultraTab5.ActiveAppearance = appearance97;
-            appearance98.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            appearance98.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            ultraTab5.Appearance = appearance98;
+            appearance99.FontData.BoldAsString = "True";
+            ultraTab5.ActiveAppearance = appearance99;
+            appearance100.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            appearance100.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            ultraTab5.Appearance = appearance100;
             ultraTab5.TabPage = this.TabControll;
             ultraTab5.Text = "General";
-            appearance99.FontData.BoldAsString = "True";
-            ultraTab6.ActiveAppearance = appearance99;
+            appearance101.FontData.BoldAsString = "True";
+            ultraTab6.ActiveAppearance = appearance101;
             ultraTab6.TabPage = this.ultraTabPageControl6;
             ultraTab6.Text = "UOM";
-            appearance100.FontData.BoldAsString = "True";
-            ultraTab8.ActiveAppearance = appearance100;
+            appearance102.FontData.BoldAsString = "True";
+            ultraTab8.ActiveAppearance = appearance102;
             ultraTab8.TabPage = this.ultraTabPageControl8;
             ultraTab8.Text = "Price";
             ultraTab3.TabPage = this.ultraTabPageControl2;
@@ -3028,8 +3035,8 @@
             ultraTab1.Text = "Vendor";
             ultraTab2.TabPage = this.ultraTabPageControl1;
             ultraTab2.Text = "Image";
-            appearance101.FontData.BoldAsString = "True";
-            ultraTab7.ActiveAppearance = appearance101;
+            appearance103.FontData.BoldAsString = "True";
+            ultraTab7.ActiveAppearance = appearance103;
             ultraTab7.TabPage = this.ultraTabPageControl7;
             ultraTab7.Text = "Tax";
             this.ultraTabControl1.Tabs.AddRange(new Infragistics.Win.UltraWinTabControl.UltraTab[] {
@@ -3041,6 +3048,39 @@
             ultraTab2,
             ultraTab7});
             this.ultraTabControl1.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+            // 
+            // ultraPanel12
+            // 
+            appearance93.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(174)))), ((int)(((byte)(239)))));
+            appearance93.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(116)))), ((int)(((byte)(217)))));
+            appearance93.BackGradientStyle = Infragistics.Win.GradientStyle.GlassTop50;
+            this.ultraPanel12.Appearance = appearance93;
+            this.ultraPanel12.BorderStyle = Infragistics.Win.UIElementBorderStyle.Rounded1;
+            // 
+            // ultraPanel12.ClientArea
+            // 
+            this.ultraPanel12.ClientArea.Controls.Add(this.ultraPictureBox8);
+            this.ultraPanel12.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.ultraPanel12.Location = new System.Drawing.Point(1135, 8);
+            this.ultraPanel12.Name = "ultraPanel12";
+            this.ultraPanel12.Size = new System.Drawing.Size(68, 29);
+            this.ultraPanel12.TabIndex = 205;
+            // 
+            // ultraPictureBox8
+            // 
+            appearance94.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
+            appearance94.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            appearance94.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            this.ultraPictureBox8.Appearance = appearance94;
+            this.ultraPictureBox8.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.ultraPictureBox8.BackColorInternal = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.ultraPictureBox8.BorderShadowColor = System.Drawing.Color.Empty;
+            this.ultraPictureBox8.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.ultraPictureBox8.Image = ((object)(resources.GetObject("ultraPictureBox8.Image")));
+            this.ultraPictureBox8.Location = new System.Drawing.Point(22, 1);
+            this.ultraPictureBox8.Name = "ultraPictureBox8";
+            this.ultraPictureBox8.Size = new System.Drawing.Size(19, 21);
+            this.ultraPictureBox8.TabIndex = 205;
             // 
             // frmItemMasterNew
             // 
@@ -3137,6 +3177,8 @@
             this.ultraPanel3.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.ultraTabControl1)).EndInit();
             this.ultraTabControl1.ResumeLayout(false);
+            this.ultraPanel12.ClientArea.ResumeLayout(false);
+            this.ultraPanel12.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -3318,6 +3360,8 @@
         private System.Windows.Forms.Label lblItemStatusReason;
         private System.Windows.Forms.ComboBox cmbItemStatus;
         private System.Windows.Forms.Label label48;
+        private Infragistics.Win.Misc.UltraPanel ultraPanel12;
+        private Infragistics.Win.UltraWinEditors.UltraPictureBox ultraPictureBox8;
     }
 }
 

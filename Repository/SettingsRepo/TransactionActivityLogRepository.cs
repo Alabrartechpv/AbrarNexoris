@@ -111,6 +111,32 @@ namespace Repository.SettingsRepo
             SaveActivity("Sales Return", transactionNo, invoiceNo, partyName, paymentMode, netAmount, activityType, activityDetails, qty, cost, unit, barcode, sPrice, taxAmt, taxPer, baseAmount, packing, retailPrice, free, unitSP, taxType, gross);
         }
 
+        public void SaveStockAdjustmentActivity(
+            long transactionNo,
+            string invoiceNo,
+            string partyName,
+            string paymentMode,
+            decimal netAmount,
+            string activityType,
+            string activityDetails,
+            decimal? qty = null,
+            decimal? cost = null,
+            string unit = null,
+            string barcode = null,
+            decimal? sPrice = null,
+            decimal? taxAmt = null,
+            decimal? taxPer = null,
+            decimal? baseAmount = null,
+            decimal? packing = null,
+            decimal? retailPrice = null,
+            decimal? free = null,
+            decimal? unitSP = null,
+            string taxType = null,
+            decimal? gross = null)
+        {
+            SaveActivity("Stock Adjustment", transactionNo, invoiceNo, partyName, paymentMode, netAmount, activityType, activityDetails, qty, cost, unit, barcode, sPrice, taxAmt, taxPer, baseAmount, packing, retailPrice, free, unitSP, taxType, gross);
+        }
+
         public DataTable GetActivityLog(string logType, DateTime fromDate, DateTime toDate, string userName, string activityType, string searchText)
         {
             DataTable result = new DataTable();
@@ -995,6 +1021,8 @@ BEGIN
         SET @TableName = N'PurchaseReturnActivityLog';
     ELSE IF @LogType = N'Sales Return'
         SET @TableName = N'SalesReturnActivityLog';
+    ELSE IF @LogType = N'Stock Adjustment'
+        SET @TableName = N'StockAdjustmentActivityLog';
     ELSE
     BEGIN
         RAISERROR('Unsupported transaction activity log type.', 16, 1);
@@ -1061,6 +1089,11 @@ END;", (SqlConnection)DataConnection))
             if (string.Equals(logType, "Sales Return", StringComparison.OrdinalIgnoreCase))
             {
                 return "SalesReturnActivityLog";
+            }
+
+            if (string.Equals(logType, "Stock Adjustment", StringComparison.OrdinalIgnoreCase))
+            {
+                return "StockAdjustmentActivityLog";
             }
 
             throw new ArgumentException("Unsupported activity log type.", nameof(logType));
