@@ -303,6 +303,34 @@ namespace Repository.Accounts
         {
             try
             {
+                // Resolve the actual Ledger ID for the selected payment mode from the PayMode table first
+                if (paymentMethodId > 0)
+                {
+                    try
+                    {
+                        string paymodeQuery = "SELECT TOP 1 LedgerID FROM PayMode WHERE PayModeID = @PayModeID";
+                        using (SqlCommand paymodeCmd = new SqlCommand(paymodeQuery, (SqlConnection)DataConnection))
+                        {
+                            paymodeCmd.Parameters.AddWithValue("@PayModeID", paymentMethodId);
+                            // Connection is already open from SaveVendorPayment
+                            object paymodeResult = paymodeCmd.ExecuteScalar();
+                            if (paymodeResult != null && paymodeResult != DBNull.Value)
+                            {
+                                int ledgerId = Convert.ToInt32(paymodeResult);
+                                if (ledgerId > 0)
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"Found LedgerID {ledgerId} for PayModeID {paymentMethodId} in PayMode table.");
+                                    return ledgerId;
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error fetching LedgerID from PayMode for vendor payment: {ex.Message}");
+                    }
+                }
+
                 var ledgerRepository = new Repository.MasterRepositry.LedgerRepository();
                 string paymentMethodName = paymentMethod ?? string.Empty;
                 string normalizedPaymentMethod = paymentMethodName.Replace(" ", string.Empty).Trim();

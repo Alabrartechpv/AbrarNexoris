@@ -257,9 +257,32 @@ namespace Repository.Accounts
                                 return false; // Missing payment method
                             }
 
-                            // Get the actual cash ledger ID for voucher entries
-                            int cashLedgerId = GetCashLedgerId(paymentMethodId, master.BranchId, ledgerRepository);
-                            System.Diagnostics.Debug.WriteLine($"PaymentMethodId: {paymentMethodId}, CashLedgerId: {cashLedgerId}");
+                            // Resolve the actual Ledger ID for the selected payment mode from the PayMode table
+                            int cashLedgerId = 0;
+                            try
+                            {
+                                string paymodeQuery = "SELECT TOP 1 LedgerID FROM PayMode WHERE PayModeID = @PayModeID";
+                                using (SqlCommand paymodeCmd = new SqlCommand(paymodeQuery, conn, transaction))
+                                {
+                                    paymodeCmd.Parameters.AddWithValue("@PayModeID", paymentMethodId);
+                                    object paymodeResult = paymodeCmd.ExecuteScalar();
+                                    if (paymodeResult != null && paymodeResult != DBNull.Value)
+                                    {
+                                        cashLedgerId = Convert.ToInt32(paymodeResult);
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Error fetching LedgerID from PayMode: {ex.Message}");
+                            }
+
+                            // Fallback to cash ledger if not defined in PayMode table
+                            if (cashLedgerId <= 0)
+                            {
+                                cashLedgerId = GetCashLedgerId(paymentMethodId, master.BranchId, ledgerRepository);
+                            }
+                            System.Diagnostics.Debug.WriteLine($"PaymentMethodId: {paymentMethodId}, Resolved LedgerID: {cashLedgerId}");
 
                             // Find the highest bill number among selected details
                             long highestBillNo = 0;
