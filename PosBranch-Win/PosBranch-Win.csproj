@@ -716,6 +716,12 @@
     <Compile Include="DialogBox\frmSalesListDialog.Designer.cs">
       <DependentUpon>frmSalesListDialog.cs</DependentUpon>
     </Compile>
+    <Compile Include="DialogBox\frmStockTransferListDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DialogBox\frmStockTransferListDialog.Designer.cs">
+      <DependentUpon>frmStockTransferListDialog.cs</DependentUpon>
+    </Compile>
     <Compile Include="DialogBox\frmSalesOptions.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1219,6 +1225,12 @@
     <Compile Include="Transaction\FrmStockAdjustment.Designer.cs">
       <DependentUpon>FrmStockAdjustment.cs</DependentUpon>
     </Compile>
+    <Compile Include="Transaction\FrmStockTransfer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Transaction\FrmStockTransfer.Designer.cs">
+      <DependentUpon>FrmStockTransfer.cs</DependentUpon>
+    </Compile>
     <Compile Include="Transaction\Pos.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1439,6 +1451,9 @@
     <EmbeddedResource Include="DialogBox\frmSalesListDialog.resx">
       <DependentUpon>frmSalesListDialog.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="DialogBox\frmStockTransferListDialog.resx">
+      <DependentUpon>frmStockTransferListDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="DialogBox\frmSalesOptions.resx">
       <DependentUpon>frmSalesOptions.cs</DependentUpon>
     </EmbeddedResource>
@@ -1649,6 +1664,9 @@
     <EmbeddedResource Include="Transaction\FrmStockAdjustment.resx">
       <DependentUpon>FrmStockAdjustment.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Transaction\FrmStockTransfer.resx">
+      <DependentUpon>FrmStockTransfer.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Transaction\Pos.resx">
       <DependentUpon>Pos.cs</DependentUpon>
     </EmbeddedResource>
@@ -1824,6 +1842,7 @@
     <None Include="Resources\exit.png" />
     <None Include="Resources\icons8-report-50.png" />
     <None Include="Resources\import-export.png" />
+    <None Include="Resources\exchanging.png" />
     <Content Include="Resources\languages %282%29.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

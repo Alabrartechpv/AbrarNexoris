@@ -27,8 +27,12 @@ namespace PosBranch_Win.Utilities
         private List<ExcelImportRepository.ImportRow> _validationRows = new List<ExcelImportRepository.ImportRow>();
         private List<ExcelImportRepository.ImportRow> _failedRows = new List<ExcelImportRepository.ImportRow>();
 
+        // Programmatic Filter Controls
+        private UltraLabel lblFilterStatus;
+        private UltraComboEditor cmbFilterStatus;
+
         // Dynamic Mapping Controls list
-        private Dictionary<string, ComboBox> _mappingDropdowns = new Dictionary<string, ComboBox>();
+        private Dictionary<string, UltraComboEditor> _mappingDropdowns = new Dictionary<string, UltraComboEditor>();
 
         public FrmExcelImport()
         {
@@ -53,6 +57,34 @@ namespace PosBranch_Win.Utilities
             cmbDuplicateBehavior.Items.Add("Skip");
             cmbDuplicateBehavior.Items.Add("Merge");
             cmbDuplicateBehavior.SelectedIndex = 0;
+
+            // Programmatic Filter controls initialization
+            lblFilterStatus = new UltraLabel();
+            lblFilterStatus.Text = "Filter:";
+            lblFilterStatus.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
+            lblFilterStatus.Location = new Point(245, 12);
+            lblFilterStatus.Size = new Size(45, 20);
+            lblFilterStatus.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            lblFilterStatus.Visible = false;
+
+            cmbFilterStatus = new UltraComboEditor();
+            cmbFilterStatus.DropDownStyle = DropDownStyle.DropDownList;
+            cmbFilterStatus.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
+            cmbFilterStatus.Location = new Point(290, 8);
+            cmbFilterStatus.Size = new Size(140, 25);
+            cmbFilterStatus.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            cmbFilterStatus.Items.Add("Show All");
+            cmbFilterStatus.Items.Add("Errors Only");
+            cmbFilterStatus.Items.Add("Warnings Only");
+            cmbFilterStatus.Items.Add("Valid Rows Only");
+            cmbFilterStatus.SelectedIndex = 0;
+            cmbFilterStatus.Visible = false;
+
+            cmbFilterStatus.ValueChanged += CmbFilterStatus_ValueChanged;
+            ultraGridPreview.AfterCellUpdate += ultraGridPreview_AfterCellUpdate;
+
+            pnlPreviewBanner.ClientArea.Controls.Add(lblFilterStatus);
+            pnlPreviewBanner.ClientArea.Controls.Add(cmbFilterStatus);
         }
 
         private void FrmExcelImport_Load(object sender, EventArgs e)
@@ -105,6 +137,11 @@ namespace PosBranch_Win.Utilities
             btnPreview.Enabled = false;
             btnImport.Enabled = false;
             btnDownloadErrorLog.Visible = false;
+            if (cmbFilterStatus != null)
+            {
+                cmbFilterStatus.Visible = false;
+                lblFilterStatus.Visible = false;
+            }
             ultraGridPreview.DataSource = null;
         }
 
@@ -231,7 +268,7 @@ namespace PosBranch_Win.Utilities
                 "Barcode", "Description", "ItemType", "Category", "Brand", "Group", "Unit", "Packing",
                 "IsBaseUnit", "Cost", "RetailPrice", "WholeSalePrice", "MRP", "CardPrice", "CreditPrice",
                 "StaffPrice", "MinPrice", "OpeningStock", "ReorderLevel", "TaxType", "TaxPer", "HSNCode",
-                "AlternativeBarcodes"
+                "AlternativeBarcodes", "OrderCycleDays", "BoxQty", "Perishable"
             };
 
             TableLayoutPanel tlp = new TableLayoutPanel();
@@ -239,25 +276,45 @@ namespace PosBranch_Win.Utilities
             tlp.RowCount = targetFields.Length;
             tlp.AutoScroll = true;
             tlp.Dock = DockStyle.Fill;
+            tlp.Padding = new Padding(10);
             tlp.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(SizeType.Percent, 45F));
             tlp.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(SizeType.Percent, 55F));
+
+            // Modern row height with nice spacing
+            for (int i = 0; i < targetFields.Length; i++)
+            {
+                tlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 32F));
+            }
 
             for (int i = 0; i < targetFields.Length; i++)
             {
                 string target = targetFields[i];
                 
-                // Label
-                Label lbl = new Label();
+                // Infragistics UltraLabel for dynamic layout mapping labels
+                UltraLabel lbl = new UltraLabel();
                 lbl.Text = target + (IsFieldRequired(target) ? " *" : "");
                 lbl.Font = new Font("Segoe UI", 9F, IsFieldRequired(target) ? FontStyle.Bold : FontStyle.Regular);
-                lbl.TextAlign = ContentAlignment.MiddleLeft;
+                lbl.Appearance.TextVAlign = VAlign.Middle;
+                if (IsFieldRequired(target))
+                {
+                    lbl.Appearance.ForeColor = Color.FromArgb(220, 38, 38); // Slate rose red
+                }
+                else
+                {
+                    lbl.Appearance.ForeColor = Color.FromArgb(71, 85, 105); // Slate dark gray
+                }
                 lbl.Dock = DockStyle.Fill;
                 tlp.Controls.Add(lbl, 0, i);
 
-                // ComboBox (runtime-created mapping dropdowns stay as standard ComboBox)
-                ComboBox cmb = new ComboBox();
-                cmb.DropDownStyle = ComboBoxStyle.DropDownList;
+                // Modernized flat UltraComboEditor controls
+                UltraComboEditor cmb = new UltraComboEditor();
+                cmb.DropDownStyle = DropDownStyle.DropDownList;
                 cmb.Dock = DockStyle.Fill;
+                cmb.UseOsThemes = DefaultableBoolean.False;
+                cmb.ButtonStyle = UIElementButtonStyle.Flat;
+                cmb.Appearance.BorderColor = Color.FromArgb(203, 213, 225); // Slate 300 border
+                cmb.Appearance.FontData.Name = "Segoe UI";
+                cmb.Appearance.FontData.SizeInPoints = 9F;
                 cmb.Items.Add("[Select Source Column]");
                 
                 foreach (var header in _fileHeaders)
@@ -287,7 +344,7 @@ namespace PosBranch_Win.Utilities
             foreach (var kvp in _mappingDropdowns)
             {
                 string target = kvp.Key.ToLower();
-                ComboBox cmb = kvp.Value;
+                UltraComboEditor cmb = kvp.Value;
 
                 // Try to find matching column header
                 for (int i = 1; i < cmb.Items.Count; i++)
@@ -295,6 +352,9 @@ namespace PosBranch_Win.Utilities
                     string option = cmb.Items[i].ToString().ToLower().Replace(" ", "").Replace("_", "");
                     if (option == target ||
                         (target == "alternativebarcodes" && (option == "alternativebarcode" || option == "alternatebarcode" || option == "alternatebarcodes" || option == "altbarcodes" || option == "altbarcode")) ||
+                        (target == "ordercycledays" && (option == "ordercycledays" || option == "ordercycle" || option == "reordercycle" || option == "cycle")) ||
+                        (target == "boxqty" && (option == "boxqty" || option == "boxquantity" || option == "boxpack")) ||
+                        (target == "perishable" && (option == "perishable" || option == "isperishable")) ||
                         (target == "description" && (option == "itemname" || option == "name" || option == "desc" || option == "productname")) ||
                         (target == "retailprice" && (option == "sellingprice" || option == "price" || option == "retail" || option == "walkinprice")) ||
                         (target == "cost" && (option == "costprice" || option == "purchaseprice" || option == "unitcost")) ||
@@ -325,7 +385,10 @@ namespace PosBranch_Win.Utilities
             _validationRows.Clear();
             _failedRows.Clear();
 
-            bool altBarcodesMapped = _mappingDropdowns.TryGetValue("AlternativeBarcodes", out ComboBox altCmb) && altCmb.SelectedIndex > 0;
+            bool altBarcodesMapped = _mappingDropdowns.TryGetValue("AlternativeBarcodes", out UltraComboEditor altCmb) && altCmb.SelectedIndex > 0;
+            bool orderCycleDaysMapped = _mappingDropdowns.TryGetValue("OrderCycleDays", out UltraComboEditor ocdCmb) && ocdCmb.SelectedIndex > 0;
+            bool boxQtyMapped = _mappingDropdowns.TryGetValue("BoxQty", out UltraComboEditor bqCmb) && bqCmb.SelectedIndex > 0;
+            bool perishableMapped = _mappingDropdowns.TryGetValue("Perishable", out UltraComboEditor pCmb) && pCmb.SelectedIndex > 0;
 
             // Populate rows from mapping
             for (int i = 0; i < _parsedFileData.Count; i++)
@@ -334,7 +397,7 @@ namespace PosBranch_Win.Utilities
                 var row = new ExcelImportRepository.ImportRow();
 
                 row.RowIndex = i + 1;
-                row.Barcode = GetMappedValue("Barcode", fileRow);
+                row.Barcode = ExcelImportRepository.CleanImportedBarcode(GetMappedValue("Barcode", fileRow));
                 row.Description = GetMappedValue("Description", fileRow);
                 row.ItemType = GetMappedValue("ItemType", fileRow);
                 row.Category = GetMappedValue("Category", fileRow);
@@ -361,8 +424,11 @@ namespace PosBranch_Win.Utilities
                 row.ReOrder = ParseDoubleValue(GetMappedValue("ReorderLevel", fileRow), 0.0);
                 row.TaxType = GetMappedValue("TaxType", fileRow);
                 row.TaxPer = ParseDoubleValue(GetMappedValue("TaxPer", fileRow), 0.0);
-                row.HSNCode = GetMappedValue("HSNCode", fileRow);
-                row.AlternativeBarcodes = altBarcodesMapped ? GetMappedValue("AlternativeBarcodes", fileRow) : null;
+                row.HSNCode = ExcelImportRepository.CleanImportedBarcode(GetMappedValue("HSNCode", fileRow));
+                row.AlternativeBarcodes = altBarcodesMapped ? ExcelImportRepository.CleanAlternativeBarcodes(GetMappedValue("AlternativeBarcodes", fileRow)) : null;
+                row.OrderCycleDays = orderCycleDaysMapped ? ParseIntValue(GetMappedValue("OrderCycleDays", fileRow), 7) : -99;
+                row.BoxQty = boxQtyMapped ? ParseDoubleValue(GetMappedValue("BoxQty", fileRow), 1.0) : -99.0;
+                row.Perishable = perishableMapped ? GetMappedValue("Perishable", fileRow) : null;
 
                 _validationRows.Add(row);
             }
@@ -384,7 +450,7 @@ namespace PosBranch_Win.Utilities
 
         private string GetMappedValue(string targetField, string[] fileRow)
         {
-            if (_mappingDropdowns.TryGetValue(targetField, out ComboBox cmb) && cmb.SelectedIndex > 0)
+            if (_mappingDropdowns.TryGetValue(targetField, out UltraComboEditor cmb) && cmb.SelectedIndex > 0)
             {
                 int fileColIndex = cmb.SelectedIndex - 1;
                 if (fileColIndex < fileRow.Length)
@@ -400,6 +466,13 @@ namespace PosBranch_Win.Utilities
             if (string.IsNullOrWhiteSpace(val)) return defaultVal;
             double result;
             return double.TryParse(val.Replace("$", "").Replace(",", "").Trim(), out result) ? result : defaultVal;
+        }
+
+        private int ParseIntValue(string val, int defaultVal)
+        {
+            if (string.IsNullOrWhiteSpace(val)) return defaultVal;
+            int result;
+            return int.TryParse(val.Replace(",", "").Trim(), out result) ? result : defaultVal;
         }
 
         // Background workers for non-blocking UI
@@ -525,11 +598,15 @@ namespace PosBranch_Win.Utilities
 
         private void bgWorkerValidate_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            // Rebind preview UltraGrid
-            ultraGridPreview.DataSource = null;
-            ultraGridPreview.DataSource = _validationRows;
+            if (cmbFilterStatus != null)
+            {
+                cmbFilterStatus.SelectedIndex = 0; // Reset to "Show All"
+                cmbFilterStatus.Visible = true;
+                lblFilterStatus.Visible = true;
+            }
 
-            // Compute statistics
+            ApplyGridFilter();
+
             int total = _validationRows.Count;
             int errors = _validationRows.Count(r => r.HasError);
             int warnings = _validationRows.Count(r => r.HasWarning && !r.HasError);
@@ -556,12 +633,14 @@ namespace PosBranch_Win.Utilities
         private void ultraGridPreview_InitializeLayout(object sender, InitializeLayoutEventArgs e)
         {
             UltraGridLayout layout = e.Layout;
-            layout.Override.AllowUpdate = DefaultableBoolean.False;
-            layout.Override.RowSelectors = DefaultableBoolean.False;
-            layout.Override.HeaderStyle = HeaderStyle.XPThemed;
+            layout.Override.AllowUpdate = DefaultableBoolean.True;
+            layout.Override.RowSelectors = DefaultableBoolean.True;
+            layout.Override.RowSelectorHeaderStyle = RowSelectorHeaderStyle.None;
+            layout.Override.CellPadding = 4;
+            layout.Override.HeaderStyle = HeaderStyle.Standard;
 
-            // Header appearance
-            layout.Override.HeaderAppearance.BackColor = Color.FromArgb(41, 128, 185);
+            // Flat headers with Navy blue background
+            layout.Override.HeaderAppearance.BackColor = Color.FromArgb(31, 58, 86);
             layout.Override.HeaderAppearance.ForeColor = Color.White;
             layout.Override.HeaderAppearance.FontData.Bold = DefaultableBoolean.True;
             layout.Override.HeaderAppearance.FontData.Name = "Segoe UI Semibold";
@@ -570,28 +649,34 @@ namespace PosBranch_Win.Utilities
             // Row appearance
             layout.Override.RowAppearance.FontData.Name = "Segoe UI";
             layout.Override.RowAppearance.FontData.SizeInPoints = 9F;
-            layout.Override.RowSpacingBefore = 1;
-            layout.Override.RowSpacingAfter = 1;
 
-            // Alternating row colors
-            layout.Override.RowAlternateAppearance.BackColor = Color.FromArgb(248, 249, 250);
+            // Alternating row colors (slate blue white)
+            layout.Override.RowAlternateAppearance.BackColor = Color.FromArgb(248, 250, 252);
 
             // Selection colors
-            layout.Override.SelectedRowAppearance.BackColor = Color.FromArgb(52, 152, 219);
+            layout.Override.SelectedRowAppearance.BackColor = Color.FromArgb(37, 99, 235); // Royal Blue
             layout.Override.SelectedRowAppearance.ForeColor = Color.White;
 
-            // Cell border style
-            layout.Override.CellAppearance.BorderColor = Color.LightGray;
-            layout.Override.BorderStyleCell = UIElementBorderStyle.Dotted;
+            // Cell border style - Solid light grey borders
+            layout.Override.CellAppearance.BorderColor = Color.FromArgb(226, 232, 240); // Slate 200
+            layout.Override.BorderStyleCell = UIElementBorderStyle.Solid;
+            layout.Override.BorderStyleRow = UIElementBorderStyle.Solid;
 
-            // Auto-size columns to fill available space
+            // Auto-size columns
             layout.Override.DefaultColWidth = 100;
             foreach (UltraGridColumn col in layout.Bands[0].Columns)
             {
-                col.CellActivation = Activation.NoEdit;
+                if (col.Key == "RowIndex" || col.Key == "HasError" || col.Key == "HasWarning" || col.Key == "StatusMessage")
+                {
+                    col.CellActivation = Activation.NoEdit;
+                    col.CellAppearance.BackColor = Color.FromArgb(241, 245, 249);
+                }
+                else
+                {
+                    col.CellActivation = Activation.AllowEdit;
+                }
             }
 
-            // Auto resize important columns if they exist
             if (layout.Bands[0].Columns.Exists("StatusMessage"))
                 layout.Bands[0].Columns["StatusMessage"].Width = 300;
             if (layout.Bands[0].Columns.Exists("Description"))
@@ -799,10 +884,13 @@ namespace PosBranch_Win.Utilities
                         dt.Columns.Add("TaxPer", typeof(double));
                         dt.Columns.Add("HSNCode", typeof(string));
                         dt.Columns.Add("AlternativeBarcodes", typeof(string));
+                        dt.Columns.Add("OrderCycleDays", typeof(int));
+                        dt.Columns.Add("BoxQty", typeof(double));
+                        dt.Columns.Add("Perishable", typeof(string));
 
                         // Add dummy row as example
-                        dt.Rows.Add("8801019203912", "Coca Cola 500ml", "STOCK ITEM", "Beverages", "Coke", "FMCG", "PCS", 1.0, "Y", 45.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 100.0, 10.0, "EXCL", 5.0, "2202", "8801019203912A,8801019203912B");
-                        dt.Rows.Add("8801019203929", "Coca Cola 500ml", "STOCK ITEM", "Beverages", "Coke", "FMCG", "BOX", 24.0, "N", 1000.0, 1100.0, 1100.0, 1100.0, 1100.0, 1100.0, 1100.0, 1100.0, 5.0, 1.0, "EXCL", 5.0, "2202", "");
+                        dt.Rows.Add("8801019203912", "Coca Cola 500ml", "STOCK ITEM", "Beverages", "Coke", "FMCG", "PCS", 1.0, "Y", 45.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 100.0, 10.0, "EXCL", 5.0, "2202", "8801019203912A,8801019203912B", 7, 24.0, "N");
+                        dt.Rows.Add("8801019203929", "Coca Cola 500ml", "STOCK ITEM", "Beverages", "Coke", "FMCG", "BOX", 24.0, "N", 1000.0, 1100.0, 1100.0, 1100.0, 1100.0, 1100.0, 1100.0, 1100.0, 5.0, 1.0, "EXCL", 5.0, "2202", "", 7, 24.0, "N");
 
                         ExcelImportRepository.CSVHelper.WriteCSV(dt, sfd.FileName);
                         MessageBox.Show("Template spreadsheet saved successfully.", "Save Template Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -972,11 +1060,13 @@ namespace PosBranch_Win.Utilities
         {
             UltraGridLayout layout = e.Layout;
             layout.Override.AllowUpdate = DefaultableBoolean.False;
-            layout.Override.RowSelectors = DefaultableBoolean.False;
-            layout.Override.HeaderStyle = HeaderStyle.XPThemed;
+            layout.Override.RowSelectors = DefaultableBoolean.True;
+            layout.Override.RowSelectorHeaderStyle = RowSelectorHeaderStyle.None;
+            layout.Override.CellPadding = 4;
+            layout.Override.HeaderStyle = HeaderStyle.Standard;
 
-            // Header appearance
-            layout.Override.HeaderAppearance.BackColor = Color.FromArgb(41, 128, 185);
+            // Flat headers with Navy blue background
+            layout.Override.HeaderAppearance.BackColor = Color.FromArgb(31, 58, 86);
             layout.Override.HeaderAppearance.ForeColor = Color.White;
             layout.Override.HeaderAppearance.FontData.Bold = DefaultableBoolean.True;
             layout.Override.HeaderAppearance.FontData.Name = "Segoe UI Semibold";
@@ -985,21 +1075,19 @@ namespace PosBranch_Win.Utilities
             // Row appearance
             layout.Override.RowAppearance.FontData.Name = "Segoe UI";
             layout.Override.RowAppearance.FontData.SizeInPoints = 9F;
-            layout.Override.RowSpacingBefore = 1;
-            layout.Override.RowSpacingAfter = 1;
 
             // Alternating row colors
-            layout.Override.RowAlternateAppearance.BackColor = Color.FromArgb(248, 249, 250);
+            layout.Override.RowAlternateAppearance.BackColor = Color.FromArgb(248, 250, 252);
 
             // Selection colors
-            layout.Override.SelectedRowAppearance.BackColor = Color.FromArgb(52, 152, 219);
+            layout.Override.SelectedRowAppearance.BackColor = Color.FromArgb(37, 99, 235);
             layout.Override.SelectedRowAppearance.ForeColor = Color.White;
 
             // Cell border style
-            layout.Override.CellAppearance.BorderColor = Color.LightGray;
-            layout.Override.BorderStyleCell = UIElementBorderStyle.Dotted;
+            layout.Override.CellAppearance.BorderColor = Color.FromArgb(226, 232, 240);
+            layout.Override.BorderStyleCell = UIElementBorderStyle.Solid;
+            layout.Override.BorderStyleRow = UIElementBorderStyle.Solid;
 
-            // Auto-size columns to fill available space
             layout.Override.DefaultColWidth = 100;
             foreach (UltraGridColumn col in layout.Bands[0].Columns)
             {
@@ -1011,6 +1099,176 @@ namespace PosBranch_Win.Utilities
                 layout.Bands[0].Columns["Description"].Width = 200;
             if (layout.Bands[0].Columns.Exists("Barcode"))
                 layout.Bands[0].Columns["Barcode"].Width = 150;
+        }
+
+        // Programmatic grid filter and cell validation event handlers
+        private void CmbFilterStatus_ValueChanged(object sender, EventArgs e)
+        {
+            ApplyGridFilter();
+        }
+
+        private void ApplyGridFilter()
+        {
+            if (cmbFilterStatus == null || !cmbFilterStatus.Visible) return;
+
+            string selected = cmbFilterStatus.Value?.ToString() ?? "Show All";
+
+            ultraGridPreview.DataSource = null;
+
+            if (selected == "Errors Only")
+            {
+                ultraGridPreview.DataSource = _validationRows.Where(r => r.HasError).ToList();
+            }
+            else if (selected == "Warnings Only")
+            {
+                ultraGridPreview.DataSource = _validationRows.Where(r => r.HasWarning && !r.HasError).ToList();
+            }
+            else if (selected == "Valid Rows Only")
+            {
+                ultraGridPreview.DataSource = _validationRows.Where(r => !r.HasError && !r.HasWarning).ToList();
+            }
+            else
+            {
+                ultraGridPreview.DataSource = _validationRows;
+            }
+        }
+
+        private void ultraGridPreview_AfterCellUpdate(object sender, CellEventArgs e)
+        {
+            var rowData = e.Cell.Row.ListObject as ExcelImportRepository.ImportRow;
+            if (rowData != null)
+            {
+                // Re-validate the edited row
+                ValidateSingleRow(rowData);
+
+                // Update the statistics label and button states
+                UpdateStatistics();
+
+                // Refresh row visual appearance (trigger initializeRow again)
+                e.Cell.Row.Refresh();
+            }
+        }
+
+        private void ValidateSingleRow(ExcelImportRepository.ImportRow row)
+        {
+            row.HasError = false;
+            row.HasWarning = false;
+            row.StatusMessage = string.Empty;
+
+            bool autoGenerateBarcodes = chkAutoGenerateBarcodes.Checked;
+            bool autoCreate = chkAutoCreate.Checked;
+
+            // Barcode validation
+            if (string.IsNullOrWhiteSpace(row.Barcode))
+            {
+                if (autoGenerateBarcodes)
+                {
+                    row.HasWarning = true;
+                    row.StatusMessage += "[Barcode will be auto-generated] ";
+                }
+                else
+                {
+                    row.HasError = true;
+                    row.StatusMessage += "Barcode is missing. ";
+                }
+            }
+            else
+            {
+                // Clean barcode first
+                row.Barcode = ExcelImportRepository.CleanImportedBarcode(row.Barcode);
+
+                // Check duplicate barcode
+                bool isDuplicate = _importRepo.ExistingBarcodes.Contains(row.Barcode);
+                if (isDuplicate)
+                {
+                    string duplicateBehavior = cmbDuplicateBehavior.SelectedItem?.ToString() ?? "Skip";
+                    if (duplicateBehavior == "Skip")
+                    {
+                        row.HasWarning = true;
+                        row.StatusMessage += "Duplicate barcode: row will be skipped. ";
+                    }
+                    else
+                    {
+                        row.HasWarning = true;
+                        row.StatusMessage += "Duplicate barcode: will merge & update prices. ";
+                    }
+                }
+            }
+
+            // Description/Name validation
+            if (string.IsNullOrWhiteSpace(row.Description))
+            {
+                row.HasError = true;
+                row.StatusMessage += "Item Name / Description is missing. ";
+            }
+
+            // Price validation
+            if (row.Cost < 0)
+            {
+                row.HasError = true;
+                row.StatusMessage += "Cost Price cannot be negative. ";
+            }
+            if (row.RetailPrice < 0)
+            {
+                row.HasError = true;
+                row.StatusMessage += "Retail Price cannot be negative. ";
+            }
+
+            // Category/Brand/Unit master validation
+            if (!autoCreate)
+            {
+                if (!string.IsNullOrWhiteSpace(row.Category) && !_importRepo.CategoryCache.ContainsKey(row.Category.Trim()))
+                {
+                    row.HasError = true;
+                    row.StatusMessage += $"Category '{row.Category}' does not exist. ";
+                }
+                if (!string.IsNullOrWhiteSpace(row.Brand) && !_importRepo.BrandCache.ContainsKey(row.Brand.Trim()))
+                {
+                    row.HasError = true;
+                    row.StatusMessage += $"Brand '{row.Brand}' does not exist. ";
+                }
+                if (!string.IsNullOrWhiteSpace(row.Unit) && !_importRepo.UnitCache.ContainsKey(row.Unit.Trim()))
+                {
+                    row.HasError = true;
+                    row.StatusMessage += $"Unit '{row.Unit}' does not exist. ";
+                }
+            }
+            else
+            {
+                if (!string.IsNullOrWhiteSpace(row.Category) && !_importRepo.CategoryCache.ContainsKey(row.Category.Trim()))
+                {
+                    row.HasWarning = true;
+                    row.StatusMessage += $"[Will create Category: {row.Category}] ";
+                }
+                if (!string.IsNullOrWhiteSpace(row.Brand) && !_importRepo.BrandCache.ContainsKey(row.Brand.Trim()))
+                {
+                    row.HasWarning = true;
+                    row.StatusMessage += $"[Will create Brand: {row.Brand}] ";
+                }
+                if (!string.IsNullOrWhiteSpace(row.Unit) && !_importRepo.UnitCache.ContainsKey(row.Unit.Trim()))
+                {
+                    row.HasWarning = true;
+                    row.StatusMessage += $"[Will create Unit: {row.Unit}] ";
+                }
+            }
+
+            if (!row.HasError && !row.HasWarning)
+            {
+                row.StatusMessage = "Valid";
+            }
+        }
+
+        private void UpdateStatistics()
+        {
+            int total = _validationRows.Count;
+            int errors = _validationRows.Count(r => r.HasError);
+            int warnings = _validationRows.Count(r => r.HasWarning && !r.HasError);
+            int valid = total - errors - warnings;
+
+            lblStats.Text = $"Total Rows: {total}  |  Valid: {valid}  |  Warnings: {warnings}  |  Errors: {errors}";
+
+            // Enable import if we have at least one row without error
+            btnImport.Enabled = (total - errors) > 0;
         }
 
         // Helper structure for Dropdown Items — works with UltraComboEditor.Items.Add(object)

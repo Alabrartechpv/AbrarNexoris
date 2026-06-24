@@ -1322,6 +1322,12 @@ namespace PosBranch_Win.DialogBox
                     }
                 }
 
+                // Enable multi-select for stock transfer and stock adjustment to allow bulk adding
+                if (FormName == "FrmStockTransfer" || FormName == "FrmStockAdjustment")
+                {
+                    ultraGrid1.DisplayLayout.Override.SelectTypeRow = Infragistics.Win.UltraWinGrid.SelectType.Extended;
+                }
+
                 // Refresh the grid to apply all changes
                 ultraGrid1.Refresh();
 
@@ -2476,6 +2482,11 @@ namespace PosBranch_Win.DialogBox
                     System.Diagnostics.Debug.WriteLine("Sending item to Stock Adjustment form");
                     SendItemToStockAdjustment();
                 }
+                else if (FormName == "FrmStockTransfer")
+                {
+                    System.Diagnostics.Debug.WriteLine("Sending item to Stock Transfer form");
+                    SendItemToStockTransfer();
+                }
                 else if (FormName == "FromPurchaseReturn")
                 {
                     SendItemToPurchaseReturn();
@@ -2505,6 +2516,11 @@ namespace PosBranch_Win.DialogBox
                     if (FormName == "FrmStockAdjustment")
                     {
                         SendItemToStockAdjustment();
+                        return true;
+                    }
+                    else if (FormName == "FrmStockTransfer")
+                    {
+                        SendItemToStockTransfer();
                         return true;
                     }
                     else if (FormName == "frmSalesReturn" || FormName == "frmSalesInvoice")
@@ -2571,6 +2587,11 @@ namespace PosBranch_Win.DialogBox
                     // Send the item to FrmStockAdjustment
                     System.Diagnostics.Debug.WriteLine("Double-click detected, sending item to Stock Adjustment");
                     SendItemToStockAdjustment();
+                }
+                else if (FormName == "FrmStockTransfer")
+                {
+                    System.Diagnostics.Debug.WriteLine("Double-click detected, sending item to Stock Transfer");
+                    SendItemToStockTransfer();
                 }
                 else if (FormName == "FrmBarcode" || FormName == "frmChangeItemNo")
                 {
@@ -4351,6 +4372,10 @@ namespace PosBranch_Win.DialogBox
                     {
                         SendItemToStockAdjustment();
                     }
+                    else if (FormName == "FrmStockTransfer")
+                    {
+                        SendItemToStockTransfer();
+                    }
                     else if (FormName == "frmSalesReturn" || FormName == "frmSalesInvoice")
                     {
                         SendItemToSalesReturn();
@@ -4734,6 +4759,69 @@ namespace PosBranch_Win.DialogBox
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 System.Diagnostics.Debug.WriteLine($"Error in SendItemToStockAdjustment: {ex.Message}");
             }
+        }
+
+        // Add a new method to send data to Stock Transfer form
+        private void SendItemToStockTransfer()
+        {
+            try
+            {
+                var parentForm = this.Owner as PosBranch_Win.Transaction.FrmStockTransfer;
+                if (parentForm != null)
+                {
+                    int itemsAdded = 0;
+                    if (ultraGrid1.Selected.Rows.Count > 0)
+                    {
+                        foreach (var selectedRow in ultraGrid1.Selected.Rows)
+                        {
+                            AddSingleRowToTransfer(selectedRow, parentForm);
+                            itemsAdded++;
+                        }
+                        ultraGrid1.Selected.Rows.Clear();
+                    }
+                    else if (ultraGrid1.ActiveRow != null)
+                    {
+                        AddSingleRowToTransfer(ultraGrid1.ActiveRow, parentForm);
+                        itemsAdded++;
+                    }
+
+                    if (itemsAdded > 0)
+                    {
+                        UpdateStatus($"Added {itemsAdded} item(s) to transfer.");
+                        this.DialogResult = DialogResult.OK;
+                        this.Close();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error sending item to Stock Transfer: {ex.Message}");
+            }
+        }
+
+        private void AddSingleRowToTransfer(UltraGridRow row, PosBranch_Win.Transaction.FrmStockTransfer parentForm)
+        {
+            string itemId = row.Cells["ItemId"].Value?.ToString() ?? "";
+            string barcode = row.Cells["BarCode"].Value?.ToString() ?? "";
+            string description = row.Cells["Description"].Value?.ToString() ?? "";
+            string unit = row.Cells["Unit"].Value?.ToString() ?? "";
+            string rate = "0";
+            if (row.Cells.Exists("RetailPrice") && row.Cells["RetailPrice"].Value != null)
+            {
+                rate = row.Cells["RetailPrice"].Value.ToString();
+            }
+            else if (row.Cells.Exists("Cost") && row.Cells["Cost"].Value != null)
+            {
+                rate = row.Cells["Cost"].Value.ToString();
+            }
+
+            int unitId = 0;
+            if (row.Cells.Exists("UnitId") && row.Cells["UnitId"].Value != null)
+            {
+                int.TryParse(row.Cells["UnitId"].Value.ToString(), out unitId);
+            }
+
+            parentForm.AddItemToGrid(itemId, barcode, description, unit, rate, unitId);
         }
 
         private void textBoxsearch_KeyDown(object sender, KeyEventArgs e)

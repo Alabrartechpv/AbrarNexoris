@@ -40,6 +40,9 @@ namespace Repository.MasterRepositry
             public double TaxPer { get; set; }
             public string HSNCode { get; set; }
             public string AlternativeBarcodes { get; set; }
+            public int OrderCycleDays { get; set; } = 7;
+            public double BoxQty { get; set; } = 1.0;
+            public string Perishable { get; set; } = "N";
             
             // Validation output fields
             public bool HasError { get; set; }
@@ -91,6 +94,38 @@ namespace Repository.MasterRepositry
             if (!string.IsNullOrEmpty(DataBase.FinyearId) && int.TryParse(DataBase.FinyearId, out int dbFinYearId) && dbFinYearId > 0)
                 return dbFinYearId;
             return 1;
+        }
+
+        public static string CleanImportedBarcode(string val)
+        {
+            if (string.IsNullOrWhiteSpace(val)) return string.Empty;
+            val = val.Trim();
+
+            // 1. Strip Excel text formula format: ="12345" or =12345
+            if (val.StartsWith("=") && val.Length > 1)
+            {
+                val = val.Substring(1).Trim('\"', '\'').Trim();
+            }
+
+            // 2. Resolve scientific notation (e.g. 4.53E+10, 1E+14, 2E+12)
+            if (val.Contains("E+") || val.Contains("e+") || val.Contains("E-") || val.Contains("e-"))
+            {
+                if (decimal.TryParse(val, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out decimal decVal))
+                {
+                    return decVal.ToString("F0", System.Globalization.CultureInfo.InvariantCulture);
+                }
+            }
+
+            return val;
+        }
+
+        public static string CleanAlternativeBarcodes(string val)
+        {
+            if (val == null) return null;
+            if (string.IsNullOrWhiteSpace(val)) return string.Empty;
+            var parts = val.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            var cleaned = parts.Select(p => CleanImportedBarcode(p)).Where(s => !string.IsNullOrWhiteSpace(s));
+            return string.Join(",", cleaned);
         }
 
         // Load caches from DB
@@ -689,8 +724,10 @@ namespace Repository.MasterRepositry
                 var row = rawRows[index];
                 row.RowIndex = index + 1;
 
-                // Strip whitespaces
-                row.Barcode = row.Barcode?.Trim();
+                // Clean and format numeric codes (handling Excel's scientific notation)
+                row.Barcode = CleanImportedBarcode(row.Barcode);
+                row.HSNCode = CleanImportedBarcode(row.HSNCode);
+                row.AlternativeBarcodes = CleanAlternativeBarcodes(row.AlternativeBarcodes);
                 row.Description = row.Description?.Trim();
 
                 // Validate barcode generation
@@ -823,12 +860,25 @@ namespace Repository.MasterRepositry
                     }
                     uomRows = uniqueUoms;
 
-                    // Check if this item already exists in the database
-                    int existingItemId = DataConnection.QueryFirstOrDefault<int>(
-                        "SELECT ItemId FROM ItemMaster WHERE Description = @Desc AND Active = 0",
+                    // Check if this item already exists in the database and get its reorder parameters
+                    int existingItemId = 0;
+                    int dbOrderCycleDays = 7;
+                    double dbBoxQuantity = 1.0;
+                    bool dbIsPerishable = false;
+
+                    var existingItemInfo = DataConnection.QueryFirstOrDefault<dynamic>(
+                        "SELECT ItemId, Order_Cycle_Days, Box_Quantity, Is_Perishable FROM ItemMaster WHERE Description = @Desc AND Active = 0",
                         new { Desc = description },
                         dbTransaction
                     );
+
+                    if (existingItemInfo != null)
+                    {
+                        existingItemId = Convert.ToInt32(existingItemInfo.ItemId);
+                        dbOrderCycleDays = Convert.ToInt32(existingItemInfo.Order_Cycle_Days ?? 7);
+                        dbBoxQuantity = Convert.ToDouble(existingItemInfo.Box_Quantity ?? 1.0);
+                        dbIsPerishable = Convert.ToBoolean(existingItemInfo.Is_Perishable ?? false);
+                    }
 
                     bool isUpdate = existingItemId > 0;
 
@@ -845,9 +895,28 @@ namespace Repository.MasterRepositry
                         continue;
                     }
 
-                    // Identify the Base Unit row (Packing = 1.0 or marked as Base)
-                    // If none explicitly marked, the first row in the group becomes the base
                     var baseRow = uomRows.FirstOrDefault(r => r.IsBaseUnit.Trim().ToUpper() == "Y" || r.Packing == 1.0) ?? uomRows.First();
+
+                    int targetOrderCycleDays = 7;
+                    if (baseRow.OrderCycleDays != -99)
+                        targetOrderCycleDays = baseRow.OrderCycleDays;
+                    else if (isUpdate)
+                        targetOrderCycleDays = dbOrderCycleDays;
+
+                    double targetBoxQty = 1.0;
+                    if (baseRow.BoxQty != -99.0)
+                        targetBoxQty = baseRow.BoxQty;
+                    else if (isUpdate)
+                        targetBoxQty = dbBoxQuantity;
+
+                    bool targetIsPerishable = false;
+                    if (baseRow.Perishable != null)
+                        targetIsPerishable = string.Equals(baseRow.Perishable, "Y", StringComparison.OrdinalIgnoreCase) ||
+                                             string.Equals(baseRow.Perishable, "YES", StringComparison.OrdinalIgnoreCase) ||
+                                             string.Equals(baseRow.Perishable, "TRUE", StringComparison.OrdinalIgnoreCase) ||
+                                             string.Equals(baseRow.Perishable, "1", StringComparison.OrdinalIgnoreCase);
+                    else if (isUpdate)
+                        targetIsPerishable = dbIsPerishable;
                     
                     // Core Item Info mapping
                     int resolvedCategory = ResolveOrCreateCategory(baseRow.Category, branchId, companyId, dbTransaction);
@@ -887,9 +956,9 @@ namespace Repository.MasterRepositry
                             ForCustomerType = "ALL",
                             NameInLocalLanguage = "",
                             HSNCode = baseRow.HSNCode ?? "",
-                            Order_Cycle_Days = 7,
-                            Box_Quantity = 1,
-                            Is_Perishable = false,
+                            Order_Cycle_Days = targetOrderCycleDays,
+                            Box_Quantity = (int)targetBoxQty,
+                            Is_Perishable = targetIsPerishable,
                             _Operation = "CREATE"
                         };
 
@@ -930,9 +999,9 @@ namespace Repository.MasterRepositry
                             ForCustomerType = "ALL",
                             NameInLocalLanguage = "",
                             HSNCode = baseRow.HSNCode ?? "",
-                            Order_Cycle_Days = 7,
-                            Box_Quantity = 1,
-                            Is_Perishable = false,
+                            Order_Cycle_Days = targetOrderCycleDays,
+                            Box_Quantity = (int)targetBoxQty,
+                            Is_Perishable = targetIsPerishable,
                             _Operation = "UPDATE"
                         };
 
@@ -1184,6 +1253,9 @@ namespace Repository.MasterRepositry
             dt.Columns.Add("TaxPer", typeof(double));
             dt.Columns.Add("HSNCode", typeof(string));
             dt.Columns.Add("AlternativeBarcodes", typeof(string));
+            dt.Columns.Add("OrderCycleDays", typeof(int));
+            dt.Columns.Add("BoxQty", typeof(double));
+            dt.Columns.Add("Perishable", typeof(string));
 
             int branchId = GetBranchId();
 
@@ -1219,7 +1291,10 @@ namespace Repository.MasterRepositry
                         IM.HSNCode AS HSNCode,
                         CASE WHEN PS.IsBaseUnit = 'Y' THEN 
                             COALESCE(STUFF((SELECT ',' + Barcode FROM ItemAlternativeBarcode WHERE ItemId = IM.ItemId FOR XML PATH('')), 1, 1, ''), '')
-                        ELSE '' END AS AlternativeBarcodes
+                        ELSE '' END AS AlternativeBarcodes,
+                        IM.Order_Cycle_Days AS OrderCycleDays,
+                        IM.Box_Quantity AS BoxQty,
+                        CASE WHEN IM.Is_Perishable = 1 THEN 'Y' ELSE 'N' END AS Perishable
                     FROM ItemMaster IM
                     INNER JOIN PriceSettings PS ON IM.ItemId = PS.ItemId
                     LEFT JOIN Category CG ON IM.CategoryId = CG.Id
@@ -1295,7 +1370,10 @@ namespace Repository.MasterRepositry
                         Convert.ToString(item.TaxType),
                         Convert.ToDouble(item.TaxPer),
                         Convert.ToString(item.HSNCode),
-                        Convert.ToString(item.AlternativeBarcodes)
+                        Convert.ToString(item.AlternativeBarcodes),
+                        Convert.ToInt32(item.OrderCycleDays),
+                        Convert.ToDouble(item.BoxQty),
+                        Convert.ToString(item.Perishable)
                     );
                 }
             }
@@ -1378,7 +1456,23 @@ namespace Repository.MasterRepositry
                     // Write rows
                     foreach (DataRow row in dt.Rows)
                     {
-                        string[] fields = row.ItemArray.Select(field => Convert.ToString(field)).ToArray();
+                        var fields = new string[dt.Columns.Count];
+                        for (int colIndex = 0; colIndex < dt.Columns.Count; colIndex++)
+                        {
+                            string colName = dt.Columns[colIndex].ColumnName;
+                            string val = Convert.ToString(row[colIndex]);
+                            
+                            // Prevent Excel from turning long codes (Barcodes, HSN) into scientific notation
+                            if ((colName == "Barcode" || colName == "HSNCode") && !string.IsNullOrWhiteSpace(val))
+                            {
+                                // Only format if it isn't already formatted as an Excel formula
+                                if (!val.StartsWith("="))
+                                {
+                                    val = $"=\"{val}\"";
+                                }
+                            }
+                            fields[colIndex] = val;
+                        }
                         writer.WriteLine(string.Join(",", fields.Select(EscapeCSV)));
                     }
                 }

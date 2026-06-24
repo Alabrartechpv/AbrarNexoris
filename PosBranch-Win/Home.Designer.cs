@@ -82,6 +82,7 @@ namespace PosBranch_Win
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool49 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Group");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool29 = new Infragistics.Win.UltraWinToolbars.ButtonTool("ItemMaster");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool54 = new Infragistics.Win.UltraWinToolbars.ButtonTool("stockadjustment");
+            Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolStockTransferMaster = new Infragistics.Win.UltraWinToolbars.ButtonTool("stocktransfer");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool51 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Line");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool52 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Rack");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool53 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Row");
@@ -97,14 +98,17 @@ namespace PosBranch_Win
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool1 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Purchase");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool2 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Purchase R/n");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool6 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Purchase Order");
+            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup18 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("Stock");
+            Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolStockTransfer = new Infragistics.Win.UltraWinToolbars.ButtonTool("stocktransfer");
+            Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolStockAdjustment = new Infragistics.Win.UltraWinToolbars.ButtonTool("stockadjustment");
             Infragistics.Win.UltraWinToolbars.RibbonTab ribbonTab4 = new Infragistics.Win.UltraWinToolbars.RibbonTab("ribbon3");
-            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup18 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("ribbonGroup1");
+            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup19 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("ribbonGroup1");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool37 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Customer");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool38 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Vendor");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool39 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Ledger");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool73 = new Infragistics.Win.UltraWinToolbars.ButtonTool("AccountGroup");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool71 = new Infragistics.Win.UltraWinToolbars.ButtonTool("ChartOfAccount");
-            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup19 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("ribbonGroup2");
+            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup20 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("ribbonGroup2");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool63 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Receipt");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool65 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Payment");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolGeneralPayment_GroupInstance = new Infragistics.Win.UltraWinToolbars.ButtonTool("GeneralPayment");
@@ -113,7 +117,7 @@ namespace PosBranch_Win
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool69 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Journal");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool77 = new Infragistics.Win.UltraWinToolbars.ButtonTool("DebitNote");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool82 = new Infragistics.Win.UltraWinToolbars.ButtonTool("CreditNote");
-            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup20 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("FinancialReports");
+            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup21 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("FinancialReports");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolTradingPL_Instance = new Infragistics.Win.UltraWinToolbars.ButtonTool("TradingPLAccount");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolProfitLoss_Instance = new Infragistics.Win.UltraWinToolbars.ButtonTool("ProfitLossAccount");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolBalanceSheet_Instance = new Infragistics.Win.UltraWinToolbars.ButtonTool("BalanceSheet");
@@ -124,45 +128,45 @@ namespace PosBranch_Win
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolVendorOutstanding_Instance = new Infragistics.Win.UltraWinToolbars.ButtonTool("VendorOutstandingReport");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolBankReconciliation_GroupInstance = new Infragistics.Win.UltraWinToolbars.ButtonTool("BankReconciliation");
             Infragistics.Win.UltraWinToolbars.RibbonTab ribbonTab5 = new Infragistics.Win.UltraWinToolbars.RibbonTab("ribbon4");
-            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup21 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("Genaral");
+            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup22 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("Genaral");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool23 = new Infragistics.Win.UltraWinToolbars.ButtonTool("frmvendor");
-            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup22 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("ribbonGroup1");
+            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup23 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("ribbonGroup1");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool32 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Goods Received");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool57 = new Infragistics.Win.UltraWinToolbars.ButtonTool("frmdebit");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool59 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Vendor Off Day");
-            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup23 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("ribbonGroup2");
+            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup24 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("ribbonGroup2");
             Infragistics.Win.UltraWinToolbars.RibbonTab ribbonTab6 = new Infragistics.Win.UltraWinToolbars.RibbonTab("ribbon5");
-            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup24 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("ribbonGroup1");
+            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup25 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("ribbonGroup1");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool102 = new Infragistics.Win.UltraWinToolbars.ButtonTool("ItemReport");
-            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup25 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("ribbonGroup2");
+            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup26 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("ribbonGroup2");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool86 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Sales Details");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool92 = new Infragistics.Win.UltraWinToolbars.ButtonTool("SalesReturn");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool112 = new Infragistics.Win.UltraWinToolbars.ButtonTool("SalesProfit");
-            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup26 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("PurchaseRelated");
+            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup27 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("PurchaseRelated");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool91 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Purchase Details");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool98 = new Infragistics.Win.UltraWinToolbars.ButtonTool("PurchaseReturn");
-            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup27 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("tockReports");
+            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup28 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("tockReports");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool104 = new Infragistics.Win.UltraWinToolbars.ButtonTool("StockReport");
             Infragistics.Win.UltraWinToolbars.RibbonTab ribbonTab7 = new Infragistics.Win.UltraWinToolbars.RibbonTab("ribbon6");
-            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup28 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("ribbonGroup1");
+            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup29 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("ribbonGroup1");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool75 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Print Barcode");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool88 = new Infragistics.Win.UltraWinToolbars.ButtonTool("PLU Weighing");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool61 = new Infragistics.Win.UltraWinToolbars.ButtonTool("BtnClosing");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool100 = new Infragistics.Win.UltraWinToolbars.ButtonTool("OpeningStock");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool114 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Change Item No");
             Infragistics.Win.UltraWinToolbars.RibbonTab ribbonTab8 = new Infragistics.Win.UltraWinToolbars.RibbonTab("ribbon7");
-            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup29 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("SalesSettings");
+            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup30 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("SalesSettings");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool106 = new Infragistics.Win.UltraWinToolbars.ButtonTool("POSSettings");
-            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup30 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("ExcelImport");
+            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup31 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("ExcelImport");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolExcelImportInstance = new Infragistics.Win.UltraWinToolbars.ButtonTool("ExcelImport");
-            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup31 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("Roles");
+            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup32 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("Roles");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool108 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Roles");
-            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup32 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("TaxManagement");
+            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup33 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("TaxManagement");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool110 = new Infragistics.Win.UltraWinToolbars.ButtonTool("TaxManagement");
-            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup33 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("ribbonGroup1");
+            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup34 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("ribbonGroup1");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool43 = new Infragistics.Win.UltraWinToolbars.ButtonTool("ActivityLog ");
             Infragistics.Win.UltraWinToolbars.RibbonTab ribbonTab9 = new Infragistics.Win.UltraWinToolbars.RibbonTab("ribbon8");
-            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup34 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("ManualBalance");
+            Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup35 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("ManualBalance");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolManualPB_Instance = new Infragistics.Win.UltraWinToolbars.ButtonTool("ManualPartyBalance");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolManualPBReport_Instance = new Infragistics.Win.UltraWinToolbars.ButtonTool("ManualPartyBalanceReport");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolCombinedPBReport_Instance = new Infragistics.Win.UltraWinToolbars.ButtonTool("CombinedPartyBalanceReport");
@@ -337,8 +341,11 @@ namespace PosBranch_Win
             Infragistics.Win.Appearance appearance86 = new Infragistics.Win.Appearance();
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolGeneralReceipt = new Infragistics.Win.UltraWinToolbars.ButtonTool("GeneralReceipt");
             Infragistics.Win.Appearance appearance87 = new Infragistics.Win.Appearance();
-            Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolBankReconciliation = new Infragistics.Win.UltraWinToolbars.ButtonTool("BankReconciliation");
+            Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolStockTransferShared = new Infragistics.Win.UltraWinToolbars.ButtonTool("stocktransfer");
             Infragistics.Win.Appearance appearance88 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance89 = new Infragistics.Win.Appearance();
+            Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolBankReconciliation = new Infragistics.Win.UltraWinToolbars.ButtonTool("BankReconciliation");
+            Infragistics.Win.Appearance appearance90 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance3 = new Infragistics.Win.Appearance();
             Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarGroup ultraExplorerBarGroup1 = new Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarGroup();
             Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarItem ultraExplorerBarItem1 = new Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarItem();
@@ -595,6 +602,8 @@ namespace PosBranch_Win
             buttonTool29.InstanceProps.IsFirstInGroup = true;
             buttonTool29.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonTool54.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
+            buttonToolStockTransferMaster.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
+            buttonToolStockTransferMaster.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonTool51.InstanceProps.IsFirstInGroup = true;
             buttonTool80.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             ribbonGroup14.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
@@ -603,6 +612,7 @@ namespace PosBranch_Win
             buttonTool49,
             buttonTool29,
             buttonTool54,
+            buttonToolStockTransferMaster,
             buttonTool51,
             buttonTool52,
             buttonTool53,
@@ -637,11 +647,18 @@ namespace PosBranch_Win
             buttonTool1,
             buttonTool2,
             buttonTool6});
+            ribbonGroup18.Caption = "Stock";
+            buttonToolStockTransfer.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
+            buttonToolStockAdjustment.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
+            ribbonGroup18.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
+            buttonToolStockTransfer,
+            buttonToolStockAdjustment});
             ribbonTab3.Groups.AddRange(new Infragistics.Win.UltraWinToolbars.RibbonGroup[] {
             ribbonGroup16,
-            ribbonGroup17});
+            ribbonGroup17,
+            ribbonGroup18});
             ribbonTab4.Caption = "Accounts";
-            ribbonGroup18.Caption = "Account Master";
+            ribbonGroup19.Caption = "Account Master";
             buttonTool37.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonTool38.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonTool39.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
@@ -649,13 +666,13 @@ namespace PosBranch_Win
             buttonTool73.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonTool71.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonTool71.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
-            ribbonGroup18.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
+            ribbonGroup19.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonTool37,
             buttonTool38,
             buttonTool39,
             buttonTool73,
             buttonTool71});
-            ribbonGroup19.Caption = "Account Transaction";
+            ribbonGroup20.Caption = "Account Transaction";
             buttonTool63.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonTool63.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonTool65.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
@@ -672,7 +689,7 @@ namespace PosBranch_Win
             buttonTool77.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonTool82.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonTool82.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
-            ribbonGroup19.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
+            ribbonGroup20.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonTool63,
             buttonTool65,
             buttonToolGeneralPayment_GroupInstance,
@@ -681,7 +698,7 @@ namespace PosBranch_Win
             buttonTool69,
             buttonTool77,
             buttonTool82});
-            ribbonGroup20.Caption = "Financial Reports";
+            ribbonGroup21.Caption = "Financial Reports";
             buttonToolTradingPL_Instance.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonToolTradingPL_Instance.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonToolProfitLoss_Instance.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
@@ -700,7 +717,7 @@ namespace PosBranch_Win
             buttonToolVendorOutstanding_Instance.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonToolBankReconciliation_GroupInstance.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonToolBankReconciliation_GroupInstance.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
-            ribbonGroup20.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
+            ribbonGroup21.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonToolTradingPL_Instance,
             buttonToolProfitLoss_Instance,
             buttonToolBalanceSheet_Instance,
@@ -711,110 +728,110 @@ namespace PosBranch_Win
             buttonToolVendorOutstanding_Instance,
             buttonToolBankReconciliation_GroupInstance});
             ribbonTab4.Groups.AddRange(new Infragistics.Win.UltraWinToolbars.RibbonGroup[] {
-            ribbonGroup18,
             ribbonGroup19,
-            ribbonGroup20});
+            ribbonGroup20,
+            ribbonGroup21});
             ribbonTab5.Caption = "Vendor";
-            ribbonGroup21.Caption = "Genaral";
+            ribbonGroup22.Caption = "Genaral";
             buttonTool23.InstanceProps.IsFirstInGroup = true;
             buttonTool23.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
-            ribbonGroup21.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
-            buttonTool23});
-            ribbonGroup22.Caption = "Transaction";
-            buttonTool32.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             ribbonGroup22.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
+            buttonTool23});
+            ribbonGroup23.Caption = "Transaction";
+            buttonTool32.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
+            ribbonGroup23.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonTool32,
             buttonTool57,
             buttonTool59});
-            ribbonGroup23.Caption = "Report";
+            ribbonGroup24.Caption = "Report";
             ribbonTab5.Groups.AddRange(new Infragistics.Win.UltraWinToolbars.RibbonGroup[] {
-            ribbonGroup21,
             ribbonGroup22,
-            ribbonGroup23});
+            ribbonGroup23,
+            ribbonGroup24});
             ribbonTab6.Caption = "Reports";
-            ribbonGroup24.Caption = "ItemRelated";
+            ribbonGroup25.Caption = "ItemRelated";
             buttonTool102.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
-            ribbonGroup24.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
+            ribbonGroup25.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonTool102});
-            ribbonGroup25.Caption = "SalesRelated";
+            ribbonGroup26.Caption = "SalesRelated";
             buttonTool86.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonTool92.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonTool112.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonTool112.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
-            ribbonGroup25.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
+            ribbonGroup26.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonTool86,
             buttonTool92,
             buttonTool112});
-            ribbonGroup26.Caption = "PurchaseRelated";
+            ribbonGroup27.Caption = "PurchaseRelated";
             buttonTool91.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonTool98.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
-            ribbonGroup26.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
+            ribbonGroup27.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonTool91,
             buttonTool98});
-            ribbonGroup27.Caption = "StockReports";
+            ribbonGroup28.Caption = "StockReports";
             buttonTool104.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
-            ribbonGroup27.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
+            ribbonGroup28.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonTool104});
             ribbonTab6.Groups.AddRange(new Infragistics.Win.UltraWinToolbars.RibbonGroup[] {
-            ribbonGroup24,
             ribbonGroup25,
             ribbonGroup26,
-            ribbonGroup27});
+            ribbonGroup27,
+            ribbonGroup28});
             ribbonTab7.Caption = "Utilities";
-            ribbonGroup28.Caption = "Print";
+            ribbonGroup29.Caption = "Print";
             buttonTool75.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonTool88.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonTool61.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonTool100.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonTool114.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Normal;
             buttonTool114.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Normal;
-            ribbonGroup28.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
+            ribbonGroup29.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonTool75,
             buttonTool88,
             buttonTool61,
             buttonTool100,
             buttonTool114});
             ribbonTab7.Groups.AddRange(new Infragistics.Win.UltraWinToolbars.RibbonGroup[] {
-            ribbonGroup28});
+            ribbonGroup29});
             ribbonTab8.Caption = "Settings";
-            ribbonGroup29.Caption = "Sale Settings";
+            ribbonGroup30.Caption = "Sale Settings";
             buttonTool106.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Normal;
             buttonTool106.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Normal;
-            ribbonGroup29.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
-            buttonTool106});
-            ribbonGroup30.Caption = "Excel Import/Export";
-            buttonToolExcelImportInstance.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             ribbonGroup30.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
-            buttonToolExcelImportInstance});
-            ribbonGroup31.Caption = "RolePermission";
-            buttonTool108.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
+            buttonTool106});
+            ribbonGroup31.Caption = "Excel Import/Export";
+            buttonToolExcelImportInstance.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             ribbonGroup31.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
-            buttonTool108});
-            ribbonGroup32.Caption = "TaxManagement";
-            buttonTool110.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
+            buttonToolExcelImportInstance});
+            ribbonGroup32.Caption = "RolePermission";
+            buttonTool108.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             ribbonGroup32.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
-            buttonTool110});
-            ribbonGroup33.Caption = "Ctrl+A";
-            buttonTool43.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
+            buttonTool108});
+            ribbonGroup33.Caption = "TaxManagement";
+            buttonTool110.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             ribbonGroup33.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
+            buttonTool110});
+            ribbonGroup34.Caption = "Ctrl+A";
+            buttonTool43.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
+            ribbonGroup34.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonTool43});
             ribbonTab8.Groups.AddRange(new Infragistics.Win.UltraWinToolbars.RibbonGroup[] {
-            ribbonGroup29,
             ribbonGroup30,
             ribbonGroup31,
             ribbonGroup32,
-            ribbonGroup33});
+            ribbonGroup33,
+            ribbonGroup34});
             ribbonTab9.Caption = "Manual Balance";
-            ribbonGroup34.Caption = "Manual Party Balance";
+            ribbonGroup35.Caption = "Manual Party Balance";
             buttonToolManualPB_Instance.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonToolManualPBReport_Instance.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonToolCombinedPBReport_Instance.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
-            ribbonGroup34.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
+            ribbonGroup35.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonToolManualPB_Instance,
             buttonToolManualPBReport_Instance,
             buttonToolCombinedPBReport_Instance});
             ribbonTab9.Groups.AddRange(new Infragistics.Win.UltraWinToolbars.RibbonGroup[] {
-            ribbonGroup34});
+            ribbonGroup35});
             this.ultraToolbarsManager1.Ribbon.NonInheritedRibbonTabs.AddRange(new Infragistics.Win.UltraWinToolbars.RibbonTab[] {
             ribbonTab1,
             ribbonTab2,
@@ -1120,8 +1137,13 @@ namespace PosBranch_Win
             buttonToolGeneralReceipt.SharedPropsInternal.AppearancesLarge.Appearance = appearance87;
             buttonToolGeneralReceipt.SharedPropsInternal.Caption = "Accounts Receipt";
             buttonToolGeneralReceipt.SharedPropsInternal.DisplayStyle = Infragistics.Win.UltraWinToolbars.ToolDisplayStyle.ImageAndText;
-            appearance88.Image = global::PosBranch_Win.Properties.Resources.bank2;
-            buttonToolBankReconciliation.SharedPropsInternal.AppearancesLarge.Appearance = appearance88;
+            appearance88.Image = global::PosBranch_Win.Properties.Resources.exchanging;
+            buttonToolStockTransferShared.SharedPropsInternal.AppearancesLarge.Appearance = appearance88;
+            appearance89.Image = global::PosBranch_Win.Properties.Resources.import_export;
+            buttonToolStockTransferShared.SharedPropsInternal.AppearancesSmall.Appearance = appearance89;
+            buttonToolStockTransferShared.SharedPropsInternal.Caption = "Stock Transfer";
+            appearance90.Image = global::PosBranch_Win.Properties.Resources.bank2;
+            buttonToolBankReconciliation.SharedPropsInternal.AppearancesLarge.Appearance = appearance90;
             buttonToolBankReconciliation.SharedPropsInternal.Caption = "Bank Reconciliation";
             buttonToolBankReconciliation.SharedPropsInternal.DisplayStyle = Infragistics.Win.UltraWinToolbars.ToolDisplayStyle.ImageAndText;
             this.ultraToolbarsManager1.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
@@ -1217,6 +1239,7 @@ namespace PosBranch_Win
             buttonTool132,
             buttonToolGeneralPayment,
             buttonToolGeneralReceipt,
+            buttonToolStockTransferShared,
             buttonToolBankReconciliation});
             this.ultraToolbarsManager1.ToolClick += new Infragistics.Win.UltraWinToolbars.ToolClickEventHandler(this.ultraToolbarsManager1_ToolClick_1);
             // 

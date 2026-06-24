@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -25,7 +25,7 @@ namespace ModelClass
         public static string SalesOrder = "Sales Order";
         public static string ManufacturingJournal = "Manufacturing Journal";
         public static string PurchaseReturn = "PR";
-        //public static string StockTransfer = "Stock Transfer";
+        public static string StockTransfer = "Stock Transfer";
     }
 
     public static class DefaultLedgers

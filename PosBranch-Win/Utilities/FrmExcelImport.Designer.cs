@@ -29,8 +29,8 @@ namespace PosBranch_Win.Utilities
             Infragistics.Win.Appearance appearance10 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance11 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance12 = new Infragistics.Win.Appearance();
-            this.tabControlMain = new System.Windows.Forms.TabControl();
-            this.tabImport = new System.Windows.Forms.TabPage();
+            this.tabControlMain = new Infragistics.Win.UltraWinTabControl.UltraTabControl();
+            this.tabImport = new Infragistics.Win.UltraWinTabControl.UltraTabPageControl();
             this.splitContainerImport = new System.Windows.Forms.SplitContainer();
             this.grpMapping = new Infragistics.Win.Misc.UltraGroupBox();
             this.pnlMappingGrid = new Infragistics.Win.Misc.UltraPanel();
@@ -58,7 +58,8 @@ namespace PosBranch_Win.Utilities
             this.btnBrowse = new Infragistics.Win.Misc.UltraButton();
             this.txtFilePath = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.lblFilePath = new Infragistics.Win.Misc.UltraLabel();
-            this.tabExport = new System.Windows.Forms.TabPage();
+            this.tabExport = new Infragistics.Win.UltraWinTabControl.UltraTabPageControl();
+            this.ultraTabSharedControlsPage1 = new Infragistics.Win.UltraWinTabControl.UltraTabSharedControlsPage();
             this.lblProgressExport = new Infragistics.Win.Misc.UltraLabel();
             this.progressBarExport = new System.Windows.Forms.ProgressBar();
             this.btnExport = new Infragistics.Win.Misc.UltraButton();
@@ -78,6 +79,7 @@ namespace PosBranch_Win.Utilities
             this.bgWorkerImport = new System.ComponentModel.BackgroundWorker();
             this.bgWorkerExport = new System.ComponentModel.BackgroundWorker();
             this.bgWorkerExportPreview = new System.ComponentModel.BackgroundWorker();
+            ((System.ComponentModel.ISupportInitialize)(this.tabControlMain)).BeginInit();
             this.tabControlMain.SuspendLayout();
             this.tabImport.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainerImport)).BeginInit();
@@ -118,15 +120,61 @@ namespace PosBranch_Win.Utilities
             // 
             // tabControlMain
             // 
+            // Define active tab appearances for Infragistics tab control
+            Infragistics.Win.Appearance appearanceTabActive = new Infragistics.Win.Appearance();
+            appearanceTabActive.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(31)))), ((int)(((byte)(58)))), ((int)(((byte)(86))))); // Slate navy
+            appearanceTabActive.ForeColor = System.Drawing.Color.White;
+
+            Infragistics.Win.Appearance appearanceTabArea = new Infragistics.Win.Appearance();
+            appearanceTabArea.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(241)))), ((int)(((byte)(245)))), ((int)(((byte)(249))))); // Slate 100 client area background
+
+            Infragistics.Win.UltraWinTabControl.UltraTab ultraTabImport = new Infragistics.Win.UltraWinTabControl.UltraTab();
+            Infragistics.Win.UltraWinTabControl.UltraTab ultraTabExport = new Infragistics.Win.UltraWinTabControl.UltraTab();
+
+            Infragistics.Win.Appearance appearanceCardHeader = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearanceCard = new Infragistics.Win.Appearance();
+
+            appearanceCardHeader.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
+            appearanceCardHeader.FontData.Name = "Segoe UI";
+            appearanceCardHeader.FontData.SizeInPoints = 9.5F;
+            appearanceCardHeader.ForeColor = System.Drawing.Color.FromArgb(31, 58, 86); // Navy blue header
+
+            appearanceCard.BackColor = System.Drawing.Color.White;
+            appearanceCard.BorderColor = System.Drawing.Color.FromArgb(218, 224, 233); // Slate border
+
+            // 
+            // tabControlMain
+            // 
+            this.tabControlMain.ActiveTabAppearance = appearanceTabActive;
+            this.tabControlMain.ClientAreaAppearance = appearanceTabArea;
+            this.tabControlMain.Controls.Add(this.ultraTabSharedControlsPage1);
             this.tabControlMain.Controls.Add(this.tabImport);
             this.tabControlMain.Controls.Add(this.tabExport);
             this.tabControlMain.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControlMain.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tabControlMain.Location = new System.Drawing.Point(0, 0);
             this.tabControlMain.Name = "tabControlMain";
-            this.tabControlMain.SelectedIndex = 0;
+            this.tabControlMain.SharedControlsPage = this.ultraTabSharedControlsPage1;
             this.tabControlMain.Size = new System.Drawing.Size(950, 600);
             this.tabControlMain.TabIndex = 0;
+            this.tabControlMain.TabOrientation = Infragistics.Win.UltraWinTabs.TabOrientation.TopLeft;
+            this.tabControlMain.Style = Infragistics.Win.UltraWinTabControl.UltraTabControlStyle.VisualStudio2005;
+            this.tabControlMain.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+
+            ultraTabImport.TabPage = this.tabImport;
+            ultraTabImport.Text = "Import Products";
+            ultraTabExport.TabPage = this.tabExport;
+            ultraTabExport.Text = "Export Products";
+
+            this.tabControlMain.Tabs.AddRange(new Infragistics.Win.UltraWinTabControl.UltraTab[] {
+            ultraTabImport,
+            ultraTabExport});
+            // 
+            // ultraTabSharedControlsPage1
+            // 
+            this.ultraTabSharedControlsPage1.Location = new System.Drawing.Point(-10000, -10000);
+            this.ultraTabSharedControlsPage1.Name = "ultraTabSharedControlsPage1";
+            this.ultraTabSharedControlsPage1.Size = new System.Drawing.Size(946, 574);
             // 
             // tabImport
             // 
@@ -134,13 +182,10 @@ namespace PosBranch_Win.Utilities
             this.tabImport.Controls.Add(this.pnlImportProgress);
             this.tabImport.Controls.Add(this.pnlOptions);
             this.tabImport.Controls.Add(this.pnlFileSelection);
-            this.tabImport.Location = new System.Drawing.Point(4, 26);
+            this.tabImport.Location = new System.Drawing.Point(1, 23);
             this.tabImport.Name = "tabImport";
             this.tabImport.Padding = new System.Windows.Forms.Padding(10);
-            this.tabImport.Size = new System.Drawing.Size(942, 570);
-            this.tabImport.TabIndex = 0;
-            this.tabImport.Text = "Import Products";
-            this.tabImport.UseVisualStyleBackColor = true;
+            this.tabImport.Size = new System.Drawing.Size(946, 574);
             // 
             // splitContainerImport
             // 
@@ -164,6 +209,10 @@ namespace PosBranch_Win.Utilities
             // 
             // grpMapping
             // 
+            this.grpMapping.HeaderAppearance = appearanceCardHeader;
+            this.grpMapping.Appearance = appearanceCard;
+            this.grpMapping.HeaderPosition = Infragistics.Win.Misc.GroupBoxHeaderPosition.TopInsideBorder;
+            this.grpMapping.ViewStyle = Infragistics.Win.Misc.GroupBoxViewStyle.Office2007;
             this.grpMapping.Controls.Add(this.pnlMappingGrid);
             this.grpMapping.Controls.Add(this.pnlAutoMapButton);
             this.grpMapping.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -198,7 +247,7 @@ namespace PosBranch_Win.Utilities
             // 
             // btnAutoMap
             // 
-            appearance1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(52)))), ((int)(((byte)(73)))), ((int)(((byte)(94)))));
+            appearance1.BackColor = System.Drawing.Color.FromArgb(100, 116, 139); // Slate-500
             appearance1.ForeColor = System.Drawing.Color.White;
             this.btnAutoMap.Appearance = appearance1;
             this.btnAutoMap.ButtonStyle = Infragistics.Win.UIElementButtonStyle.Flat;
@@ -213,8 +262,8 @@ namespace PosBranch_Win.Utilities
             // 
             // btnPreview
             // 
-            appearance2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(41)))), ((int)(((byte)(128)))), ((int)(((byte)(185)))));
-            appearance2.BackColorDisabled = System.Drawing.Color.FromArgb(((int)(((byte)(129)))), ((int)(((byte)(178)))), ((int)(((byte)(215)))));
+            appearance2.BackColor = System.Drawing.Color.FromArgb(37, 99, 235); // Royal Blue
+            appearance2.BackColorDisabled = System.Drawing.Color.FromArgb(147, 197, 253);
             appearance2.ForeColor = System.Drawing.Color.White;
             appearance2.ForeColorDisabled = System.Drawing.Color.FromArgb(((int)(((byte)(240)))), ((int)(((byte)(240)))), ((int)(((byte)(240)))));
             this.btnPreview.Appearance = appearance2;
@@ -231,6 +280,10 @@ namespace PosBranch_Win.Utilities
             // 
             // grpPreview
             // 
+            this.grpPreview.HeaderAppearance = appearanceCardHeader;
+            this.grpPreview.Appearance = appearanceCard;
+            this.grpPreview.HeaderPosition = Infragistics.Win.Misc.GroupBoxHeaderPosition.TopInsideBorder;
+            this.grpPreview.ViewStyle = Infragistics.Win.Misc.GroupBoxViewStyle.Office2007;
             this.grpPreview.Controls.Add(this.ultraGridPreview);
             this.grpPreview.Controls.Add(this.pnlPreviewBanner);
             this.grpPreview.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -256,7 +309,7 @@ namespace PosBranch_Win.Utilities
             // 
             // pnlPreviewBanner
             // 
-            appearance3.BackColor = System.Drawing.Color.WhiteSmoke;
+            appearance3.BackColor = System.Drawing.Color.FromArgb(248, 250, 252); // Slate-50 background
             this.pnlPreviewBanner.Appearance = appearance3;
             // 
             // pnlPreviewBanner.ClientArea
@@ -282,7 +335,7 @@ namespace PosBranch_Win.Utilities
             // btnDownloadErrorLog
             // 
             this.btnDownloadErrorLog.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            appearance4.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(57)))), ((int)(((byte)(43)))));
+            appearance4.BackColor = System.Drawing.Color.FromArgb(220, 38, 38); // Crimson Red
             appearance4.ForeColor = System.Drawing.Color.White;
             this.btnDownloadErrorLog.Appearance = appearance4;
             this.btnDownloadErrorLog.ButtonStyle = Infragistics.Win.UIElementButtonStyle.Flat;
@@ -333,8 +386,8 @@ namespace PosBranch_Win.Utilities
             // btnImport
             // 
             this.btnImport.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            appearance5.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(150)))), ((int)(((byte)(136)))));
-            appearance5.BackColorDisabled = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(203)))), ((int)(((byte)(196)))));
+            appearance5.BackColor = System.Drawing.Color.FromArgb(5, 150, 105); // Emerald Green
+            appearance5.BackColorDisabled = System.Drawing.Color.FromArgb(167, 243, 208);
             appearance5.ForeColor = System.Drawing.Color.White;
             appearance5.ForeColorDisabled = System.Drawing.Color.FromArgb(((int)(((byte)(240)))), ((int)(((byte)(240)))), ((int)(((byte)(240)))));
             this.btnImport.Appearance = appearance5;
@@ -351,7 +404,7 @@ namespace PosBranch_Win.Utilities
             // 
             // pnlOptions
             // 
-            appearance6.BackColor = System.Drawing.Color.WhiteSmoke;
+            appearance6.BackColor = System.Drawing.Color.FromArgb(248, 250, 252); // Slate-50 background
             this.pnlOptions.Appearance = appearance6;
             // 
             // pnlOptions.ClientArea
@@ -512,17 +565,14 @@ namespace PosBranch_Win.Utilities
             // 
             this.tabExport.Controls.Add(this.grpExportPreview);
             this.tabExport.Controls.Add(this.grpFilters);
-            this.tabExport.Location = new System.Drawing.Point(4, 26);
+            this.tabExport.Location = new System.Drawing.Point(-10000, -10000);
             this.tabExport.Name = "tabExport";
             this.tabExport.Padding = new System.Windows.Forms.Padding(10);
-            this.tabExport.Size = new System.Drawing.Size(942, 570);
-            this.tabExport.TabIndex = 1;
-            this.tabExport.Text = "Export Products";
-            this.tabExport.UseVisualStyleBackColor = true;
+            this.tabExport.Size = new System.Drawing.Size(946, 574);
             // 
             // btnLoadPreview
             // 
-            this.btnLoadPreview.Appearance.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(41)))), ((int)(((byte)(128)))), ((int)(((byte)(185)))));
+            this.btnLoadPreview.Appearance.BackColor = System.Drawing.Color.FromArgb(37, 99, 235); // Royal Blue
             this.btnLoadPreview.Appearance.ForeColor = System.Drawing.Color.White;
             this.btnLoadPreview.ButtonStyle = Infragistics.Win.UIElementButtonStyle.Flat;
             this.btnLoadPreview.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -553,8 +603,8 @@ namespace PosBranch_Win.Utilities
             // 
             // btnExport
             // 
-            appearance12.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(150)))), ((int)(((byte)(136)))));
-            appearance12.BackColorDisabled = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(203)))), ((int)(((byte)(196)))));
+            appearance12.BackColor = System.Drawing.Color.FromArgb(5, 150, 105); // Emerald Green
+            appearance12.BackColorDisabled = System.Drawing.Color.FromArgb(167, 243, 208);
             appearance12.ForeColor = System.Drawing.Color.White;
             appearance12.ForeColorDisabled = System.Drawing.Color.FromArgb(((int)(((byte)(240)))), ((int)(((byte)(240)))), ((int)(((byte)(240)))));
             this.btnExport.Appearance = appearance12;
@@ -570,6 +620,10 @@ namespace PosBranch_Win.Utilities
             // 
             // grpFilters
             // 
+            this.grpFilters.HeaderAppearance = appearanceCardHeader;
+            this.grpFilters.Appearance = appearanceCard;
+            this.grpFilters.HeaderPosition = Infragistics.Win.Misc.GroupBoxHeaderPosition.TopInsideBorder;
+            this.grpFilters.ViewStyle = Infragistics.Win.Misc.GroupBoxViewStyle.Office2007;
             this.grpFilters.Controls.Add(this.btnExport);
             this.grpFilters.Controls.Add(this.btnLoadPreview);
             this.grpFilters.Controls.Add(this.progressBarExport);
@@ -610,6 +664,10 @@ namespace PosBranch_Win.Utilities
             // 
             // grpExportPreview
             // 
+            this.grpExportPreview.HeaderAppearance = appearanceCardHeader;
+            this.grpExportPreview.Appearance = appearanceCard;
+            this.grpExportPreview.HeaderPosition = Infragistics.Win.Misc.GroupBoxHeaderPosition.TopInsideBorder;
+            this.grpExportPreview.ViewStyle = Infragistics.Win.Misc.GroupBoxViewStyle.Office2007;
             this.grpExportPreview.Controls.Add(this.ultraGridExportPreview);
             this.grpExportPreview.Dock = System.Windows.Forms.DockStyle.Fill;
             this.grpExportPreview.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -717,8 +775,10 @@ namespace PosBranch_Win.Utilities
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "FrmExcelImport";
             this.Text = "Bulk Product Import / Export";
+            this.BackColor = System.Drawing.Color.FromArgb(241, 245, 249); // Slate-100 Form Background
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Load += new System.EventHandler(this.FrmExcelImport_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.tabControlMain)).EndInit();
             this.tabControlMain.ResumeLayout(false);
             this.tabImport.ResumeLayout(false);
             this.splitContainerImport.Panel1.ResumeLayout(false);
@@ -765,9 +825,10 @@ namespace PosBranch_Win.Utilities
 
         #endregion
 
-        private System.Windows.Forms.TabControl tabControlMain;
-        private System.Windows.Forms.TabPage tabImport;
-        private System.Windows.Forms.TabPage tabExport;
+        private Infragistics.Win.UltraWinTabControl.UltraTabControl tabControlMain;
+        private Infragistics.Win.UltraWinTabControl.UltraTabPageControl tabImport;
+        private Infragistics.Win.UltraWinTabControl.UltraTabPageControl tabExport;
+        private Infragistics.Win.UltraWinTabControl.UltraTabSharedControlsPage ultraTabSharedControlsPage1;
         private Infragistics.Win.Misc.UltraPanel pnlFileSelection;
         private Infragistics.Win.Misc.UltraLabel lblFilePath;
         private Infragistics.Win.UltraWinEditors.UltraTextEditor txtFilePath;

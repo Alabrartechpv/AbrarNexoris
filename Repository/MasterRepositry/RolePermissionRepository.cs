@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using ModelClass.Master;
 using System;
 using System.Collections.Generic;
@@ -317,6 +317,13 @@ END';
         @FormKey = N'ActivityLog',
         @FormName = N'Activity Log',
         @Category = N'Settings';
+
+    EXEC sp_executesql
+        @Sql,
+        N'@FormKey NVARCHAR(100), @FormName NVARCHAR(200), @Category NVARCHAR(100)',
+        @FormKey = N'stocktransfer',
+        @FormName = N'Stock Transfer',
+        @Category = N'Transaction';
 END", (SqlConnection)DataConnection))
                 {
                     cmd.ExecuteNonQuery();

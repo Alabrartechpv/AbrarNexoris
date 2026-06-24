@@ -71,7 +71,6 @@ namespace PosBranch_Win
             new ReportNavigatorDefinition("Sales", "Salesman Incentive Report", "SalesmanIncentiveReport"),
             new ReportNavigatorDefinition("Sales", "Daily Sales", "DSales"),
             new ReportNavigatorDefinition("Sales", "Counter Report", "CounterReport"),
-            new ReportNavigatorDefinition("Sales", "Shift Reconciliation (Z-Report)", "ShiftReconciliationReport"),
             new ReportNavigatorDefinition("Purchase", "Purchase Details", "Purchase Details"),
             new ReportNavigatorDefinition("Purchase", "Purchase Return Report", "PurchaseReturn"),
             new ReportNavigatorDefinition("Customer", "Customer Outstanding Listing", "CustomerOutstandingReport"),
@@ -1985,6 +1984,11 @@ namespace PosBranch_Win
                 FrmStockAdjustment stokadj = new FrmStockAdjustment();
                 OpenFormInTab(stokadj, "Stock Adjustment");
             }
+            if (e.Tool.Key == "stocktransfer")
+            {
+                FrmStockTransfer stoktransfer = new FrmStockTransfer();
+                OpenFormInTab(stoktransfer, "Stock Transfer");
+            }
             if (e.Tool.Key == "frmvendor")
             {
                 FrmVendor vendor = new FrmVendor();
@@ -2129,11 +2133,6 @@ namespace PosBranch_Win
             {
                 Reports.SalesReports.frmCounterReport frmCounterReport = new Reports.SalesReports.frmCounterReport();
                 OpenFormInTab(frmCounterReport, "Counter Report");
-            }
-            if (e.Tool.Key == "ShiftReconciliationReport")
-            {
-                Reports.FinancialReports.FrmShiftReconciliationReport shiftReconciliation = new Reports.FinancialReports.FrmShiftReconciliationReport();
-                OpenFormInTab(shiftReconciliation, "Shift Reconciliation");
             }
 
             // Activity Log
@@ -3729,8 +3728,7 @@ namespace PosBranch_Win
                     keyToExecute == "SalesmanIncentiveReport" ||
                     keyToExecute == "CounterReport" ||
                     keyToExecute == "TradingAccount" ||
-                    keyToExecute == "ProfitLossAccount" ||
-                    keyToExecute == "ShiftReconciliationReport")
+                    keyToExecute == "ProfitLossAccount")
                 {
                     Infragistics.Win.UltraWinToolbars.ToolBase toolToExecute;
 
