@@ -64,6 +64,7 @@ namespace Repository
         public static string _VendorPaymentDetails = "_VendorPaymentDetails";
         public static string _CompanyInfo = "_CompanyInfo";
         public static string _POS_CashBankBook = "POS_CashBankBook";
+        public static string POS_BankStatementReport = "POS_BankStatementReport";
         public static string _CompanyDetails = "_CompanyDetails";
         public static string _POS_GetWeighingItems = "_POS_GetWeighingItems";
         public const string _POS_DayBook = "POS_DayBook";

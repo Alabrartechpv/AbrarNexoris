@@ -143,6 +143,7 @@ namespace ModelClass
         public int BranchId { get; set; }
         public int UserId { get; set; }
         public int CounterId { get; set; }
+        public DateTime BillDate { get; set; }
     }
     public class GetHoldBillGrid
     {

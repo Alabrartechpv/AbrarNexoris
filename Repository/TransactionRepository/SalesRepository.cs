@@ -1804,7 +1804,8 @@ namespace Repository.TransactionRepository
                                         CustomerName = row["CustomerName"] != DBNull.Value ? row["CustomerName"].ToString() : "Default Customer",
                                         NetAmount = row["NetAmount"] != DBNull.Value ? Convert.ToDouble(row["NetAmount"]) : 0,
                                         SaleType = saleType,
-                                        CounterId = counterId
+                                        CounterId = counterId,
+                                        BillDate = billDate
                                     };
                                     bills.Add(bill);
                                 }

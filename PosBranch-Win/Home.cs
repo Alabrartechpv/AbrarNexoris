@@ -83,6 +83,7 @@ namespace PosBranch_Win
             new ReportNavigatorDefinition("Analysis", "Trial Balance", "TrialBalance"),
             new ReportNavigatorDefinition("Analysis", "Cash & Bank Book", "CashBankBook"),
             new ReportNavigatorDefinition("Analysis", "Day Book", "DayBook"),
+            new ReportNavigatorDefinition("Analysis", "Counter Closing Report", "ShiftReconciliationReport"),
             new ReportNavigatorDefinition("Others", "Manual Party Balance Report", "ManualPartyBalanceReport"),
             new ReportNavigatorDefinition("Others", "Combined Party Balance Report", "CombinedPartyBalanceReport")
         };
@@ -1918,6 +1919,16 @@ namespace PosBranch_Win
                 Accounts.FrmBankReconciliation bankRecon = new FrmBankReconciliation();
                 OpenFormInTab(bankRecon, "Bank Reconciliation");
             }
+            if (e.Tool.Key == "BankStatementReport")
+            {
+                PosBranch_Win.Reports.FinancialReports.FrmBankStatementReport bankStatement = new PosBranch_Win.Reports.FinancialReports.FrmBankStatementReport();
+                OpenFormInTab(bankStatement, "Bank Statement");
+            }
+            if (e.Tool.Key == "ShiftReconciliationReport")
+            {
+                PosBranch_Win.Reports.FinancialReports.FrmShiftReconciliationReport shiftReport = new PosBranch_Win.Reports.FinancialReports.FrmShiftReconciliationReport();
+                OpenFormInTab(shiftReport, "Shift Report");
+            }
             if (e.Tool.Key == "Contra")
             {
                 Accounts.FrmContra contra = new FrmContra();
@@ -3727,6 +3738,7 @@ namespace PosBranch_Win
                     keyToExecute == "CustomerReceiptReport" ||
                     keyToExecute == "SalesmanIncentiveReport" ||
                     keyToExecute == "CounterReport" ||
+                    keyToExecute == "ShiftReconciliationReport" ||
                     keyToExecute == "TradingAccount" ||
                     keyToExecute == "ProfitLossAccount")
                 {

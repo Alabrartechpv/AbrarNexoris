@@ -1,4 +1,4 @@
-﻿using Infragistics.Win;
+using Infragistics.Win;
 using Infragistics.Win.UltraWinGrid;
 using ModelClass;
 using Repository.TransactionRepository;
@@ -107,6 +107,8 @@ namespace PosBranch_Win.DialogBox
             }
         }
 
+        public void RefreshData() => LoadSalesData();
+
         private void InitializeSavedColumnWidths()
         {
             savedColumnWidths.Clear();
@@ -124,6 +126,8 @@ namespace PosBranch_Win.DialogBox
         
         private void PreserveColumnWidths()
         {
+            if (ultraGrid1.DisplayLayout.AutoFitStyle == AutoFitStyle.ResizeAllColumns)
+                return;
             try
             {
                 ultraGrid1.SuspendLayout();
@@ -338,7 +342,7 @@ namespace PosBranch_Win.DialogBox
                 }
                 o.CellAppearance.TextVAlign = VAlign.Middle;
                 o.CellAppearance.TextHAlign = HAlign.Center;
-                ultraGrid1.DisplayLayout.AutoFitStyle = AutoFitStyle.None;
+                ultraGrid1.DisplayLayout.AutoFitStyle = AutoFitStyle.ResizeAllColumns;
                 o.ColumnAutoSizeMode = ColumnAutoSizeMode.None;
             }
             catch (Exception ex) { UpdateStatus($"Grid style error: {ex.Message}"); }
@@ -376,7 +380,7 @@ namespace PosBranch_Win.DialogBox
                 e.Layout.Override.HeaderAppearance.FontData.SizeInPoints = 9;
                 e.Layout.Override.HeaderAppearance.FontData.Name = "Microsoft Sans Serif";
                 e.Layout.Bands[0].Columns.Cast<UltraGridColumn>().ToList().ForEach(c => c.Hidden = true);
-                string[] columnsToShow = { "BillNo", "CustomerName", "NetAmount", "Status" };
+                string[] columnsToShow = { "BillNo", "BillDate", "CustomerName", "NetAmount", "Status" };
                 for (int i = 0; i < columnsToShow.Length; i++)
                 {
                     if (e.Layout.Bands[0].Columns.Exists(columnsToShow[i]))
@@ -386,10 +390,11 @@ namespace PosBranch_Win.DialogBox
                         col.Header.VisiblePosition = i;
                         switch (columnsToShow[i])
                         {
-                            case "BillNo": col.Header.Caption = "Bill No"; col.Width = 100; break;
-                            case "CustomerName": col.Header.Caption = "Customer Name"; col.Width = 350; col.CellAppearance.TextHAlign = HAlign.Left; break;
-                            case "NetAmount": col.Header.Caption = "Amount"; col.Width = 150; col.Format = "N2"; col.CellAppearance.TextHAlign = HAlign.Right; break;
-                            case "Status": col.Header.Caption = "Status"; col.Width = 100; break;
+                            case "BillNo": col.Header.Caption = "Bill No"; col.Width = 80; break;
+                            case "BillDate": col.Header.Caption = "Date"; col.Width = 100; col.Format = "dd-MM-yyyy"; break;
+                            case "CustomerName": col.Header.Caption = "Customer Name"; col.Width = 280; col.CellAppearance.TextHAlign = HAlign.Left; break;
+                            case "NetAmount": col.Header.Caption = "Amount"; col.Width = 110; col.Format = "N2"; col.CellAppearance.TextHAlign = HAlign.Right; break;
+                            case "Status": col.Header.Caption = "Status"; col.Width = 80; break;
                         }
                     }
                 }
@@ -438,7 +443,7 @@ namespace PosBranch_Win.DialogBox
         private void InitializeColumnOrderComboBox()
         {
             comboBox2.Items.Clear();
-            comboBox2.Items.AddRange(new object[] { "Bill No", "Customer Name", "Amount" });
+            comboBox2.Items.AddRange(new object[] { "Bill No", "Date", "Customer Name", "Amount" });
             comboBox2.SelectedIndex = 0;
             comboBox2.SelectedIndexChanged += (s, e) => ReorderColumns(comboBox2.SelectedItem.ToString());
         }
@@ -447,7 +452,7 @@ namespace PosBranch_Win.DialogBox
         {
             if (ultraGrid1.DisplayLayout.Bands.Count == 0) return;
             ultraGrid1.SuspendLayout();
-            var columnMap = new Dictionary<string, string> { { "Bill No", "BillNo" }, { "Customer Name", "CustomerName" }, { "Amount", "NetAmount" } };
+            var columnMap = new Dictionary<string, string> { { "Bill No", "BillNo" }, { "Date", "BillDate" }, { "Customer Name", "CustomerName" }, { "Amount", "NetAmount" } };
             string key = columnMap.ContainsKey(selectedColumn) ? columnMap[selectedColumn] : "BillNo";
             if (ultraGrid1.DisplayLayout.Bands[0].Columns.Exists(key))
             {
@@ -565,10 +570,10 @@ namespace PosBranch_Win.DialogBox
         {
             if (columnChooserListBox == null) return;
             columnChooserListBox.Items.Clear();
-            string[] standardColumns = { "BillNo", "CustomerName", "NetAmount", "Status" };
+            string[] standardColumns = { "BillNo", "BillDate", "CustomerName", "NetAmount", "Status" };
             var displayNames = new Dictionary<string, string>
             {
-                { "BillNo", "Bill No" }, { "CustomerName", "Customer Name" },
+                { "BillNo", "Bill No" }, { "BillDate", "Date" }, { "CustomerName", "Customer Name" },
                 { "NetAmount", "Amount" }, { "Status", "Status" }
             };
             var addedColumns = new HashSet<string>();
