@@ -2161,6 +2161,13 @@ namespace PosBranch_Win
                 OpenFormInTab(posSettings, "Sale Settings");
             }
 
+            // Financial Year Closing
+            if (toolKey == "FinancialYearClosing")
+            {
+                FrmFinancialYearClosing yearClosing = new FrmFinancialYearClosing();
+                OpenFormInTab(yearClosing, "Financial Year Closing");
+            }
+
             // Role Permissions (Admin only)
             if (toolKey == "RolePermissions" || toolKey == "Roles")
             {

@@ -1,4 +1,4 @@
-﻿using ModelClass;
+using ModelClass;
 using ModelClass.TransactionModels;
 using System;
 using System.Collections.Generic;
@@ -1773,7 +1773,7 @@ namespace Repository.TransactionRepository
                     cmd.Parameters.AddWithValue("@_Operation", "GETALL");
                     cmd.Parameters.AddWithValue("@CancelFlag", 0); // Explicitly pass CancelFlag=0 to get only active records
                     cmd.Parameters.AddWithValue("@BranchId", DataBase.BranchId); // Pass current branch
-                    cmd.Parameters.AddWithValue("@FinYearId", 1); // Use hardcoded FinYearId=1 as per requirement
+                    cmd.Parameters.AddWithValue("@FinYearId", SessionContext.FinYearId > 0 ? SessionContext.FinYearId : (int.TryParse(DataBase.FinyearId, out var id) ? id : 1));
                     cmd.Parameters.AddWithValue("@CompanyId", DataBase.CompanyId); // Pass current company
 
                     using (SqlDataAdapter adp = new SqlDataAdapter(cmd))
@@ -2029,7 +2029,7 @@ namespace Repository.TransactionRepository
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@SReturnNo", sReturnNo);
                     cmd.Parameters.AddWithValue("@BranchId", DataBase.BranchId);
-                    cmd.Parameters.AddWithValue("@FinYearId", 1); // Hardcode to 1 per business requirements
+                    cmd.Parameters.AddWithValue("@FinYearId", SessionContext.FinYearId > 0 ? SessionContext.FinYearId : (int.TryParse(DataBase.FinyearId, out var id) ? id : 1));
                     cmd.Parameters.AddWithValue("@_Operation", "GETPAYMENTINFO");
 
                     System.Diagnostics.Debug.WriteLine($"Retrieving payment info for SReturnNo: {sReturnNo}");
@@ -2140,7 +2140,7 @@ namespace Repository.TransactionRepository
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@SReturnNo", sReturnNo);
                     cmd.Parameters.AddWithValue("@BranchId", DataBase.BranchId);
-                    cmd.Parameters.AddWithValue("@FinYearId", 1); // Hardcode to 1 per business requirements
+                    cmd.Parameters.AddWithValue("@FinYearId", SessionContext.FinYearId > 0 ? SessionContext.FinYearId : (int.TryParse(DataBase.FinyearId, out var id) ? id : 1));
                     cmd.Parameters.AddWithValue("@_Operation", "GETBYID");
 
                     using (SqlDataAdapter adapt = new SqlDataAdapter(cmd))
@@ -2232,7 +2232,7 @@ namespace Repository.TransactionRepository
                                 {
                                     DataRow row = ds.Tables[0].Rows[0];
                                     branchId = Convert.ToInt32(row["BranchId"]);
-                                    finYearId = 1; // Always use FinYearId=1 as per requirement
+                                    finYearId = SessionContext.FinYearId > 0 ? SessionContext.FinYearId : (int.TryParse(DataBase.FinyearId, out var id) ? id : 1);
 
                                     System.Diagnostics.Debug.WriteLine($"Found record with BranchId={branchId}, FinYearId={finYearId} (forced to 1)");
                                 }
@@ -2346,7 +2346,7 @@ namespace Repository.TransactionRepository
                                 cmd.CommandType = CommandType.StoredProcedure;
                                 cmd.Parameters.Add(new SqlParameter("@CompanyId", SqlDbType.Int) { Value = Convert.ToInt32(DataBase.CompanyId) });
                                 cmd.Parameters.Add(new SqlParameter("@BranchId", SqlDbType.Int) { Value = branchId });
-                                cmd.Parameters.Add(new SqlParameter("@FinYearId", SqlDbType.Int) { Value = 1 }); // Always use FinYearId=1
+                                cmd.Parameters.Add(new SqlParameter("@FinYearId", SqlDbType.Int) { Value = SessionContext.FinYearId > 0 ? SessionContext.FinYearId : (int.TryParse(DataBase.FinyearId, out var id) ? id : 1) });
                                 cmd.Parameters.Add(new SqlParameter("@SReturnNo", SqlDbType.Int) { Value = sReturnNo });
                                 cmd.Parameters.Add(new SqlParameter("@VoucherId", SqlDbType.Int) { Value = voucherId });
                                 cmd.Parameters.Add(new SqlParameter("@VoucherType", SqlDbType.VarChar, 50) { Value = "Credit Note" });

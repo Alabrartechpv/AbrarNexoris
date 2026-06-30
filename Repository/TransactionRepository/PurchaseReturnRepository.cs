@@ -1,4 +1,4 @@
-﻿using ModelClass.TransactionModels;
+using ModelClass.TransactionModels;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -339,11 +339,11 @@ namespace Repository.TransactionRepository
                         }
                     }
 
-                    // As a last resort, use a hardcoded value
+                    // As a last resort, use a dynamic session value or default to 1
                     if (pr.FinYearId <= 0)
                     {
-                        pr.FinYearId = 1;
-                        System.Diagnostics.Debug.WriteLine("Using default FinYearId: 1");
+                        pr.FinYearId = SessionContext.FinYearId > 0 ? SessionContext.FinYearId : (int.TryParse(DataBase.FinyearId, out var id) ? id : 1);
+                        System.Diagnostics.Debug.WriteLine($"Using default/session FinYearId: {pr.FinYearId}");
                     }
 
                     DataConnection.Close();
@@ -355,7 +355,7 @@ namespace Repository.TransactionRepository
                         DataConnection.Close();
 
                     // Set a default value
-                    pr.FinYearId = 1;
+                    pr.FinYearId = SessionContext.FinYearId > 0 ? SessionContext.FinYearId : (int.TryParse(DataBase.FinyearId, out var id) ? id : 1);
                 }
             }
 
@@ -1895,18 +1895,18 @@ namespace Repository.TransactionRepository
                             }
                         }
 
-                        // As a last resort, use a hardcoded value
+                        // As a last resort, use a dynamic session value or default to 1
                         if (pr.FinYearId <= 0)
                         {
-                            pr.FinYearId = 1;
-                            System.Diagnostics.Debug.WriteLine("Using default FinYearId: 1");
+                            pr.FinYearId = SessionContext.FinYearId > 0 ? SessionContext.FinYearId : (int.TryParse(DataBase.FinyearId, out var id) ? id : 1);
+                            System.Diagnostics.Debug.WriteLine($"Using default/session FinYearId: {pr.FinYearId}");
                         }
                     }
                     catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine($"Error retrieving FinYearId: {ex.Message}");
                         // Set a default value
-                        pr.FinYearId = 1;
+                        pr.FinYearId = SessionContext.FinYearId > 0 ? SessionContext.FinYearId : (int.TryParse(DataBase.FinyearId, out var id) ? id : 1);
                     }
                 }
 

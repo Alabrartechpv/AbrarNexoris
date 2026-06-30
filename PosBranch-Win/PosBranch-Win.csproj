@@ -1057,6 +1057,12 @@
     <Compile Include="Settings\frmPOSSettings.Designer.cs">
       <DependentUpon>frmPOSSettings.cs</DependentUpon>
     </Compile>
+    <Compile Include="Settings\FrmFinancialYearClosing.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Settings\FrmFinancialYearClosing.Designer.cs">
+      <DependentUpon>FrmFinancialYearClosing.cs</DependentUpon>
+    </Compile>
     <Compile Include="Reportrpt\Sales_Daily.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -1655,6 +1661,9 @@
     <EmbeddedResource Include="Settings\frmPOSSettings.resx">
       <DependentUpon>frmPOSSettings.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Settings\FrmFinancialYearClosing.resx">
+      <DependentUpon>FrmFinancialYearClosing.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Test.resx">
       <DependentUpon>Test.cs</DependentUpon>
     </EmbeddedResource>
@@ -1834,6 +1843,7 @@
     <None Include="Resources\report.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\yearly-report1.png" />
     <None Include="Resources\spreadsheet2.png" />
     <None Include="Resources\transaction2.png" />
     <None Include="Resources\spreadsheet1.png" />
@@ -1858,6 +1868,7 @@
     <None Include="Resources\bank2.png" />
     <None Include="Resources\accounting.png" />
     <None Include="Resources\bank-statement.png" />
+    <None Include="Resources\chatgpt_year_closing.png" />
     <Content Include="Resources\color-selection.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
