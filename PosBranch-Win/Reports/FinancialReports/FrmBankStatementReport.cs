@@ -13,6 +13,7 @@ using ModelClass;
 using ModelClass.Report;
 using System.Text;
 using System.IO;
+using System.Globalization;
 
 namespace PosBranch_Win.Reports.FinancialReports
 {
@@ -20,6 +21,10 @@ namespace PosBranch_Win.Reports.FinancialReports
     {
         private readonly BankStatementReportRepository _repository;
         private BindingList<BankStatementTransaction> _transactionsList;
+        private List<BankStatementTransaction> _allTransactions;
+        private DateTime _reportFromDate;
+        private DateTime _reportToDate;
+        private bool _updatingPaymentMethods;
 
         // Color constants for consistent theme
         private static readonly Color HeaderBackColor = Color.FromArgb(38, 50, 56);
@@ -42,6 +47,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             InitializeComponent();
             _repository = new BankStatementReportRepository();
             _transactionsList = new BindingList<BankStatementTransaction>();
+            _allTransactions = new List<BankStatementTransaction>();
 
             // Event Handlers
             this.Load += FrmBankStatementReport_Load;
@@ -53,6 +59,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             // UltraGrid events
             ultraGridTransactions.InitializeLayout += UltraGridTransactions_InitializeLayout;
             ultraGridTransactions.InitializeRow += UltraGridTransactions_InitializeRow;
+            ultraGridTransactions.AfterRowFilterChanged += UltraGridTransactions_AfterRowFilterChanged;
 
             // Keyboard Shortcuts
             this.KeyPreview = true;
@@ -64,6 +71,18 @@ namespace PosBranch_Win.Reports.FinancialReports
             SetupGrid();
             StyleButtons();
             StyleSummaryPanels();
+
+            // Populate Pay Mode dropdown
+            cmbPaymentMethod.Items.Clear();
+            cmbPaymentMethod.Items.Add("All", "All");
+            cmbPaymentMethod.Value = "All";
+
+            // Wire ValueChanged after setting initial value
+            cmbPaymentMethod.ValueChanged += CmbPaymentMethod_ValueChanged;
+            txtSearch.TextChanged += TxtSearch_TextChanged;
+
+            dtFromDate.FormatString = "dd-MMM-yyyy";
+            dtToDate.FormatString = "dd-MMM-yyyy";
 
             // Default date range: This Month
             dtFromDate.Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
@@ -92,23 +111,27 @@ namespace PosBranch_Win.Reports.FinancialReports
                 DateTime fromDate = Convert.ToDateTime(dtFromDate.Value).Date;
                 DateTime toDate = Convert.ToDateTime(dtToDate.Value).Date;
 
+                if (fromDate > toDate)
+                {
+                    MessageBox.Show("From Date cannot be later than To Date.", "Invalid Date Range",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    dtFromDate.Focus();
+                    return;
+                }
+
                 BankStatementReportModel report = _repository.GetBankStatementReport(fromDate, toDate);
 
-                _transactionsList = new BindingList<BankStatementTransaction>(report.Transactions);
-                ultraGridTransactions.DataSource = _transactionsList;
-
-                // Update summary panels
-                lblTotalMoneyInValue.Text = report.Summary.TotalMoneyIn.ToString("N2");
-                lblTotalMoneyInValue.Appearance.ForeColor = MoneyInColor;
-
-                lblTotalMoneyOutValue.Text = report.Summary.TotalMoneyOut.ToString("N2");
-                lblTotalMoneyOutValue.Appearance.ForeColor = MoneyOutColor;
-
-                lblNetAmountValue.Text = report.Summary.NetAmount.ToString("N2");
-                lblNetAmountValue.Appearance.ForeColor = report.Summary.NetAmount >= 0 ? NetPositiveColor : NetNegativeColor;
+                _reportFromDate = fromDate;
+                _reportToDate = toDate;
+                _allTransactions = (report.Transactions ?? new List<BankStatementTransaction>())
+                    .OrderBy(t => t.TransactionDate)
+                    .ThenBy(t => t.BillVoucherNo)
+                    .ToList();
+                PopulatePaymentMethods();
+                ApplyPaymentMethodFilter();
 
                 // Show record count in status
-                this.Text = $"Bank Statement Report ({report.Transactions.Count} transactions)";
+                this.Text = $"Bank Transaction Reconciliation - {_allTransactions.Count:N0} transactions";
             }
             catch (Exception ex)
             {
@@ -119,6 +142,177 @@ namespace PosBranch_Win.Reports.FinancialReports
             {
                 this.Cursor = Cursors.Default;
             }
+        }
+
+        private void CmbPaymentMethod_ValueChanged(object sender, EventArgs e)
+        {
+            if (!_updatingPaymentMethods)
+                ApplyPaymentMethodFilter();
+        }
+
+        private void TxtSearch_TextChanged(object sender, EventArgs e)
+        {
+            ApplyPaymentMethodFilter();
+        }
+
+
+
+        private void PopulatePaymentMethods()
+        {
+            string selected = cmbPaymentMethod.Value?.ToString() ?? "All";
+            List<string> methods = _allTransactions
+                .Select(t => (t.PaymentMethod ?? string.Empty).Trim())
+                .Where(m => m.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(m => m)
+                .ToList();
+
+            _updatingPaymentMethods = true;
+            try
+            {
+                cmbPaymentMethod.Items.Clear();
+                cmbPaymentMethod.Items.Add("All", "All payment modes");
+                foreach (string method in methods)
+                    cmbPaymentMethod.Items.Add(method, GetPaymentMethodDisplayName(method));
+
+                cmbPaymentMethod.Value = methods.Any(m => m.Equals(selected, StringComparison.OrdinalIgnoreCase))
+                    ? selected
+                    : "All";
+            }
+            finally
+            {
+                _updatingPaymentMethods = false;
+            }
+        }
+
+        private void ApplyPaymentMethodFilter()
+        {
+            string selectedMethod = cmbPaymentMethod.Value?.ToString() ?? "All";
+            string search = (txtSearch.Text ?? string.Empty).Trim();
+
+            IEnumerable<BankStatementTransaction> query = _allTransactions;
+
+            if (!selectedMethod.Equals("All", StringComparison.OrdinalIgnoreCase))
+                query = query.Where(t => string.Equals((t.PaymentMethod ?? string.Empty).Trim(),
+                    selectedMethod.Trim(), StringComparison.OrdinalIgnoreCase));
+
+            if (search.Length > 0)
+                query = query.Where(t => TransactionContains(t, search));
+
+
+
+            _transactionsList = new BindingList<BankStatementTransaction>(query.ToList());
+            ultraGridTransactions.DataSource = _transactionsList;
+
+            // This updates both overall summaries and the payment breakdown
+            UpdateSummariesFromGrid();
+        }
+
+        private void UltraGridTransactions_AfterRowFilterChanged(object sender, AfterRowFilterChangedEventArgs e)
+        {
+            UpdateSummariesFromGrid();
+        }
+
+        private void UpdateSummariesFromGrid()
+        {
+            decimal totalMoneyIn = 0;
+            decimal totalMoneyOut = 0;
+
+            decimal upiIn = 0, upiOut = 0;
+            decimal bankIn = 0, bankOut = 0;
+            decimal cardIn = 0, cardOut = 0;
+            decimal chequeIn = 0, chequeOut = 0;
+            decimal otherIn = 0, otherOut = 0;
+            int visibleCount = 0;
+
+            foreach (var row in ultraGridTransactions.Rows.GetFilteredInNonGroupByRows())
+            {
+                if (row.IsDataRow)
+                {
+                    visibleCount++;
+                    decimal moneyIn = row.Cells.Exists("MoneyIn") && row.Cells["MoneyIn"].Value != null ? Convert.ToDecimal(row.Cells["MoneyIn"].Value) : 0;
+                    decimal moneyOut = row.Cells.Exists("MoneyOut") && row.Cells["MoneyOut"].Value != null ? Convert.ToDecimal(row.Cells["MoneyOut"].Value) : 0;
+                    string method = row.Cells.Exists("PaymentMethod") && row.Cells["PaymentMethod"].Value != null ? row.Cells["PaymentMethod"].Value.ToString().Trim().ToLowerInvariant() : "";
+                    BankStatementTransaction transaction = row.ListObject as BankStatementTransaction;
+
+                    totalMoneyIn += moneyIn;
+                    totalMoneyOut += moneyOut;
+
+                    if (method.Contains("upi"))
+                    {
+                        upiIn += moneyIn;
+                        upiOut += moneyOut;
+                    }
+                    else if (method.Contains("bank") || method.Contains("transfer") || method.Contains("neft") ||
+                             method.Contains("rtgs") || method.Contains("imps"))
+                    {
+                        bankIn += moneyIn;
+                        bankOut += moneyOut;
+                    }
+                    else if (method.Contains("card"))
+                    {
+                        cardIn += moneyIn;
+                        cardOut += moneyOut;
+                    }
+                    else if (method.Contains("cheque"))
+                    {
+                        chequeIn += moneyIn;
+                        chequeOut += moneyOut;
+                    }
+                    else
+                    {
+                        otherIn += moneyIn;
+                        otherOut += moneyOut;
+                    }
+                }
+            }
+
+            decimal netAmount = totalMoneyIn - totalMoneyOut;
+
+            lblTotalMoneyInValue.Text = totalMoneyIn.ToString("N2");
+            lblTotalMoneyInValue.Appearance.ForeColor = MoneyInColor;
+
+            lblTotalMoneyOutValue.Text = totalMoneyOut.ToString("N2");
+            lblTotalMoneyOutValue.Appearance.ForeColor = MoneyOutColor;
+
+            lblNetAmountValue.Text = netAmount.ToString("N2");
+            lblNetAmountValue.Appearance.ForeColor = netAmount >= 0 ? NetPositiveColor : NetNegativeColor;
+
+            lblBreakdown.Text = $"UPI  In {upiIn:N2} / Out {upiOut:N2}     |     " +
+                               $"Bank Transfer  In {bankIn:N2} / Out {bankOut:N2}     |     " +
+                               $"Card  In {cardIn:N2} / Out {cardOut:N2}     |     " +
+                               $"Cheque  In {chequeIn:N2} / Out {chequeOut:N2}     |     " +
+                               $"Other  In {otherIn:N2} / Out {otherOut:N2}";
+
+            lblPeriod.Text = _reportFromDate == DateTime.MinValue
+                ? "Select a period and generate the report"
+                : $"Period: {_reportFromDate:dd-MMM-yyyy} to {_reportToDate:dd-MMM-yyyy}";
+            lblRecordCount.Text = $"Showing {visibleCount:N0} of {_allTransactions.Count:N0}";
+        }
+
+        private static bool TransactionContains(BankStatementTransaction transaction, string search)
+        {
+            return Contains(transaction.TransactionType, search) ||
+                   Contains(transaction.PartyName, search) ||
+                   Contains(transaction.BillVoucherNo, search) ||
+                   Contains(transaction.PaymentMethod, search) ||
+                   Contains(transaction.Reference, search) ||
+                   transaction.MoneyIn.ToString("0.##", CultureInfo.InvariantCulture).Contains(search) ||
+                   transaction.MoneyOut.ToString("0.##", CultureInfo.InvariantCulture).Contains(search);
+        }
+
+        private static bool Contains(string value, string search)
+        {
+            return (value ?? string.Empty).IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+
+
+        private static string GetPaymentMethodDisplayName(string method)
+        {
+            if (string.Equals(method, "BankTransfer", StringComparison.OrdinalIgnoreCase))
+                return "Bank Transfer";
+            return method;
         }
 
         #endregion
@@ -137,6 +331,8 @@ namespace PosBranch_Win.Reports.FinancialReports
             ultraGridTransactions.DisplayLayout.Override.RowSizing = RowSizing.AutoFixed;
             ultraGridTransactions.DisplayLayout.Override.CellClickAction = CellClickAction.RowSelect;
             ultraGridTransactions.DisplayLayout.Override.HeaderClickAction = HeaderClickAction.SortSingle;
+            ultraGridTransactions.DisplayLayout.Override.AllowRowFiltering = DefaultableBoolean.True;
+            ultraGridTransactions.DisplayLayout.Override.FilterUIType = FilterUIType.FilterRow;
             ultraGridTransactions.DisplayLayout.ScrollBounds = ScrollBounds.ScrollToFill;
             ultraGridTransactions.DisplayLayout.ScrollStyle = ScrollStyle.Immediate;
         }
@@ -144,6 +340,14 @@ namespace PosBranch_Win.Reports.FinancialReports
         private void UltraGridTransactions_InitializeLayout(object sender, InitializeLayoutEventArgs e)
         {
             UltraGridBand band = e.Layout.Bands[0];
+
+            if (!band.Columns.Exists("BankEffect"))
+            {
+                UltraGridColumn bankEffectColumn = band.Columns.Add("BankEffect", "Bank Effect");
+                bankEffectColumn.DataType = typeof(decimal);
+            }
+
+
 
             // Column settings
             if (band.Columns.Exists("TransactionDate"))
@@ -191,6 +395,14 @@ namespace PosBranch_Win.Reports.FinancialReports
                 band.Columns["Reference"].Header.Caption = "Reference";
                 band.Columns["Reference"].Width = 180;
             }
+            if (band.Columns.Exists("BankEffect"))
+            {
+                band.Columns["BankEffect"].Header.Caption = "Bank Effect";
+                band.Columns["BankEffect"].Format = "N2";
+                band.Columns["BankEffect"].Width = 110;
+                band.Columns["BankEffect"].CellAppearance.TextHAlign = HAlign.Right;
+            }
+
 
             // Header styling
             e.Layout.Override.HeaderAppearance.BackColor = HeaderBackColor;
@@ -216,6 +428,8 @@ namespace PosBranch_Win.Reports.FinancialReports
 
         private void UltraGridTransactions_InitializeRow(object sender, InitializeRowEventArgs e)
         {
+            BankStatementTransaction transaction = e.Row.ListObject as BankStatementTransaction;
+
             // Color MoneyIn cells green, MoneyOut cells red
             if (e.Row.Cells.Exists("MoneyIn"))
             {
@@ -235,6 +449,14 @@ namespace PosBranch_Win.Reports.FinancialReports
                     e.Row.Cells["MoneyOut"].Appearance.ForeColor = MoneyOutColor;
                     e.Row.Cells["MoneyOut"].Appearance.FontData.Bold = DefaultableBoolean.True;
                 }
+            }
+
+            if (transaction != null && e.Row.Cells.Exists("BankEffect"))
+            {
+                decimal bankEffect = transaction.MoneyIn - transaction.MoneyOut;
+                e.Row.Cells["BankEffect"].Value = bankEffect;
+                e.Row.Cells["BankEffect"].Appearance.ForeColor = bankEffect >= 0 ? MoneyInColor : MoneyOutColor;
+                e.Row.Cells["BankEffect"].Appearance.FontData.Bold = DefaultableBoolean.True;
             }
 
             // Color-code by transaction type
@@ -372,7 +594,8 @@ namespace PosBranch_Win.Reports.FinancialReports
         {
             try
             {
-                if (_transactionsList == null || _transactionsList.Count == 0)
+                List<BankStatementTransaction> visibleTransactions = GetVisibleTransactions();
+                if (visibleTransactions.Count == 0)
                 {
                     MessageBox.Show("No data to export. Please generate the report first.",
                         "No Data", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -388,14 +611,25 @@ namespace PosBranch_Win.Reports.FinancialReports
                     if (saveDialog.ShowDialog() == DialogResult.OK)
                     {
                         StringBuilder sb = new StringBuilder();
-                        sb.AppendLine("Date,Type,Party Name,Bill/Voucher No,Money In,Money Out,Payment Method,Reference");
+                        sb.AppendLine("Date,Type,Party Name,Bill/Voucher No,Money In,Money Out,Bank Effect,Payment Method,Reference");
 
-                        foreach (var txn in _transactionsList)
+                        foreach (BankStatementTransaction txn in visibleTransactions)
                         {
-                            sb.AppendLine($"\"{txn.TransactionDate:dd-MMM-yyyy}\",\"{txn.TransactionType}\",\"{txn.PartyName}\",\"{txn.BillVoucherNo}\",{txn.MoneyIn:F2},{txn.MoneyOut:F2},\"{txn.PaymentMethod}\",\"{txn.Reference}\"");
+                            sb.AppendLine(string.Join(",", new[]
+                            {
+                                CsvEscape(txn.TransactionDate == DateTime.MinValue ? string.Empty : txn.TransactionDate.ToString("dd-MMM-yyyy")),
+                                CsvEscape(txn.TransactionType),
+                                CsvEscape(txn.PartyName),
+                                CsvEscape(txn.BillVoucherNo),
+                                txn.MoneyIn.ToString("0.00", CultureInfo.InvariantCulture),
+                                txn.MoneyOut.ToString("0.00", CultureInfo.InvariantCulture),
+                                (txn.MoneyIn - txn.MoneyOut).ToString("0.00", CultureInfo.InvariantCulture),
+                                CsvEscape(txn.PaymentMethod),
+                                CsvEscape(txn.Reference)
+                            }));
                         }
 
-                        File.WriteAllText(saveDialog.FileName, sb.ToString());
+                        File.WriteAllText(saveDialog.FileName, sb.ToString(), new UTF8Encoding(true));
                         MessageBox.Show("Report exported successfully!", "Export",
                             MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
@@ -410,10 +644,24 @@ namespace PosBranch_Win.Reports.FinancialReports
 
         #endregion
 
+        private List<BankStatementTransaction> GetVisibleTransactions()
+        {
+            return ultraGridTransactions.Rows.GetFilteredInNonGroupByRows()
+                .Where(row => row.IsDataRow && row.ListObject is BankStatementTransaction)
+                .Select(row => (BankStatementTransaction)row.ListObject)
+                .ToList();
+        }
+
+        private static string CsvEscape(string value)
+        {
+            return "\"" + (value ?? string.Empty).Replace("\"", "\"\"") + "\"";
+        }
+
         #region Print
 
         private void BtnPrint_Click(object sender, EventArgs e)
         {
+            DefaultableBoolean previousFilterSetting = ultraGridTransactions.DisplayLayout.Override.AllowRowFiltering;
             try
             {
                 ultraGridTransactions.DisplayLayout.Override.AllowRowFiltering = DefaultableBoolean.False;
@@ -423,6 +671,10 @@ namespace PosBranch_Win.Reports.FinancialReports
             {
                 MessageBox.Show($"Print error: {ex.Message}", "Print",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                ultraGridTransactions.DisplayLayout.Override.AllowRowFiltering = previousFilterSetting;
             }
         }
 
@@ -442,6 +694,14 @@ namespace PosBranch_Win.Reports.FinancialReports
                     this.Close();
                     e.Handled = true;
                     break;
+            }
+
+            if (e.Control && e.KeyCode == Keys.F)
+            {
+                txtSearch.Focus();
+                txtSearch.SelectAll();
+                e.Handled = true;
+                e.SuppressKeyPress = true;
             }
         }
 

@@ -717,6 +717,7 @@ namespace PosBranch_Win.Accounts
             // Bind an empty table with all expected columns so grid style is visible on open
             ultraGrid1.DataSource = CreateEmptyInvoiceTable();
             ConfigureGridColumns();
+            dtpPurchaseDate.Value = DateTime.Now;
         }
 
         private void btnF11_Click(object sender, EventArgs e)

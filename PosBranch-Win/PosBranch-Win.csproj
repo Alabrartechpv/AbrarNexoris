@@ -1601,6 +1601,9 @@
     <EmbeddedResource Include="Reports\AuditReport\frmAuditReport.resx">
       <DependentUpon>frmAuditReport.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Reports\FinancialReports\FrmBankStatementReport.resx">
+      <DependentUpon>FrmBankStatementReport.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Reports\FinancialReports\FrmManualPartyBalanceReport.resx">
       <DependentUpon>FrmManualPartyBalanceReport.cs</DependentUpon>
     </EmbeddedResource>

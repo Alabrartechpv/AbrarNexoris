@@ -45,6 +45,16 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.lblExpectedCaption = new Infragistics.Win.Misc.UltraLabel();
             this.lblSales = new Infragistics.Win.Misc.UltraLabel();
             this.lblSalesCaption = new Infragistics.Win.Misc.UltraLabel();
+            this.lblTotalCashSale = new Infragistics.Win.Misc.UltraLabel();
+            this.lblTotalCashSaleCaption = new Infragistics.Win.Misc.UltraLabel();
+            this.lblTotalCardSale = new Infragistics.Win.Misc.UltraLabel();
+            this.lblTotalCardSaleCaption = new Infragistics.Win.Misc.UltraLabel();
+            this.lblTotalUpiSale = new Infragistics.Win.Misc.UltraLabel();
+            this.lblTotalUpiSaleCaption = new Infragistics.Win.Misc.UltraLabel();
+            this.lblTotalCreditSale = new Infragistics.Win.Misc.UltraLabel();
+            this.lblTotalCreditSaleCaption = new Infragistics.Win.Misc.UltraLabel();
+            this.lblTotalCustReceipt = new Infragistics.Win.Misc.UltraLabel();
+            this.lblTotalCustReceiptCaption = new Infragistics.Win.Misc.UltraLabel();
             this.ultraPanelControls.ClientArea.SuspendLayout();
             this.ultraPanelControls.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.txtCounterFilter)).BeginInit();
@@ -240,10 +250,100 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.ultraPanelSummary.ClientArea.Controls.Add(this.lblExpectedCaption);
             this.ultraPanelSummary.ClientArea.Controls.Add(this.lblSales);
             this.ultraPanelSummary.ClientArea.Controls.Add(this.lblSalesCaption);
+            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblTotalCashSale);
+            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblTotalCashSaleCaption);
+            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblTotalCardSale);
+            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblTotalCardSaleCaption);
+            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblTotalUpiSale);
+            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblTotalUpiSaleCaption);
+            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblTotalCreditSale);
+            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblTotalCreditSaleCaption);
+            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblTotalCustReceipt);
+            this.ultraPanelSummary.ClientArea.Controls.Add(this.lblTotalCustReceiptCaption);
             this.ultraPanelSummary.Location = new System.Drawing.Point(0, 399);
             this.ultraPanelSummary.Name = "ultraPanelSummary";
             this.ultraPanelSummary.Size = new System.Drawing.Size(1349, 160);
             this.ultraPanelSummary.TabIndex = 2;
+            // 
+            // lblTotalCashSale
+            // 
+            this.lblTotalCashSale.Location = new System.Drawing.Point(20, 110);
+            this.lblTotalCashSale.Name = "lblTotalCashSale";
+            this.lblTotalCashSale.Size = new System.Drawing.Size(180, 30);
+            this.lblTotalCashSale.TabIndex = 9;
+            this.lblTotalCashSale.Text = "₹ 0.00";
+            // 
+            // lblTotalCashSaleCaption
+            // 
+            this.lblTotalCashSaleCaption.Location = new System.Drawing.Point(20, 85);
+            this.lblTotalCashSaleCaption.Name = "lblTotalCashSaleCaption";
+            this.lblTotalCashSaleCaption.Size = new System.Drawing.Size(180, 25);
+            this.lblTotalCashSaleCaption.TabIndex = 8;
+            this.lblTotalCashSaleCaption.Text = "Total Cash Sales:";
+            // 
+            // lblTotalCardSale
+            // 
+            this.lblTotalCardSale.Location = new System.Drawing.Point(235, 110);
+            this.lblTotalCardSale.Name = "lblTotalCardSale";
+            this.lblTotalCardSale.Size = new System.Drawing.Size(180, 30);
+            this.lblTotalCardSale.TabIndex = 11;
+            this.lblTotalCardSale.Text = "₹ 0.00";
+            // 
+            // lblTotalCardSaleCaption
+            // 
+            this.lblTotalCardSaleCaption.Location = new System.Drawing.Point(235, 85);
+            this.lblTotalCardSaleCaption.Name = "lblTotalCardSaleCaption";
+            this.lblTotalCardSaleCaption.Size = new System.Drawing.Size(180, 25);
+            this.lblTotalCardSaleCaption.TabIndex = 10;
+            this.lblTotalCardSaleCaption.Text = "Total Card Sales:";
+            // 
+            // lblTotalUpiSale
+            // 
+            this.lblTotalUpiSale.Location = new System.Drawing.Point(490, 110);
+            this.lblTotalUpiSale.Name = "lblTotalUpiSale";
+            this.lblTotalUpiSale.Size = new System.Drawing.Size(180, 30);
+            this.lblTotalUpiSale.TabIndex = 13;
+            this.lblTotalUpiSale.Text = "₹ 0.00";
+            // 
+            // lblTotalUpiSaleCaption
+            // 
+            this.lblTotalUpiSaleCaption.Location = new System.Drawing.Point(490, 85);
+            this.lblTotalUpiSaleCaption.Name = "lblTotalUpiSaleCaption";
+            this.lblTotalUpiSaleCaption.Size = new System.Drawing.Size(180, 25);
+            this.lblTotalUpiSaleCaption.TabIndex = 12;
+            this.lblTotalUpiSaleCaption.Text = "Total UPI Sales:";
+            // 
+            // lblTotalCreditSale
+            // 
+            this.lblTotalCreditSale.Location = new System.Drawing.Point(715, 110);
+            this.lblTotalCreditSale.Name = "lblTotalCreditSale";
+            this.lblTotalCreditSale.Size = new System.Drawing.Size(180, 30);
+            this.lblTotalCreditSale.TabIndex = 15;
+            this.lblTotalCreditSale.Text = "₹ 0.00";
+            // 
+            // lblTotalCreditSaleCaption
+            // 
+            this.lblTotalCreditSaleCaption.Location = new System.Drawing.Point(715, 85);
+            this.lblTotalCreditSaleCaption.Name = "lblTotalCreditSaleCaption";
+            this.lblTotalCreditSaleCaption.Size = new System.Drawing.Size(180, 25);
+            this.lblTotalCreditSaleCaption.TabIndex = 14;
+            this.lblTotalCreditSaleCaption.Text = "Total Credit Sales:";
+            // 
+            // lblTotalCustReceipt
+            // 
+            this.lblTotalCustReceipt.Location = new System.Drawing.Point(960, 110);
+            this.lblTotalCustReceipt.Name = "lblTotalCustReceipt";
+            this.lblTotalCustReceipt.Size = new System.Drawing.Size(180, 30);
+            this.lblTotalCustReceipt.TabIndex = 17;
+            this.lblTotalCustReceipt.Text = "₹ 0.00";
+            // 
+            // lblTotalCustReceiptCaption
+            // 
+            this.lblTotalCustReceiptCaption.Location = new System.Drawing.Point(960, 85);
+            this.lblTotalCustReceiptCaption.Name = "lblTotalCustReceiptCaption";
+            this.lblTotalCustReceiptCaption.Size = new System.Drawing.Size(180, 25);
+            this.lblTotalCustReceiptCaption.TabIndex = 16;
+            this.lblTotalCustReceiptCaption.Text = "Total Cust Receipts:";
             // 
             // lblVariance
             // 
@@ -370,5 +470,15 @@ namespace PosBranch_Win.Reports.FinancialReports
         private Infragistics.Win.Misc.UltraLabel lblExpectedCaption;
         private Infragistics.Win.Misc.UltraLabel lblSales;
         private Infragistics.Win.Misc.UltraLabel lblSalesCaption;
+        private Infragistics.Win.Misc.UltraLabel lblTotalCashSale;
+        private Infragistics.Win.Misc.UltraLabel lblTotalCashSaleCaption;
+        private Infragistics.Win.Misc.UltraLabel lblTotalCardSale;
+        private Infragistics.Win.Misc.UltraLabel lblTotalCardSaleCaption;
+        private Infragistics.Win.Misc.UltraLabel lblTotalUpiSale;
+        private Infragistics.Win.Misc.UltraLabel lblTotalUpiSaleCaption;
+        private Infragistics.Win.Misc.UltraLabel lblTotalCreditSale;
+        private Infragistics.Win.Misc.UltraLabel lblTotalCreditSaleCaption;
+        private Infragistics.Win.Misc.UltraLabel lblTotalCustReceipt;
+        private Infragistics.Win.Misc.UltraLabel lblTotalCustReceiptCaption;
     }
 }

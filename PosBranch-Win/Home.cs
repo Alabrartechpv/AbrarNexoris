@@ -84,6 +84,7 @@ namespace PosBranch_Win
             new ReportNavigatorDefinition("Analysis", "Cash & Bank Book", "CashBankBook"),
             new ReportNavigatorDefinition("Analysis", "Day Book", "DayBook"),
             new ReportNavigatorDefinition("Analysis", "Counter Closing Report", "ShiftReconciliationReport"),
+            new ReportNavigatorDefinition("Analysis", "Bank Statement", "BankStatementReport"),
             new ReportNavigatorDefinition("Others", "Manual Party Balance Report", "ManualPartyBalanceReport"),
             new ReportNavigatorDefinition("Others", "Combined Party Balance Report", "CombinedPartyBalanceReport")
         };

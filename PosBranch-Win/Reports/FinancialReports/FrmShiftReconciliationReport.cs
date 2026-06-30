@@ -127,6 +127,18 @@ namespace PosBranch_Win.Reports.FinancialReports
             StyleSummaryValueLabel(lblExpected, Color.FromArgb(13, 71, 161), 14);
             StyleSummaryValueLabel(lblCounted, Color.FromArgb(27, 94, 32), 14);
             StyleSummaryValueLabel(lblVariance, Color.FromArgb(191, 54, 12), 16);
+
+            StyleSummaryLabel(lblTotalCashSaleCaption, Color.FromArgb(70, 70, 70));
+            StyleSummaryLabel(lblTotalCardSaleCaption, Color.FromArgb(70, 70, 70));
+            StyleSummaryLabel(lblTotalUpiSaleCaption, Color.FromArgb(70, 70, 70));
+            StyleSummaryLabel(lblTotalCreditSaleCaption, Color.FromArgb(70, 70, 70));
+            StyleSummaryLabel(lblTotalCustReceiptCaption, Color.FromArgb(70, 70, 70));
+
+            StyleSummaryValueLabel(lblTotalCashSale, Color.FromArgb(40, 40, 40), 12);
+            StyleSummaryValueLabel(lblTotalCardSale, Color.FromArgb(40, 40, 40), 12);
+            StyleSummaryValueLabel(lblTotalUpiSale, Color.FromArgb(40, 40, 40), 12);
+            StyleSummaryValueLabel(lblTotalCreditSale, Color.FromArgb(40, 40, 40), 12);
+            StyleSummaryValueLabel(lblTotalCustReceipt, Color.FromArgb(40, 40, 40), 12);
         }
 
         private static void StyleSummaryLabel(Infragistics.Win.Misc.UltraLabel label, Color foreColor)
@@ -280,9 +292,21 @@ namespace PosBranch_Win.Reports.FinancialReports
             decimal totalPhysical = rows.Sum(x => x.PhysicalCashCounted);
             decimal totalVariance = rows.Sum(x => x.CashDifference);
 
+            decimal totalCashSale = rows.Sum(x => x.CashSale);
+            decimal totalCardSale = rows.Sum(x => x.CardSale);
+            decimal totalUpiSale = rows.Sum(x => x.UpiSale);
+            decimal totalCreditSale = rows.Sum(x => x.CreditSale);
+            decimal totalCustReceipt = rows.Sum(x => x.CustomerReceipt);
+
             lblSales.Text = $"₹ {totalNetSales:N2}";
             lblExpected.Text = $"₹ {totalExpected:N2}";
             lblCounted.Text = $"₹ {totalPhysical:N2}";
+
+            lblTotalCashSale.Text = $"₹ {totalCashSale:N2}";
+            lblTotalCardSale.Text = $"₹ {totalCardSale:N2}";
+            lblTotalUpiSale.Text = $"₹ {totalUpiSale:N2}";
+            lblTotalCreditSale.Text = $"₹ {totalCreditSale:N2}";
+            lblTotalCustReceipt.Text = $"₹ {totalCustReceipt:N2}";
             
             // Variance formatting (shortages in parenthesis or negative, color highlights)
             lblVariance.Text = $"₹ {totalVariance:N2}";
