@@ -1214,6 +1214,11 @@ namespace PosBranch_Win.Transaction
         {
             //PurchaseInvoiceRepository ObjPurchaseRepo = new PurchaseInvoiceRepository();
 
+            // New purchases must always start with the current system date.
+            DateTime systemDate = DateTime.Today;
+            DtpInoviceDate.Value = systemDate;
+            dtpPurchaseDate.Value = systemDate;
+
             // Hide update button initially
             ultraPictureBox4.Visible = false;
 
@@ -1246,7 +1251,11 @@ namespace PosBranch_Win.Transaction
             CmboBranch.SelectedValueChanged += CmboBranch_SelectedValueChanged;
 
             PaymodeDDlGrid ObjPayModeDDL = drop.GetPaymode();
-            CmboPayment.DataSource = ObjPayModeDDL.List;
+            CmboPayment.DataSource = (ObjPayModeDDL.List ?? Enumerable.Empty<PaymodeDDl>())
+                .Where(payMode =>
+                    string.Equals(payMode.PayModeName, "Cash", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(payMode.PayModeName, "Credit", StringComparison.OrdinalIgnoreCase))
+                .ToList();
             CmboPayment.DisplayMember = "PayModeName";
             CmboPayment.ValueMember = "PayModeID";
 

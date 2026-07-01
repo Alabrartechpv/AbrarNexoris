@@ -55,10 +55,12 @@ namespace Repository.ReportRepository
                 overview.YesterdaySales = ReadTotal("SMaster", "BillDate", "NetAmount", "BranchId", comparisonFromDate, rangeFromDate);
                 overview.YesterdayPurchase = ReadTotal("PMaster", "PurchaseDate", "GrandTotal", "BranchID", comparisonFromDate, rangeFromDate);
 
-                overview.TotalReceipts = ReadVoucherTotal(rangeFromDate, exclusiveToDate, "Receipt", "Debit");
-                overview.TotalPayments = ReadVoucherTotal(rangeFromDate, exclusiveToDate, "Payment", "Credit");
-                overview.ReceiptsCount = ReadVoucherCount(rangeFromDate, exclusiveToDate, "Receipt");
-                overview.PaymentsCount = ReadVoucherCount(rangeFromDate, exclusiveToDate, "Payment");
+                // Receipt and payment forms persist their voucher rows with these
+                // application voucher types.
+                overview.TotalReceipts = ReadVoucherTotal(rangeFromDate, exclusiveToDate, "CUSTRCPT", "Debit");
+                overview.TotalPayments = ReadVoucherTotal(rangeFromDate, exclusiveToDate, "VENDPAY", "Credit");
+                overview.ReceiptsCount = ReadVoucherCount(rangeFromDate, exclusiveToDate, "CUSTRCPT");
+                overview.PaymentsCount = ReadVoucherCount(rangeFromDate, exclusiveToDate, "VENDPAY");
                 overview.DueReceivables = ReadSafeDecimal(@"
 IF OBJECT_ID('SMaster', 'U') IS NULL SELECT CAST(0 AS decimal(18,2))
 ELSE SELECT ISNULL(SUM(ISNULL(NetAmount, 0) - ISNULL(ReceivedAmount, 0)), 0)
@@ -143,7 +145,7 @@ WHERE {branchColumn} = @BranchId AND CompanyId = @CompanyId AND FinYearId = @Fin
         {
             string sql = @"
 IF OBJECT_ID('Vouchers', 'U') IS NULL SELECT 0
-ELSE SELECT COUNT(1)
+ELSE SELECT COUNT(DISTINCT VoucherID)
 FROM Vouchers
 WHERE BranchID = @BranchId AND CompanyID = @CompanyId AND FinYearID = @FinYearId
   AND VoucherDate >= @FromDate AND VoucherDate < @ToDate
