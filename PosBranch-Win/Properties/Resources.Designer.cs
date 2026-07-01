@@ -243,6 +243,16 @@ namespace PosBranch_Win.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap chatgpt_year_closing {
+            get {
+                object obj = ResourceManager.GetObject("chatgpt_year_closing", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap ClosingSales {
             get {
                 object obj = ResourceManager.GetObject("ClosingSales", resourceCulture);
@@ -666,6 +676,26 @@ namespace PosBranch_Win.Properties {
         internal static System.Drawing.Bitmap waiting {
             get {
                 object obj = ResourceManager.GetObject("waiting", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap yearly_report {
+            get {
+                object obj = ResourceManager.GetObject("yearly-report", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap yearly_report1 {
+            get {
+                object obj = ResourceManager.GetObject("yearly-report1", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

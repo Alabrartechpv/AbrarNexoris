@@ -99,6 +99,7 @@
     <Compile Include="Report\VendorOutstandingReportModel.cs" />
     <Compile Include="SessionContext.cs" />
     <Compile Include="Settings\POSSetting.cs" />
+    <Compile Include="Settings\FinancialYearModel.cs" />
     <Compile Include="SessionContextExtensions.cs" />
     <Compile Include="TransactionModels\GeneralVoucherModel.cs" />
     <Compile Include="TransactionModels\BankReconciliationModel.cs" />

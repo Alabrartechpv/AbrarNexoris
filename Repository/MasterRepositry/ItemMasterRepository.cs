@@ -1327,7 +1327,7 @@ WHERE ItemId = @ItemId";
                     cmd.Parameters.AddWithValue("@ItemId", itemId);
                     cmd.Parameters.AddWithValue("@CompanyId", DataBase.CompanyId);
                     cmd.Parameters.AddWithValue("@BranchId", DataBase.BranchId);
-                    cmd.Parameters.AddWithValue("@FinYearId", 1);
+                    cmd.Parameters.AddWithValue("@FinYearId", SessionContext.FinYearId > 0 ? SessionContext.FinYearId : (int.TryParse(DataBase.FinyearId, out var id) ? id : 1));
 
 
 

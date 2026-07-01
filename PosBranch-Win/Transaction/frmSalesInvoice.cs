@@ -7534,6 +7534,7 @@ namespace PosBranch_Win.Transaction
                 return;
             }
 
+            bool eventsEnabled = false;
             try
             {
                 // Store current selection for next time
@@ -7550,7 +7551,7 @@ namespace PosBranch_Win.Transaction
                     .ToDictionary(g => g.Key, g => g.ToList());
 
                 // Suspend event handlers
-                bool eventsEnabled = EventHandlersAdded;
+                eventsEnabled = EventHandlersAdded;
                 if (eventsEnabled)
                 {
                     ultraGrid1.BeforeCellUpdate -= ultraGrid1_BeforeCellUpdate;
@@ -7659,19 +7660,26 @@ namespace PosBranch_Win.Transaction
                     row.Cells["MarginAmt"].Value = marginAmt;
                 }
 
-                // Restore event handlers and recalculate total
-                if (eventsEnabled)
-                {
-                    // Event handlers are already added, just mark as enabled
-                    EventHandlersAdded = true;
-                }
-
                 CalculateTotal();
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in cmpPrice_SelectedIndexChanged: {ex.Message}");
                 MessageBox.Show("Unable to apply selected price level. Please try again.", "Price Level Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            finally
+            {
+                // Restore event handlers and mark as enabled
+                if (eventsEnabled)
+                {
+                    // Unsubscribe first to avoid duplicate handler attachment
+                    ultraGrid1.BeforeCellUpdate -= ultraGrid1_BeforeCellUpdate;
+                    ultraGrid1.AfterCellUpdate -= ultraGrid1_AfterCellUpdate;
+
+                    ultraGrid1.BeforeCellUpdate += ultraGrid1_BeforeCellUpdate;
+                    ultraGrid1.AfterCellUpdate += ultraGrid1_AfterCellUpdate;
+                    EventHandlersAdded = true;
+                }
             }
         }
         private void ShowSalesPersonDialog()

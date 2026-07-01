@@ -165,6 +165,8 @@ namespace ModelClass
         public double TaxPer { get; set; }
         public string Barcode { get; set; }
         public string _Operations { get; set; }
+        public int CounterId { get; set; }
+        public string CounterName { get; set; }
     }
     public class InvoicePrntGrid
     {

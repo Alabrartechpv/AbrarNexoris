@@ -1566,9 +1566,9 @@ WHERE ItemId IN ({string.Join(", ", parameterNames)})";
                 using (SqlCommand cmdC = new SqlCommand(STOREDPROCEDURE.POS_dropdown, (SqlConnection)DataConnection))
                 {
                     cmdC.CommandType = CommandType.StoredProcedure;
-                    cmdC.Parameters.AddWithValue("@BranchId", 11);
-                    cmdC.Parameters.AddWithValue("@CompanyId", 1);
-                    cmdC.Parameters.AddWithValue("@FinyearId", 1);
+                    cmdC.Parameters.AddWithValue("@BranchId", SessionContext.BranchId > 0 ? SessionContext.BranchId : 11);
+                    cmdC.Parameters.AddWithValue("@CompanyId", SessionContext.CompanyId > 0 ? SessionContext.CompanyId : 1);
+                    cmdC.Parameters.AddWithValue("@FinyearId", SessionContext.FinYearId > 0 ? SessionContext.FinYearId : (int.TryParse(DataBase.FinyearId, out var id) ? id : 1));
                     cmdC.Parameters.AddWithValue("@Operation", "Currency");
                     using (SqlDataAdapter adaptC = new SqlDataAdapter(cmdC))
                     {
