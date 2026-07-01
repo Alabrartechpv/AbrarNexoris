@@ -39,6 +39,7 @@ namespace PosBranch_Win.Dashboard
             ConfigureDashboardDateEditor(dtFrom);
             ConfigureDashboardDateEditor(dtTo);
             ConfigureQuickDateCombo();
+            ConfigureApplyButton();
             if (cmbAnalysisMode != null && !cmbAnalysisMode.Items.Contains("Yearly"))
                 cmbAnalysisMode.Items.Add("Yearly");
             Load += FrmStockAnalytics_Load;
@@ -84,6 +85,30 @@ namespace PosBranch_Win.Dashboard
             }
 
             LoadAnalytics();
+        }
+
+        private void ConfigureApplyButton()
+        {
+            btnApply.UseVisualStyleBackColor = false;
+            btnApply.FlatStyle = FlatStyle.Flat;
+            btnApply.FlatAppearance.BorderSize = 0;
+            btnApply.FlatAppearance.MouseOverBackColor = Color.FromArgb(42, 108, 211);
+            btnApply.FlatAppearance.MouseDownBackColor = Color.FromArgb(31, 88, 181);
+            btnApply.BackColor = AccentBlue;
+            btnApply.ForeColor = Color.White;
+            btnApply.Font = new Font("Segoe UI Semibold", 8.75F, FontStyle.Bold);
+            btnApply.Paint -= ApplyButton_Paint;
+            btnApply.Paint += ApplyButton_Paint;
+            btnApply.Invalidate();
+        }
+
+        private void ApplyButton_Paint(object sender, PaintEventArgs e)
+        {
+            using (SolidBrush brush = new SolidBrush(AccentBlue))
+                e.Graphics.FillRectangle(brush, btnApply.ClientRectangle);
+
+            TextRenderer.DrawText(e.Graphics, btnApply.Text, btnApply.Font, btnApply.ClientRectangle,
+                Color.White, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine);
         }
 
         private void ConfigureDashboardDateEditor(UltraDateTimeEditor editor)
