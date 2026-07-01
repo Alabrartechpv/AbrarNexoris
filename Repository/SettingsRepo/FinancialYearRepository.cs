@@ -9,7 +9,8 @@ namespace Repository.SettingsRepo
     {
         /// <summary>
         /// Gets the current active financial year for a company from the FinancialYear table.
-        /// If no active record exists, it attempts to load dates from CompanyInfo and returns a default ID of 1.
+        /// Returns null if no row with CurFinYear = 1 exists. Never fabricates a fallback ID.
+        /// Exceptions propagate to the caller so the UI can block the closing flow.
         /// </summary>
         public FinancialYearModel GetCurrentFinancialYear(int companyId)
         {
@@ -20,7 +21,6 @@ namespace Repository.SettingsRepo
                 if (DataConnection.State != ConnectionState.Open)
                     DataConnection.Open();
 
-                // 1. Try to read from FinancialYear table first
                 string sql = "SELECT CompanyID, FinYearFrom, FinYearTo, FinYearID, CurFinYear FROM FinancialYear WHERE CompanyID = @CompanyID AND CurFinYear = 1";
                 using (SqlCommand cmd = new SqlCommand(sql, (SqlConnection)DataConnection))
                 {
@@ -40,34 +40,7 @@ namespace Repository.SettingsRepo
                         }
                     }
                 }
-
-                // 2. Fallback: If empty, read from CompanyInfo
-                if (model == null)
-                {
-                    string fallbackSql = "SELECT CompanyID, FinYearFrom, FinYearTo FROM CompanyInfo WHERE CompanyID = @CompanyID";
-                    using (SqlCommand cmd = new SqlCommand(fallbackSql, (SqlConnection)DataConnection))
-                    {
-                        cmd.Parameters.AddWithValue("@CompanyID", companyId);
-                        using (SqlDataReader reader = cmd.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                model = new FinancialYearModel
-                                {
-                                    CompanyID = Convert.ToInt32(reader["CompanyID"]),
-                                    FinYearFrom = reader["FinYearFrom"] != DBNull.Value ? Convert.ToDateTime(reader["FinYearFrom"]) : DateTime.Today,
-                                    FinYearTo = reader["FinYearTo"] != DBNull.Value ? Convert.ToDateTime(reader["FinYearTo"]) : DateTime.Today.AddYears(1),
-                                    FinYearID = 1, // Default ID
-                                    CurFinYear = 1
-                                };
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error retrieving financial year: {ex.Message}");
+                // No fallback to CompanyInfo — closing requires an actual FinancialYear row.
             }
             finally
             {
@@ -79,9 +52,9 @@ namespace Repository.SettingsRepo
         }
 
         /// <summary>
-        /// Checks if there are any active/open counter sessions in this branch
+        /// Checks if there are any active/open counter sessions in this company (all branches)
         /// </summary>
-        public bool HasOpenSessions(int companyId, int branchId)
+        public bool HasOpenSessions(int companyId)
         {
             bool hasOpen = false;
 
@@ -90,18 +63,13 @@ namespace Repository.SettingsRepo
                 if (DataConnection.State != ConnectionState.Open)
                     DataConnection.Open();
 
-                string sql = "SELECT COUNT(*) FROM CounterSessions WHERE CompanyId = @CompanyID AND BranchId = @BranchID AND Status = 'Open'";
+                string sql = "SELECT COUNT(*) FROM CounterSessions WHERE CompanyId = @CompanyID AND Status = 'Open'";
                 using (SqlCommand cmd = new SqlCommand(sql, (SqlConnection)DataConnection))
                 {
                     cmd.Parameters.AddWithValue("@CompanyID", companyId);
-                    cmd.Parameters.AddWithValue("@BranchID", branchId);
                     int count = (int)cmd.ExecuteScalar();
                     hasOpen = count > 0;
                 }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error checking open sessions: {ex.Message}");
             }
             finally
             {
@@ -113,9 +81,13 @@ namespace Repository.SettingsRepo
         }
 
         /// <summary>
-        /// Calls the stored procedure _POS_FinancialYearClosing to perform the rollover
+        /// Calls the stored procedure _POS_FinancialYearClosing to perform the company-wide rollover.
+        /// BranchId is not passed — the SP processes every branch recorded in TrackTrans.
         /// </summary>
-        public string PerformFinancialYearClosing(int companyId, int branchId, int oldYearId, int newYearId, DateTime newFrom, DateTime newTo, string username)
+        public string PerformFinancialYearClosing(
+            int companyId, int oldYearId, int newYearId,
+            DateTime newFrom, DateTime newTo,
+            string username, int userId, int counterId)
         {
             string result = "Failed to run rollover.";
 
@@ -126,25 +98,20 @@ namespace Repository.SettingsRepo
 
                 using (SqlCommand cmd = new SqlCommand("dbo._POS_FinancialYearClosing", (SqlConnection)DataConnection))
                 {
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Parameters.AddWithValue("@CompanyId", companyId);
-                    cmd.Parameters.AddWithValue("@BranchId", branchId);
+                    cmd.CommandType    = CommandType.StoredProcedure;
+                    cmd.CommandTimeout = 300; // 5-minute timeout for large year-end operations
+                    cmd.Parameters.AddWithValue("@CompanyId",    companyId);
                     cmd.Parameters.AddWithValue("@OldFinYearId", oldYearId);
                     cmd.Parameters.AddWithValue("@NewFinYearId", newYearId);
-                    cmd.Parameters.AddWithValue("@NewYearFrom", newFrom);
-                    cmd.Parameters.AddWithValue("@NewYearTo", newTo);
-                    cmd.Parameters.AddWithValue("@UserName", username);
+                    cmd.Parameters.AddWithValue("@NewYearFrom",  newFrom.Date);
+                    cmd.Parameters.AddWithValue("@NewYearTo",    newTo.Date);
+                    cmd.Parameters.AddWithValue("@UserName",     username);
+                    cmd.Parameters.AddWithValue("@UserID",       userId);
+                    cmd.Parameters.AddWithValue("@CounterID",    counterId);
 
                     object spResult = cmd.ExecuteScalar();
-                    if (spResult != null)
-                    {
-                        result = spResult.ToString();
-                    }
+                    result = spResult?.ToString() ?? "No result returned.";
                 }
-            }
-            catch (Exception ex)
-            {
-                result = ex.Message;
             }
             finally
             {
