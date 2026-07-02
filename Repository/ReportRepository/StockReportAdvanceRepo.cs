@@ -1,4 +1,4 @@
-﻿using ModelClass.Report;
+using ModelClass.Report;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -75,6 +75,7 @@ namespace Repository.ReportRepository
                                     SalesReturn = row["SalesReturn"] != DBNull.Value ? Convert.ToDecimal(row["SalesReturn"]) : 0,
                                     ClosingStock = row["ClosingStock"] != DBNull.Value ? Convert.ToDecimal(row["ClosingStock"]) : 0,
                                     OrderedStock = row["OrderedStock"] != DBNull.Value ? Convert.ToDecimal(row["OrderedStock"]) : 0,
+                                    HoldQty = row.Table.Columns.Contains("HoldQty") && row["HoldQty"] != DBNull.Value ? Convert.ToDecimal(row["HoldQty"]) : 0,
                                     Cost = row["Cost"] != DBNull.Value ? Convert.ToDecimal(row["Cost"]) : 0,
                                     RetailPrice = row["RetailPrice"] != DBNull.Value ? Convert.ToDecimal(row["RetailPrice"]) : 0,
                                     WholeSalePrice = row["WholeSalePrice"] != DBNull.Value ? Convert.ToDecimal(row["WholeSalePrice"]) : 0,

@@ -649,6 +649,26 @@ namespace PosBranch_Win.Reports.InventoryReport
                     // Apply saved layout AFTER columns are created
                     ApplySavedLayoutIfAvailable();
 
+                    // Customize new columns in the grid
+                    if (ultraGridStock.DisplayLayout.Bands.Count > 0)
+                    {
+                        var band = ultraGridStock.DisplayLayout.Bands[0];
+                        if (band.Columns.Exists("HoldQty"))
+                        {
+                            var col = band.Columns["HoldQty"];
+                            col.Header.Caption = "Hold Qty";
+                            col.Format = "N2";
+                            col.CellAppearance.TextHAlign = Infragistics.Win.HAlign.Right;
+                        }
+                        if (band.Columns.Exists("AvailableStock"))
+                        {
+                            var col = band.Columns["AvailableStock"];
+                            col.Header.Caption = "Available Stock";
+                            col.Format = "N2";
+                            col.CellAppearance.TextHAlign = Infragistics.Win.HAlign.Right;
+                        }
+                    }
+
                     // Update summaries
                     ultraLabelTotalItemsValue.Text = data.Count.ToString("N0");
                     ultraLabelTotalValueValue.Text = data.Sum(x => x.StockValue).ToString("C2");
@@ -1146,6 +1166,14 @@ namespace PosBranch_Win.Reports.InventoryReport
 
             try
             {
+                // Delete old grid layout file if it doesn't contain HoldQty, so new columns are visible by default
+                string xmlContent = File.ReadAllText(GridLayoutPath);
+                if (!xmlContent.Contains("HoldQty"))
+                {
+                    File.Delete(GridLayoutPath);
+                    return;
+                }
+
                 ultraGridStock.DisplayLayout.LoadFromXml(GridLayoutPath);
                 gridLayoutLoaded = true;
                 PopulateColumnChooserListBox();

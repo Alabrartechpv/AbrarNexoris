@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -35,6 +35,9 @@ namespace ModelClass.Report
         public string BaseUnitName { get; set; }
         public decimal Profit { get; set; }
         public decimal SaleAmount { get; set; }
+
+        public decimal HoldQty { get; set; }
+        public decimal AvailableStock => ClosingStock - HoldQty;
 
         // Calculated properties
         public decimal TotalIn => OpeningStock + Purchase + StockAdjustmentIn + StockTransferIn + SalesReturn;
