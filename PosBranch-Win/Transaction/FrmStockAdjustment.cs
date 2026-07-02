@@ -1,4 +1,4 @@
-﻿using ModelClass;
+using ModelClass;
 using ModelClass.TransactionModels;
 using PosBranch_Win.DialogBox;
 using Repository;
@@ -248,15 +248,30 @@ namespace PosBranch_Win.Transaction
                 ultraPictureBox5.Click += UltraPictureBox5_Click; // Clear (F1)
                 pbxExit.Click += PbxExit_Click; // Close (F4)
 
-                // In FrmStockAdjustment_Load, after InitializeComponent():
+                // Hide the side panel — Save/Clear/Exit are handled via the ribbon
+                ultraPanel6.Visible = false;
+
+                // Register Activated event so barcode textbox always gets focus
+                this.Activated += FrmStockAdjustment_Activated;
+
                 btnSave.Visible = true;
                 ultraPictureBox7.Visible = false;
+
+                // Set initial focus to barcode field
+                barcodeFocus();
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error during form load: " + ex.Message, "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+
+        // Activated event: return focus to barcode textbox whenever the form is activated
+        private void FrmStockAdjustment_Activated(object sender, EventArgs e)
+        {
+            barcodeFocus();
         }
 
         // Add method to load grid layout
@@ -307,6 +322,9 @@ namespace PosBranch_Win.Transaction
                     frmdialForItemMaster itemDialog = new frmdialForItemMaster(Params1);
                     itemDialog.Owner = this; // Set owner for communication
                     itemDialog.ShowDialog();
+
+                    // Return focus to barcode textbox after dialog closes
+                    barcodeFocus();
                 }
                 catch (Exception ex)
                 {
@@ -352,6 +370,9 @@ namespace PosBranch_Win.Transaction
 
                 // Log after dialog is closed
                 System.Diagnostics.Debug.WriteLine("Item dialog closed");
+
+                // Return focus to barcode textbox after dialog closes
+                barcodeFocus();
             }
             catch (Exception ex)
             {
