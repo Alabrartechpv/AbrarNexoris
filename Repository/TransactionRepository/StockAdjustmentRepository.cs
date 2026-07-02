@@ -423,6 +423,38 @@ namespace Repository.TransactionRepository
                 string adjustmentType = totalQtyDifference >= 0 ? "Stock In" : "Stock Out";
                 string narration = $"PhysicalStock: #{stockMaster.StockAdjustmentNo}| {adjustmentType} WORTH:{absAdjustmentValue}| REMARKS: {stockMaster.Comments}";
 
+                // Determine the contra ledger details
+                int contraGroupId;
+                int contraLedgerId;
+                string contraLedgerName;
+
+                if (stockMaster.LedgerId > 0)
+                {
+                    contraGroupId = Convert.ToInt32(AccountGroup.SUNDRY_CREDITORS); // Default fallback group
+                    try
+                    {
+                        var groupIdResult = DataConnection.QueryFirstOrDefault<int?>(
+                            "SELECT GroupID FROM LedgerMaster WHERE LedgerID = @LedgerID",
+                            new { LedgerID = stockMaster.LedgerId },
+                            transaction
+                        );
+                        if (groupIdResult.HasValue)
+                        {
+                            contraGroupId = groupIdResult.Value;
+                        }
+                    }
+                    catch { }
+
+                    contraLedgerId = stockMaster.LedgerId;
+                    contraLedgerName = stockMaster.LedgerName;
+                }
+                else
+                {
+                    contraGroupId = Convert.ToInt32(AccountGroup.PURCHASE_ACCOUNT);
+                    contraLedgerId = objLedgerRepository.GetLedgerId(DefaultLedgers.PURCHASE, (int)AccountGroup.PURCHASE_ACCOUNT, SessionContext.BranchId);
+                    contraLedgerName = DefaultLedgers.PURCHASE;
+                }
+
                 // Create appropriate voucher entries based on adjustment type
                 if (totalQtyDifference >= 0) // Stock In (Positive Adjustment)
                 {
@@ -437,10 +469,10 @@ namespace Repository.TransactionRepository
 
                     DataConnection.Query<Voucher>(STOREDPROCEDURE.POS_Vouchers, voucher, transaction, commandType: CommandType.StoredProcedure);
 
-                    // Entry 2: Credit Purchase Ledger (decrease purchase)
-                    voucher.GroupID = Convert.ToInt32(AccountGroup.PURCHASE_ACCOUNT);
-                    voucher.LedgerID = objLedgerRepository.GetLedgerId(DefaultLedgers.PURCHASE, (int)AccountGroup.PURCHASE_ACCOUNT, SessionContext.BranchId);
-                    voucher.LedgerName = DefaultLedgers.PURCHASE;
+                    // Entry 2: Credit Contra Ledger
+                    voucher.GroupID = contraGroupId;
+                    voucher.LedgerID = contraLedgerId;
+                    voucher.LedgerName = contraLedgerName;
                     voucher.Debit = 0;
                     voucher.Credit = absAdjustmentValue;
                     voucher.Narration = narration;
@@ -461,38 +493,15 @@ namespace Repository.TransactionRepository
 
                     DataConnection.Query<Voucher>(STOREDPROCEDURE.POS_Vouchers, voucher, transaction, commandType: CommandType.StoredProcedure);
 
-                    // Entry 2: Debit Purchase Ledger (increase purchase)
-                    voucher.GroupID = Convert.ToInt32(AccountGroup.PURCHASE_ACCOUNT);
-                    voucher.LedgerID = objLedgerRepository.GetLedgerId(DefaultLedgers.PURCHASE, (int)AccountGroup.PURCHASE_ACCOUNT, SessionContext.BranchId);
-                    voucher.LedgerName = DefaultLedgers.PURCHASE;
+                    // Entry 2: Debit Contra Ledger
+                    voucher.GroupID = contraGroupId;
+                    voucher.LedgerID = contraLedgerId;
+                    voucher.LedgerName = contraLedgerName;
                     voucher.Debit = absAdjustmentValue;
                     voucher.Credit = 0;
                     voucher.Narration = narration;
                     voucher.SlNo = 2;
 
-                    DataConnection.Query<Voucher>(STOREDPROCEDURE.POS_Vouchers, voucher, transaction, commandType: CommandType.StoredProcedure);
-                }
-
-                // Add entry for reason ledger if specified
-                if (stockMaster.LedgerId > 0)
-                {
-                    voucher.GroupID = Convert.ToInt32(AccountGroup.SUNDRY_CREDITORS);
-                    voucher.LedgerID = stockMaster.LedgerId;
-                    voucher.LedgerName = stockMaster.LedgerName;
-
-                    if (totalQtyDifference >= 0) // Stock In
-                    {
-                        voucher.Debit = absAdjustmentValue;
-                        voucher.Credit = 0;
-                    }
-                    else // Stock Out
-                    {
-                        voucher.Debit = 0;
-                        voucher.Credit = absAdjustmentValue;
-                    }
-
-                    voucher.Narration = narration;
-                    voucher.SlNo = 3;
                     DataConnection.Query<Voucher>(STOREDPROCEDURE.POS_Vouchers, voucher, transaction, commandType: CommandType.StoredProcedure);
                 }
 
@@ -779,6 +788,38 @@ namespace Repository.TransactionRepository
                 double absAdjustmentValue = Math.Abs(totalAdjustmentValue);
                 string adjustmentType = totalQtyDifference >= 0 ? "Stock In" : "Stock Out";
 
+                // Determine the contra ledger details
+                int contraGroupId;
+                int contraLedgerId;
+                string contraLedgerName;
+
+                if (sk.LedgerId > 0)
+                {
+                    contraGroupId = Convert.ToInt32(AccountGroup.SUNDRY_CREDITORS); // Default fallback group
+                    try
+                    {
+                        var groupIdResult = DataConnection.QueryFirstOrDefault<int?>(
+                            "SELECT GroupID FROM LedgerMaster WHERE LedgerID = @LedgerID",
+                            new { LedgerID = sk.LedgerId },
+                            trans
+                        );
+                        if (groupIdResult.HasValue)
+                        {
+                            contraGroupId = groupIdResult.Value;
+                        }
+                    }
+                    catch { }
+
+                    contraLedgerId = sk.LedgerId;
+                    contraLedgerName = sk.LedgerName;
+                }
+                else
+                {
+                    contraGroupId = Convert.ToInt32(AccountGroup.PURCHASE_ACCOUNT);
+                    contraLedgerId = objLedgerRepository.GetLedgerId(DefaultLedgers.PURCHASE, (int)AccountGroup.PURCHASE_ACCOUNT, SessionContext.BranchId);
+                    contraLedgerName = DefaultLedgers.PURCHASE;
+                }
+
                 if (totalQtyDifference >= 0) // Stock In (Positive Adjustment)
                 {
                     // Entry 1: Debit Stock Ledger (increase stock)
@@ -792,10 +833,10 @@ namespace Repository.TransactionRepository
 
                     List<Voucher> ObjSaveDebitVoucher = DataConnection.Query<Voucher>(STOREDPROCEDURE.POS_Vouchers, objVoucher, trans, commandType: CommandType.StoredProcedure).ToList<Voucher>();
 
-                    // Entry 2: Credit Purchase Ledger (decrease purchase)
-                    objVoucher.GroupID = Convert.ToInt32(AccountGroup.PURCHASE_ACCOUNT); // Purchase Ledger
-                    objVoucher.LedgerID = objLedgerRepository.GetLedgerId(DefaultLedgers.PURCHASE, (int)AccountGroup.PURCHASE_ACCOUNT, SessionContext.BranchId);
-                    objVoucher.LedgerName = DefaultLedgers.PURCHASE;
+                    // Entry 2: Credit Contra Ledger
+                    objVoucher.GroupID = contraGroupId;
+                    objVoucher.LedgerID = contraLedgerId;
+                    objVoucher.LedgerName = contraLedgerName;
                     objVoucher.Debit = 0;
                     objVoucher.Credit = absAdjustmentValue;
                     objVoucher.Narration = "PhysicalStock: #" + Convert.ToString(sk.StockAdjustmentNo) + "| " + adjustmentType + " WORTH:" + Convert.ToString(absAdjustmentValue) + "| REMARKS: " + sk.Comments;
@@ -816,40 +857,16 @@ namespace Repository.TransactionRepository
 
                     List<Voucher> ObjSaveCreditVoucher = DataConnection.Query<Voucher>(STOREDPROCEDURE.POS_Vouchers, objVoucher, trans, commandType: CommandType.StoredProcedure).ToList<Voucher>();
 
-                    // Entry 2: Debit Purchase Ledger (increase purchase)
-                    objVoucher.GroupID = Convert.ToInt32(AccountGroup.PURCHASE_ACCOUNT); // Purchase Ledger
-                    objVoucher.LedgerID = objLedgerRepository.GetLedgerId(DefaultLedgers.PURCHASE, (int)AccountGroup.PURCHASE_ACCOUNT, SessionContext.BranchId);
-                    objVoucher.LedgerName = DefaultLedgers.PURCHASE;
+                    // Entry 2: Debit Contra Ledger
+                    objVoucher.GroupID = contraGroupId;
+                    objVoucher.LedgerID = contraLedgerId;
+                    objVoucher.LedgerName = contraLedgerName;
                     objVoucher.Debit = absAdjustmentValue;
                     objVoucher.Credit = 0;
                     objVoucher.Narration = "PhysicalStock: #" + Convert.ToString(sk.StockAdjustmentNo) + "| " + adjustmentType + " WORTH:" + Convert.ToString(absAdjustmentValue) + "| REMARKS: " + sk.Comments;
                     objVoucher.SlNo = 2;
 
                     List<Voucher> ObjSaveDebitVoucher = DataConnection.Query<Voucher>(STOREDPROCEDURE.POS_Vouchers, objVoucher, trans, commandType: CommandType.StoredProcedure).ToList<Voucher>();
-                }
-
-                // Add entries for the reason ledger if needed
-                if (sk.LedgerId > 0)
-                {
-                    // Entry for reason ledger (e.g., DAMAGE, LOSS, etc.)
-                    objVoucher.GroupID = Convert.ToInt32(AccountGroup.SUNDRY_CREDITORS);
-                    objVoucher.LedgerID = sk.LedgerId;
-                    objVoucher.LedgerName = sk.LedgerName;
-
-                    if (totalQtyDifference >= 0) // Stock In
-                    {
-                        objVoucher.Debit = absAdjustmentValue;
-                        objVoucher.Credit = 0;
-                    }
-                    else // Stock Out
-                    {
-                        objVoucher.Debit = 0;
-                        objVoucher.Credit = absAdjustmentValue;
-                    }
-
-                    objVoucher.Narration = "PhysicalStock: #" + Convert.ToString(sk.StockAdjustmentNo) + "| " + adjustmentType + " WORTH:" + Convert.ToString(absAdjustmentValue) + "| REMARKS: " + sk.Comments;
-                    objVoucher.SlNo = 3;
-                    List<Voucher> ObjSaveReasonVoucher = DataConnection.Query<Voucher>(STOREDPROCEDURE.POS_Vouchers, objVoucher, trans, commandType: CommandType.StoredProcedure).ToList<Voucher>();
                 }
 
                 if (liststock.Count > 0)
