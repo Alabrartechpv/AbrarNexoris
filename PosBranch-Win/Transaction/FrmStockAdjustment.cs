@@ -952,6 +952,7 @@ namespace PosBranch_Win.Transaction
                 btnSave.Enabled = true;
                 ultraPictureBox7.Visible = false;
                 ultraPictureBox7.Enabled = true;
+                _isUpdateMode = false; // Reset to save mode
 
                 // Clear the DataTable
                 if (stockAdjustmentTable != null)
@@ -1498,16 +1499,21 @@ namespace PosBranch_Win.Transaction
             }
         }
 
-        // Public method called by Home.cs universal save
+        // Track whether we're in save mode (new) or update mode (edit existing)
+        private bool _isUpdateMode = false;
+
+        // Public method called by Home.cs universal ribbon Save
+        // NOTE: btnSave is inside ultraPanel6 which is hidden (ribbon replaces it),
+        // so we cannot rely on btnSave.Visible. Use _isUpdateMode flag instead.
         public void Save()
         {
-            if (btnSave.Visible && btnSave.Enabled)
-            {
-                btnSave_Click(this, EventArgs.Empty);
-            }
-            else if (ultraPictureBox7.Visible && ultraPictureBox7.Enabled)
+            if (_isUpdateMode)
             {
                 btn_update_Click(this, EventArgs.Empty);
+            }
+            else
+            {
+                btnSave_Click(this, EventArgs.Empty);
             }
         }
 
@@ -1515,6 +1521,7 @@ namespace PosBranch_Win.Transaction
         {
             btnSave.Visible = false;
             ultraPictureBox7.Visible = true;
+            _isUpdateMode = true;  // Tell ribbon Save to call update instead
         }
 
 
