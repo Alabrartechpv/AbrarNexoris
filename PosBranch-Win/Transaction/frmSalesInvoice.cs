@@ -890,12 +890,15 @@ namespace PosBranch_Win.Transaction
             }
             else if (e.KeyCode == Keys.Oem3)
             {
-                bool enableSearch = !ChkSearch.Checked;
-                ChkSearch.Checked = enableSearch;
-                if (enableSearch)
+                if (ChkSearch != null)
                 {
-                    txtBarcode.Clear();
-                    BarcodeFocuse();
+                    bool enableSearch = !ChkSearch.Checked;
+                    ChkSearch.Checked = enableSearch;
+                    if (enableSearch)
+                    {
+                        txtBarcode.Clear();
+                        BarcodeFocuse();
+                    }
                 }
             }
         }
@@ -3887,7 +3890,7 @@ namespace PosBranch_Win.Transaction
 
         private void txtBarcode_KeyUp(object sender, KeyEventArgs e)
         {
-            if (ChkSearch.Checked == true)
+            if (ChkSearch != null && ChkSearch.Checked == true)
             {
                 if (txtBarcode.Text.Length > 3)
                 {
@@ -4238,7 +4241,7 @@ namespace PosBranch_Win.Transaction
 
         private void txtItemNameSearch_TextChanged(object sender, EventArgs e)
         {
-            if (ChkSearch.Checked == false)
+            if (ChkSearch != null && ChkSearch.Checked == false)
             {
                 DataBase.Operations = "GETITEMBYBARCODENAME";
                 ItemDDlGrid item = dp.itemDDlGrid(txtItemNameSearch.Text, txtItemNameSearch.Text);
