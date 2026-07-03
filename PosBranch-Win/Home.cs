@@ -3142,7 +3142,8 @@ namespace PosBranch_Win
         {
             try
             {
-                item.Settings.ReserveImageSpace = Infragistics.Win.DefaultableBoolean.True;
+                item.Settings.ReserveImageSpace = Infragistics.Win.DefaultableBoolean.False;
+                item.Settings.UseDefaultImage = Infragistics.Win.DefaultableBoolean.False;
 
                 // ===== BUTTON STYLE =====
                 item.Settings.Style = Infragistics.Win.UltraWinExplorerBar.ItemStyle.Button;
@@ -3433,26 +3434,30 @@ namespace PosBranch_Win
                 
                 foreach (var group in ultraExplorerBarReportNavigator.Groups)
                 {
-                    // Exact Office 2007 Blue gradients for group headers
-                    group.Settings.AppearancesSmall.HeaderAppearance.BackColor = Color.FromArgb(240, 246, 253);
-                    group.Settings.AppearancesSmall.HeaderAppearance.BackColor2 = Color.FromArgb(183, 212, 241);
-                    group.Settings.AppearancesSmall.HeaderAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
-                    group.Settings.AppearancesSmall.HeaderAppearance.ForeColor = Color.FromArgb(18, 64, 126);
+                    // Modern, flat solid design for group headers
+                    group.Settings.AppearancesSmall.HeaderAppearance.BackColor = Color.FromArgb(198, 222, 246);
+                    group.Settings.AppearancesSmall.HeaderAppearance.BackColor2 = Color.Empty;
+                    group.Settings.AppearancesSmall.HeaderAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.None;
+                    group.Settings.AppearancesSmall.HeaderAppearance.ForeColor = Color.FromArgb(24, 66, 115);
                     group.Settings.AppearancesSmall.HeaderAppearance.FontData.Name = "Segoe UI";
-                    group.Settings.AppearancesSmall.HeaderAppearance.FontData.SizeInPoints = 9f;
+                    group.Settings.AppearancesSmall.HeaderAppearance.FontData.SizeInPoints = 9.5f;
                     group.Settings.AppearancesSmall.HeaderAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
-                    group.Settings.AppearancesSmall.HeaderAppearance.BorderColor = Color.FromArgb(124, 170, 216);
+                    group.Settings.AppearancesSmall.HeaderAppearance.BorderColor = Color.FromArgb(165, 195, 225);
+                    group.Settings.AppearancesSmall.HeaderAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
 
-                    group.Settings.AppearancesSmall.HeaderHotTrackAppearance.BackColor = Color.FromArgb(255, 255, 255);
-                    group.Settings.AppearancesSmall.HeaderHotTrackAppearance.BackColor2 = Color.FromArgb(225, 240, 255);
-                    group.Settings.AppearancesSmall.HeaderHotTrackAppearance.ForeColor = Color.FromArgb(18, 64, 126);
+                    group.Settings.AppearancesSmall.HeaderHotTrackAppearance.BackColor = Color.FromArgb(215, 235, 255);
+                    group.Settings.AppearancesSmall.HeaderHotTrackAppearance.BackColor2 = Color.Empty;
+                    group.Settings.AppearancesSmall.HeaderHotTrackAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.None;
+                    group.Settings.AppearancesSmall.HeaderHotTrackAppearance.ForeColor = Color.FromArgb(24, 66, 115);
+                    group.Settings.AppearancesSmall.HeaderHotTrackAppearance.BorderColor = Color.FromArgb(165, 195, 225);
+                    group.Settings.AppearancesSmall.HeaderHotTrackAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
 
-                    // Item area styling - seamless light blue like IRS POS
-                    group.Settings.AppearancesSmall.ItemAreaAppearance.BackColor = Color.FromArgb(224, 240, 255);
-                    group.Settings.AppearancesSmall.ItemAreaAppearance.BorderColor = Color.FromArgb(170, 199, 229);
-                    group.Settings.ItemAreaInnerMargins.Left = 8;
+                    // Item area styling - richer soft blue background to avoid looking "full in white"
+                    group.Settings.AppearancesSmall.ItemAreaAppearance.BackColor = Color.FromArgb(215, 230, 246);
+                    group.Settings.AppearancesSmall.ItemAreaAppearance.BorderColor = Color.FromArgb(165, 190, 215);
+                    group.Settings.ItemAreaInnerMargins.Left = 6;
                     group.Settings.ItemAreaInnerMargins.Top = 6;
-                    group.Settings.ItemAreaInnerMargins.Right = 8;
+                    group.Settings.ItemAreaInnerMargins.Right = 6;
                     group.Settings.ItemAreaInnerMargins.Bottom = 6;
                     
                     // Set Group Header Icons to match IRS categories
@@ -3581,19 +3586,22 @@ namespace PosBranch_Win
         {
             item.Settings.Style = Infragistics.Win.UltraWinExplorerBar.ItemStyle.Button;
             item.Settings.ReserveImageSpace = Infragistics.Win.DefaultableBoolean.False;
-            item.Settings.Height = 30;
-            item.Settings.MaxLines = 2;
+            item.Settings.UseDefaultImage = Infragistics.Win.DefaultableBoolean.False;
+            item.Settings.Height = 32;
+            item.Settings.MaxLines = 1;
+            item.Settings.Indent = 14;
 
-            item.Settings.AppearancesSmall.Appearance.ForeColor = Color.FromArgb(22, 69, 124);
-            item.Settings.AppearancesSmall.Appearance.FontData.SizeInPoints = 8.5f;
+            // Normal state: transparent background, nice dark blue text, no borders
+            item.Settings.AppearancesSmall.Appearance.ForeColor = Color.FromArgb(45, 75, 110);
+            item.Settings.AppearancesSmall.Appearance.FontData.SizeInPoints = 9.5f;
             item.Settings.AppearancesSmall.Appearance.FontData.Name = "Segoe UI";
             item.Settings.AppearancesSmall.Appearance.Cursor = Cursors.Hand;
             item.Settings.AppearancesSmall.Appearance.TextHAlignAsString = "Left";
             item.Settings.AppearancesSmall.Appearance.TextVAlignAsString = "Middle";
-            item.Settings.AppearancesSmall.Appearance.BackColor = Color.FromArgb(248, 252, 255);
-            item.Settings.AppearancesSmall.Appearance.BackColor2 = Color.FromArgb(227, 242, 255);
-            item.Settings.AppearancesSmall.Appearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
-            item.Settings.AppearancesSmall.Appearance.BorderColor = Color.FromArgb(174, 205, 235);
+            item.Settings.AppearancesSmall.Appearance.BackColor = Color.Transparent;
+            item.Settings.AppearancesSmall.Appearance.BackColor2 = Color.Empty;
+            item.Settings.AppearancesSmall.Appearance.BackGradientStyle = Infragistics.Win.GradientStyle.None;
+            item.Settings.AppearancesSmall.Appearance.BorderAlpha = Infragistics.Win.Alpha.Transparent;
             item.Settings.AppearancesSmall.Appearance.Image = null;
             item.Settings.AppearancesLarge.Appearance.Image = null;
             item.Settings.AppearancesSmall.ActiveAppearance.Image = null;
@@ -3608,22 +3616,28 @@ namespace PosBranch_Win
             item.Settings.AppearancesLarge.HotTrackAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
             item.Settings.AppearancesLarge.ActiveAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
 
-            item.Settings.AppearancesSmall.ActiveAppearance.BackColor = Color.FromArgb(40, 155, 235);
-            item.Settings.AppearancesSmall.ActiveAppearance.BackColor2 = Color.FromArgb(10, 119, 202);
-            item.Settings.AppearancesSmall.ActiveAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
-            item.Settings.AppearancesSmall.ActiveAppearance.BorderColor = Color.FromArgb(8, 91, 171);
+            // Active/Selected state: solid clean modern blue
+            item.Settings.AppearancesSmall.ActiveAppearance.BackColor = Color.FromArgb(30, 120, 225);
+            item.Settings.AppearancesSmall.ActiveAppearance.BackColor2 = Color.Empty;
+            item.Settings.AppearancesSmall.ActiveAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.None;
+            item.Settings.AppearancesSmall.ActiveAppearance.BorderColor = Color.FromArgb(20, 100, 200);
+            item.Settings.AppearancesSmall.ActiveAppearance.BorderAlpha = Infragistics.Win.Alpha.Opaque;
             item.Settings.AppearancesSmall.ActiveAppearance.ForeColor = Color.White;
             item.Settings.AppearancesSmall.ActiveAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
+            item.Settings.AppearancesSmall.ActiveAppearance.FontData.SizeInPoints = 9.5f;
+            item.Settings.AppearancesSmall.ActiveAppearance.FontData.Name = "Segoe UI";
             item.Settings.AppearancesSmall.ActiveAppearance.TextHAlignAsString = "Left";
             item.Settings.AppearancesSmall.ActiveAppearance.TextVAlignAsString = "Middle";
 
-            item.Settings.AppearancesSmall.HotTrackAppearance.BackColor = Color.FromArgb(255, 248, 224);
-            item.Settings.AppearancesSmall.HotTrackAppearance.BackColor2 = Color.FromArgb(255, 221, 151);
-            item.Settings.AppearancesSmall.HotTrackAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
-            item.Settings.AppearancesSmall.HotTrackAppearance.BorderColor = Color.FromArgb(226, 158, 55);
-            item.Settings.AppearancesSmall.HotTrackAppearance.ForeColor = Color.FromArgb(70, 57, 22);
+            // Hover (HotTrack) state: soft modern blue highlight
+            item.Settings.AppearancesSmall.HotTrackAppearance.BackColor = Color.FromArgb(208, 230, 252);
+            item.Settings.AppearancesSmall.HotTrackAppearance.BackColor2 = Color.Empty;
+            item.Settings.AppearancesSmall.HotTrackAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.None;
+            item.Settings.AppearancesSmall.HotTrackAppearance.BorderColor = Color.FromArgb(160, 200, 240);
+            item.Settings.AppearancesSmall.HotTrackAppearance.BorderAlpha = Infragistics.Win.Alpha.Opaque;
+            item.Settings.AppearancesSmall.HotTrackAppearance.ForeColor = Color.FromArgb(15, 65, 125);
             item.Settings.AppearancesSmall.HotTrackAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
-            item.Settings.AppearancesSmall.HotTrackAppearance.FontData.SizeInPoints = 8.5f;
+            item.Settings.AppearancesSmall.HotTrackAppearance.FontData.SizeInPoints = 9.5f;
             item.Settings.AppearancesSmall.HotTrackAppearance.FontData.Name = "Segoe UI";
             item.Settings.AppearancesSmall.HotTrackAppearance.TextHAlignAsString = "Left";
             item.Settings.AppearancesSmall.HotTrackAppearance.TextVAlignAsString = "Middle";
