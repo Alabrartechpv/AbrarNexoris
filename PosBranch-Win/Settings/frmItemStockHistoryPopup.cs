@@ -110,7 +110,7 @@ namespace PosBranch_Win.Settings
 
             SetColumn("DisplayLogNo", "#", 55, 0);
             SetColumn("CreatedOn", "Date & Time", 155, 1);
-            SetColumn("Action", "Action", 120, 2);
+            SetColumn("Action", "Action", 220, 2);
             SetColumn("DocNo", "Doc No", 95, 3);
             SetColumn("StockIn", "Stock In", 90, 4);
             SetColumn("StockOut", "Stock Out", 90, 5);
@@ -211,7 +211,7 @@ namespace PosBranch_Win.Settings
                 display.Rows.Add(
                     ToInt(row, "DisplayLogNo"),
                     ToDateTime(row, "CreatedOn"),
-                    action,
+                    FormatDisplayAction(row, action, qtyDifference),
                     FirstText(row, "TransactionNo", "DocNo"),
                     stockIn,
                     stockOut,
@@ -230,6 +230,16 @@ namespace PosBranch_Win.Settings
             }
 
             return display;
+        }
+
+        private static string FormatDisplayAction(DataRow row, string action, decimal qtyDifference)
+        {
+            if (!string.Equals(FirstText(row, "ActivityType"), "UPDATE", StringComparison.OrdinalIgnoreCase))
+            {
+                return action;
+            }
+
+            return "Doc " + FirstText(row, "TransactionNo", "DocNo") + " updated (" + action + ")";
         }
 
         private static bool IsStockInAction(string action)
@@ -380,6 +390,26 @@ namespace PosBranch_Win.Settings
 
         private static Color GetActionColor(string action)
         {
+            if (action != null && action.IndexOf("(Purchase)", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return Color.FromArgb(24, 128, 70);
+            }
+
+            if (action != null && action.IndexOf("(Sales)", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return Color.FromArgb(190, 35, 35);
+            }
+
+            if (action != null && action.IndexOf("(Stock IN)", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return Color.FromArgb(24, 128, 70);
+            }
+
+            if (action != null && action.IndexOf("(Stock OUT)", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return Color.FromArgb(190, 35, 35);
+            }
+
             if (string.Equals(action, "Sales", StringComparison.OrdinalIgnoreCase))
             {
                 return Color.FromArgb(190, 35, 35);
@@ -417,6 +447,26 @@ namespace PosBranch_Win.Settings
 
         private static Color GetActionBackColor(string action)
         {
+            if (action != null && action.IndexOf("(Purchase)", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return Color.FromArgb(235, 250, 241);
+            }
+
+            if (action != null && action.IndexOf("(Sales)", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return Color.FromArgb(255, 238, 238);
+            }
+
+            if (action != null && action.IndexOf("(Stock IN)", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return Color.FromArgb(235, 250, 241);
+            }
+
+            if (action != null && action.IndexOf("(Stock OUT)", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return Color.FromArgb(255, 238, 238);
+            }
+
             if (string.Equals(action, "Sales", StringComparison.OrdinalIgnoreCase))
             {
                 return Color.FromArgb(255, 238, 238);

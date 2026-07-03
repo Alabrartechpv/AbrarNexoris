@@ -13,6 +13,7 @@ namespace Repository.SettingsRepo
             DataTable result = ExecuteTable("GET", fromDate, toDate, userName, action, itemSearch);
             AppendRecoveredPurchaseRows(result, fromDate, toDate, userName, action, itemSearch);
             ApplyActivityLogMetadata(result, fromDate, toDate);
+            ApplyActivityQuantitySnapshots(result);
             NormalizePurchaseReturnMovements(result);
             result = SortActivityTable(result);
             ApplyStableStockTimeline(result);
@@ -363,6 +364,131 @@ WHERE ISNULL(pm.UserName, N'') <> N''
             }
         }
 
+        private static void ApplyActivityQuantitySnapshots(DataTable rows)
+        {
+            if (rows == null ||
+                !rows.Columns.Contains("ActivityQty") ||
+                !rows.Columns.Contains("ActivityType") ||
+                !rows.Columns.Contains("ActivityLogId"))
+            {
+                return;
+            }
+
+            EnsureColumn(rows, "StockIn", typeof(decimal));
+            EnsureColumn(rows, "StockOut", typeof(decimal));
+            EnsureColumn(rows, "QtyDifference", typeof(decimal));
+
+            var groups = new Dictionary<string, List<DataRow>>(StringComparer.OrdinalIgnoreCase);
+            foreach (DataRow row in rows.Rows)
+            {
+                string activityType = Convert.ToString(row["ActivityType"]);
+                if ((!string.Equals(activityType, "SAVE", StringComparison.OrdinalIgnoreCase) &&
+                     !string.Equals(activityType, "UPDATE", StringComparison.OrdinalIgnoreCase)) ||
+                    row["ActivityQty"] == DBNull.Value ||
+                    !CanApplyActivitySnapshot(rows, row))
+                {
+                    continue;
+                }
+
+                string key = string.Join("|",
+                    Convert.ToString(row["Action"]),
+                    ToLong(row, "TransactionNo"),
+                    ToLong(row, "ItemId"),
+                    ToLong(row, "UnitId"));
+
+                List<DataRow> group;
+                if (!groups.TryGetValue(key, out group))
+                {
+                    group = new List<DataRow>();
+                    groups[key] = group;
+                }
+
+                group.Add(row);
+            }
+
+            foreach (List<DataRow> group in groups.Values)
+            {
+                group.Sort((left, right) =>
+                {
+                    int dateCompare = ToDateTime(left, "CreatedOn").CompareTo(ToDateTime(right, "CreatedOn"));
+                    return dateCompare != 0
+                        ? dateCompare
+                        : ToLong(left, "ActivityLogId").CompareTo(ToLong(right, "ActivityLogId"));
+                });
+
+                decimal? previousSignedSnapshot = null;
+                foreach (DataRow row in group)
+                {
+                    decimal snapshotQty = Math.Abs(ToDecimal(row, "ActivityQty"));
+                    decimal signedSnapshot = IsNaturallyStockOut(Convert.ToString(row["Action"]))
+                        ? 0m - snapshotQty
+                        : snapshotQty;
+                    bool isUpdate = string.Equals(Convert.ToString(row["ActivityType"]), "UPDATE", StringComparison.OrdinalIgnoreCase);
+                    decimal movement = isUpdate && previousSignedSnapshot.HasValue
+                        ? signedSnapshot - previousSignedSnapshot.Value
+                        : signedSnapshot;
+
+                    if (rows.Columns.Contains("Qty"))
+                    {
+                        // Qty is the value entered on this transaction snapshot.
+                        // StockIn/StockOut and QtyDifference represent only the
+                        // movement caused by an update.
+                        row["Qty"] = snapshotQty;
+                    }
+                    row["StockIn"] = movement > 0m ? movement : 0m;
+                    row["StockOut"] = movement < 0m ? Math.Abs(movement) : 0m;
+                    row["QtyDifference"] = movement;
+                    previousSignedSnapshot = signedSnapshot;
+                }
+            }
+        }
+
+        private static bool CanApplyActivitySnapshot(DataTable rows, DataRow current)
+        {
+            string activityBarcode = Convert.ToString(current["ActivityBarcode"]);
+            string rowBarcode = current.Table.Columns.Contains("Barcode")
+                ? Convert.ToString(current["Barcode"])
+                : string.Empty;
+
+            if (!string.IsNullOrWhiteSpace(activityBarcode) &&
+                !string.Equals(activityBarcode, "Multiple", StringComparison.OrdinalIgnoreCase))
+            {
+                return string.Equals(activityBarcode.Trim(), rowBarcode.Trim(), StringComparison.OrdinalIgnoreCase);
+            }
+
+            long itemId = 0;
+            int distinctItems = 0;
+            foreach (DataRow row in rows.Rows)
+            {
+                if (!string.Equals(Convert.ToString(row["Action"]), Convert.ToString(current["Action"]), StringComparison.OrdinalIgnoreCase) ||
+                    ToLong(row, "TransactionNo") != ToLong(current, "TransactionNo"))
+                {
+                    continue;
+                }
+
+                long candidateItemId = ToLong(row, "ItemId");
+                if (candidateItemId > 0 && candidateItemId != itemId)
+                {
+                    itemId = candidateItemId;
+                    distinctItems++;
+                    if (distinctItems > 1)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return distinctItems == 1;
+        }
+
+        private static bool IsNaturallyStockOut(string action)
+        {
+            return string.Equals(action, "Sales", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(action, "Purchase Return", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(action, "Stock OUT", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(action, "Stock Out", StringComparison.OrdinalIgnoreCase);
+        }
+
         private void NormalizePurchaseReturnMovements(DataTable rows)
         {
             if (rows == null || rows.Rows.Count == 0 || !rows.Columns.Contains("Action"))
@@ -378,6 +504,14 @@ WHERE ISNULL(pm.UserName, N'') <> N''
             foreach (DataRow row in rows.Rows)
             {
                 if (!string.Equals(Convert.ToString(row["Action"]), "Purchase Return", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (rows.Columns.Contains("ActivityQty") &&
+                    rows.Columns.Contains("ActivityType") &&
+                    row["ActivityQty"] != DBNull.Value &&
+                    !string.IsNullOrWhiteSpace(Convert.ToString(row["ActivityType"])))
                 {
                     continue;
                 }
@@ -511,7 +645,7 @@ WHERE PReturnNo = @PReturnNo
                     continue;
                 }
 
-                DataRow metadata = FindActivityMetadata(activityRows, action, transactionNo);
+                DataRow metadata = FindActivityMetadata(activityRows, action, transactionNo, ToLong(row, "ActivityLogId"));
                 if (metadata == null)
                 {
                     continue;
@@ -524,6 +658,9 @@ WHERE PReturnNo = @PReturnNo
                 CopyIfColumnExists(row, metadata, "CounterId");
                 CopyIfColumnExists(row, metadata, "CounterSessionId");
                 CopyIfColumnExists(row, metadata, "ActivityLogId");
+                CopyIfColumnExists(row, metadata, "ActivityType");
+                CopyIfColumnExists(row, metadata, "ActivityQty");
+                CopyIfColumnExists(row, metadata, "ActivityBarcode");
             }
         }
 
@@ -588,26 +725,21 @@ WHERE PReturnNo = @PReturnNo
 WITH ActivityRows AS
 (
 " + unionSql + @"
-),
-RankedRows AS
-(
-    SELECT
-        *,
-        ROW_NUMBER() OVER (PARTITION BY Action, TransactionNo ORDER BY CreatedOn DESC, ActivityLogId DESC) AS RowNo
-    FROM ActivityRows
 )
 SELECT
     Action,
     TransactionNo,
     ActivityLogId,
+    ActivityType,
+    ActivityQty,
+    ActivityBarcode,
     CreatedOn,
     UserName,
     UserId,
     CounterName,
     CounterId,
     CounterSessionId
-FROM RankedRows
-WHERE RowNo = 1;";
+FROM ActivityRows;";
         }
 
         private void AppendActivityMetadataSelect(ref string unionSql, string tableName, string action)
@@ -616,6 +748,16 @@ WHERE RowNo = 1;";
             {
                 return;
             }
+
+            string activityTypeExpression = ColumnExists(tableName, "ActivityType")
+                ? "CAST(ActivityType AS nvarchar(50))"
+                : "CAST(NULL AS nvarchar(50))";
+            string qtyExpression = ColumnExists(tableName, "Qty")
+                ? "CAST(Qty AS decimal(18,4))"
+                : "CAST(NULL AS decimal(18,4))";
+            string barcodeExpression = ColumnExists(tableName, "Barcode")
+                ? "CAST(Barcode AS nvarchar(100))"
+                : "CAST(NULL AS nvarchar(100))";
 
             if (!string.IsNullOrWhiteSpace(unionSql))
             {
@@ -629,6 +771,9 @@ UNION ALL
         CAST(N'" + action.Replace("'", "''") + @"' AS nvarchar(50)) AS Action,
         CAST(TransactionNo AS bigint) AS TransactionNo,
         CAST(ActivityLogId AS int) AS ActivityLogId,
+        " + activityTypeExpression + @" AS ActivityType,
+        " + qtyExpression + @" AS ActivityQty,
+        " + barcodeExpression + @" AS ActivityBarcode,
         CreatedOn,
         CAST(UserName AS nvarchar(150)) AS UserName,
         CAST(UserId AS int) AS UserId,
@@ -840,6 +985,9 @@ SELECT ISNULL(@Latest, CONVERT(datetime, '19000101', 112));", (SqlConnection)Dat
             EnsureColumn(table, "CounterId", typeof(int));
             EnsureColumn(table, "CounterSessionId", typeof(long));
             EnsureColumn(table, "ActivityLogId", typeof(int));
+            EnsureColumn(table, "ActivityType", typeof(string));
+            EnsureColumn(table, "ActivityQty", typeof(decimal));
+            EnsureColumn(table, "ActivityBarcode", typeof(string));
         }
 
         private static void EnsureColumn(DataTable table, string columnName, Type dataType)
@@ -856,6 +1004,9 @@ SELECT ISNULL(@Latest, CONVERT(datetime, '19000101', 112));", (SqlConnection)Dat
             table.Columns.Add("Action", typeof(string));
             table.Columns.Add("TransactionNo", typeof(long));
             table.Columns.Add("ActivityLogId", typeof(int));
+            table.Columns.Add("ActivityType", typeof(string));
+            table.Columns.Add("ActivityQty", typeof(decimal));
+            table.Columns.Add("ActivityBarcode", typeof(string));
             table.Columns.Add("CreatedOn", typeof(DateTime));
             table.Columns.Add("UserName", typeof(string));
             table.Columns.Add("UserId", typeof(int));
@@ -878,18 +1029,31 @@ SELECT ISNULL(@Latest, CONVERT(datetime, '19000101', 112));", (SqlConnection)Dat
             return action ?? string.Empty;
         }
 
-        private static DataRow FindActivityMetadata(DataTable metadataRows, string action, long transactionNo)
+        private static DataRow FindActivityMetadata(DataTable metadataRows, string action, long transactionNo, long activityLogId)
         {
+            DataRow latestMatch = null;
+            long latestActivityLogId = 0;
+
             foreach (DataRow metadata in metadataRows.Rows)
             {
                 if (string.Equals(Convert.ToString(metadata["Action"]), action, StringComparison.OrdinalIgnoreCase) &&
                     ToLong(metadata, "TransactionNo") == transactionNo)
                 {
-                    return metadata;
+                    long metadataActivityLogId = ToLong(metadata, "ActivityLogId");
+                    if (activityLogId > 0 && metadataActivityLogId == activityLogId)
+                    {
+                        return metadata;
+                    }
+
+                    if (metadataActivityLogId > latestActivityLogId)
+                    {
+                        latestMatch = metadata;
+                        latestActivityLogId = metadataActivityLogId;
+                    }
                 }
             }
 
-            return null;
+            return latestMatch;
         }
 
         private static void CopyIfColumnExists(DataRow target, DataRow source, string columnName)
@@ -986,7 +1150,9 @@ SELECT ISNULL(@Latest, CONVERT(datetime, '19000101', 112));", (SqlConnection)Dat
 
             for (int index = 0; index < table.Rows.Count; index++)
             {
-                table.Rows[index]["DisplayLogNo"] = index + 1;
+                // The grid is sorted newest first, but log numbers must increase
+                // chronologically so the latest activity has the highest number.
+                table.Rows[index]["DisplayLogNo"] = table.Rows.Count - index;
             }
         }
 

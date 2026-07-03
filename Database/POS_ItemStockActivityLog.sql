@@ -295,6 +295,7 @@ BEGIN
               AND ISNULL(v.CompanyID, 0) = ISNULL(sam.CompanyId, 0)
               AND ISNULL(v.BranchID, 0) = ISNULL(sam.BranchId, 0)
               AND ISNULL(v.FinYearID, 0) = ISNULL(sam.FinYearId, 0)
+              AND ISNULL(v.VoucherType, N'') = N'PhysicalStock'
         ) v
         WHERE ISNULL(sam.CancelFlag, 0) = 0
           AND (@CompanyId IS NULL OR @CompanyId = 0 OR ISNULL(sam.CompanyId, 0) = @CompanyId)
@@ -725,6 +726,7 @@ BEGIN
           AND ISNULL(v.CompanyID, 0) = ISNULL(sam.CompanyId, 0)
           AND ISNULL(v.BranchID, 0) = ISNULL(sam.BranchId, 0)
           AND ISNULL(v.FinYearID, 0) = ISNULL(sam.FinYearId, 0)
+          AND ISNULL(v.VoucherType, N'') = N'PhysicalStock'
     ) v
     WHERE ISNULL(sam.CancelFlag, 0) = 0
       AND ISNULL(sad.CancelFlag, 0) = 0
@@ -758,7 +760,9 @@ BEGIN
         FROM #ItemStockActivity a
     )
     SELECT
-        ROW_NUMBER() OVER (ORDER BY CreatedOn DESC, ActivityLogId DESC, ActionSort, TransactionNo DESC, SlNo DESC) AS DisplayLogNo,
+        COUNT(*) OVER ()
+            - ROW_NUMBER() OVER (ORDER BY CreatedOn DESC, ActivityLogId DESC, ActionSort, TransactionNo DESC, SlNo DESC)
+            + 1 AS DisplayLogNo,
         CreatedOn,
         UserName,
         Action,

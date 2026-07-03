@@ -329,7 +329,7 @@ namespace PosBranch_Win.Settings
             SetColumn("DisplayLogNo", "#", 55);
             SetColumn("CreatedOn", "Date & Time", 155);
             SetColumn("UserName", "User", 115);
-            SetColumn("Action", "Action", 120);
+            SetColumn("Action", "Action", 220);
             SetColumn("ItemName", "Item Name", 240);
             SetColumn("Barcode", "Barcode", 150);
             SetColumn("UOM", "UOM", 80);
@@ -445,6 +445,11 @@ namespace PosBranch_Win.Settings
                 if (string.IsNullOrWhiteSpace(Convert.ToString(row["Reason"])))
                 {
                     row["Reason"] = FirstText(row, "Reason", "Comments", "Remarks");
+                }
+
+                if (string.Equals(FirstText(row, "ActivityType"), "UPDATE", StringComparison.OrdinalIgnoreCase))
+                {
+                    row["Action"] = "Doc " + FirstText(row, "TransactionNo", "DocNo") + " updated (" + action + ")";
                 }
             }
 
@@ -886,6 +891,26 @@ namespace PosBranch_Win.Settings
 
         private static Color GetActionColor(string action)
         {
+            if (action != null && action.IndexOf("(Purchase)", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return Color.FromArgb(24, 128, 70);
+            }
+
+            if (action != null && action.IndexOf("(Sales)", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return Color.FromArgb(190, 35, 35);
+            }
+
+            if (action != null && action.IndexOf("(Stock IN)", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return Color.FromArgb(24, 128, 70);
+            }
+
+            if (action != null && action.IndexOf("(Stock OUT)", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return Color.FromArgb(190, 35, 35);
+            }
+
             if (string.Equals(action, "Sales", StringComparison.OrdinalIgnoreCase))
             {
                 return Color.FromArgb(190, 35, 35);
