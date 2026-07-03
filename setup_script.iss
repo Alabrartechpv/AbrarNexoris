@@ -25,7 +25,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 ; Copy all compiled binaries and assets recursively from the build folder
-Source: "c:\AbrarNexorisLatestproj\AbrarNexoris\PosBranch-Win\bin\Debug\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "PosBranch-Win\bin\Debug\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\Nexoris POS"; Filename: "{app}\NexorisPOS.exe"
@@ -35,20 +35,132 @@ Name: "{commondesktop}\Nexoris POS"; Filename: "{app}\NexorisPOS.exe"; Tasks: de
 Filename: "{app}\NexorisPOS.exe"; Description: "{cm:LaunchProgram,Nexoris POS}"; Flags: nowait postinstall skipifsilent
 
 [Code]
-// Helper function to create default config connection file post-install if it doesn't exist.
+var
+  DbConfigPage: TInputQueryWizardPage;
+
+// Helper function to extract only the value from a key=value string.
+// If no '=' is present, returns the trimmed string itself.
+function GetConfigValue(Part: string; DefaultVal: string): string;
+var
+  EqPos: Integer;
+begin
+  EqPos := Pos('=', Part);
+  if EqPos > 0 then
+    Result := Trim(Copy(Part, EqPos + 1, Length(Part) - EqPos))
+  else
+    Result := Trim(Part);
+    
+  if Result = '' then
+    Result := DefaultVal;
+end;
+
+procedure InitializeWizard;
+var
+  ConfigPath: string;
+  FileContentAnsi: AnsiString;
+  FileContent: string;
+  Separators: TArrayOfString;
+  Parts: TArrayOfString;
+  ServerVal: string;
+  DbVal: string;
+  UserVal: string;
+  PassVal: string;
+begin
+  // Create a custom wizard page to request SQL Connection details
+  DbConfigPage := CreateInputQueryPage(wpSelectDir,
+    'Database Connection Settings', 'Specify database connection parameters',
+    'Please enter the SQL Server instance name, database name, and credentials. These settings will be saved to C:\Connection\Config.txt.');
+
+  // Add fields
+  DbConfigPage.Add('SQL Server / Server IP (e.g. 192.168.1.232\SQLEXPRESS or localhost\SQLEXPRESS):', False);
+  DbConfigPage.Add('Database Name:', False);
+  DbConfigPage.Add('Database User ID:', False);
+  DbConfigPage.Add('Database Password:', True); // password masked
+
+  // Default values
+  ServerVal := '192.168.1.232\SQLEXPRESS';
+  DbVal := 'RambaiTest';
+  UserVal := 'sa';
+  PassVal := 'Abrar@123';
+
+  // Check if an existing config file exists, if so read and parse it to pre-fill the form
+  ConfigPath := 'C:\Connection\Config.txt';
+  if FileExists(ConfigPath) then
+  begin
+    if LoadStringFromFile(ConfigPath, FileContentAnsi) then
+    begin
+      FileContent := Trim(String(FileContentAnsi));
+      SetLength(Separators, 1);
+      Separators[0] := ';';
+      Parts := StringSplit(FileContent, Separators, stAll);
+      if GetArrayLength(Parts) >= 4 then
+      begin
+        ServerVal := GetConfigValue(Parts[0], ServerVal);
+        DbVal := GetConfigValue(Parts[1], DbVal);
+        UserVal := GetConfigValue(Parts[2], UserVal);
+        PassVal := GetConfigValue(Parts[3], PassVal);
+      end;
+    end;
+  end;
+
+  // Set values to the page inputs
+  DbConfigPage.Values[0] := ServerVal;
+  DbConfigPage.Values[1] := DbVal;
+  DbConfigPage.Values[2] := UserVal;
+  DbConfigPage.Values[3] := PassVal;
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   ConfigDir: string;
   ConfigFile: string;
-  DefaultConfig: string;
+  ConfigContent: string;
+  Server: string;
+  DbName: string;
+  User: string;
+  Pass: string;
+  FileContentAnsi: AnsiString;
+  FileContent: string;
+  Separators: TArrayOfString;
+  Parts: TArrayOfString;
+  ExtraPart: string;
+  I: Integer;
 begin
   if CurStep = ssPostInstall then
   begin
     ConfigDir := 'C:\Connection';
     ConfigFile := ConfigDir + '\Config.txt';
     
-    // Default connection string template
-    DefaultConfig := '192.168.1.232\SQLEXPRESS;RambaiTest;sa;Abrar@123;';
+    // Retrieve values entered by the user in the wizard
+    Server := Trim(DbConfigPage.Values[0]);
+    DbName := Trim(DbConfigPage.Values[1]);
+    User := Trim(DbConfigPage.Values[2]);
+    Pass := DbConfigPage.Values[3];
+
+    // Build connection string template with required SQL keys
+    ConfigContent := 'Data Source=' + Server + ';Initial Catalog=' + DbName + ';User ID=' + User + ';Password=' + Pass + ';';
+
+    // Preserve any extra parameters (like CounterId) from the original file if it exists
+    if FileExists(ConfigFile) then
+    begin
+      if LoadStringFromFile(ConfigFile, FileContentAnsi) then
+      begin
+        FileContent := Trim(String(FileContentAnsi));
+        SetLength(Separators, 1);
+        Separators[0] := ';';
+        Parts := StringSplit(FileContent, Separators, stAll);
+        
+        // Append all extra parameters (index 4 onwards)
+        for I := 4 to GetArrayLength(Parts) - 1 do
+        begin
+          ExtraPart := Trim(Parts[I]);
+          if ExtraPart <> '' then
+          begin
+            ConfigContent := ConfigContent + ExtraPart + ';';
+          end;
+        end;
+      end;
+    end;
 
     try
       // Ensure Connection Directory exists
@@ -60,18 +172,11 @@ begin
           Log('Failed to create folder C:\Connection');
       end;
 
-      // Ensure Config file exists, write template if not present
-      if not FileExists(ConfigFile) then
-      begin
-        if SaveStringToFile(ConfigFile, DefaultConfig, False) then
-          Log('Successfully wrote default config to C:\Connection\Config.txt')
-        else
-          Log('Failed to write default config to C:\Connection\Config.txt');
-      end
+      // Write user inputs to config file (overwriting any previous value)
+      if SaveStringToFile(ConfigFile, ConfigContent, False) then
+        Log('Successfully wrote connection configuration to C:\Connection\Config.txt')
       else
-      begin
-        Log('Config file already exists. Preserving current connection configuration.');
-      end;
+        Log('Failed to write connection configuration to C:\Connection\Config.txt');
     except
       MsgBox('An unexpected error occurred while creating database connection configuration files. Please configure C:\Connection\Config.txt manually.', mbError, MB_OK);
     end;
