@@ -281,6 +281,7 @@ namespace PosBranch_Win.Master
             this.btnSave.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnSave.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
             this.btnSave.ForeColor = System.Drawing.Color.White;
+            this.btnSave.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnSave.Location = new System.Drawing.Point(255, 448);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(140, 45);
@@ -296,6 +297,7 @@ namespace PosBranch_Win.Master
             this.btnNew.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnNew.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
             this.btnNew.ForeColor = System.Drawing.Color.White;
+            this.btnNew.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnNew.Location = new System.Drawing.Point(93, 448);
             this.btnNew.Name = "btnNew";
             this.btnNew.Size = new System.Drawing.Size(140, 45);
@@ -321,6 +323,7 @@ namespace PosBranch_Win.Master
             this.ultraGroupBoxAddress.Controls.Add(this.label7);
             this.ultraGroupBoxAddress.Controls.Add(this.ultraTextEditor1);
             this.ultraGroupBoxAddress.HeaderBorderStyle = Infragistics.Win.UIElementBorderStyle.Rounded1;
+            this.ultraGroupBoxAddress.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.ultraGroupBoxAddress.Location = new System.Drawing.Point(460, 60);
             this.ultraGroupBoxAddress.Name = "ultraGroupBoxAddress";
             this.ultraGroupBoxAddress.Size = new System.Drawing.Size(440, 215);
@@ -480,6 +483,7 @@ namespace PosBranch_Win.Master
             this.ultraGroupBoxContact.Controls.Add(this.txtWebsite);
             this.ultraGroupBoxContact.Controls.Add(this.label9);
             this.ultraGroupBoxContact.HeaderBorderStyle = Infragistics.Win.UIElementBorderStyle.Rounded1;
+            this.ultraGroupBoxContact.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.ultraGroupBoxContact.Location = new System.Drawing.Point(914, 60);
             this.ultraGroupBoxContact.Name = "ultraGroupBoxContact";
             this.ultraGroupBoxContact.Size = new System.Drawing.Size(432, 140);
@@ -577,6 +581,7 @@ namespace PosBranch_Win.Master
             this.btnDelete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnDelete.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
             this.btnDelete.ForeColor = System.Drawing.Color.White;
+            this.btnDelete.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnDelete.Location = new System.Drawing.Point(413, 448);
             this.btnDelete.Name = "btnDelete";
             this.btnDelete.Size = new System.Drawing.Size(140, 45);
@@ -597,6 +602,7 @@ namespace PosBranch_Win.Master
             this.ultraGroupBoxDates.Controls.Add(this.dtpBookTo);
             this.ultraGroupBoxDates.Controls.Add(this.ultraLabel5);
             this.ultraGroupBoxDates.HeaderBorderStyle = Infragistics.Win.UIElementBorderStyle.Rounded1;
+            this.ultraGroupBoxDates.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.ultraGroupBoxDates.Location = new System.Drawing.Point(914, 222);
             this.ultraGroupBoxDates.Name = "ultraGroupBoxDates";
             this.ultraGroupBoxDates.Size = new System.Drawing.Size(432, 115);
@@ -706,6 +712,7 @@ namespace PosBranch_Win.Master
             this.ultraGroupBoxLegal.Controls.Add(this.txtFSSAINo);
             this.ultraGroupBoxLegal.Controls.Add(this.ultraLabelFSSAI);
             this.ultraGroupBoxLegal.HeaderBorderStyle = Infragistics.Win.UIElementBorderStyle.Rounded1;
+            this.ultraGroupBoxLegal.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.ultraGroupBoxLegal.Location = new System.Drawing.Point(14, 278);
             this.ultraGroupBoxLegal.Name = "ultraGroupBoxLegal";
             this.ultraGroupBoxLegal.Size = new System.Drawing.Size(900, 150);
@@ -783,6 +790,7 @@ namespace PosBranch_Win.Master
             this.txtTaxNo.Appearance = appearance4;
             this.txtTaxNo.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
             this.txtTaxNo.Font = new System.Drawing.Font("Segoe UI", 11F);
+            this.txtTaxNo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.txtTaxNo.Location = new System.Drawing.Point(626, 30);
             this.txtTaxNo.Name = "txtTaxNo";
             this.txtTaxNo.Size = new System.Drawing.Size(250, 27);
@@ -793,6 +801,7 @@ namespace PosBranch_Win.Master
             // 
             this.label10.AutoSize = true;
             this.label10.Font = new System.Drawing.Font("Segoe UI", 11F);
+            this.label10.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label10.Location = new System.Drawing.Point(540, 33);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(75, 22);
@@ -846,6 +855,7 @@ namespace PosBranch_Win.Master
             this.txtDLNo2.Appearance = appearance4;
             this.txtDLNo2.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
             this.txtDLNo2.Font = new System.Drawing.Font("Segoe UI", 11F);
+            this.txtDLNo2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.txtDLNo2.Location = new System.Drawing.Point(627, 65);
             this.txtDLNo2.Name = "txtDLNo2";
             this.txtDLNo2.Size = new System.Drawing.Size(250, 27);
@@ -856,6 +866,7 @@ namespace PosBranch_Win.Master
             // 
             this.label13.AutoSize = true;
             this.label13.Font = new System.Drawing.Font("Segoe UI", 11F);
+            this.label13.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label13.Location = new System.Drawing.Point(516, 68);
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(111, 22);
@@ -891,6 +902,7 @@ namespace PosBranch_Win.Master
             this.ultraGroupBoxLogo.Controls.Add(this.txtBackupPath);
             this.ultraGroupBoxLogo.Controls.Add(this.ultraLabelBackup);
             this.ultraGroupBoxLogo.HeaderBorderStyle = Infragistics.Win.UIElementBorderStyle.Rounded1;
+            this.ultraGroupBoxLogo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.ultraGroupBoxLogo.Location = new System.Drawing.Point(914, 360);
             this.ultraGroupBoxLogo.Name = "ultraGroupBoxLogo";
             this.ultraGroupBoxLogo.Size = new System.Drawing.Size(432, 120);
