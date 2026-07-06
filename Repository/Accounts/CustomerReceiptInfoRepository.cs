@@ -546,24 +546,23 @@ namespace Repository.Accounts
             DataConnection.Open();
             try
             {
-                string query = @"
-                    SELECT ISNULL(
-                        (SELECT (ISNULL(LM.OpnDebit, 0) - ISNULL(LM.OpnCredit, 0) + ISNULL(SUM(ISNULL(V.Debit, 0)), 0) - ISNULL(SUM(ISNULL(V.Credit, 0)), 0))
-                         FROM LedgerMaster AS LM
-                         LEFT JOIN Vouchers AS V ON LM.LedgerID = V.LedgerID AND LM.BranchID = V.BranchID AND V.CancelFlag = 0
-                         WHERE LM.BranchID = @BranchId AND LM.LedgerID = @CustomerLedgerId
-                         GROUP BY LM.LedgerID, LM.OpnDebit, LM.OpnCredit
-                        ), 0);";
-
-                using (SqlCommand cmd = new SqlCommand(query, (SqlConnection)DataConnection))
+                using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE._CustomerReceiptMaster, (SqlConnection)DataConnection))
                 {
+                    cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@CustomerLedgerId", customerLedgerId);
                     cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
+                    cmd.Parameters.AddWithValue("@_Operation", "OUTSTANDINGTOTAL");
 
-                    object result = cmd.ExecuteScalar();
-                    if (result != null && result != DBNull.Value)
+                    using (SqlDataReader reader = cmd.ExecuteReader())
                     {
-                        outstandingTotal = Convert.ToDecimal(result);
+                        if (reader.Read())
+                        {
+                            object result = reader["TotalOutStanding"];
+                            if (result != null && result != DBNull.Value)
+                            {
+                                outstandingTotal = Convert.ToDecimal(result);
+                            }
+                        }
                     }
                 }
             }
@@ -590,6 +589,7 @@ namespace Repository.Accounts
             {
                 decimal invoiceAmount = GetRowDecimal(row, "InvoiceAmount");
                 decimal receivedAmount = GetRowDecimal(row, "ReceivedAmount");
+                decimal returnedAmount = invoices.Columns.Contains("ReturnedAmount") ? GetRowDecimal(row, "ReturnedAmount") : 0m;
 
                 if (invoiceAmount < 0m)
                 {
@@ -601,12 +601,26 @@ namespace Repository.Accounts
                     receivedAmount = 0m;
                 }
 
-                if (invoiceAmount > 0m && receivedAmount > invoiceAmount)
+                if (returnedAmount < 0m)
                 {
-                    receivedAmount = invoiceAmount;
+                    returnedAmount = 0m;
                 }
 
-                decimal balance = invoiceAmount - receivedAmount;
+                decimal maxPaidAndReturned = receivedAmount + returnedAmount;
+                if (invoiceAmount > 0m && maxPaidAndReturned > invoiceAmount)
+                {
+                    if (receivedAmount > invoiceAmount)
+                    {
+                        receivedAmount = invoiceAmount;
+                        returnedAmount = 0m;
+                    }
+                    else
+                    {
+                        returnedAmount = invoiceAmount - receivedAmount;
+                    }
+                }
+
+                decimal balance = invoiceAmount - receivedAmount - returnedAmount;
                 if (balance < 0m)
                 {
                     balance = 0m;
@@ -620,6 +634,11 @@ namespace Repository.Accounts
                 if (invoices.Columns.Contains("ReceivedAmount"))
                 {
                     row["ReceivedAmount"] = receivedAmount;
+                }
+
+                if (invoices.Columns.Contains("ReturnedAmount"))
+                {
+                    row["ReturnedAmount"] = returnedAmount;
                 }
 
                 if (invoices.Columns.Contains("Balance"))
@@ -781,8 +800,29 @@ namespace Repository.Accounts
                     balanceToSet = 0m;
                 }
 
-                decimal computedReceivedAmount = Math.Round(netAmount - balanceToSet, 3, MidpointRounding.AwayFromZero);
-                decimal receivedAmountToSet = Math.Max(receivedFromDb, computedReceivedAmount);
+                decimal returnedAmount = 0m;
+                using (SqlCommand returnCmd = new SqlCommand(
+                    @"SELECT ISNULL(SUM(GrandTotal), 0) 
+                      FROM SReturnMaster 
+                      WHERE InvoiceNo = @BillNo 
+                        AND BranchId = @BranchId 
+                        AND CancelFlag = 0", conn, transaction))
+                {
+                    returnCmd.Parameters.AddWithValue("@BillNo", billNo);
+                    returnCmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
+                    object retResult = returnCmd.ExecuteScalar();
+                    if (retResult != null && retResult != DBNull.Value)
+                    {
+                        returnedAmount = Convert.ToDecimal(retResult);
+                    }
+                }
+
+                decimal receivedAmountToSet = Math.Round(receivedFromDb + adjustedAmount, 3, MidpointRounding.AwayFromZero);
+                if (isFullyPaid)
+                {
+                    receivedAmountToSet = Math.Round(netAmount - returnedAmount, 3, MidpointRounding.AwayFromZero);
+                }
+
                 if (netAmount > 0m)
                 {
                     receivedAmountToSet = Math.Min(receivedAmountToSet, netAmount);

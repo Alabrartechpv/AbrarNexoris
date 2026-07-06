@@ -455,13 +455,32 @@ namespace Repository.TransactionRepository
                     contraLedgerName = DefaultLedgers.PURCHASE;
                 }
 
+                // --- Resolve STOCK IN HAND ledger (Group 18) for Leg 1 ---
+                // Correct journal: Dr STOCK IN HAND / Cr Reason (Stock In)
+                //                  Dr Reason / Cr STOCK IN HAND  (Stock Out)
+                int stockInHandGroupId = Convert.ToInt32(AccountGroup.STOCK_IN_HAND);
+                int stockInHandLedgerId = objLedgerRepository.GetLedgerId(DefaultLedgers.BEGINSTOCK, (int)AccountGroup.STOCK_IN_HAND, SessionContext.BranchId);
+                string stockInHandLedgerName = DefaultLedgers.BEGINSTOCK;
+                if (stockInHandLedgerId == 0)
+                {
+                    // Fallback: use the first available Group 18 ledger for this branch
+                    var fallbackLedger = DataConnection.QueryFirstOrDefault<dynamic>(
+                        "SELECT TOP 1 LedgerID, LedgerName FROM LedgerMaster WHERE GroupID = 18 AND BranchID = @BranchId ORDER BY LedgerID",
+                        new { BranchId = SessionContext.BranchId }, transaction);
+                    if (fallbackLedger != null)
+                    {
+                        stockInHandLedgerId   = (int)fallbackLedger.LedgerID;
+                        stockInHandLedgerName = (string)fallbackLedger.LedgerName;
+                    }
+                }
+
                 // Create appropriate voucher entries based on adjustment type
                 if (totalQtyDifference >= 0) // Stock In (Positive Adjustment)
                 {
-                    // Entry 1: Debit Stock Ledger (increase stock)
-                    voucher.GroupID = Convert.ToInt32(AccountGroup.CASH_IN_HAND);
-                    voucher.LedgerID = objLedgerRepository.GetLedgerId(DefaultLedgers.CASH, (int)AccountGroup.CASH_IN_HAND, SessionContext.BranchId);
-                    voucher.LedgerName = DefaultLedgers.CASH;
+                    // Entry 1: Debit STOCK IN HAND (Group 18 — increases stock asset)
+                    voucher.GroupID = stockInHandGroupId;
+                    voucher.LedgerID = stockInHandLedgerId;
+                    voucher.LedgerName = stockInHandLedgerName;
                     voucher.Debit = absAdjustmentValue;
                     voucher.Credit = 0;
                     voucher.Narration = narration;
@@ -469,7 +488,7 @@ namespace Repository.TransactionRepository
 
                     DataConnection.Query<Voucher>(STOREDPROCEDURE.POS_Vouchers, voucher, transaction, commandType: CommandType.StoredProcedure);
 
-                    // Entry 2: Credit Contra Ledger
+                    // Entry 2: Credit Reason/Contra Ledger
                     voucher.GroupID = contraGroupId;
                     voucher.LedgerID = contraLedgerId;
                     voucher.LedgerName = contraLedgerName;
@@ -482,10 +501,10 @@ namespace Repository.TransactionRepository
                 }
                 else // Stock Out (Negative Adjustment)
                 {
-                    // Entry 1: Credit Stock Ledger (decrease stock)
-                    voucher.GroupID = Convert.ToInt32(AccountGroup.CASH_IN_HAND);
-                    voucher.LedgerID = objLedgerRepository.GetLedgerId(DefaultLedgers.CASH, (int)AccountGroup.CASH_IN_HAND, SessionContext.BranchId);
-                    voucher.LedgerName = DefaultLedgers.CASH;
+                    // Entry 1: Credit STOCK IN HAND (Group 18 — decreases stock asset)
+                    voucher.GroupID = stockInHandGroupId;
+                    voucher.LedgerID = stockInHandLedgerId;
+                    voucher.LedgerName = stockInHandLedgerName;
                     voucher.Debit = 0;
                     voucher.Credit = absAdjustmentValue;
                     voucher.Narration = narration;
@@ -493,7 +512,7 @@ namespace Repository.TransactionRepository
 
                     DataConnection.Query<Voucher>(STOREDPROCEDURE.POS_Vouchers, voucher, transaction, commandType: CommandType.StoredProcedure);
 
-                    // Entry 2: Debit Contra Ledger
+                    // Entry 2: Debit Reason/Contra Ledger
                     voucher.GroupID = contraGroupId;
                     voucher.LedgerID = contraLedgerId;
                     voucher.LedgerName = contraLedgerName;
@@ -820,12 +839,32 @@ namespace Repository.TransactionRepository
                     contraLedgerName = DefaultLedgers.PURCHASE;
                 }
 
+                // --- Resolve STOCK IN HAND ledger (Group 18) for Leg 1 ---
+                // Correct journal: Dr STOCK IN HAND / Cr Reason (Stock In)
+                //                  Dr Reason / Cr STOCK IN HAND  (Stock Out)
+                int stkInHandGroupId = Convert.ToInt32(AccountGroup.STOCK_IN_HAND);
+                int stkInHandLedgerId = objLedgerRepository.GetLedgerId(DefaultLedgers.BEGINSTOCK, (int)AccountGroup.STOCK_IN_HAND, SessionContext.BranchId);
+                string stkInHandLedgerName = DefaultLedgers.BEGINSTOCK;
+                if (stkInHandLedgerId == 0)
+                {
+                    // Fallback: use the first available Group 18 ledger for this branch
+                    var fallbackLedger = DataConnection.QueryFirstOrDefault<dynamic>(
+                        "SELECT TOP 1 LedgerID, LedgerName FROM LedgerMaster WHERE GroupID = 18 AND BranchID = @BranchId ORDER BY LedgerID",
+                        new { BranchId = SessionContext.BranchId }, trans);
+                    if (fallbackLedger != null)
+                    {
+                        stkInHandLedgerId   = (int)fallbackLedger.LedgerID;
+                        stkInHandLedgerName = (string)fallbackLedger.LedgerName;
+                    }
+                }
+
+                // Correct double-entry: Dr STOCK IN HAND / Cr Reason (Stock In) | Dr Reason / Cr STOCK IN HAND (Stock Out)
                 if (totalQtyDifference >= 0) // Stock In (Positive Adjustment)
                 {
-                    // Entry 1: Debit Stock Ledger (increase stock)
-                    objVoucher.GroupID = Convert.ToInt32(AccountGroup.CASH_IN_HAND); // Stock Ledger
-                    objVoucher.LedgerID = objLedgerRepository.GetLedgerId(DefaultLedgers.CASH, (int)AccountGroup.CASH_IN_HAND, SessionContext.BranchId);
-                    objVoucher.LedgerName = DefaultLedgers.CASH;
+                    // Entry 1: Debit STOCK IN HAND (Group 18 — increases stock asset)
+                    objVoucher.GroupID = stkInHandGroupId;
+                    objVoucher.LedgerID = stkInHandLedgerId;
+                    objVoucher.LedgerName = stkInHandLedgerName;
                     objVoucher.Debit = absAdjustmentValue;
                     objVoucher.Credit = 0;
                     objVoucher.Narration = "PhysicalStock: #" + Convert.ToString(sk.StockAdjustmentNo) + "| " + adjustmentType + " WORTH:" + Convert.ToString(absAdjustmentValue) + "| REMARKS: " + sk.Comments;
@@ -833,7 +872,7 @@ namespace Repository.TransactionRepository
 
                     List<Voucher> ObjSaveDebitVoucher = DataConnection.Query<Voucher>(STOREDPROCEDURE.POS_Vouchers, objVoucher, trans, commandType: CommandType.StoredProcedure).ToList<Voucher>();
 
-                    // Entry 2: Credit Contra Ledger
+                    // Entry 2: Credit Reason/Contra Ledger
                     objVoucher.GroupID = contraGroupId;
                     objVoucher.LedgerID = contraLedgerId;
                     objVoucher.LedgerName = contraLedgerName;
@@ -846,10 +885,10 @@ namespace Repository.TransactionRepository
                 }
                 else // Stock Out (Negative Adjustment)
                 {
-                    // Entry 1: Credit Stock Ledger (decrease stock)
-                    objVoucher.GroupID = Convert.ToInt32(AccountGroup.CASH_IN_HAND); // Stock Ledger
-                    objVoucher.LedgerID = objLedgerRepository.GetLedgerId(DefaultLedgers.CASH, (int)AccountGroup.CASH_IN_HAND, SessionContext.BranchId);
-                    objVoucher.LedgerName = DefaultLedgers.CASH;
+                    // Entry 1: Credit STOCK IN HAND (Group 18 — decreases stock asset)
+                    objVoucher.GroupID = stkInHandGroupId;
+                    objVoucher.LedgerID = stkInHandLedgerId;
+                    objVoucher.LedgerName = stkInHandLedgerName;
                     objVoucher.Debit = 0;
                     objVoucher.Credit = absAdjustmentValue;
                     objVoucher.Narration = "PhysicalStock: #" + Convert.ToString(sk.StockAdjustmentNo) + "| " + adjustmentType + " WORTH:" + Convert.ToString(absAdjustmentValue) + "| REMARKS: " + sk.Comments;
@@ -857,7 +896,7 @@ namespace Repository.TransactionRepository
 
                     List<Voucher> ObjSaveCreditVoucher = DataConnection.Query<Voucher>(STOREDPROCEDURE.POS_Vouchers, objVoucher, trans, commandType: CommandType.StoredProcedure).ToList<Voucher>();
 
-                    // Entry 2: Debit Contra Ledger
+                    // Entry 2: Debit Reason/Contra Ledger
                     objVoucher.GroupID = contraGroupId;
                     objVoucher.LedgerID = contraLedgerId;
                     objVoucher.LedgerName = contraLedgerName;

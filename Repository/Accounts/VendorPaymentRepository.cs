@@ -432,6 +432,7 @@ namespace Repository.Accounts
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@VendorLedgerId", vendorLedgerId);
+                    cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
                     cmd.Parameters.AddWithValue("@_Operation", "GETOUTSTANDING");
                     DataTable dt = new DataTable();
 
@@ -462,6 +463,7 @@ namespace Repository.Accounts
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@VendorLedgerId", vendorLedgerId);
+                    cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
                     cmd.Parameters.AddWithValue("@_Operation", "GETALLINVOICES");
                     DataTable dt = new DataTable();
 
@@ -493,6 +495,7 @@ namespace Repository.Accounts
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@VendorLedgerId", vendorLedgerId);
+                    cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
                     cmd.Parameters.AddWithValue("@_Operation", "OUTSTANDINGTOTAL");
 
                     using (SqlDataReader reader = cmd.ExecuteReader())
