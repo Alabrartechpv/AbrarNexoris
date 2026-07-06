@@ -70,7 +70,7 @@ namespace PosBranch_Win.Accounts
             // Configure columns
             if (band.Columns.Exists("BillNo"))
             {
-                band.Columns["BillNo"].Header.Caption = "Bill No";
+                band.Columns["BillNo"].Header.Caption = "Purchase No";
                 band.Columns["BillNo"].Width = 100;
             }
 
@@ -175,6 +175,8 @@ namespace PosBranch_Win.Accounts
             ultraGrid1.CellChange += UltraGrid1_CellChange;
             // Add KeyDown event for textBox4 (vendor ID input)
             textBox4.KeyDown += textBox4_KeyDown;
+            // Add click event for ultraPictureBox10
+            ultraPictureBox10.Click += ultraPictureBox10_Click;
         }
 
         private void textBox4_KeyDown(object sender, KeyEventArgs e)
@@ -202,6 +204,22 @@ namespace PosBranch_Win.Accounts
                 {
                     MessageBox.Show("Please enter a valid numeric vendor ID.", "Invalid Input", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
+            }
+        }
+
+        private void ultraPictureBox10_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Open the payment list history dialog using the OfficialReceiptList form in payment mode
+                using (var paymentListForm = new PosBranch_Win.DialogBox.OfficialReceiptList(isPayment: true))
+                {
+                    paymentListForm.ShowDialog(this);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error opening payment list: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -349,7 +367,7 @@ namespace PosBranch_Win.Accounts
                 // Configure columns
                 if (band.Columns.Exists("BillNo"))
                 {
-                    band.Columns["BillNo"].Header.Caption = "Bill No";
+                    band.Columns["BillNo"].Header.Caption = "Purchase No";
                     band.Columns["BillNo"].Width = 100;
                 }
 
@@ -393,7 +411,7 @@ namespace PosBranch_Win.Accounts
 
                 if (band.Columns.Exists("BillDate"))
                 {
-                    band.Columns["BillDate"].Header.Caption = "Bill Date";
+                    band.Columns["BillDate"].Header.Caption = "Purchase Date";
                     band.Columns["BillDate"].Width = 100;
                     band.Columns["BillDate"].CellActivation = Activation.NoEdit;
                 }

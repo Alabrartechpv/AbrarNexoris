@@ -141,7 +141,7 @@ namespace PosBranch_Win.DialogBox
                 // Configure columns in the correct order
                 if (band.Columns.Exists("BillNo"))
                 {
-                    band.Columns["BillNo"].Header.Caption = "Bill No";
+                    band.Columns["BillNo"].Header.Caption = "Purchase No";
                     band.Columns["BillNo"].Width = 100;
                     band.Columns["BillNo"].CellActivation = Infragistics.Win.UltraWinGrid.Activation.NoEdit;
                     band.Columns["BillNo"].CellAppearance.TextHAlign = Infragistics.Win.HAlign.Center;
@@ -149,7 +149,7 @@ namespace PosBranch_Win.DialogBox
 
                 if (band.Columns.Exists("BillDate"))
                 {
-                    band.Columns["BillDate"].Header.Caption = "Bill Date";
+                    band.Columns["BillDate"].Header.Caption = "Purchase Date";
                     band.Columns["BillDate"].Width = 100;
                     band.Columns["BillDate"].CellActivation = Infragistics.Win.UltraWinGrid.Activation.NoEdit;
                     // Format date to show only date part
