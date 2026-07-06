@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Infragistics.Win.UltraWinGrid;
 using Repository.Accounts;
+using ModelClass;
 
 namespace PosBranch_Win.DialogBox
 {
@@ -203,12 +204,24 @@ namespace PosBranch_Win.DialogBox
                     band.Columns["BillAmount"].Hidden = true;
                 }
 
+                if (band.Columns.Exists("Type"))
+                {
+                    band.Columns["Type"].Header.Caption = "Type";
+                    band.Columns["Type"].Width = 100;
+                    band.Columns["Type"].CellActivation = Infragistics.Win.UltraWinGrid.Activation.NoEdit;
+                    band.Columns["Type"].CellAppearance.TextHAlign = Infragistics.Win.HAlign.Center;
+                }
+
                 // Set column order
                 band.Columns["BillNo"].Header.VisiblePosition = 0;
                 band.Columns["BillDate"].Header.VisiblePosition = 1;
-                band.Columns["InvoiceAmount"].Header.VisiblePosition = 2;
-                band.Columns["ReceiptAmount"].Header.VisiblePosition = 3;
-                band.Columns["BalanceAmount"].Header.VisiblePosition = 4;
+                if (band.Columns.Exists("Type"))
+                {
+                    band.Columns["Type"].Header.VisiblePosition = 2;
+                }
+                band.Columns["InvoiceAmount"].Header.VisiblePosition = 3;
+                band.Columns["ReceiptAmount"].Header.VisiblePosition = 4;
+                band.Columns["BalanceAmount"].Header.VisiblePosition = 5;
 
                 // Set alternating row colors for better readability
                 ultraGridViewReceipt.DisplayLayout.Override.RowAlternateAppearance.BackColor = Color.FromArgb(242, 242, 242);
@@ -234,7 +247,7 @@ namespace PosBranch_Win.DialogBox
                     using (var cmd = new SqlCommand("SELECT NetAmount FROM SMaster WHERE BillNo = @BillNo AND BranchId = @BranchId", connection))
                     {
                         cmd.Parameters.AddWithValue("@BillNo", billNo);
-                        cmd.Parameters.AddWithValue("@BranchId", 11); // Use the same branch ID as in FrmReceipt
+                        cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId); // Use dynamic branch ID
 
                         object result = cmd.ExecuteScalar();
                         if (result != null && result != DBNull.Value)

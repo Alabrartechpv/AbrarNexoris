@@ -5287,7 +5287,8 @@ namespace PosBranch_Win.Transaction
                     itemsPanel.Controls.Add(itemNameLabel);
 
                     Label qtyLabel = new Label();
-                    qtyLabel.Text = row.Cells["Qty"].Value?.ToString() ?? "";
+                    qtyLabel.Text = row.Cells.Exists("ReturnQty") && row.Cells["ReturnQty"].Value != null ?
+                        row.Cells["ReturnQty"].Value.ToString() : (row.Cells["Qty"].Value?.ToString() ?? "");
                     qtyLabel.Font = new Font("Arial", 9);
                     qtyLabel.Size = new Size(50, 20);
                     qtyLabel.Location = new Point(220, yOffset);
