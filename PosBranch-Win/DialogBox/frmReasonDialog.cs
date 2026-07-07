@@ -1,4 +1,4 @@
-﻿using Infragistics.Win.UltraWinGrid;
+using Infragistics.Win.UltraWinGrid;
 using ModelClass;
 using ModelClass.Master;
 using PosBranch_Win.Master;
@@ -554,12 +554,56 @@ namespace PosBranch_Win.DialogBox
             ultraPictureBox2.Click += (s, e) => this.Close();
             label3.Click += (s, e) => this.Close();
 
+            // New/Edit/Del Button
+            ultraPanel4.Click += (s, e) => OpenLedgerForm();
+            ultraPictureBox3.Click += (s, e) => OpenLedgerForm();
+            label4.Click += (s, e) => OpenLedgerForm();
+
             // Navigation
             ConnectNavigationPanelEvents(ultraPanel3, ultraPictureBox5, MoveItemHighlighterUp); // Up
             ConnectNavigationPanelEvents(ultraPanel7, ultraPictureBox6, MoveItemHighlighterDown); // Down
             
             // Toggle sort
             ultraPictureBox4.Click += ToggleSortOrder;
+        }
+
+        private void OpenLedgerForm()
+        {
+            try
+            {
+                MessageBox.Show(
+                    "To create a new stock adjustment reason:\n\n" +
+                    "1. Create the ledger under the default 'Indirect Expenses' group.\n" +
+                    "2. Include keywords like 'Damage', 'Expiry', 'Lost', or 'Wastage' in the ledger name.\n\n" +
+                    "Example: 'Wastage - Spoiled Goods'",
+                    "Creating Stock Adjustment Reason",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+
+                var frmLedgers = new PosBranch_Win.Accounts.FrmLedgers();
+                frmLedgers.SetPreselectedGroupId(12); // Pre-select Group 12 (Indirect Expenses) as the default reason group
+                var homeForm = Application.OpenForms.OfType<Home>().FirstOrDefault();
+                if (homeForm != null)
+                {
+                    var openFormInTabMethod = homeForm.GetType().GetMethod("OpenFormInTab",
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+                    if (openFormInTabMethod != null)
+                    {
+                        this.Close(); // Close the modal reason dialog first so the UI is not blocked
+                        openFormInTabMethod.Invoke(homeForm, new object[] { frmLedgers, "Ledger" });
+                        return;
+                    }
+                }
+
+                // Fallback: show as modal dialog if homeForm is not found
+                this.Close();
+                frmLedgers.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error opening Ledger form: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
         
         private void SetupPanelHoverEffects()

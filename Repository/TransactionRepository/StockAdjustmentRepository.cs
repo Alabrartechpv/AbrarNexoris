@@ -103,6 +103,12 @@ namespace Repository.TransactionRepository
             if (stockDetail == null) return "Failed: Stock detail cannot be null";
             if (itemsGrid == null || itemsGrid.Rows.Count == 0) return "Failed: No items to adjust";
 
+            int validationStockInHandLedgerId = objLedgerRepository.GetLedgerId(DefaultLedgers.BEGINSTOCK, (int)AccountGroup.STOCK_IN_HAND, SessionContext.BranchId);
+            if (stockMaster.LedgerId == validationStockInHandLedgerId)
+            {
+                return "Failed: The primary STOCK IN HAND ledger cannot be selected as the adjustment reason.";
+            }
+
             Voucher voucher = new Voucher();
             SqlTransaction transaction = null;
 
@@ -555,6 +561,12 @@ namespace Repository.TransactionRepository
 
         public string updateStock(StockAdjMaster sk, StockAdjPriceDetails stkdet, DataGridView dgv_stockadjustment)
         {
+            int validationStockInHandLedgerId = objLedgerRepository.GetLedgerId(DefaultLedgers.BEGINSTOCK, (int)AccountGroup.STOCK_IN_HAND, SessionContext.BranchId);
+            if (sk.LedgerId == validationStockInHandLedgerId)
+            {
+                return "Failed: The primary STOCK IN HAND ledger cannot be selected as the adjustment reason.";
+            }
+
             Voucher objVoucher = new Voucher();
             SqlTransaction trans = null;
 
