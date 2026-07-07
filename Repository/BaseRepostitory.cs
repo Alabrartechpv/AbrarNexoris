@@ -1,4 +1,4 @@
-﻿using ModelClass;
+using ModelClass;
 using System;
 using System.Data;
 using System.Data.SqlClient;
@@ -24,27 +24,37 @@ namespace Repository
                 string txtpath = @"C:\Connection\Config.txt";
                 try
                 {
-                    if (File.Exists(txtpath))
+                    if (!File.Exists(txtpath))
                     {
-                        using (StreamReader sr = new StreamReader(txtpath))
-                        {
-                            string ss = sr.ReadLine();
-                            string[] txtsplit = ss.Split(';');
-                            string server = txtsplit[0].ToString();
-                            string DataBase = txtsplit[1].ToString();
-                            string userid = txtsplit[2].ToString(); // user id
-                            string password = txtsplit[3].ToString(); // password
-                                                                      // string Security = txtsplit[3].ToString();
-                            string Local = server + ';' + DataBase + ';' + userid + ';' + password + ';';//+ Security
+                        throw new FileNotFoundException("Database configuration file is missing.", txtpath);
+                    }
 
-                            DataConnection = new SqlConnection(Local);
+                    using (StreamReader sr = new StreamReader(txtpath))
+                    {
+                        string ss = sr.ReadLine();
+                        if (string.IsNullOrWhiteSpace(ss))
+                        {
+                            throw new InvalidOperationException("Database configuration file is empty.");
                         }
+
+                        string[] txtsplit = ss.Split(';');
+                        if (txtsplit.Length < 4)
+                        {
+                            throw new FormatException("Database configuration file is malformed. It must contain at least 4 semicolon-separated parameters.");
+                        }
+
+                        string server = txtsplit[0].ToString();
+                        string DataBase = txtsplit[1].ToString();
+                        string userid = txtsplit[2].ToString(); // user id
+                        string password = txtsplit[3].ToString(); // password
+                        string Local = server + ';' + DataBase + ';' + userid + ';' + password + ';';
+
+                        DataConnection = new SqlConnection(Local);
                     }
                 }
                 catch (Exception ex)
                 {
-
-                    throw;
+                    throw new InvalidOperationException($"Error initializing connection: {ex.Message}", ex);
                 }
             }
             else
