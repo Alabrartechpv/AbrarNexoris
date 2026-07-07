@@ -1101,8 +1101,13 @@ namespace PosBranch_Win.Accounts
         {
             try
             {
-                OfficialReceiptList officialReceiptList = new OfficialReceiptList();
-                officialReceiptList.ShowDialog();
+                using (OfficialReceiptList officialReceiptList = new OfficialReceiptList())
+                {
+                    if (officialReceiptList.ShowDialog(this) == DialogResult.OK && officialReceiptList.SelectedVoucherId > 0)
+                    {
+                        LoadReceipt(officialReceiptList.SelectedVoucherId);
+                    }
+                }
             }
             catch (Exception ex)
             {
