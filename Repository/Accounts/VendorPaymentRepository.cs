@@ -432,6 +432,7 @@ namespace Repository.Accounts
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@VendorLedgerId", vendorLedgerId);
+                    cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
                     cmd.Parameters.AddWithValue("@_Operation", "GETOUTSTANDING");
                     DataTable dt = new DataTable();
 
@@ -462,6 +463,7 @@ namespace Repository.Accounts
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@VendorLedgerId", vendorLedgerId);
+                    cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
                     cmd.Parameters.AddWithValue("@_Operation", "GETALLINVOICES");
                     DataTable dt = new DataTable();
 
@@ -493,6 +495,7 @@ namespace Repository.Accounts
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@VendorLedgerId", vendorLedgerId);
+                    cmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
                     cmd.Parameters.AddWithValue("@_Operation", "OUTSTANDINGTOTAL");
 
                     using (SqlDataReader reader = cmd.ExecuteReader())
@@ -549,6 +552,34 @@ namespace Repository.Accounts
                 if (DataConnection.State == ConnectionState.Open)
                     DataConnection.Close();
             }
+        }
+
+        public DataTable GetAllPayments(int branchId)
+        {
+            DataTable dt = new DataTable();
+            DataConnection.Open();
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE._VendorPaymentMaster, (SqlConnection)DataConnection))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@BranchId", branchId);
+                    cmd.Parameters.AddWithValue("@VoucherType", "VENDPAY");
+                    cmd.Parameters.AddWithValue("@_Operation", "GETALL");
+                    cmd.Parameters.AddWithValue("@PageIndex", 0);
+                    cmd.Parameters.AddWithValue("@PageSize", 1000);
+                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                    {
+                        da.Fill(dt);
+                    }
+                }
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                    DataConnection.Close();
+            }
+            return dt;
         }
     }
 }

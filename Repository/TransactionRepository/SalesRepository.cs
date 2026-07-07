@@ -2559,6 +2559,12 @@ namespace Repository.TransactionRepository
                 // If ledger doesn't exist, create it automatically
                 try
                 {
+                    int nextLedgerId = 1;
+                    using (SqlCommand idCmd = new SqlCommand("SELECT ISNULL(MAX(LedgerID), 0) + 1 FROM LedgerMaster", (SqlConnection)DataConnection, (SqlTransaction)trans))
+                    {
+                        nextLedgerId = Convert.ToInt32(idCmd.ExecuteScalar());
+                    }
+
                     // Create the GST ledger using stored procedure
                     using (SqlCommand cmd = new SqlCommand("POS_Ledger", (SqlConnection)DataConnection, (SqlTransaction)trans))
                     {
@@ -2566,7 +2572,7 @@ namespace Repository.TransactionRepository
                         cmd.Parameters.AddWithValue("@_Operation", "CREATE");
                         cmd.Parameters.AddWithValue("@CompanyID", SessionContext.CompanyId);
                         cmd.Parameters.AddWithValue("@BranchID", SessionContext.BranchId);
-                        cmd.Parameters.AddWithValue("@LedgerID", DBNull.Value); // Will be auto-generated
+                        cmd.Parameters.AddWithValue("@LedgerID", nextLedgerId);
                         cmd.Parameters.AddWithValue("@LedgerName", ledgerName);
                         cmd.Parameters.AddWithValue("@Alias", ledgerName);
                         cmd.Parameters.AddWithValue("@Description", $"GST Output Ledger - {ledgerName}");

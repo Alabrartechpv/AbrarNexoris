@@ -17,6 +17,8 @@ namespace PosBranch_Win.DialogBox
     public partial class OfficialReceiptList : Form
     {
         private CustomerReceiptInfoRepository receiptRepo = new CustomerReceiptInfoRepository();
+        private VendorPaymentRepository paymentRepo = new VendorPaymentRepository();
+        private bool isPaymentMode = false;
         private int currentBranchId = ModelClass.SessionContext.BranchId;
         private DataTable fullDataTable = null;
         private string frmName;
@@ -59,6 +61,16 @@ namespace PosBranch_Win.DialogBox
             this.ultraGrid1.Resize += UltraGrid1_Resize;
         }
 
+        public OfficialReceiptList(bool isPayment) : this()
+        {
+            this.isPaymentMode = isPayment;
+            if (this.isPaymentMode)
+            {
+                this.Text = "Official Payment List";
+                this.textBoxsearch.Text = "Search payments...";
+            }
+        }
+
         private void OfficialReceiptList_Load(object sender, EventArgs e)
         {
             LoadReceiptData();
@@ -73,7 +85,14 @@ namespace PosBranch_Win.DialogBox
         {
             try
             {
-                fullDataTable = receiptRepo.GetAllReceipts(currentBranchId);
+                if (isPaymentMode)
+                {
+                    fullDataTable = paymentRepo.GetAllPayments(currentBranchId);
+                }
+                else
+                {
+                    fullDataTable = receiptRepo.GetAllReceipts(currentBranchId);
+                }
                 if (fullDataTable == null) fullDataTable = new DataTable();
 
                 // Map old SP column names to expected names if needed
@@ -81,6 +100,16 @@ namespace PosBranch_Win.DialogBox
                     fullDataTable.Columns["Date"].ColumnName = "VoucherDate";
                 if (fullDataTable.Columns.Contains("CustomerName") && !fullDataTable.Columns.Contains("LedgerName"))
                     fullDataTable.Columns["CustomerName"].ColumnName = "LedgerName";
+                if (fullDataTable.Columns.Contains("VendorName") && !fullDataTable.Columns.Contains("LedgerName"))
+                    fullDataTable.Columns["VendorName"].ColumnName = "LedgerName";
+
+                if (fullDataTable.Columns.Contains("TotalAmount"))
+                {
+                    if (isPaymentMode)
+                        fullDataTable.Columns["TotalAmount"].ColumnName = "PaymentAmount";
+                    else
+                        fullDataTable.Columns["TotalAmount"].ColumnName = "ReceiptAmount";
+                }
 
                 PreserveOriginalRowOrder(fullDataTable);
                 
@@ -99,6 +128,11 @@ namespace PosBranch_Win.DialogBox
                         ultraGrid1.DisplayLayout.Bands[0].Columns["ReceiptAmount"].Format = "##,##0.00";
                         ultraGrid1.DisplayLayout.Bands[0].Columns["ReceiptAmount"].CellAppearance.TextHAlign = HAlign.Right;
                     }
+                    if (ultraGrid1.DisplayLayout.Bands[0].Columns.Exists("PaymentAmount"))
+                    {
+                        ultraGrid1.DisplayLayout.Bands[0].Columns["PaymentAmount"].Format = "##,##0.00";
+                        ultraGrid1.DisplayLayout.Bands[0].Columns["PaymentAmount"].CellAppearance.TextHAlign = HAlign.Right;
+                    }
                     if (ultraGrid1.DisplayLayout.Bands[0].Columns.Exists("Balance"))
                     {
                         ultraGrid1.DisplayLayout.Bands[0].Columns["Balance"].Format = "##,##0.00";
@@ -108,6 +142,12 @@ namespace PosBranch_Win.DialogBox
                     {
                         ultraGrid1.DisplayLayout.Bands[0].Columns["VoucherDate"].Format = "dd-MM-yyyy";
                     }
+
+                    // Hide VendorLedgerId/CustomerLedgerId if exists
+                    if (ultraGrid1.DisplayLayout.Bands[0].Columns.Exists("VendorLedgerId"))
+                        ultraGrid1.DisplayLayout.Bands[0].Columns["VendorLedgerId"].Hidden = true;
+                    if (ultraGrid1.DisplayLayout.Bands[0].Columns.Exists("CustomerLedgerId"))
+                        ultraGrid1.DisplayLayout.Bands[0].Columns["CustomerLedgerId"].Hidden = true;
                 }
                 
                 if (ultraGrid1.Rows.Count > 0)
@@ -119,11 +159,11 @@ namespace PosBranch_Win.DialogBox
                 
                 InitializeSavedColumnWidths();
                 UpdateRecordCountLabel();
-                UpdateStatus("Loaded " + fullDataTable.Rows.Count + " receipts.");
+                UpdateStatus("Loaded " + fullDataTable.Rows.Count + (isPaymentMode ? " payments." : " receipts."));
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error loading receipts: " + ex.Message);
+                MessageBox.Show("Error loading data: " + ex.Message);
             }
         }
 
@@ -215,25 +255,45 @@ namespace PosBranch_Win.DialogBox
             {
                 try
                 {
-                    int customerLedgerId = GetRowIntVal("CustomerLedgerId");
-                    string billNo = GetRowStringVal("BillNo");
-                    decimal originalAmount = (decimal)GetRowFloatVal("TotalAmount");
-
-                    if (customerLedgerId > 0 && !string.IsNullOrEmpty(billNo))
+                    if (isPaymentMode)
                     {
-                        using (FrmViewReceipt receiptHistoryForm = new FrmViewReceipt(customerLedgerId, billNo, originalAmount))
+                        int vendorLedgerId = GetRowIntVal("VendorLedgerId");
+                        string billNo = GetRowStringVal("BillNo");
+                        
+                        if (vendorLedgerId > 0 && !string.IsNullOrEmpty(billNo) && billNo != "0")
                         {
-                            receiptHistoryForm.ShowDialog(this);
+                            using (FrmViewPayment paymentHistoryForm = new FrmViewPayment(vendorLedgerId, billNo))
+                            {
+                                paymentHistoryForm.ShowDialog(this);
+                            }
+                        }
+                        else
+                        {
+                            MessageBox.Show("Cannot open detail for this payment. No valid bill associated.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                     }
                     else
                     {
-                        MessageBox.Show("Cannot open detail for this receipt.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        int customerLedgerId = GetRowIntVal("CustomerLedgerId");
+                        string billNo = GetRowStringVal("BillNo");
+                        decimal originalAmount = (decimal)GetRowFloatVal("TotalAmount");
+
+                        if (customerLedgerId > 0 && !string.IsNullOrEmpty(billNo))
+                        {
+                            using (FrmViewReceipt receiptHistoryForm = new FrmViewReceipt(customerLedgerId, billNo, originalAmount))
+                            {
+                                receiptHistoryForm.ShowDialog(this);
+                            }
+                        }
+                        else
+                        {
+                            MessageBox.Show("Cannot open detail for this receipt.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Error selecting receipt: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Error selecting row: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }

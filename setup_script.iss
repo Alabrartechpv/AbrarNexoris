@@ -26,12 +26,17 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 ; Copy all compiled binaries and assets recursively from the build folder
 Source: "PosBranch-Win\bin\Debug\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Copy the Crystal Reports runtime installer MSI to the temp directory during setup
+Source: "Prerequisites\CRRuntime_32bit.msi"; DestDir: "{tmp}"; Flags: nocompression deleteafterinstall
 
 [Icons]
 Name: "{group}\Nexoris POS"; Filename: "{app}\NexorisPOS.exe"
 Name: "{commondesktop}\Nexoris POS"; Filename: "{app}\NexorisPOS.exe"; Tasks: desktopicon
 
 [Run]
+; Install SAP Crystal Reports Runtime silently with basic progress bar (/qb) during installation
+Filename: "msiexec.exe"; Parameters: "/i ""{tmp}\CRRuntime_32bit.msi"" /qb"; StatusMsg: "Installing SAP Crystal Reports engine, please wait..."; Flags: runhidden
+; Run the POS application after setup completes
 Filename: "{app}\NexorisPOS.exe"; Description: "{cm:LaunchProgram,Nexoris POS}"; Flags: nowait postinstall skipifsilent
 
 [Code]

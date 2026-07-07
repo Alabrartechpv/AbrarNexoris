@@ -32,6 +32,7 @@ namespace ModelClass
     {
         public static string PURCHASE = "PURCHASE";
         public static string CASH = "CASH-IN-HAND";
+        public static string BEGINSTOCK = "STOCK IN HAND"; // Primary Stock In Hand ledger (Group 18) used in PhysicalStock vouchers
         //public static string TAXPAYABLE = "TAX PAYABLE"; // REMOVE LATER
         //public static string TAXRECEIVABLE = "TAX RECEIVABLE"; // REMOVE LATER
         public static string DISCOUNTRECEIVED = "DISCOUNT RECEIVED";

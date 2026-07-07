@@ -70,7 +70,7 @@ namespace PosBranch_Win.Accounts
             // Configure columns
             if (band.Columns.Exists("BillNo"))
             {
-                band.Columns["BillNo"].Header.Caption = "Bill No";
+                band.Columns["BillNo"].Header.Caption = "Purchase No";
                 band.Columns["BillNo"].Width = 100;
             }
 
@@ -175,6 +175,8 @@ namespace PosBranch_Win.Accounts
             ultraGrid1.CellChange += UltraGrid1_CellChange;
             // Add KeyDown event for textBox4 (vendor ID input)
             textBox4.KeyDown += textBox4_KeyDown;
+            // Add click event for ultraPictureBox10
+            ultraPictureBox10.Click += ultraPictureBox10_Click;
         }
 
         private void textBox4_KeyDown(object sender, KeyEventArgs e)
@@ -202,6 +204,22 @@ namespace PosBranch_Win.Accounts
                 {
                     MessageBox.Show("Please enter a valid numeric vendor ID.", "Invalid Input", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
+            }
+        }
+
+        private void ultraPictureBox10_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Open the payment list history dialog using the OfficialReceiptList form in payment mode
+                using (var paymentListForm = new PosBranch_Win.DialogBox.OfficialReceiptList(isPayment: true))
+                {
+                    paymentListForm.ShowDialog(this);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error opening payment list: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -349,7 +367,7 @@ namespace PosBranch_Win.Accounts
                 // Configure columns
                 if (band.Columns.Exists("BillNo"))
                 {
-                    band.Columns["BillNo"].Header.Caption = "Bill No";
+                    band.Columns["BillNo"].Header.Caption = "Purchase No";
                     band.Columns["BillNo"].Width = 100;
                 }
 
@@ -375,6 +393,14 @@ namespace PosBranch_Win.Accounts
                     band.Columns["PayedAmount"].CellActivation = Activation.NoEdit;
                 }
 
+                if (band.Columns.Exists("ReturnedAmount"))
+                {
+                    band.Columns["ReturnedAmount"].Header.Caption = "Returned Amount";
+                    band.Columns["ReturnedAmount"].Width = 120;
+                    band.Columns["ReturnedAmount"].Format = "##,##0.00";
+                    band.Columns["ReturnedAmount"].CellActivation = Activation.NoEdit;
+                }
+
                 if (band.Columns.Exists("Balance"))
                 {
                     band.Columns["Balance"].Header.Caption = "Balance";
@@ -385,7 +411,7 @@ namespace PosBranch_Win.Accounts
 
                 if (band.Columns.Exists("BillDate"))
                 {
-                    band.Columns["BillDate"].Header.Caption = "Bill Date";
+                    band.Columns["BillDate"].Header.Caption = "Purchase Date";
                     band.Columns["BillDate"].Width = 100;
                     band.Columns["BillDate"].CellActivation = Activation.NoEdit;
                 }
@@ -579,7 +605,10 @@ namespace PosBranch_Win.Accounts
                 if (remainingAmount <= 0) break;
                 decimal invoiceAmount = Convert.ToDecimal(row.Cells["InvoiceAmount"].Value);
                 decimal paidAmount = Convert.ToDecimal(row.Cells["PayedAmount"].Value);
-                decimal originalBalance = invoiceAmount - paidAmount;
+                decimal returnedAmount = row.Cells.Exists("ReturnedAmount") && row.Cells["ReturnedAmount"].Value != null && row.Cells["ReturnedAmount"].Value != DBNull.Value 
+                    ? Convert.ToDecimal(row.Cells["ReturnedAmount"].Value) 
+                    : 0m;
+                decimal originalBalance = invoiceAmount - paidAmount - returnedAmount;
                 decimal adjustedAmount;
                 // Handle negative balances (vendor overpaid) for payments
                 if (originalBalance < 0)
@@ -613,11 +642,14 @@ namespace PosBranch_Win.Accounts
         {
             decimal invoiceAmount = Convert.ToDecimal(row.Cells["InvoiceAmount"].Value);
             decimal paidAmount = Convert.ToDecimal(row.Cells["PayedAmount"].Value);
+            decimal returnedAmount = row.Cells.Exists("ReturnedAmount") && row.Cells["ReturnedAmount"].Value != null && row.Cells["ReturnedAmount"].Value != DBNull.Value 
+                ? Convert.ToDecimal(row.Cells["ReturnedAmount"].Value) 
+                : 0m;
             decimal adjustedAmount = Convert.ToDecimal(row.Cells["AdjustedAmount"].Value);
 
             // Calculate the new balance: Original outstanding balance - adjusted amount
-            // Original outstanding balance = InvoiceAmount - PayedAmount
-            decimal originalOutstandingBalance = invoiceAmount - paidAmount;
+            // Original outstanding balance = InvoiceAmount - PayedAmount - ReturnedAmount
+            decimal originalOutstandingBalance = invoiceAmount - paidAmount - returnedAmount;
             decimal newBalance = originalOutstandingBalance - adjustedAmount;
 
             row.Cells["Balance"].Value = newBalance;
@@ -648,6 +680,7 @@ namespace PosBranch_Win.Accounts
             dt.Columns.Add("InvoiceNo", typeof(string));
             dt.Columns.Add("InvoiceAmount", typeof(decimal));
             dt.Columns.Add("PayedAmount", typeof(decimal)); // Match the stored procedure column name
+            dt.Columns.Add("ReturnedAmount", typeof(decimal));
             dt.Columns.Add("Balance", typeof(decimal));
             dt.Columns.Add("Select", typeof(bool));
             dt.Columns.Add("AdjustedAmount", typeof(decimal));
@@ -660,7 +693,7 @@ namespace PosBranch_Win.Accounts
             if (dt == null) return CreateEmptyInvoiceTable();
 
             // Ensure all columns exist and in the correct order
-            var correctOrder = new[] { "BillNo", "InvoiceNo", "InvoiceAmount", "PayedAmount", "Balance", "Select", "AdjustedAmount", "BillDate" };
+            var correctOrder = new[] { "BillNo", "InvoiceNo", "InvoiceAmount", "PayedAmount", "ReturnedAmount", "Balance", "Select", "AdjustedAmount", "BillDate" };
 
             // Create new table with correct structure
             var newDt = new DataTable();
@@ -675,6 +708,10 @@ namespace PosBranch_Win.Accounts
                     newDt.Columns.Add(colName, typeof(bool));
                 }
                 else if (colName == "AdjustedAmount")
+                {
+                    newDt.Columns.Add(colName, typeof(decimal));
+                }
+                else if (colName == "ReturnedAmount")
                 {
                     newDt.Columns.Add(colName, typeof(decimal));
                 }
@@ -697,13 +734,37 @@ namespace PosBranch_Win.Accounts
                     newRow["Select"] = false;
                 if (newDt.Columns.Contains("AdjustedAmount"))
                     newRow["AdjustedAmount"] = 0m;
+                if (newDt.Columns.Contains("ReturnedAmount") && newRow["ReturnedAmount"] == DBNull.Value)
+                    newRow["ReturnedAmount"] = 0m;
 
-                // Recalculate balance: InvoiceAmount - PayedAmount
+                // Recalculate balance: InvoiceAmount - PayedAmount - ReturnedAmount
                 if (newDt.Columns.Contains("InvoiceAmount") && newDt.Columns.Contains("PayedAmount") && newDt.Columns.Contains("Balance"))
                 {
                     decimal invoiceAmount = Convert.ToDecimal(newRow["InvoiceAmount"]);
                     decimal paidAmount = Convert.ToDecimal(newRow["PayedAmount"]);
-                    newRow["Balance"] = invoiceAmount - paidAmount;
+                    decimal returnedAmount = newDt.Columns.Contains("ReturnedAmount") && newRow["ReturnedAmount"] != DBNull.Value ? Convert.ToDecimal(newRow["ReturnedAmount"]) : 0m;
+
+                    // Clamping logic to prevent over-allocation and negative balances (similar to FrmReceipt)
+                    decimal maxPaidAndReturned = paidAmount + returnedAmount;
+                    if (invoiceAmount > 0m && maxPaidAndReturned > invoiceAmount)
+                    {
+                        if (paidAmount > invoiceAmount)
+                        {
+                            paidAmount = invoiceAmount;
+                            returnedAmount = 0m;
+                        }
+                        else
+                        {
+                            returnedAmount = invoiceAmount - paidAmount;
+                        }
+                    }
+
+                    newRow["PayedAmount"] = paidAmount;
+                    if (newDt.Columns.Contains("ReturnedAmount"))
+                    {
+                        newRow["ReturnedAmount"] = returnedAmount;
+                    }
+                    newRow["Balance"] = invoiceAmount - paidAmount - returnedAmount;
                 }
 
                 newDt.Rows.Add(newRow);

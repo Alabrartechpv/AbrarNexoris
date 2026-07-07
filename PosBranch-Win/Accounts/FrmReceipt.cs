@@ -322,7 +322,10 @@ namespace PosBranch_Win.Accounts
                     // not the grid Balance column because Balance is already reduced by Adjusted Amount.
                     decimal invoiceAmount = row.Cells["InvoiceAmount"].Value != null ? Convert.ToDecimal(row.Cells["InvoiceAmount"].Value) : 0m;
                     decimal alreadyReceived = row.Cells["ReceivedAmount"].Value != null ? Convert.ToDecimal(row.Cells["ReceivedAmount"].Value) : 0m;
-                    decimal originalOutstanding = invoiceAmount - alreadyReceived;
+                    decimal returnedAmount = row.Cells.Exists("ReturnedAmount") && row.Cells["ReturnedAmount"].Value != null && row.Cells["ReturnedAmount"].Value != DBNull.Value
+                        ? Convert.ToDecimal(row.Cells["ReturnedAmount"].Value)
+                        : 0m;
+                    decimal originalOutstanding = invoiceAmount - alreadyReceived - returnedAmount;
                     if (originalOutstanding < 0m)
                     {
                         originalOutstanding = 0m;
@@ -664,6 +667,14 @@ namespace PosBranch_Win.Accounts
                     band.Columns["Balance"].CellActivation = Activation.NoEdit;
                 }
 
+                if (band.Columns.Exists("ReturnedAmount"))
+                {
+                    band.Columns["ReturnedAmount"].Header.Caption = "Returned Amount";
+                    band.Columns["ReturnedAmount"].Width = 120;
+                    band.Columns["ReturnedAmount"].Format = "##,##0.00";
+                    band.Columns["ReturnedAmount"].CellActivation = Activation.NoEdit;
+                }
+
                 // Add checkbox column if not exists
                 if (!band.Columns.Exists("Select"))
                 {
@@ -941,9 +952,12 @@ namespace PosBranch_Win.Accounts
                 decimal invoiceAmount = Convert.ToDecimal(row.Cells["InvoiceAmount"].Value);
                 decimal receivedAmount = Convert.ToDecimal(row.Cells["ReceivedAmount"].Value);
                 decimal adjustedAmount = Convert.ToDecimal(row.Cells["Adjusted Amount"].Value);
+                decimal returnedAmount = row.Cells.Exists("ReturnedAmount") && row.Cells["ReturnedAmount"].Value != null && row.Cells["ReturnedAmount"].Value != DBNull.Value
+                    ? Convert.ToDecimal(row.Cells["ReturnedAmount"].Value)
+                    : 0m;
 
-                // Original balance = InvoiceAmount - ReceivedAmount
-                decimal originalBalance = invoiceAmount - receivedAmount;
+                // Original balance = InvoiceAmount - ReceivedAmount - ReturnedAmount
+                decimal originalBalance = invoiceAmount - receivedAmount - returnedAmount;
                 // New balance = Original balance - Adjusted amount
                 row.Cells["Balance"].Value = originalBalance - adjustedAmount;
             }
@@ -1130,6 +1144,7 @@ namespace PosBranch_Win.Accounts
             dt.Columns.Add("DueDate", typeof(DateTime));
             dt.Columns.Add("InvoiceAmount", typeof(decimal));
             dt.Columns.Add("ReceivedAmount", typeof(decimal));
+            dt.Columns.Add("ReturnedAmount", typeof(decimal));
             dt.Columns.Add("Balance", typeof(decimal));
             dt.Columns.Add("Select", typeof(bool));
             dt.Columns.Add("Adjusted Amount", typeof(decimal));
@@ -1206,6 +1221,7 @@ namespace PosBranch_Win.Accounts
                         newRow["BillDate"] = dr["BillDate"];
                         newRow["InvoiceAmount"] = dr["BillAmount"];
                         newRow["ReceivedAmount"] = dr["ReceivedAmount"];
+                        newRow["ReturnedAmount"] = dr.Table.Columns.Contains("ReturnedAmount") && dr["ReturnedAmount"] != DBNull.Value ? dr["ReturnedAmount"] : 0m;
                         newRow["Balance"] = dr["BalanceAmount"];
                         newRow["Select"] = true;
                         newRow["Adjusted Amount"] = dr["ReceiptAmount"];
