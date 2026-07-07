@@ -48,6 +48,7 @@ namespace Repository.ReportRepository
                 overview.TopVendors = ReadTopVendors(rangeFrom, exclusiveTo);
                 overview.Brief = ReadBrief(rangeFrom, exclusiveTo);
                 overview.ItemPurchases = ReadItemPurchasesMap(rangeFrom, exclusiveTo);
+                overview.ItemPurchaseDetails = ReadItemPurchaseDetails(rangeFrom, exclusiveTo);
             }
             finally
             {
@@ -183,7 +184,7 @@ ELSE
 IF OBJECT_ID('PDetails', 'U') IS NULL OR OBJECT_ID('PMaster', 'U') IS NULL
     SELECT TOP 0 CAST('' AS nvarchar(200)) AS ItemName, CAST(0 AS decimal(18,2)) AS QtyPurchased, CAST(0 AS decimal(18,2)) AS Amount
 ELSE
-    SELECT TOP 12
+    SELECT
         ISNULL(NULLIF(pd.ItemName, ''), 'Unknown Item') AS ItemName,
         ISNULL(SUM(ISNULL(pd.Qty, 0) * ISNULL(NULLIF(pd.Packing, 0), 1)), 0) AS QtyPurchased,
         ISNULL(SUM(ISNULL(pd.Cost, 0) * ISNULL(NULLIF(pd.Packing, 0), 1) * ISNULL(pd.Qty, 0)), 0) AS Amount
@@ -196,6 +197,33 @@ ELSE
     ORDER BY Amount DESC;";
 
             return DataConnection.Query<PurchaseItemMetric>(sql, BuildParameters(fromDate, toDate)).ToList();
+        }
+
+        private List<PurchaseItemDetail> ReadItemPurchaseDetails(DateTime fromDate, DateTime toDate)
+        {
+            const string sql = @"
+IF OBJECT_ID('PDetails', 'U') IS NULL OR OBJECT_ID('PMaster', 'U') IS NULL
+    SELECT TOP 0 CAST(0 AS bigint) AS PurchaseNo, CAST(NULL AS datetime) AS PurchaseDate,
+        CAST('' AS nvarchar(200)) AS ItemName, CAST('' AS nvarchar(200)) AS Vendor,
+        CAST(0 AS decimal(18,2)) AS Qty, CAST(0 AS decimal(18,2)) AS Cost, CAST(0 AS decimal(18,2)) AS Amount
+ELSE
+    SELECT
+        pd.PurchaseNo,
+        pm.PurchaseDate,
+        ISNULL(NULLIF(pd.ItemName, ''), 'Unknown Item') AS ItemName,
+        ISNULL(NULLIF(pm.VendorName, ''), 'Unknown Vendor') AS Vendor,
+        ISNULL(pd.Qty, 0) * ISNULL(NULLIF(pd.Packing, 0), 1) AS Qty,
+        ISNULL(pd.Cost, 0) AS Cost,
+        ISNULL(pd.Cost, 0) * ISNULL(NULLIF(pd.Packing, 0), 1) * ISNULL(pd.Qty, 0) AS Amount
+    FROM PDetails pd
+    INNER JOIN PMaster pm ON pm.PurchaseNo = pd.PurchaseNo AND pm.FinYearId = pd.FinYearId
+        AND pm.BranchID = pd.BranchID AND pm.CompanyId = pd.CompanyId
+    WHERE pm.BranchID = @BranchId AND pm.CompanyId = @CompanyId AND pm.FinYearId = @FinYearId
+      AND ISNULL(pm.CancelFlag, 0) = 0
+      AND pm.PurchaseDate >= @FromDate AND pm.PurchaseDate < @ToDate
+    ORDER BY pm.PurchaseDate DESC, pd.PurchaseNo DESC;";
+
+            return DataConnection.Query<PurchaseItemDetail>(sql, BuildParameters(fromDate, toDate)).ToList();
         }
 
         private List<PurchaseBreakdown> ReadPaymentBreakdown(DateTime fromDate, DateTime toDate)
@@ -213,7 +241,7 @@ ELSE
             string nameExpression = BuildPaymentNameExpression("pm", masterPayModeColumn, joinPayMode.Length > 0 ? "pay" : null, payModeNameColumn);
 
             string sql = $@"
-SELECT TOP 8
+SELECT
     {nameExpression} AS Name,
     ISNULL(SUM(ISNULL(pm.GrandTotal, 0)), 0) AS Amount,
     COUNT(1) AS Count
@@ -222,6 +250,7 @@ FROM PMaster pm
   AND ISNULL(pm.CancelFlag, 0) = 0
   AND pm.PurchaseDate >= @FromDate AND pm.PurchaseDate < @ToDate
 GROUP BY {nameExpression}
+HAVING LOWER(LTRIM(RTRIM({nameExpression}))) IN ('cash', 'credit')
 ORDER BY Amount DESC;";
 
             return NormalizePaymentBreakdown(DataConnection.Query<PurchaseBreakdown>(sql, BuildParameters(fromDate, toDate)).ToList());
@@ -239,7 +268,7 @@ ORDER BY Amount DESC;";
 IF OBJECT_ID('PDetails', 'U') IS NULL OR OBJECT_ID('PMaster', 'U') IS NULL
     SELECT TOP 0 CAST('' AS nvarchar(120)) AS Name, CAST(0 AS decimal(18,2)) AS Amount, CAST(0 AS int) AS Count
 ELSE
-    SELECT TOP 6
+    SELECT
         'Uncategorised' AS Name,
         ISNULL(SUM(ISNULL(pd.Cost, 0) * ISNULL(NULLIF(pd.Packing, 0), 1) * ISNULL(pd.Qty, 0)), 0) AS Amount,
         COUNT(DISTINCT pd.ItemID) AS Count
@@ -256,7 +285,7 @@ ELSE
 IF OBJECT_ID('PDetails', 'U') IS NULL OR OBJECT_ID('PMaster', 'U') IS NULL OR OBJECT_ID('ItemMaster', 'U') IS NULL OR OBJECT_ID('Category', 'U') IS NULL
     SELECT TOP 0 CAST('' AS nvarchar(120)) AS Name, CAST(0 AS decimal(18,2)) AS Amount, CAST(0 AS int) AS Count
 ELSE
-    SELECT TOP 6
+    SELECT
         ISNULL(NULLIF(c.CategoryName, ''), 'Uncategorised') AS Name,
         ISNULL(SUM(ISNULL(pd.Cost, 0) * ISNULL(NULLIF(pd.Packing, 0), 1) * ISNULL(pd.Qty, 0)), 0) AS Amount,
         COUNT(DISTINCT pd.ItemID) AS Count
@@ -361,7 +390,7 @@ WHERE BranchId = @BranchId
 
         private List<PurchaseBreakdown> NormalizePaymentBreakdown(List<PurchaseBreakdown> rows)
         {
-            string[] standardNames = { "Cash", "UPI", "Card", "Bank Transfer", "Other" };
+            string[] standardNames = { "Cash", "Credit" };
             Dictionary<string, PurchaseBreakdown> buckets = standardNames.ToDictionary(
                 name => name,
                 name => new PurchaseBreakdown { Name = name, Amount = 0, Count = 0 },
@@ -377,10 +406,7 @@ WHERE BranchId = @BranchId
                 buckets[bucketName].Count += row.Count;
             }
 
-            return standardNames
-                .Select(name => buckets[name])
-                .Concat(buckets.Values.Where(x => !standardNames.Contains(x.Name, StringComparer.OrdinalIgnoreCase)).OrderByDescending(x => x.Amount))
-                .ToList();
+            return standardNames.Select(name => buckets[name]).ToList();
         }
 
         private string GetPaymentBucketName(string rawName)
@@ -395,6 +421,8 @@ WHERE BranchId = @BranchId
                 return "Bank Transfer";
             if (compact.Contains("CASH"))
                 return "Cash";
+            if (compact.Contains("CREDIT"))
+                return "Credit";
 
             return "Other";
         }
@@ -451,6 +479,7 @@ END;";
         public List<PurchaseVendorMetric> TopVendors { get; set; } = new List<PurchaseVendorMetric>();
         public PurchaseBriefSummary Brief { get; set; } = new PurchaseBriefSummary();
         public List<PurchaseItemMetric> ItemPurchases { get; set; } = new List<PurchaseItemMetric>();
+        public List<PurchaseItemDetail> ItemPurchaseDetails { get; set; } = new List<PurchaseItemDetail>();
     }
 
     public class PurchaseAnalyticsSummary
@@ -479,6 +508,17 @@ END;";
     {
         public string ItemName { get; set; }
         public decimal QtyPurchased { get; set; }
+        public decimal Amount { get; set; }
+    }
+
+    public class PurchaseItemDetail
+    {
+        public long PurchaseNo { get; set; }
+        public DateTime PurchaseDate { get; set; }
+        public string ItemName { get; set; }
+        public string Vendor { get; set; }
+        public decimal Qty { get; set; }
+        public decimal Cost { get; set; }
         public decimal Amount { get; set; }
     }
 

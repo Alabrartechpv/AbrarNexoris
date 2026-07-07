@@ -81,6 +81,8 @@ ELSE SELECT COUNT(1) FROM ItemMaster WHERE CompanyId = @CompanyId;");
                 overview.OutOfStockItems = ReadSafeInt("IF OBJECT_ID('PriceSettings', 'U') IS NULL SELECT 0 ELSE SELECT COUNT(1) FROM PriceSettings WHERE BranchId = @BranchId AND ISNULL(Stock, 0) <= 0;");
                 overview.TotalCustomers = ReadLedgerCount(16, "Customer");
                 overview.TotalVendors = ReadLedgerCount(17, "Vendor");
+                overview.Customers = ReadLedgerRows(16);
+                overview.Vendors = ReadLedgerRows(17);
 
                 overview.SalesTrend = ReadSalesTrend(rangeFromDate, exclusiveToDate, rangeKind);
                 overview.TopSellingItems = ReadTopSellingItems(rangeFromDate, exclusiveToDate);
@@ -168,6 +170,24 @@ WHERE BranchID = @BranchId AND CompanyID = @CompanyId AND GroupID = @GroupId;", 
 IF OBJECT_ID('{fallbackTableName}', 'U') IS NULL SELECT 0
 ELSE SELECT COUNT(1) FROM {fallbackTableName} WHERE BranchId = @BranchId;";
             return ReadSafeInt(sql);
+        }
+
+        private List<DashboardPartyRow> ReadLedgerRows(int groupId)
+        {
+            const string sql = @"
+IF OBJECT_ID('LedgerMaster', 'U') IS NULL
+    SELECT TOP 0 CAST(0 AS int) AS LedgerId, CAST('' AS nvarchar(250)) AS Name
+ELSE
+    SELECT
+        CAST(LedgerID AS int) AS LedgerId,
+        ISNULL(NULLIF(LedgerName, ''), 'Unnamed') AS Name
+    FROM LedgerMaster
+    WHERE BranchID = @BranchId AND CompanyID = @CompanyId AND GroupID = @GroupId
+    ORDER BY LedgerName;";
+
+            return DataConnection.Query<DashboardPartyRow>(
+                sql,
+                BuildParameters(null, null, new { GroupId = groupId })).ToList();
         }
 
         private List<DashboardTrendPoint> ReadSalesTrend(DateTime fromDate, DateTime toDate, DashboardOverviewRangeKind rangeKind)
@@ -378,8 +398,16 @@ END;";
         public int OutOfStockItems { get; set; }
         public int TotalCustomers { get; set; }
         public int TotalVendors { get; set; }
+        public List<DashboardPartyRow> Customers { get; set; } = new List<DashboardPartyRow>();
+        public List<DashboardPartyRow> Vendors { get; set; } = new List<DashboardPartyRow>();
         public List<DashboardTrendPoint> SalesTrend { get; set; } = new List<DashboardTrendPoint>();
         public List<DashboardTopItem> TopSellingItems { get; set; } = new List<DashboardTopItem>();
+    }
+
+    public class DashboardPartyRow
+    {
+        public int LedgerId { get; set; }
+        public string Name { get; set; }
     }
 
     public class DashboardTrendPoint
