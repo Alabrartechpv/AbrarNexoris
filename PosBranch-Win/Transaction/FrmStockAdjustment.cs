@@ -996,6 +996,13 @@ namespace PosBranch_Win.Transaction
                     return;
                 }
 
+                if (txtb_reason.Text.Trim().Equals(DefaultLedgers.BEGINSTOCK, StringComparison.OrdinalIgnoreCase))
+                {
+                    MessageBox.Show("The primary Stock In Hand ledger cannot be selected as the adjustment reason.", "Validation Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
                 if (ultraGrid1.Rows.Count == 0)
                 {
                     MessageBox.Show("Please add at least one item to adjust.", "Validation Error",
@@ -1186,6 +1193,13 @@ namespace PosBranch_Win.Transaction
                 if (string.IsNullOrWhiteSpace(txtb_reason.Text))
                 {
                     MessageBox.Show("Please select a reason for the adjustment.", "Validation Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                if (txtb_reason.Text.Trim().Equals(DefaultLedgers.BEGINSTOCK, StringComparison.OrdinalIgnoreCase))
+                {
+                    MessageBox.Show("The primary Stock In Hand ledger cannot be selected as the adjustment reason.", "Validation Error",
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
