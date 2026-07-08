@@ -214,7 +214,10 @@ namespace PosBranch_Win.Accounts
                 // Open the payment list history dialog using the OfficialReceiptList form in payment mode
                 using (var paymentListForm = new PosBranch_Win.DialogBox.OfficialReceiptList(isPayment: true))
                 {
-                    paymentListForm.ShowDialog(this);
+                    if (paymentListForm.ShowDialog(this) == DialogResult.OK && paymentListForm.SelectedVoucherId > 0)
+                    {
+                        LoadPayment(paymentListForm.SelectedVoucherId);
+                    }
                 }
             }
             catch (Exception ex)
@@ -1259,6 +1262,77 @@ namespace PosBranch_Win.Accounts
                 // Open vendor dialog (same as btnF11_Click)
                 btnF11_Click(sender, e);
                 e.Handled = true;
+            }
+        }
+
+        private void LoadPayment(long voucherId)
+        {
+            try
+            {
+                DataSet ds = paymentRepo.GetPaymentDataByVoucherId(voucherId, currentBranchId);
+                if (ds == null || ds.Tables.Count == 0 || ds.Tables[0].Rows.Count == 0) return;
+
+                isAdjusting = true;
+                DataRow master = ds.Tables[0].Rows[0];
+
+                txtPurchaseNo.Text = master["VoucherId"].ToString();
+                currentVendorLedgerId = Convert.ToInt32(master["VendorLedgerId"]);
+                textBox4.Text = currentVendorLedgerId.ToString();
+                
+                // Get vendor name from the 3rd table if available (Vendor Info / Balance)
+                if (ds.Tables.Count > 2 && ds.Tables[2].Rows.Count > 0)
+                {
+                    txtVendorName.Text = ds.Tables[2].Rows[0]["LedgerName"]?.ToString() ?? "";
+                    txtOutstanding.Text = ds.Tables[2].Rows[0][1]?.ToString() ?? "0.00";
+                }
+                else
+                {
+                    // Fallback to searching vendor name
+                    var vendorList = ObjDrop.VendorDDL().List;
+                    var vendor = vendorList.FirstOrDefault(v => v.LedgerID == currentVendorLedgerId);
+                    if (vendor != null) txtVendorName.Text = vendor.LedgerName;
+                }
+
+                textBox1.Text = master["PaymentAmount"]?.ToString() ?? "0.00";
+                totalPaymentAmount = Convert.ToDecimal(master["PaymentAmount"] ?? 0);
+                
+                if (master["PaymentMethodLedgerId"] != DBNull.Value)
+                    CmboPayment.Value = master["PaymentMethodLedgerId"];
+                
+                if (master["VoucherDate"] != DBNull.Value)
+                    dtpPurchaseDate.Value = Convert.ToDateTime(master["VoucherDate"]);
+
+                textBox2.Text = "";
+                richTextBox2.Text = master["Narration"]?.ToString() ?? "";
+
+                // Populate Grid
+                DataTable dtGrid = CreateEmptyInvoiceTable();
+                if (ds.Tables.Count > 1)
+                {
+                    foreach (DataRow dr in ds.Tables[1].Rows)
+                    {
+                        DataRow newRow = dtGrid.NewRow();
+                        newRow["BillNo"] = dr["BillNo"]?.ToString();
+                        newRow["InvoiceNo"] = dr.Table.Columns.Contains("InvoiceNo") ? dr["InvoiceNo"]?.ToString() : dr["BillNo"]?.ToString();
+                        newRow["InvoiceAmount"] = dr["BillAmount"];
+                        newRow["PayedAmount"] = dr["PayedAmount"];
+                        newRow["ReturnedAmount"] = dr.Table.Columns.Contains("ReturnedAmount") && dr["ReturnedAmount"] != DBNull.Value ? dr["ReturnedAmount"] : 0m;
+                        newRow["Balance"] = dr["BalanceAmount"];
+                        newRow["Select"] = true;
+                        newRow["AdjustedAmount"] = dr["PaymentAmount"];
+                        newRow["BillDate"] = dr["BillDate"];
+                        dtGrid.Rows.Add(newRow);
+                    }
+                }
+                ultraGrid1.DataSource = dtGrid;
+                ConfigureGridColumns();
+
+                isAdjusting = false;
+            }
+            catch (Exception ex)
+            {
+                isAdjusting = false;
+                MessageBox.Show("Error loading payment: " + ex.Message);
             }
         }
 

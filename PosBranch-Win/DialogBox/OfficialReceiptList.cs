@@ -264,19 +264,18 @@ namespace PosBranch_Win.DialogBox
                 {
                     if (isPaymentMode)
                     {
-                        int vendorLedgerId = GetRowIntVal("VendorLedgerId");
-                        string billNo = GetRowStringVal("BillNo");
-                        
-                        if (vendorLedgerId > 0 && !string.IsNullOrEmpty(billNo) && billNo != "0")
+                        // Payment mode: return the selected VoucherId to FrmPayment so it can load
+                        // the full payment data into the form for editing/viewing.
+                        long voucherId = GetRowLongVal("VoucherID");
+                        if (voucherId > 0)
                         {
-                            using (FrmViewPayment paymentHistoryForm = new FrmViewPayment(vendorLedgerId, billNo))
-                            {
-                                paymentHistoryForm.ShowDialog(this);
-                            }
+                            SelectedVoucherId = voucherId;
+                            this.DialogResult = DialogResult.OK;
+                            this.Close();
                         }
                         else
                         {
-                            MessageBox.Show("Cannot open detail for this payment. No valid bill associated.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            MessageBox.Show("Cannot load this payment. Invalid Voucher ID.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                     }
                     else
