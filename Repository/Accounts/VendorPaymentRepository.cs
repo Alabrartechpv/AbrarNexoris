@@ -523,6 +523,36 @@ namespace Repository.Accounts
             return outstandingTotal;
         }
 
+        public DataSet GetPaymentDataByVoucherId(long voucherId, int branchId)
+        {
+            DataSet ds = new DataSet();
+            DataConnection.Open();
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE._VendorPaymentMaster, (SqlConnection)DataConnection))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@VoucherId", voucherId);
+                    cmd.Parameters.AddWithValue("@BranchId", branchId);
+                    cmd.Parameters.AddWithValue("@_Operation", "GETBYID");
+                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                    {
+                        da.Fill(ds);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                    DataConnection.Close();
+            }
+            return ds;
+        }
+
         public DataTable GetPaymentHistory(int vendorLedgerId, long billNo)
         {
             DataConnection.Open();

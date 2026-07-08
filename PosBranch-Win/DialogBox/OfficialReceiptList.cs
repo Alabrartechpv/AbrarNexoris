@@ -30,6 +30,12 @@ namespace PosBranch_Win.DialogBox
         private Dictionary<string, int> savedColumnWidths = new Dictionary<string, int>();
         private bool isOriginalOrder = true;
 
+        /// <summary>
+        /// In receipt mode: the VoucherId of the row selected by the user.
+        /// FrmReceipt reads this after ShowDialog() returns DialogResult.OK.
+        /// </summary>
+        public long SelectedVoucherId { get; private set; } = 0;
+
         public OfficialReceiptList()
         {
             InitializeComponent();
@@ -105,9 +111,9 @@ namespace PosBranch_Win.DialogBox
 
                 if (fullDataTable.Columns.Contains("TotalAmount"))
                 {
-                    if (isPaymentMode)
+                    if (isPaymentMode && !fullDataTable.Columns.Contains("PaymentAmount"))
                         fullDataTable.Columns["TotalAmount"].ColumnName = "PaymentAmount";
-                    else
+                    else if (!isPaymentMode && !fullDataTable.Columns.Contains("ReceiptAmount"))
                         fullDataTable.Columns["TotalAmount"].ColumnName = "ReceiptAmount";
                 }
 
@@ -198,8 +204,8 @@ namespace PosBranch_Win.DialogBox
                     col.Hidden = true;
                 }
                 
-                // Define columns to show
-                string[] columnsToShow = new string[] { "VoucherID", "VoucherDate", "BillNo", "LedgerName", "TotalAmount", "ReceiptAmount", "Balance" };
+                // Define columns to show (include both ReceiptAmount and PaymentAmount since the column is renamed based on mode)
+                string[] columnsToShow = new string[] { "VoucherID", "VoucherDate", "BillNo", "LedgerName", "TotalAmount", "ReceiptAmount", "PaymentAmount", "Balance" };
                 for (int i = 0; i < columnsToShow.Length; i++)
                 {
                     string colKey = columnsToShow[i];
@@ -223,9 +229,10 @@ namespace PosBranch_Win.DialogBox
             if (band.Columns.Exists("VoucherID")) { band.Columns["VoucherID"].Header.Caption = "Voucher"; }
             if (band.Columns.Exists("VoucherDate")) { band.Columns["VoucherDate"].Header.Caption = "Date"; }
             if (band.Columns.Exists("BillNo")) { band.Columns["BillNo"].Header.Caption = "Bill No"; }
-            if (band.Columns.Exists("LedgerName")) { band.Columns["LedgerName"].Header.Caption = "Customer"; }
+            if (band.Columns.Exists("LedgerName")) { band.Columns["LedgerName"].Header.Caption = isPaymentMode ? "Vendor" : "Customer"; }
             if (band.Columns.Exists("TotalAmount")) { band.Columns["TotalAmount"].Header.Caption = "Total"; }
             if (band.Columns.Exists("ReceiptAmount")) { band.Columns["ReceiptAmount"].Header.Caption = "Paid"; }
+            if (band.Columns.Exists("PaymentAmount")) { band.Columns["PaymentAmount"].Header.Caption = "Paid"; }
             if (band.Columns.Exists("Balance")) { band.Columns["Balance"].Header.Caption = "Balance"; }
         }
 
@@ -257,37 +264,34 @@ namespace PosBranch_Win.DialogBox
                 {
                     if (isPaymentMode)
                     {
-                        int vendorLedgerId = GetRowIntVal("VendorLedgerId");
-                        string billNo = GetRowStringVal("BillNo");
-                        
-                        if (vendorLedgerId > 0 && !string.IsNullOrEmpty(billNo) && billNo != "0")
+                        // Payment mode: return the selected VoucherId to FrmPayment so it can load
+                        // the full payment data into the form for editing/viewing.
+                        long voucherId = GetRowLongVal("VoucherID");
+                        if (voucherId > 0)
                         {
-                            using (FrmViewPayment paymentHistoryForm = new FrmViewPayment(vendorLedgerId, billNo))
-                            {
-                                paymentHistoryForm.ShowDialog(this);
-                            }
+                            SelectedVoucherId = voucherId;
+                            this.DialogResult = DialogResult.OK;
+                            this.Close();
                         }
                         else
                         {
-                            MessageBox.Show("Cannot open detail for this payment. No valid bill associated.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            MessageBox.Show("Cannot load this payment. Invalid Voucher ID.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                     }
                     else
                     {
-                        int customerLedgerId = GetRowIntVal("CustomerLedgerId");
-                        string billNo = GetRowStringVal("BillNo");
-                        decimal originalAmount = (decimal)GetRowFloatVal("TotalAmount");
-
-                        if (customerLedgerId > 0 && !string.IsNullOrEmpty(billNo))
+                        // Receipt mode: return the selected VoucherId to FrmReceipt so it can load
+                        // the full receipt data into the form for editing/viewing.
+                        long voucherId = GetRowLongVal("VoucherID");
+                        if (voucherId > 0)
                         {
-                            using (FrmViewReceipt receiptHistoryForm = new FrmViewReceipt(customerLedgerId, billNo, originalAmount))
-                            {
-                                receiptHistoryForm.ShowDialog(this);
-                            }
+                            SelectedVoucherId = voucherId;
+                            this.DialogResult = DialogResult.OK;
+                            this.Close();
                         }
                         else
                         {
-                            MessageBox.Show("Cannot open detail for this receipt.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            MessageBox.Show("Cannot load this receipt. Invalid Voucher ID.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                     }
                 }
@@ -304,6 +308,15 @@ namespace PosBranch_Win.DialogBox
             var val = ultraGrid1.ActiveRow.Cells[colName].Value;
             if (val == null || val == DBNull.Value) return 0;
             if (int.TryParse(val.ToString(), out int res)) return res;
+            return 0;
+        }
+
+        private long GetRowLongVal(string colName) 
+        {
+            if (!ultraGrid1.ActiveRow.Cells.Exists(colName)) return 0;
+            var val = ultraGrid1.ActiveRow.Cells[colName].Value;
+            if (val == null || val == DBNull.Value) return 0;
+            if (long.TryParse(val.ToString(), out long res)) return res;
             return 0;
         }
 
@@ -379,7 +392,7 @@ namespace PosBranch_Win.DialogBox
             {
                 if (fullDataTable == null) return;
                 string searchText = textBoxsearch.Text.Trim();
-                if (searchText == "Search receipts..." || searchText == "Search receipts by voucher, customer, amount or balance")
+                if (searchText == "Search receipts..." || searchText == "Search payments..." || searchText == "Search receipts by voucher, customer, amount or balance")
                 {
                     searchText = "";
                 }
@@ -408,6 +421,7 @@ namespace PosBranch_Win.DialogBox
                             if(fullDataTable.Columns.Contains("BillNo")) parts.Add("CONVERT(BillNo, 'System.String') LIKE '%" + escapedSearchText + "%'");
                             if(fullDataTable.Columns.Contains("LedgerName")) parts.Add("LedgerName LIKE '%" + escapedSearchText + "%'");
                             if(fullDataTable.Columns.Contains("ReceiptAmount")) parts.Add("CONVERT(ReceiptAmount, 'System.String') LIKE '%" + escapedSearchText + "%'");
+                            if(fullDataTable.Columns.Contains("PaymentAmount")) parts.Add("CONVERT(PaymentAmount, 'System.String') LIKE '%" + escapedSearchText + "%'");
                             if(fullDataTable.Columns.Contains("Balance")) parts.Add("CONVERT(Balance, 'System.String') LIKE '%" + escapedSearchText + "%'");
                             filter = string.Join(" OR ", parts);
                             break;
@@ -446,7 +460,7 @@ namespace PosBranch_Win.DialogBox
 
         private void textBoxsearch_GotFocus(object sender, EventArgs e)
         {
-            if (textBoxsearch.Text == "Search receipts..." || textBoxsearch.Text == "Search receipts by voucher, customer, amount or balance")
+            if (textBoxsearch.Text == "Search receipts..." || textBoxsearch.Text == "Search payments..." || textBoxsearch.Text == "Search receipts by voucher, customer, amount or balance")
             {
                 textBoxsearch.Text = "";
                 textBoxsearch.ForeColor = Color.Black;
@@ -457,7 +471,7 @@ namespace PosBranch_Win.DialogBox
         {
             if (string.IsNullOrWhiteSpace(textBoxsearch.Text))
             {
-                textBoxsearch.Text = "Search receipts...";
+                textBoxsearch.Text = isPaymentMode ? "Search payments..." : "Search receipts...";
                 textBoxsearch.ForeColor = Color.Gray;
             }
         }

@@ -1083,12 +1083,18 @@ namespace Repository.MasterRepositry
                         double currentStock = uomRow.OpnStk;
                         double currentStockValue = uomRow.OpnStk * uomRow.Cost;
                         double currentOrderedStock = 0;
+                        double currentOpeningCost = 0;
+                        double currentOpnValue = 0;
+                        DateTime? currentOpnDate = null;
 
                         if (isUpdate && existingStocks.TryGetValue(uomUnitId, out var cachedStock))
                         {
                             currentStock = Convert.ToDouble(cachedStock.Stock);
                             currentStockValue = Convert.ToDouble(cachedStock.StockValue);
                             currentOrderedStock = Convert.ToDouble(cachedStock.OrderedStock);
+                            currentOpeningCost = Convert.ToDouble(cachedStock.OpeningCost);
+                            currentOpnValue = Convert.ToDouble(cachedStock.OpnValue);
+                            currentOpnDate = cachedStock.OpnDate;
                         }
 
                         // Tax calculation (inclusive vs exclusive)
@@ -1113,6 +1119,9 @@ namespace Repository.MasterRepositry
                             Unit = uomRow.Unit,
                             Packing = uomRow.Packing,
                             Cost = uomRow.Cost,
+                            OpeningCost = currentOpeningCost,
+                            OpnValue = currentOpnValue,
+                            OpnDate = currentOpnDate,
                             MarginPer = uomRow.RetailPrice > 0 ? ((uomRow.RetailPrice - uomRow.Cost) / uomRow.RetailPrice * 100.0) : 0,
                             MarginAmt = uomRow.RetailPrice - uomRow.Cost,
                             RetailPrice = uomRow.RetailPrice,
