@@ -27,8 +27,7 @@ namespace PosBranch_Win.Transaction
         SalesMaster sales = new SalesMaster();
         SalesDetails salesDetails = new SalesDetails();
         SalesRepository operations = new SalesRepository();
-        private bool isCtrlPressed = false;
-        private bool isf2Pressed = false;
+
 
         float SubTotal;
         bool CheckExists;
@@ -93,7 +92,6 @@ namespace PosBranch_Win.Transaction
         // Grid layout persistence for column chooser
         private const string GRID_LAYOUT_FILE = "SalesInvoiceGridLayout.xml";
         private string GridLayoutPath => Path.Combine(Application.StartupPath, GRID_LAYOUT_FILE);
-        private bool gridLayoutLoaded = false;
         private static readonly DateTime SQL_MAX_DATE = new DateTime(9999, 12, 31);
         // 1. Add private fields for column chooser and drag state
         private Form columnChooserForm = null;
@@ -318,8 +316,6 @@ namespace PosBranch_Win.Transaction
 
         // Cost display functionality
         private System.Windows.Forms.ToolTip costToolTip = new System.Windows.Forms.ToolTip();
-        private bool isCostColumnVisible = false;
-
         public frmSalesInvoice()
         {
             InitializeComponent();
@@ -475,7 +471,6 @@ namespace PosBranch_Win.Transaction
                 if (File.Exists(GridLayoutPath))
                 {
                     ultraGrid1.DisplayLayout.LoadFromXml(GridLayoutPath);
-                    gridLayoutLoaded = true;
 
                     // Enforce essential columns to be visible regardless of saved layout
                     if (ultraGrid1.DisplayLayout.Bands.Count > 0)
@@ -654,14 +649,6 @@ namespace PosBranch_Win.Transaction
 
         private void frmSalesInvoice_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Control)
-            {
-                isCtrlPressed = true;
-            }
-            if (e.KeyCode == Keys.F2)
-            {
-                isf2Pressed = true;
-            }
             // Handle Delete key at form level to delete the selected row
             // This makes Delete key work even when focus is on barcode textbox
             if (e.KeyCode == Keys.Delete && ultraGrid1.Rows.Count > 0 && ultraGrid1.ActiveRow != null)
@@ -905,15 +892,6 @@ namespace PosBranch_Win.Transaction
 
         private void frmSalesInvoice_KeyUp(object sender, KeyEventArgs e)
         {
-            // Reset modifier flags when keys are released to prevent sticky state
-            if (e.KeyCode == Keys.ControlKey)
-            {
-                isCtrlPressed = false;
-            }
-            if (e.KeyCode == Keys.F2)
-            {
-                isf2Pressed = false;
-            }
         }
 
         private void frmSalesInvoice_Load(object sender, EventArgs e)
@@ -1435,26 +1413,6 @@ namespace PosBranch_Win.Transaction
                         }));
                         return;
                     }
-
-                    // Validate that unit price is not less than cost unless allowed
-                    float cost = ParseFloat(e.Cell.Row.Cells["Cost"].Value, 0);
-                    if (price < cost && !SessionContext.AllowSaleBelowCost)
-                    {
-                        MessageBox.Show($"Unit price cannot be less than cost price (â‚¹{cost:F2}).", "Price Below Cost", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        e.Cancel = true;
-                        validationFailed = true;
-
-                        // Restore the old value immediately
-                        e.Cell.CancelUpdate();
-
-                        // Return focus to barcode field
-                        this.BeginInvoke(new Action(() =>
-                        {
-                            txtBarcode.Focus();
-                            txtBarcode.SelectAll();
-                        }));
-                        return;
-                    }
                 }
                 else if (e.Cell.Column.Key == "Amount") // SellingPrice validation
                 {
@@ -1462,26 +1420,6 @@ namespace PosBranch_Win.Transaction
                     if (!float.TryParse(e.NewValue.ToString(), out sellingPrice) || sellingPrice < 0)
                     {
                         MessageBox.Show("Please enter a valid selling price.", "Invalid Input", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        e.Cancel = true;
-                        validationFailed = true;
-
-                        // Restore the old value immediately
-                        e.Cell.CancelUpdate();
-
-                        // Return focus to barcode field
-                        this.BeginInvoke(new Action(() =>
-                        {
-                            txtBarcode.Focus();
-                            txtBarcode.SelectAll();
-                        }));
-                        return;
-                    }
-
-                    // Validate that selling price is not less than cost unless allowed
-                    float cost = ParseFloat(e.Cell.Row.Cells["Cost"].Value, 0);
-                    if (sellingPrice < cost && !SessionContext.AllowSaleBelowCost)
-                    {
-                        MessageBox.Show($"Selling price cannot be less than cost price (â‚¹{cost:F2}).", "Price Below Cost", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         e.Cancel = true;
                         validationFailed = true;
 
@@ -2029,15 +1967,6 @@ namespace PosBranch_Win.Transaction
                 int activeRowIndex = ultraGrid1.ActiveRow.Index;
                 if (activeRowIndex >= 0)
                 {
-                    // Validate that selling price is not less than cost unless allowed
-                    float cost = ParseFloat(ultraGrid1.Rows[activeRowIndex].Cells["Cost"].Value, 0);
-                    if (newPrice < cost && !SessionContext.AllowSaleBelowCost)
-                    {
-                        MessageBox.Show($"Selling price cannot be less than cost price (â‚¹{cost:F2}).", "Price Below Cost", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        txtBarcode.Clear();
-                        return;
-                    }
-
                     // Update the selling price (Amount column) directly
                     ultraGrid1.Rows[activeRowIndex].Cells["Amount"].Value = newPrice;
                     // Update totals using the method that preserves selling price
@@ -3139,6 +3068,27 @@ namespace PosBranch_Win.Transaction
                 ShowNoItemsMessage("to save the invoice");
                 return false;
             }
+
+            // Validate that no items are sold below cost unless allowed
+            if (!SessionContext.AllowSaleBelowCost)
+            {
+                foreach (Infragistics.Win.UltraWinGrid.UltraGridRow row in ultraGrid1.Rows)
+                {
+                    float cost = ParseFloat(row.Cells["Cost"].Value, 0);
+                    float sellingPrice = ParseFloat(row.Cells["Amount"].Value, 0);
+                    string itemName = row.Cells["ItemName"].Value?.ToString() ?? "Item";
+
+                    // If cost is 0, we don't need to validate it
+                    if (cost <= 0) continue;
+
+                    if (sellingPrice < cost)
+                    {
+                        MessageBox.Show($"Selling price for '{itemName}' cannot be less than cost price (₹{cost:F2}).", "Price Below Cost", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return false;
+                    }
+                }
+            }
+
             return true;
         }
 
@@ -4988,17 +4938,6 @@ namespace PosBranch_Win.Transaction
                                     {
                                         decimal newPrice = priceDialog.SellingPrice;
 
-                                        // Validate that selling price is not less than cost unless allowed
-                                        decimal cost = 0;
-                                        if (e.Cell.Row.Cells["Cost"].Value != null)
-                                            decimal.TryParse(e.Cell.Row.Cells["Cost"].Value.ToString(), out cost);
-
-                                        if (newPrice < cost && !SessionContext.AllowSaleBelowCost)
-                                        {
-                                            MessageBox.Show($"Selling price cannot be less than cost price (â‚¹{cost:F2}).", "Price Below Cost", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                                            return;
-                                        }
-
                                         // Update the selling price and recalculate total amount
                                         e.Cell.Row.Cells["Amount"].Value = newPrice;
 
@@ -5195,6 +5134,8 @@ namespace PosBranch_Win.Transaction
         {
             if (ultraGrid1.Rows.Count > 0)
             {
+                if (!ValidateBeforeSave()) return;
+
                 // Check for zero stock items BEFORE showing payment panel
                 CheckAndDisplayZeroStockWarning();
 

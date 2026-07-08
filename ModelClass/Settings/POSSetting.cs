@@ -67,6 +67,12 @@ namespace ModelClass.Settings
             if (string.IsNullOrEmpty(SettingValue))
                 return defaultValue;
 
+            string trimmed = SettingValue.Trim().ToLowerInvariant();
+            if (trimmed == "true" || trimmed == "1" || trimmed == "yes" || trimmed == "y")
+                return true;
+            if (trimmed == "false" || trimmed == "0" || trimmed == "no" || trimmed == "n")
+                return false;
+
             if (bool.TryParse(SettingValue, out bool result))
                 return result;
 
@@ -81,7 +87,7 @@ namespace ModelClass.Settings
             if (string.IsNullOrEmpty(SettingValue))
                 return defaultValue;
 
-            if (int.TryParse(SettingValue, out int result))
+            if (int.TryParse(SettingValue.Trim(), out int result))
                 return result;
 
             return defaultValue;
@@ -92,7 +98,7 @@ namespace ModelClass.Settings
         /// </summary>
         public string GetStringValue(string defaultValue = "")
         {
-            return string.IsNullOrEmpty(SettingValue) ? defaultValue : SettingValue;
+            return string.IsNullOrEmpty(SettingValue) ? defaultValue : SettingValue.Trim();
         }
 
         #endregion
