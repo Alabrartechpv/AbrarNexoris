@@ -105,7 +105,6 @@ namespace PosBranch_Win.Transaction
         // Add these fields at the class level
         private Infragistics.Win.Misc.UltraPanel summaryFooterPanel; // The blue UltraPanel below the grid
         private Dictionary<string, Label> summaryLabels = new Dictionary<string, Label>();
-        private string currentSummaryType = "None";
         private readonly string[] summaryTypes = new[] { "Sum", "Min", "Max", "Average", "Count", "None" };
         private Dictionary<string, string> columnAggregations = new Dictionary<string, string>(); // columnKey -> summaryType
 
@@ -189,7 +188,6 @@ namespace PosBranch_Win.Transaction
         {
             if (sender is ToolStripMenuItem item && item.Tag is string type)
             {
-                currentSummaryType = type;
                 // Set all visible columns to this type (explicitly set in columnAggregations)
                 if (ultraGrid1.DisplayLayout.Bands.Count > 0)
                 {
@@ -948,7 +946,6 @@ namespace PosBranch_Win.Transaction
                 catch (Exception fontEx)
                 {
                     System.Diagnostics.Debug.WriteLine($"Failed to load custom font: {fontEx.Message}");
-                    // Font will fall back to default if loading fails
                 }
 
                 // Set up customer default
@@ -3327,21 +3324,6 @@ namespace PosBranch_Win.Transaction
                     }
                 }
 
-                // Display warning if any items have zero stock
-                //if (zeroStockItems.Count > 0)
-                //{
-                //    StringBuilder message = new StringBuilder();
-                //    message.AppendLine("The following items have no stock available:");
-                //    message.AppendLine();
-
-                //    foreach (string itemName in zeroStockItems)
-                //    {
-                //        message.AppendLine($"â€¢ {itemName}");
-                //    }
-
-                //    MessageBox.Show(message.ToString(), "Stock Warning",
-                //        MessageBoxButtons.OK, MessageBoxIcon.Information);
-                //}
             }
             catch (Exception ex)
             {
@@ -3380,7 +3362,6 @@ namespace PosBranch_Win.Transaction
             return 0; // Return 0 if stock cannot be determined
         }
 
-        // Replace this entire method with a call to the repository version
         private DataGridView ConvertUltraGridToDataGridView(UltraGrid ultraGrid)
         {
             DataGridView grid = operations.ConvertDataTableToDataGridView(ultraGrid.DataSource as DataTable);
@@ -5314,13 +5295,6 @@ namespace PosBranch_Win.Transaction
             ResetGrid();
         }
 
-        // Overloaded method for PaymentResult - not used, commented out to avoid confusion
-        // NOTE: This method signature was misleading - use the string overload directly with:
-        // ShowReceiptPanel(txtNetTotal.Text, paymentResult.TenderedAmount, paymentResult.ChangeAmount)
-        // private void ShowReceiptPanel(PaymentResult paymentResult)
-        // {
-        //     ShowReceiptPanel(txtNetTotal.Text, paymentResult.TenderedAmount, paymentResult.ChangeAmount);
-        // }
 
         // Consolidated method to show print dialog
         private void ShowPrintDialog(string billNo)
