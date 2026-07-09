@@ -23,6 +23,12 @@ namespace PosBranch_Win.Accounts
         private Dropdowns drop = new Dropdowns();
         private AccountGroupRepository accountGroupRepo;
         private LedgerRepository ledgerRepo;
+        private int? preselectedGroupId = null;
+
+        public void SetPreselectedGroupId(int groupId)
+        {
+            preselectedGroupId = groupId;
+        }
         public FrmLedgers()
         {
             try
@@ -75,6 +81,11 @@ namespace PosBranch_Win.Accounts
 
                 // Generate next ledger ID
                 GenerateNextLedgerID();
+
+                if (preselectedGroupId.HasValue)
+                {
+                    ultraDrpParentGroup.Value = preselectedGroupId.Value;
+                }
 
                 Debug.WriteLine("Form load completed");
             }

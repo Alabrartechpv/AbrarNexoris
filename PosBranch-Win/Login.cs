@@ -527,8 +527,21 @@ namespace PosBranch_Win
         // Feature icons click handlers
         private void picSettings_Click(object sender, EventArgs e)
         {
-            // You can add logic to open DB settings here
-            MessageBox.Show("Settings configuration");
+            using (Connection connForm = new Connection())
+            {
+                if (connForm.ShowDialog() == DialogResult.OK)
+                {
+                    con = new BaseRepostitory();
+                    this.RefreshBranch();
+
+                    if (comboBox1.Items.Count > 1)
+                    {
+                        comboBox1.SelectedIndex = 1;
+                        DataBase.Branch = comboBox1.GetItemText(comboBox1.SelectedItem);
+                        DataBase.BranchId = comboBox1.SelectedValue?.ToString() ?? "0";
+                    }
+                }
+            }
         }
 
         private void pnlLeft_Paint(object sender, PaintEventArgs e)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -43,6 +43,9 @@ namespace ModelClass.Master
         public double ReOrder { get; set; }
         public string BarCode { get; set; }
         public double OpnStk { get; set; }
+        public double OpeningCost { get; set; }
+        public double OpnValue { get; set; }
+        public DateTime? OpnDate { get; set; }
         public string TaxType { get; set; }
         public double TaxPer { get; set; }
         public double TaxAmt { get; set; }

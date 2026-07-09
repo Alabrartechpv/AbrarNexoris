@@ -293,7 +293,7 @@ namespace PosBranch_Win.Accounts
                     CustomerLedgerId = currentCustomerLedgerId,
                     // Store payment method ID as a string in the model
                     PaymentMethod = paymentMethodId.ToString(),
-                    SalesPerson = txtSalesMan.Text,
+                    SalesPerson = txtSalesMan.Text + "|" + richTextBox2.Text,
                     TotalReceivableAmount = GetTotalReceivableAmount(),
                     TotalReceiptAmount = totalReceivedAmount,
                     ReceiptDate = DateTime.Now,
@@ -467,6 +467,7 @@ namespace PosBranch_Win.Accounts
             textBox4.Text = string.Empty;
             CmboPayment.Value = null;
             txtSalesMan.Text = string.Empty;
+            richTextBox2.Text = string.Empty;
             txtReceivedAmount.Text = string.Empty;
             textBox3.Text = "0.00"; // Clear the outstanding amount field
             ultraGrid1.DataSource = null;
@@ -1101,8 +1102,13 @@ namespace PosBranch_Win.Accounts
         {
             try
             {
-                OfficialReceiptList officialReceiptList = new OfficialReceiptList();
-                officialReceiptList.ShowDialog();
+                using (OfficialReceiptList officialReceiptList = new OfficialReceiptList())
+                {
+                    if (officialReceiptList.ShowDialog(this) == DialogResult.OK && officialReceiptList.SelectedVoucherId > 0)
+                    {
+                        LoadReceipt(officialReceiptList.SelectedVoucherId);
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -1208,7 +1214,18 @@ namespace PosBranch_Win.Accounts
                 if (master["VoucherDate"] != DBNull.Value)
                     dtpPurchaseDate.Value = Convert.ToDateTime(master["VoucherDate"]);
 
-                txtSalesMan.Text = master["Narration"]?.ToString() ?? "";
+                string narration = master["Narration"]?.ToString() ?? "";
+                if (narration.Contains("|"))
+                {
+                    string[] parts = narration.Split('|');
+                    txtSalesMan.Text = parts[0];
+                    richTextBox2.Text = parts[1];
+                }
+                else
+                {
+                    txtSalesMan.Text = narration;
+                    richTextBox2.Text = string.Empty;
+                }
 
                 // Populate Grid
                 DataTable dtGrid = CreateEmptyInvoiceTable();

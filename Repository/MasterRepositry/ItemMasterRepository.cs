@@ -632,7 +632,10 @@ namespace Repository.MasterRepositry
                         {
                             Stock = price.Stock,
                             StockValue = price.StockValue,
-                            OrderedStock = price.OrderedStock
+                            OrderedStock = price.OrderedStock,
+                            OpeningCost = price.OpeningCost,
+                            OpnValue = price.OpnValue,
+                            OpnDate = price.OpnDate
                         };
                     }
                 }
@@ -680,12 +683,18 @@ namespace Repository.MasterRepositry
                     double existingStock = 0;
                     double existingStockValue = 0;
                     double existingOrderedStock = 0;
+                    double existingOpeningCost = 0;
+                    double existingOpnValue = 0;
+                    DateTime? existingOpnDate = null;
 
                     if (existingStocks.ContainsKey(currentUnitId))
                     {
                         existingStock = existingStocks[currentUnitId].Stock;
                         existingStockValue = existingStocks[currentUnitId].StockValue;
                         existingOrderedStock = existingStocks[currentUnitId].OrderedStock;
+                        existingOpeningCost = existingStocks[currentUnitId].OpeningCost;
+                        existingOpnValue = existingStocks[currentUnitId].OpnValue;
+                        existingOpnDate = existingStocks[currentUnitId].OpnDate;
                     }
 
                     var unitPriceSettings = new ItemMasterPriceSettings
@@ -702,6 +711,9 @@ namespace Repository.MasterRepositry
                         AliasBarcode = uomRow.Cells["AliasBarcode"]?.Value?.ToString() ?? "",  // Save alias barcode from grid
                         ReOrder = SafeParseDouble(uomRow.Cells["Reorder"]?.Value),
                         OpnStk = SafeParseDouble(uomRow.Cells["OpnStk"]?.Value),
+                        OpeningCost = existingOpeningCost,
+                        OpnValue = existingOpnValue,
+                        OpnDate = existingOpnDate,
                         Cost = 0,
                         MarginAmt = 0,
                         MarginPer = 0,

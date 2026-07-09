@@ -16,11 +16,26 @@ namespace PosBranch_Win.Utilities
             try
             {
                 repo = new BaseRepostitory();
+                if (repo.DataConnection == null)
+                    return false;
+
+                if (repo.DataConnection.State != ConnectionState.Open)
+                    repo.DataConnection.Open();
+
+                // Check if Branches table exists in the schema
+                string checkTableSql = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = 'Branches'";
+                using (SqlCommand checkCmd = new SqlCommand(checkTableSql, (SqlConnection)repo.DataConnection))
+                {
+                    int tableCount = Convert.ToInt32(checkCmd.ExecuteScalar());
+                    if (tableCount == 0)
+                    {
+                        // Branches table does not exist, database is uninitialized/empty schema
+                        return true;
+                    }
+                }
+
                 using (SqlCommand cmd = new SqlCommand("SELECT COUNT(*) FROM Branches WHERE IsDelete = 0", (SqlConnection)repo.DataConnection))
                 {
-                    if (repo.DataConnection.State != ConnectionState.Open)
-                        repo.DataConnection.Open();
-
                     int count = Convert.ToInt32(cmd.ExecuteScalar());
                     return count == 0;
                 }
@@ -28,6 +43,10 @@ namespace PosBranch_Win.Utilities
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error checking if database is empty: {ex.Message}");
+                if (ex is SqlException sqlEx && sqlEx.Number == 208)
+                {
+                    return true;
+                }
                 return false; // Fallback to normal login flow on connection/database errors
             }
             finally
@@ -60,6 +79,18 @@ namespace PosBranch_Win.Utilities
                     repo.DataConnection.Open();
 
                 SqlConnection conn = (SqlConnection)repo.DataConnection;
+
+                // Verify core schema tables exist before executing seed scripts
+                string checkSchemaSql = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME IN ('CompanyInfo', 'FinancialYear', 'Userlevels', 'Users', 'Branches')";
+                using (SqlCommand checkSchema = new SqlCommand(checkSchemaSql, conn))
+                {
+                    int tableCount = Convert.ToInt32(checkSchema.ExecuteScalar());
+                    if (tableCount < 5)
+                    {
+                        throw new InvalidOperationException("The database schema tables ('CompanyInfo', 'FinancialYear', etc.) are missing. Please execute the database schema installation scripts on SQL Server first.");
+                    }
+                }
+
                 transaction = conn.BeginTransaction();
 
                 // 1. Insert CompanyInfo if empty
