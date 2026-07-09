@@ -1350,11 +1350,11 @@ A183,33,2,4,1,1,N,""{price}""";
 
                 for (int i = 0; i < copies; i++)
                 {
-                    System.Diagnostics.Debug.WriteLine($"🖨️ PRINTING: Copy {i + 1} of {copies} to printer '{printerName}'...");
+                    System.Diagnostics.Debug.WriteLine($" PRINTING: Copy {i + 1} of {copies} to printer '{printerName}'...");
                     bool success = RawPrinterHelper.SendBytesToPrinter(printerName, rawData, $"BarcodeLabel_Copy_{i + 1}");
                     if (!success)
                     {
-                        System.Diagnostics.Debug.WriteLine($"❌ PRINT FAILED: Copy {i + 1} failed to print");
+                        System.Diagnostics.Debug.WriteLine($" PRINT FAILED: Copy {i + 1} failed to print");
                         throw new Exception($"Failed to print copy {i + 1} to printer {printerName}");
                     }
 
@@ -1369,7 +1369,7 @@ A183,33,2,4,1,1,N,""{price}""";
                 }
 
                 // Force printer to process the job immediately - especially important for small jobs
-                System.Diagnostics.Debug.WriteLine($"🔄 FORCING PRINT FLUSH: Ensuring printer processes {copies} copies immediately");
+                System.Diagnostics.Debug.WriteLine($" FORCING PRINT FLUSH: Ensuring printer processes {copies} copies immediately");
                 System.Threading.Thread.Sleep(300); // Give printer time to process the job
 
                 // Send a small flush command to ensure the printer doesn't buffer the job
@@ -1377,7 +1377,7 @@ A183,33,2,4,1,1,N,""{price}""";
                 {
                     byte[] flushCommand = System.Text.Encoding.ASCII.GetBytes("\n");
                     RawPrinterHelper.SendBytesToPrinter(printerName, flushCommand, "FlushCommand");
-                    System.Diagnostics.Debug.WriteLine($"📤 FLUSH SENT: Forced printer to process buffered jobs");
+                    System.Diagnostics.Debug.WriteLine($" FLUSH SENT: Forced printer to process buffered jobs");
                 }
                 catch (Exception flushEx)
                 {

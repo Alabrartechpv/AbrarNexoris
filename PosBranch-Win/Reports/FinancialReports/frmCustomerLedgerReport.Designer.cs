@@ -205,7 +205,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.btnSearch.Name = "btnSearch";
             this.btnSearch.Size = new System.Drawing.Size(100, 28);
             this.btnSearch.TabIndex = 7;
-            this.btnSearch.Text = "🔍  Search  [F5]";
+            this.btnSearch.Text = "Search  [F5]";
             // 
             // btnReset
             // 

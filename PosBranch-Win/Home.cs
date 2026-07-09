@@ -3197,8 +3197,8 @@ namespace PosBranch_Win
                     Infragistics.Win.Alpha.Transparent;
 
                 // ===== BLUE GRADIENT BACKGROUND =====
-                item.Settings.AppearancesSmall.Appearance.BackColor = Color.FromArgb(28, 151, 234);
-                item.Settings.AppearancesSmall.Appearance.BackColor2 = Color.FromArgb(10, 120, 200);
+                item.Settings.AppearancesSmall.Appearance.BackColor = SidebarTheme.AccentPrimary;
+                item.Settings.AppearancesSmall.Appearance.BackColor2 = SidebarTheme.AccentDark;
                 item.Settings.AppearancesSmall.Appearance.BackGradientStyle =
                     Infragistics.Win.GradientStyle.Vertical;
 
@@ -3210,7 +3210,7 @@ namespace PosBranch_Win
                 item.Settings.AppearancesSmall.Appearance.FontData.Bold =
                     Infragistics.Win.DefaultableBoolean.True;
                 item.Settings.AppearancesSmall.Appearance.FontData.SizeInPoints = 8.5f;
-                item.Settings.AppearancesSmall.Appearance.FontData.Name = "Segoe UI";
+                item.Settings.AppearancesSmall.Appearance.FontData.Name = SidebarTheme.FontFamily;
 
                 // ===== CENTER TEXT =====
                 item.Settings.AppearancesSmall.Appearance.TextHAlignAsString = "Center";
@@ -3220,7 +3220,7 @@ namespace PosBranch_Win
                 item.Settings.AppearancesSmall.HotTrackAppearance.BackColor =
                     Color.FromArgb(50, 170, 250);
                 item.Settings.AppearancesSmall.HotTrackAppearance.BackColor2 =
-                    Color.FromArgb(20, 140, 220);
+                    SidebarTheme.AccentDark;
                 item.Settings.AppearancesSmall.HotTrackAppearance.BackGradientStyle =
                     Infragistics.Win.GradientStyle.Vertical;
                 item.Settings.AppearancesSmall.HotTrackAppearance.BorderAlpha =
@@ -3228,7 +3228,7 @@ namespace PosBranch_Win
                 item.Settings.AppearancesSmall.HotTrackAppearance.FontData.Bold =
                     Infragistics.Win.DefaultableBoolean.True;
                 item.Settings.AppearancesSmall.HotTrackAppearance.FontData.SizeInPoints = 8.5f;
-                item.Settings.AppearancesSmall.HotTrackAppearance.FontData.Name = "Segoe UI";
+                item.Settings.AppearancesSmall.HotTrackAppearance.FontData.Name = SidebarTheme.FontFamily;
 
                 // ===== ADD TO FAVOURITE vs REGULAR ITEMS =====
                 if (item.Key == "AddToFavourite")
@@ -3450,7 +3450,7 @@ namespace PosBranch_Win
             {
                 var item = new Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarItem();
                 item.Key = definition.Key;
-                item.Text = definition.Text;
+                item.Text = "      " + definition.Text;
                 group.Items.Add(item);
             }
         }
@@ -3623,60 +3623,64 @@ namespace PosBranch_Win
             item.Settings.Style = Infragistics.Win.UltraWinExplorerBar.ItemStyle.Button;
             item.Settings.ReserveImageSpace = Infragistics.Win.DefaultableBoolean.False;
             item.Settings.UseDefaultImage = Infragistics.Win.DefaultableBoolean.False;
-            item.Settings.Height = 32;
+            item.Settings.Height = SidebarTheme.ItemHeight;
             item.Settings.MaxLines = 1;
-            item.Settings.Indent = 14;
+            item.Settings.Indent = SidebarTheme.ItemIndent;
 
-            // Normal state: transparent background, nice dark blue text, no borders
-            item.Settings.AppearancesSmall.Appearance.ForeColor = Color.FromArgb(45, 75, 110);
-            item.Settings.AppearancesSmall.Appearance.FontData.SizeInPoints = 9.5f;
-            item.Settings.AppearancesSmall.Appearance.FontData.Name = "Segoe UI";
-            item.Settings.AppearancesSmall.Appearance.Cursor = Cursors.Hand;
-            item.Settings.AppearancesSmall.Appearance.TextHAlignAsString = "Left";
-            item.Settings.AppearancesSmall.Appearance.TextVAlignAsString = "Middle";
-            item.Settings.AppearancesSmall.Appearance.BackColor = Color.Transparent;
-            item.Settings.AppearancesSmall.Appearance.BackColor2 = Color.Empty;
-            item.Settings.AppearancesSmall.Appearance.BackGradientStyle = Infragistics.Win.GradientStyle.None;
-            item.Settings.AppearancesSmall.Appearance.BorderAlpha = Infragistics.Win.Alpha.Transparent;
-            item.Settings.AppearancesSmall.Appearance.Image = null;
+            var normal = item.Settings.AppearancesSmall.Appearance;
+            normal.ForeColor = SidebarTheme.TextPrimary;
+            normal.FontData.SizeInPoints = SidebarTheme.ItemFontSize;
+            normal.FontData.Name = SidebarTheme.FontFamily;
+            normal.FontData.Underline = Infragistics.Win.DefaultableBoolean.False;
+            normal.Cursor = Cursors.Hand;
+            normal.TextHAlignAsString = "Left";
+            normal.TextVAlignAsString = "Middle";
+            normal.BackColor = Color.Transparent;
+            normal.BackColor2 = Color.Empty;
+            normal.BackGradientStyle = Infragistics.Win.GradientStyle.None;
+            normal.BorderAlpha = Infragistics.Win.Alpha.Transparent;
+            normal.Image = null;
+            normal.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
+
             item.Settings.AppearancesLarge.Appearance.Image = null;
             item.Settings.AppearancesSmall.ActiveAppearance.Image = null;
             item.Settings.AppearancesLarge.ActiveAppearance.Image = null;
             item.Settings.AppearancesSmall.HotTrackAppearance.Image = null;
             item.Settings.AppearancesLarge.HotTrackAppearance.Image = null;
 
-            item.Settings.AppearancesSmall.Appearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
-            item.Settings.AppearancesSmall.HotTrackAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
-            item.Settings.AppearancesSmall.ActiveAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
             item.Settings.AppearancesLarge.Appearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
             item.Settings.AppearancesLarge.HotTrackAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
             item.Settings.AppearancesLarge.ActiveAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
 
-            // Active/Selected state: solid clean modern blue
-            item.Settings.AppearancesSmall.ActiveAppearance.BackColor = Color.FromArgb(30, 120, 225);
-            item.Settings.AppearancesSmall.ActiveAppearance.BackColor2 = Color.Empty;
-            item.Settings.AppearancesSmall.ActiveAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.None;
-            item.Settings.AppearancesSmall.ActiveAppearance.BorderColor = Color.FromArgb(20, 100, 200);
-            item.Settings.AppearancesSmall.ActiveAppearance.BorderAlpha = Infragistics.Win.Alpha.Opaque;
-            item.Settings.AppearancesSmall.ActiveAppearance.ForeColor = Color.White;
-            item.Settings.AppearancesSmall.ActiveAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
-            item.Settings.AppearancesSmall.ActiveAppearance.FontData.SizeInPoints = 9.5f;
-            item.Settings.AppearancesSmall.ActiveAppearance.FontData.Name = "Segoe UI";
-            item.Settings.AppearancesSmall.ActiveAppearance.TextHAlignAsString = "Left";
-            item.Settings.AppearancesSmall.ActiveAppearance.TextVAlignAsString = "Middle";
+            // Active/selected — FLAT light blue fill, dark blue bold text. Modern, not dated.
+            var active = item.Settings.AppearancesSmall.ActiveAppearance;
+            active.BackColor = Color.FromArgb(214, 235, 255);
+            active.BackColor2 = Color.Empty;
+            active.BackGradientStyle = Infragistics.Win.GradientStyle.None;
+            active.BorderAlpha = Infragistics.Win.Alpha.Transparent;
+            active.ForeColor = SidebarTheme.TextPrimary;
+            active.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
+            active.FontData.Underline = Infragistics.Win.DefaultableBoolean.False;
+            active.FontData.SizeInPoints = SidebarTheme.ItemFontSize;
+            active.FontData.Name = SidebarTheme.FontFamily;
+            active.TextHAlignAsString = "Left";
+            active.TextVAlignAsString = "Middle";
+            active.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
 
-            // Hover (HotTrack) state: soft modern blue highlight
-            item.Settings.AppearancesSmall.HotTrackAppearance.BackColor = Color.FromArgb(208, 230, 252);
-            item.Settings.AppearancesSmall.HotTrackAppearance.BackColor2 = Color.Empty;
-            item.Settings.AppearancesSmall.HotTrackAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.None;
-            item.Settings.AppearancesSmall.HotTrackAppearance.BorderColor = Color.FromArgb(160, 200, 240);
-            item.Settings.AppearancesSmall.HotTrackAppearance.BorderAlpha = Infragistics.Win.Alpha.Opaque;
-            item.Settings.AppearancesSmall.HotTrackAppearance.ForeColor = Color.FromArgb(15, 65, 125);
-            item.Settings.AppearancesSmall.HotTrackAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
-            item.Settings.AppearancesSmall.HotTrackAppearance.FontData.SizeInPoints = 9.5f;
-            item.Settings.AppearancesSmall.HotTrackAppearance.FontData.Name = "Segoe UI";
-            item.Settings.AppearancesSmall.HotTrackAppearance.TextHAlignAsString = "Left";
-            item.Settings.AppearancesSmall.HotTrackAppearance.TextVAlignAsString = "Middle";
+            // Hover — soft tint, flat, no underline
+            var hot = item.Settings.AppearancesSmall.HotTrackAppearance;
+            hot.BackColor = SidebarTheme.HoverBackground;
+            hot.BackColor2 = Color.Empty;
+            hot.BackGradientStyle = Infragistics.Win.GradientStyle.None;
+            hot.BorderAlpha = Infragistics.Win.Alpha.Transparent; // no border either — cleaner than the boxed hover before
+            hot.ForeColor = SidebarTheme.HoverText;
+            hot.FontData.Bold = Infragistics.Win.DefaultableBoolean.False; // don't bold on hover — only active should feel "selected"
+            hot.FontData.Underline = Infragistics.Win.DefaultableBoolean.False;
+            hot.FontData.SizeInPoints = SidebarTheme.ItemFontSize;
+            hot.FontData.Name = SidebarTheme.FontFamily;
+            hot.TextHAlignAsString = "Left";
+            hot.TextVAlignAsString = "Middle";
+            hot.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
         }
 
         private void SetActiveReportNavigatorItem(Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarItem activeItem)

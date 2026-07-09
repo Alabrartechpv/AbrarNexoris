@@ -583,7 +583,7 @@ namespace PosBranch_Win.Accounts
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(140, 45);
             this.btnSave.TabIndex = 5;
-            this.btnSave.Text = "💾 Save";
+            this.btnSave.Text = "Save";
             this.btnSave.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click_1);
             // 
@@ -605,7 +605,7 @@ namespace PosBranch_Win.Accounts
             this.btnClear.Name = "btnClear";
             this.btnClear.Size = new System.Drawing.Size(140, 45);
             this.btnClear.TabIndex = 7;
-            this.btnClear.Text = "🔄 Clear";
+            this.btnClear.Text = "Clear";
             this.btnClear.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
             // 

@@ -277,7 +277,7 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.btnSearch.Name = "btnSearch";
             this.btnSearch.Size = new System.Drawing.Size(100, 28);
             this.btnSearch.TabIndex = 14;
-            this.btnSearch.Text = "🔍  Search  [F5]";
+            this.btnSearch.Text = "Search  [F5]";
             // 
             // btnReset
             // 

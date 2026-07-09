@@ -123,7 +123,7 @@
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new System.Drawing.Size(95, 30);
             this.btnClose.TabIndex = 7;
-            this.btnClose.Text = "❌ Close";
+            this.btnClose.Text = "Close";
             this.btnClose.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
             // 
@@ -133,7 +133,7 @@
             this.btnPrint.Name = "btnPrint";
             this.btnPrint.Size = new System.Drawing.Size(95, 30);
             this.btnPrint.TabIndex = 6;
-            this.btnPrint.Text = "🖨️ Print";
+            this.btnPrint.Text = "Print";
             this.btnPrint.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             this.btnPrint.Click += new System.EventHandler(this.btnPrint_Click);
             // 
@@ -143,7 +143,7 @@
             this.btnExport.Name = "btnExport";
             this.btnExport.Size = new System.Drawing.Size(95, 30);
             this.btnExport.TabIndex = 5;
-            this.btnExport.Text = "📊 Export";
+            this.btnExport.Text = "Export";
             this.btnExport.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             this.btnExport.Click += new System.EventHandler(this.btnExport_Click);
             // 
@@ -153,7 +153,7 @@
             this.btnSearch.Name = "btnSearch";
             this.btnSearch.Size = new System.Drawing.Size(95, 30);
             this.btnSearch.TabIndex = 4;
-            this.btnSearch.Text = "🔍 Search";
+            this.btnSearch.Text = "Search";
             this.btnSearch.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             this.btnSearch.Click += new System.EventHandler(this.btnSearch_Click);
             // 
@@ -302,7 +302,7 @@
             this.ultraLabelItemName.Name = "ultraLabelItemName";
             this.ultraLabelItemName.Size = new System.Drawing.Size(80, 23);
             this.ultraLabelItemName.TabIndex = 1;
-            this.ultraLabelItemName.Text = "📦 Item Name:";
+            this.ultraLabelItemName.Text = " Item Name:";
             // 
             // ultraLabelItemNameValue
             // 
@@ -465,7 +465,7 @@
             this.ultraLabelCurrentStockCaption.Name = "ultraLabelCurrentStockCaption";
             this.ultraLabelCurrentStockCaption.Size = new System.Drawing.Size(150, 23);
             this.ultraLabelCurrentStockCaption.TabIndex = 4;
-            this.ultraLabelCurrentStockCaption.Text = "📦 Current Stock:";
+            this.ultraLabelCurrentStockCaption.Text = " Current Stock:";
             // 
             // ultraLabelTotalOutValue
             // 
@@ -481,7 +481,7 @@
             this.ultraLabelTotalOutCaption.Name = "ultraLabelTotalOutCaption";
             this.ultraLabelTotalOutCaption.Size = new System.Drawing.Size(150, 23);
             this.ultraLabelTotalOutCaption.TabIndex = 2;
-            this.ultraLabelTotalOutCaption.Text = "📤 Total OUT:";
+            this.ultraLabelTotalOutCaption.Text = "Total OUT:";
             // 
             // ultraLabelTotalInValue
             // 
@@ -497,7 +497,7 @@
             this.ultraLabelTotalInCaption.Name = "ultraLabelTotalInCaption";
             this.ultraLabelTotalInCaption.Size = new System.Drawing.Size(150, 23);
             this.ultraLabelTotalInCaption.TabIndex = 0;
-            this.ultraLabelTotalInCaption.Text = "📥 Total IN:";
+            this.ultraLabelTotalInCaption.Text = "Total IN:";
             // 
             // frmItemReport
             // 
@@ -513,7 +513,7 @@
             this.MinimumSize = new System.Drawing.Size(1024, 600);
             this.Name = "frmItemReport";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "📦 Item Report - Transaction History";
+            this.Text = " Item Report - Transaction History";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Load += new System.EventHandler(this.frmItemReport_Load);
             this.ultraPanelControls.ClientArea.ResumeLayout(false);

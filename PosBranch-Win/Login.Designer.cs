@@ -407,7 +407,7 @@ namespace PosBranch_Win
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(110, 55);
             this.btnCancel.TabIndex = 23;
-            this.btnCancel.Text = "❌ Cancel";
+            this.btnCancel.Text = " Cancel";
             this.btnCancel.UseVisualStyleBackColor = false;
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
             // 

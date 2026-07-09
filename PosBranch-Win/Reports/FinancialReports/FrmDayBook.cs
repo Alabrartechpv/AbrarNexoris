@@ -370,7 +370,7 @@ namespace PosBranch_Win.Reports.FinancialReports
                 }
                 else if (debit > 0 && credit > 0)
                 {
-                    e.Row.Cells["IconCol"].Value = "🔄";
+                    e.Row.Cells["IconCol"].Value = "";
                 }
             }
 

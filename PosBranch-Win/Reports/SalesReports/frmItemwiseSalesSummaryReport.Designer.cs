@@ -234,7 +234,7 @@ namespace PosBranch_Win.Reports.SalesReports
             // 
             this.btnSearch.Location = new System.Drawing.Point(630, 56);
             this.btnSearch.Size = new System.Drawing.Size(100, 28);
-            this.btnSearch.Text = "🔍  Search  [F5]";
+            this.btnSearch.Text = "Search  [F5]";
             // 
             // btnReset
             // 
