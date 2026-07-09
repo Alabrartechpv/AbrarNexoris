@@ -75,11 +75,10 @@ namespace PosBranch_Win
             this.pnlLeft.Controls.Add(this.lblCurrentTime);
             this.pnlLeft.Controls.Add(this.lblCompanyName);
             this.pnlLeft.Controls.Add(this.ultraPictureBox1);
-            this.pnlLeft.Location = new System.Drawing.Point(-12, -7);
+            this.pnlLeft.Location = new System.Drawing.Point(3, 3);
             this.pnlLeft.Name = "pnlLeft";
-            this.pnlLeft.Size = new System.Drawing.Size(318, 432);
+            this.pnlLeft.Size = new System.Drawing.Size(277, 414);
             this.pnlLeft.TabIndex = 0;
-            this.pnlLeft.Paint += new System.Windows.Forms.PaintEventHandler(this.pnlLeft_Paint);
             // 
             // lblCurrentDate
             // 
@@ -87,7 +86,7 @@ namespace PosBranch_Win
             this.lblCurrentDate.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.lblCurrentDate.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblCurrentDate.ForeColor = System.Drawing.Color.MidnightBlue;
-            this.lblCurrentDate.Location = new System.Drawing.Point(84, 302);
+            this.lblCurrentDate.Location = new System.Drawing.Point(69, 292);
             this.lblCurrentDate.Name = "lblCurrentDate";
             this.lblCurrentDate.Size = new System.Drawing.Size(148, 18);
             this.lblCurrentDate.TabIndex = 3;
@@ -99,7 +98,7 @@ namespace PosBranch_Win
             this.lblCurrentTime.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.lblCurrentTime.Font = new System.Drawing.Font("Arial", 36F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblCurrentTime.ForeColor = System.Drawing.Color.Firebrick;
-            this.lblCurrentTime.Location = new System.Drawing.Point(53, 329);
+            this.lblCurrentTime.Location = new System.Drawing.Point(38, 319);
             this.lblCurrentTime.Name = "lblCurrentTime";
             this.lblCurrentTime.Size = new System.Drawing.Size(212, 55);
             this.lblCurrentTime.TabIndex = 4;
@@ -111,7 +110,7 @@ namespace PosBranch_Win
             this.lblCompanyName.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.lblCompanyName.Font = new System.Drawing.Font("Arial Narrow", 20.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblCompanyName.ForeColor = System.Drawing.Color.Black;
-            this.lblCompanyName.Location = new System.Drawing.Point(57, 29);
+            this.lblCompanyName.Location = new System.Drawing.Point(42, 19);
             this.lblCompanyName.Name = "lblCompanyName";
             this.lblCompanyName.Size = new System.Drawing.Size(203, 31);
             this.lblCompanyName.TabIndex = 0;
@@ -123,7 +122,7 @@ namespace PosBranch_Win
             this.ultraPictureBox1.BackColorInternal = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.ultraPictureBox1.BorderShadowColor = System.Drawing.Color.Empty;
             this.ultraPictureBox1.Image = ((object)(resources.GetObject("ultraPictureBox1.Image")));
-            this.ultraPictureBox1.Location = new System.Drawing.Point(-86, -201);
+            this.ultraPictureBox1.Location = new System.Drawing.Point(-101, -211);
             this.ultraPictureBox1.Name = "ultraPictureBox1";
             this.ultraPictureBox1.Size = new System.Drawing.Size(482, 771);
             this.ultraPictureBox1.TabIndex = 5;
@@ -152,11 +151,10 @@ namespace PosBranch_Win
             this.pnlRight.Controls.Add(this.btnClear);
             this.pnlRight.Controls.Add(this.btnCancel);
             this.pnlRight.Controls.Add(this.btnOK);
-            this.pnlRight.Location = new System.Drawing.Point(280, -7);
+            this.pnlRight.Location = new System.Drawing.Point(280, 3);
             this.pnlRight.Name = "pnlRight";
-            this.pnlRight.Size = new System.Drawing.Size(387, 475);
+            this.pnlRight.Size = new System.Drawing.Size(305, 414);
             this.pnlRight.TabIndex = 1;
-            this.pnlRight.Paint += new System.Windows.Forms.PaintEventHandler(this.pnlRight_Paint_1);
             // 
             // ultraButton8
             // 
@@ -165,7 +163,7 @@ namespace PosBranch_Win
             appearance1.BackGradientStyle = Infragistics.Win.GradientStyle.GlassBottom37;
             this.ultraButton8.Appearance = appearance1;
             this.ultraButton8.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ultraButton8.Location = new System.Drawing.Point(128, 185);
+            this.ultraButton8.Location = new System.Drawing.Point(128, 175);
             this.ultraButton8.Name = "ultraButton8";
             this.ultraButton8.Size = new System.Drawing.Size(61, 55);
             this.ultraButton8.TabIndex = 44;
@@ -179,7 +177,7 @@ namespace PosBranch_Win
             appearance2.BackGradientStyle = Infragistics.Win.GradientStyle.GlassBottom37;
             this.ultraButton9.Appearance = appearance2;
             this.ultraButton9.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ultraButton9.Location = new System.Drawing.Point(66, 185);
+            this.ultraButton9.Location = new System.Drawing.Point(66, 175);
             this.ultraButton9.Name = "ultraButton9";
             this.ultraButton9.Size = new System.Drawing.Size(61, 55);
             this.ultraButton9.TabIndex = 43;
@@ -193,7 +191,7 @@ namespace PosBranch_Win
             appearance3.BackGradientStyle = Infragistics.Win.GradientStyle.GlassBottom37;
             this.ultraButton10.Appearance = appearance3;
             this.ultraButton10.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ultraButton10.Location = new System.Drawing.Point(4, 185);
+            this.ultraButton10.Location = new System.Drawing.Point(4, 175);
             this.ultraButton10.Name = "ultraButton10";
             this.ultraButton10.Size = new System.Drawing.Size(61, 55);
             this.ultraButton10.TabIndex = 42;
@@ -207,7 +205,7 @@ namespace PosBranch_Win
             appearance4.BackGradientStyle = Infragistics.Win.GradientStyle.GlassBottom37;
             this.ultraButton1.Appearance = appearance4;
             this.ultraButton1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ultraButton1.Location = new System.Drawing.Point(128, 297);
+            this.ultraButton1.Location = new System.Drawing.Point(128, 287);
             this.ultraButton1.Name = "ultraButton1";
             this.ultraButton1.Size = new System.Drawing.Size(61, 55);
             this.ultraButton1.TabIndex = 41;
@@ -221,7 +219,7 @@ namespace PosBranch_Win
             appearance5.BackGradientStyle = Infragistics.Win.GradientStyle.GlassBottom37;
             this.ultraButton2.Appearance = appearance5;
             this.ultraButton2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ultraButton2.Location = new System.Drawing.Point(66, 297);
+            this.ultraButton2.Location = new System.Drawing.Point(66, 287);
             this.ultraButton2.Name = "ultraButton2";
             this.ultraButton2.Size = new System.Drawing.Size(61, 55);
             this.ultraButton2.TabIndex = 40;
@@ -235,7 +233,7 @@ namespace PosBranch_Win
             appearance6.BackGradientStyle = Infragistics.Win.GradientStyle.GlassBottom37;
             this.ultraButton3.Appearance = appearance6;
             this.ultraButton3.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ultraButton3.Location = new System.Drawing.Point(4, 297);
+            this.ultraButton3.Location = new System.Drawing.Point(4, 287);
             this.ultraButton3.Name = "ultraButton3";
             this.ultraButton3.Size = new System.Drawing.Size(61, 55);
             this.ultraButton3.TabIndex = 39;
@@ -249,7 +247,7 @@ namespace PosBranch_Win
             appearance7.BackGradientStyle = Infragistics.Win.GradientStyle.GlassBottom37;
             this.ultraButton5.Appearance = appearance7;
             this.ultraButton5.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ultraButton5.Location = new System.Drawing.Point(128, 241);
+            this.ultraButton5.Location = new System.Drawing.Point(128, 231);
             this.ultraButton5.Name = "ultraButton5";
             this.ultraButton5.Size = new System.Drawing.Size(61, 55);
             this.ultraButton5.TabIndex = 38;
@@ -263,7 +261,7 @@ namespace PosBranch_Win
             appearance8.BackGradientStyle = Infragistics.Win.GradientStyle.GlassBottom37;
             this.ultraButton6.Appearance = appearance8;
             this.ultraButton6.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ultraButton6.Location = new System.Drawing.Point(66, 241);
+            this.ultraButton6.Location = new System.Drawing.Point(66, 231);
             this.ultraButton6.Name = "ultraButton6";
             this.ultraButton6.Size = new System.Drawing.Size(61, 55);
             this.ultraButton6.TabIndex = 37;
@@ -277,7 +275,7 @@ namespace PosBranch_Win
             appearance9.BackGradientStyle = Infragistics.Win.GradientStyle.GlassBottom37;
             this.ultraButton7.Appearance = appearance9;
             this.ultraButton7.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ultraButton7.Location = new System.Drawing.Point(4, 241);
+            this.ultraButton7.Location = new System.Drawing.Point(4, 231);
             this.ultraButton7.Name = "ultraButton7";
             this.ultraButton7.Size = new System.Drawing.Size(61, 55);
             this.ultraButton7.TabIndex = 36;
@@ -291,7 +289,7 @@ namespace PosBranch_Win
             appearance10.BackGradientStyle = Infragistics.Win.GradientStyle.GlassBottom37;
             this.ultraButton4.Appearance = appearance10;
             this.ultraButton4.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ultraButton4.Location = new System.Drawing.Point(4, 354);
+            this.ultraButton4.Location = new System.Drawing.Point(4, 344);
             this.ultraButton4.Name = "ultraButton4";
             this.ultraButton4.Size = new System.Drawing.Size(185, 69);
             this.ultraButton4.TabIndex = 35;
@@ -303,7 +301,7 @@ namespace PosBranch_Win
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Arial", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.DarkBlue;
-            this.label1.Location = new System.Drawing.Point(32, 25);
+            this.label1.Location = new System.Drawing.Point(32, 15);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(55, 17);
             this.label1.TabIndex = 30;
@@ -312,7 +310,7 @@ namespace PosBranch_Win
             // comboBox1
             // 
             this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(95, 23);
+            this.comboBox1.Location = new System.Drawing.Point(95, 13);
             this.comboBox1.Name = "comboBox1";
             this.comboBox1.Size = new System.Drawing.Size(151, 21);
             this.comboBox1.TabIndex = 29;
@@ -322,7 +320,7 @@ namespace PosBranch_Win
             this.lblUserId.AutoSize = true;
             this.lblUserId.Font = new System.Drawing.Font("Arial", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblUserId.ForeColor = System.Drawing.Color.DarkBlue;
-            this.lblUserId.Location = new System.Drawing.Point(36, 59);
+            this.lblUserId.Location = new System.Drawing.Point(36, 49);
             this.lblUserId.Name = "lblUserId";
             this.lblUserId.Size = new System.Drawing.Size(57, 17);
             this.lblUserId.TabIndex = 10;
@@ -333,7 +331,7 @@ namespace PosBranch_Win
             this.lblPassword.AutoSize = true;
             this.lblPassword.Font = new System.Drawing.Font("Arial", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblPassword.ForeColor = System.Drawing.Color.DarkBlue;
-            this.lblPassword.Location = new System.Drawing.Point(21, 94);
+            this.lblPassword.Location = new System.Drawing.Point(21, 84);
             this.lblPassword.Name = "lblPassword";
             this.lblPassword.Size = new System.Drawing.Size(74, 17);
             this.lblPassword.TabIndex = 12;
@@ -344,7 +342,7 @@ namespace PosBranch_Win
             this.lblDate.AutoSize = true;
             this.lblDate.Font = new System.Drawing.Font("Arial", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblDate.ForeColor = System.Drawing.Color.DarkBlue;
-            this.lblDate.Location = new System.Drawing.Point(52, 129);
+            this.lblDate.Location = new System.Drawing.Point(52, 119);
             this.lblDate.Name = "lblDate";
             this.lblDate.Size = new System.Drawing.Size(39, 17);
             this.lblDate.TabIndex = 14;
@@ -354,7 +352,7 @@ namespace PosBranch_Win
             // 
             this.txtUserName.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtUserName.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtUserName.Location = new System.Drawing.Point(95, 56);
+            this.txtUserName.Location = new System.Drawing.Point(95, 46);
             this.txtUserName.Name = "txtUserName";
             this.txtUserName.Size = new System.Drawing.Size(151, 26);
             this.txtUserName.TabIndex = 11;
@@ -365,7 +363,7 @@ namespace PosBranch_Win
             // 
             this.txtPassword.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtPassword.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtPassword.Location = new System.Drawing.Point(95, 91);
+            this.txtPassword.Location = new System.Drawing.Point(95, 81);
             this.txtPassword.Name = "txtPassword";
             this.txtPassword.PasswordChar = '*';
             this.txtPassword.Size = new System.Drawing.Size(151, 26);
@@ -377,7 +375,7 @@ namespace PosBranch_Win
             // 
             this.txtDate.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtDate.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtDate.Location = new System.Drawing.Point(95, 126);
+            this.txtDate.Location = new System.Drawing.Point(95, 116);
             this.txtDate.Name = "txtDate";
             this.txtDate.ReadOnly = true;
             this.txtDate.Size = new System.Drawing.Size(151, 26);
@@ -389,7 +387,7 @@ namespace PosBranch_Win
             this.btnClear.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnClear.Font = new System.Drawing.Font("Arial", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnClear.ForeColor = System.Drawing.Color.Black;
-            this.btnClear.Location = new System.Drawing.Point(190, 185);
+            this.btnClear.Location = new System.Drawing.Point(190, 175);
             this.btnClear.Name = "btnClear";
             this.btnClear.Size = new System.Drawing.Size(110, 55);
             this.btnClear.TabIndex = 19;
@@ -403,7 +401,7 @@ namespace PosBranch_Win
             this.btnCancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCancel.Font = new System.Drawing.Font("Arial", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnCancel.ForeColor = System.Drawing.Color.Black;
-            this.btnCancel.Location = new System.Drawing.Point(190, 241);
+            this.btnCancel.Location = new System.Drawing.Point(190, 231);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(110, 55);
             this.btnCancel.TabIndex = 23;
@@ -417,7 +415,7 @@ namespace PosBranch_Win
             this.btnOK.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnOK.Font = new System.Drawing.Font("Arial", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnOK.ForeColor = System.Drawing.Color.Black;
-            this.btnOK.Location = new System.Drawing.Point(190, 297);
+            this.btnOK.Location = new System.Drawing.Point(190, 287);
             this.btnOK.Name = "btnOK";
             this.btnOK.Size = new System.Drawing.Size(110, 126);
             this.btnOK.TabIndex = 27;
@@ -434,7 +432,7 @@ namespace PosBranch_Win
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.BackColor = System.Drawing.Color.Black;
             this.ClientSize = new System.Drawing.Size(588, 420);
             this.Controls.Add(this.pnlRight);
             this.Controls.Add(this.pnlLeft);

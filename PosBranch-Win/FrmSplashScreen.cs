@@ -1,12 +1,24 @@
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace PosBranch_Win
 {
     public partial class FrmSplashScreen : Form
     {
+        [DllImport("Gdi32.dll", EntryPoint = "CreateRoundRectRgn")]
+        private static extern IntPtr CreateRoundRectRgn
+        (
+            int nLeftRect,
+            int nTopRect,
+            int nRightRect,
+            int nBottomRect,
+            int nWidthEllipse,
+            int nHeightEllipse
+        );
+
         private Timer closeTimer;
         private Timer fadeTimer;
         private Timer animationTimer;
@@ -16,6 +28,8 @@ namespace PosBranch_Win
         public FrmSplashScreen()
         {
             InitializeComponent();
+            this.FormBorderStyle = FormBorderStyle.None;
+            Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, Width, Height, 20, 20));
 
             // Initial opacity 0 for fade-in effect
             this.Opacity = 0;
@@ -69,11 +83,11 @@ namespace PosBranch_Win
         private void CenterControls()
         {
             // Center text horizontally
-            lblLoading.Left = (this.ClientSize.Width - lblLoading.Width) / 2;
+            lblLoading.Left = (pnlMain.Width - lblLoading.Width) / 2;
 
             // Position loader below text, centered
             // The Designer put it at hardcoded X=520, let's recenter it below text
-            picLoader.Left = (this.ClientSize.Width - picLoader.Width) / 2;
+            picLoader.Left = (pnlMain.Width - picLoader.Width) / 2;
             picLoader.Top = lblLoading.Bottom + 10;
         }
 
