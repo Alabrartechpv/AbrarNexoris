@@ -38,6 +38,7 @@ namespace PosBranch_Win
             InitializeComponent();
             this.FormBorderStyle = FormBorderStyle.None;
             Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, Width, Height, 20, 20));
+            pnlContainer.Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, pnlContainer.Width, pnlContainer.Height, 14, 14));
 
             // Load logo image
             try

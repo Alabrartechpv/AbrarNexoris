@@ -30,6 +30,7 @@ namespace PosBranch_Win
             InitializeComponent();
             this.FormBorderStyle = FormBorderStyle.None;
             Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, Width, Height, 20, 20));
+            pnlMain.Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, pnlMain.Width, pnlMain.Height, 14, 14));
 
             // Initial opacity 0 for fade-in effect
             this.Opacity = 0;

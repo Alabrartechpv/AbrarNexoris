@@ -64,8 +64,10 @@ namespace PosBranch_Win
             this.btnCancel = new System.Windows.Forms.Button();
             this.btnOK = new System.Windows.Forms.Button();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.pnlContainer = new System.Windows.Forms.Panel();
             this.pnlLeft.SuspendLayout();
             this.pnlRight.SuspendLayout();
+            this.pnlContainer.SuspendLayout();
             this.SuspendLayout();
             // 
             // pnlLeft
@@ -75,7 +77,7 @@ namespace PosBranch_Win
             this.pnlLeft.Controls.Add(this.lblCurrentTime);
             this.pnlLeft.Controls.Add(this.lblCompanyName);
             this.pnlLeft.Controls.Add(this.ultraPictureBox1);
-            this.pnlLeft.Location = new System.Drawing.Point(3, 3);
+            this.pnlLeft.Location = new System.Drawing.Point(0, 0);
             this.pnlLeft.Name = "pnlLeft";
             this.pnlLeft.Size = new System.Drawing.Size(277, 414);
             this.pnlLeft.TabIndex = 0;
@@ -151,10 +153,20 @@ namespace PosBranch_Win
             this.pnlRight.Controls.Add(this.btnClear);
             this.pnlRight.Controls.Add(this.btnCancel);
             this.pnlRight.Controls.Add(this.btnOK);
-            this.pnlRight.Location = new System.Drawing.Point(280, 3);
+            this.pnlRight.Location = new System.Drawing.Point(277, 0);
             this.pnlRight.Name = "pnlRight";
             this.pnlRight.Size = new System.Drawing.Size(305, 414);
             this.pnlRight.TabIndex = 1;
+            // 
+            // pnlContainer
+            // 
+            this.pnlContainer.BackColor = System.Drawing.Color.Transparent;
+            this.pnlContainer.Controls.Add(this.pnlRight);
+            this.pnlContainer.Controls.Add(this.pnlLeft);
+            this.pnlContainer.Location = new System.Drawing.Point(3, 3);
+            this.pnlContainer.Name = "pnlContainer";
+            this.pnlContainer.Size = new System.Drawing.Size(582, 414);
+            this.pnlContainer.TabIndex = 2;
             // 
             // ultraButton8
             // 
@@ -434,13 +446,13 @@ namespace PosBranch_Win
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
             this.ClientSize = new System.Drawing.Size(588, 420);
-            this.Controls.Add(this.pnlRight);
-            this.Controls.Add(this.pnlLeft);
+            this.Controls.Add(this.pnlContainer);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "Login";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Login";
             this.Load += new System.EventHandler(this.Login_Load);
+            this.pnlContainer.ResumeLayout(false);
             this.pnlLeft.ResumeLayout(false);
             this.pnlLeft.PerformLayout();
             this.pnlRight.ResumeLayout(false);
@@ -453,6 +465,7 @@ namespace PosBranch_Win
 
         private System.Windows.Forms.Panel pnlLeft;
         private System.Windows.Forms.Panel pnlRight;
+        private System.Windows.Forms.Panel pnlContainer;
         private System.Windows.Forms.Label lblCompanyName;
         private System.Windows.Forms.Label lblCurrentDate;
         private System.Windows.Forms.Label lblCurrentTime;
