@@ -73,6 +73,7 @@ namespace PosBranch_Win
             new ReportNavigatorDefinition("Sales", "Counter Report", "CounterReport"),
             new ReportNavigatorDefinition("Purchase", "Purchase Details", "Purchase Details"),
             new ReportNavigatorDefinition("Purchase", "Purchase Return Report", "PurchaseReturn"),
+            new ReportNavigatorDefinition("Purchase", "Vendor Purchase Report", "VendorPurchaseReport"),
             new ReportNavigatorDefinition("Customer", "Customer Outstanding Listing", "CustomerOutstandingReport"),
             new ReportNavigatorDefinition("Customer", "Customer Receipt Report", "CustomerReceiptReport"),
             new ReportNavigatorDefinition("Vendor", "Vendor Outstanding Listing", "VendorOutstandingReport"),
@@ -2074,6 +2075,11 @@ namespace PosBranch_Win
 
                 Reports.PurchaseReports.PurchaseReturnReport frmPurchaseReturnReport = new Reports.PurchaseReports.PurchaseReturnReport();
                 OpenFormInTab(frmPurchaseReturnReport, "PurchaseReturn");
+            }
+            if (e.Tool.Key == "VendorPurchaseReport")
+            {
+                Reports.PurchaseReports.frmvendorpurchasereport vendorPurchaseReport = new Reports.PurchaseReports.frmvendorpurchasereport();
+                OpenFormInTab(vendorPurchaseReport, "Vendor Purchase Report");
             }
             if (e.Tool.Key == "AuditTrail")
             {

@@ -1093,6 +1093,9 @@
     <Compile Include="Reports\PurchaseReports\PurchaseReturnReport.Designer.cs">
       <DependentUpon>PurchaseReturnReport.cs</DependentUpon>
     </Compile>
+    <Compile Include="Reports\PurchaseReports\frmvendorpurchasereport.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Reports\SalesReports\frmSalesDetailsReport.cs">
       <SubType>Form</SubType>
     </Compile>
