@@ -113,7 +113,7 @@
             this.btnClearFilters.Name = "btnClearFilters";
             this.btnClearFilters.Size = new System.Drawing.Size(95, 28);
             this.btnClearFilters.TabIndex = 20;
-            this.btnClearFilters.Text = "🔄 Clear Filters";
+            this.btnClearFilters.Text = "Clear Filters";
             this.btnClearFilters.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             this.btnClearFilters.Click += new System.EventHandler(this.btnClearFilters_Click);
             // 
@@ -123,7 +123,7 @@
             this.btnSearch.Name = "btnSearch";
             this.btnSearch.Size = new System.Drawing.Size(95, 28);
             this.btnSearch.TabIndex = 19;
-            this.btnSearch.Text = "🔍 Search";
+            this.btnSearch.Text = "Search";
             this.btnSearch.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             this.btnSearch.Click += new System.EventHandler(this.btnSearch_Click);
             // 
@@ -142,7 +142,7 @@
             this.ultraLabelPreset.Name = "ultraLabelPreset";
             this.ultraLabelPreset.Size = new System.Drawing.Size(85, 23);
             this.ultraLabelPreset.TabIndex = 17;
-            this.ultraLabelPreset.Text = "⚡ Quick Date:";
+            this.ultraLabelPreset.Text = "Quick Date:";
             // 
             // ultraTextEditorCustomer
             // 
@@ -210,7 +210,7 @@
             this.btnExport.Name = "btnExport";
             this.btnExport.Size = new System.Drawing.Size(105, 30);
             this.btnExport.TabIndex = 7;
-            this.btnExport.Text = "📊 Export";
+            this.btnExport.Text = "Export";
             this.btnExport.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             this.btnExport.Click += new System.EventHandler(this.btnExport_Click);
             // 
@@ -220,7 +220,7 @@
             this.btnPrint.Name = "btnPrint";
             this.btnPrint.Size = new System.Drawing.Size(100, 30);
             this.btnPrint.TabIndex = 6;
-            this.btnPrint.Text = "🖨️ Print";
+            this.btnPrint.Text = "Print";
             this.btnPrint.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             this.btnPrint.Click += new System.EventHandler(this.btnPrint_Click);
             // 
@@ -230,7 +230,7 @@
             this.btnRefresh.Name = "btnRefresh";
             this.btnRefresh.Size = new System.Drawing.Size(105, 30);
             this.btnRefresh.TabIndex = 5;
-            this.btnRefresh.Text = "🔄 Refresh";
+            this.btnRefresh.Text = " Refresh";
             this.btnRefresh.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
             // 
@@ -345,7 +345,7 @@
             this.ultraLabelGrandTotalCaption.Name = "ultraLabelGrandTotalCaption";
             this.ultraLabelGrandTotalCaption.Size = new System.Drawing.Size(200, 25);
             this.ultraLabelGrandTotalCaption.TabIndex = 4;
-            this.ultraLabelGrandTotalCaption.Text = "💵 Grand Total:";
+            this.ultraLabelGrandTotalCaption.Text = " Grand Total:";
             // 
             // ultraLabelGrandTotalValue
             // 
@@ -368,7 +368,7 @@
             this.MinimumSize = new System.Drawing.Size(1024, 600);
             this.Name = "SalesReturnReport";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "📊 Sales Return Report - Master Detail View";
+            this.Text = " Sales Return Report - Master Detail View";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.SalesReturnReport_FormClosing);
             this.Load += new System.EventHandler(this.SalesReturnReport_Load);

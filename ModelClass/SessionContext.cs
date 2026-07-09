@@ -559,6 +559,17 @@ namespace ModelClass
             }
         }
 
+        private static bool ParseBoolean(string value, bool defaultValue = false)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return defaultValue;
+            string trimmed = value.Trim().ToLowerInvariant();
+            if (trimmed == "true" || trimmed == "1" || trimmed == "yes" || trimmed == "y")
+                return true;
+            if (trimmed == "false" || trimmed == "0" || trimmed == "no" || trimmed == "n")
+                return false;
+            return defaultValue;
+        }
+
         /// <summary>
         /// Applies a single setting value to the corresponding SessionContext property.
         /// </summary>
@@ -569,57 +580,60 @@ namespace ModelClass
         {
             if (string.IsNullOrEmpty(key)) return;
 
-            switch (key)
+            string cleanKey = key.Trim();
+            string cleanValue = value?.Trim();
+
+            switch (cleanKey)
             {
                 // Sales Settings
                 case "DuplicateItemBehavior":
-                    DuplicateItemBehavior = value ?? "MergeQuantity";
+                    DuplicateItemBehavior = cleanValue ?? "MergeQuantity";
                     break;
 
                 case "AllowNegativeStock":
-                    AllowNegativeStock = bool.TryParse(value, out var negStock) && negStock;
+                    AllowNegativeStock = ParseBoolean(cleanValue, false);
                     break;
 
                 case "AutoPrintAfterSave":
-                    AutoPrintAfterSave = !bool.TryParse(value, out var autoPrint) || autoPrint; // Default true
+                    AutoPrintAfterSave = ParseBoolean(cleanValue, true); // Default true
                     break;
 
                 case "DefaultSaleType":
-                    DefaultSaleType = value ?? "Cash";
+                    DefaultSaleType = cleanValue ?? "Cash";
                     break;
 
                 case "DefaultPriceLevel":
-                    DefaultPriceLevel = value ?? "RetailPrice";
+                    DefaultPriceLevel = cleanValue ?? "RetailPrice";
                     break;
 
                 case "DefaultCreditDays":
-                    DefaultCreditDays = int.TryParse(value, out var defaultCreditDays) ? defaultCreditDays : 30;
+                    DefaultCreditDays = int.TryParse(cleanValue, out var defaultCreditDays) ? defaultCreditDays : 30;
                     break;
 
                 case "RoundingMethod":
-                    RoundingMethod = value ?? "None";
+                    RoundingMethod = cleanValue ?? "None";
                     break;
 
                 case "MaxDiscountPercent":
-                    MaxDiscountPercent = int.TryParse(value, out var maxDisc) ? maxDisc : 100;
+                    MaxDiscountPercent = int.TryParse(cleanValue, out var maxDisc) ? maxDisc : 100;
                     break;
 
                 case "AllowSaleBelowCost":
-                    AllowSaleBelowCost = bool.TryParse(value, out var saleBelowCost) && saleBelowCost;
+                    AllowSaleBelowCost = ParseBoolean(cleanValue, false);
                     break;
 
                 // Display Settings
                 case "ShowCostToUser":
-                    ShowCostToUser = bool.TryParse(value, out var showCost) && showCost;
+                    ShowCostToUser = ParseBoolean(cleanValue, false);
                     break;
 
                 case "ShowMarginColumn":
-                    ShowMarginColumn = bool.TryParse(value, out var showMargin) && showMargin;
+                    ShowMarginColumn = ParseBoolean(cleanValue, false);
                     break;
 
                 // Printing Settings
                 case "PrintCopies":
-                    PrintCopies = int.TryParse(value, out var copies) ? copies : 1;
+                    PrintCopies = int.TryParse(cleanValue, out var copies) ? copies : 1;
                     break;
 
                 default:

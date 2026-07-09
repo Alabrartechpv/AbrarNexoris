@@ -236,7 +236,7 @@ namespace PosBranch_Win.Reports.SalesReports
             this.btnExport.Name = "btnExport";
             this.btnExport.Size = new System.Drawing.Size(85, 28);
             this.btnExport.TabIndex = 8;
-            this.btnExport.Text = "📥 Export";
+            this.btnExport.Text = "Export";
             this.btnExport.Click += new System.EventHandler(this.btnExport_Click);
             // 
             // btnClear
@@ -254,7 +254,7 @@ namespace PosBranch_Win.Reports.SalesReports
             this.btnSearch.Name = "btnSearch";
             this.btnSearch.Size = new System.Drawing.Size(85, 28);
             this.btnSearch.TabIndex = 6;
-            this.btnSearch.Text = "🔍 Search";
+            this.btnSearch.Text = "Search";
             this.btnSearch.Click += new System.EventHandler(this.btnSearch_Click);
             // 
             // ultraComboPresetDates

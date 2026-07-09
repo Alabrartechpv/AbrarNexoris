@@ -96,6 +96,10 @@ namespace Repository
         public static string POS_ItemAuditReport = "POS_ItemAuditReport";
         public static string _POS_ItemReport = "_Test9";
         public static string _POS_StockReportAdvanced = "_Test16";
+        public static string POS_ItemwiseSalesSummaryReport = "POS_ItemwiseSalesSummaryReport";
+        public static string POS_CustomerwiseSalesSummaryReport = "POS_CustomerwiseSalesSummaryReport";
+        public static string POS_SalesmanwiseSalesSummaryReport = "POS_SalesmanwiseSalesSummaryReport";
+        public static string POS_LowStockAlertReport = "POS_LowStockAlertReport";
         public static string POS_RolePermission = "POS_RolePermission";
         public static string _SalesProfitReport = "SalesProfitReport";
         public static string _POS_Salesman_Incentive_Report = "_POS_Salesman_Incentive_Report";
@@ -104,6 +108,7 @@ namespace Repository
         public static string _POS_TrialBalance = "POS_TrialBalance";
         public static string _CustomerOutstandingReport = "_CustomerOutstandingReport";
         public static string _CustomerReceiptReport = "_CustomerReceiptReport";
+        public static string _POS_CustomerLedger = "POS_CustomerLedger";
         public static string _VendorOutstandingReport = "_VendorOutstandingReport";
         public static string _VendorPaymentReport = "_VendorPaymentReport";
         public static string _POS_GetSmartReorderSuggestions = "_POS_GetSmartReorderSuggestions";

@@ -65,7 +65,12 @@ namespace PosBranch_Win
             new ReportNavigatorDefinition("Item", "Item Report", "ItemReport"),
             new ReportNavigatorDefinition("Item", "Stock Report Advanced", "StockReportAdv", "StockReport"),
             new ReportNavigatorDefinition("Item", "Inventory Audit Trail", "AuditTrail"),
+            new ReportNavigatorDefinition("Item", "Stock Valuation Report", "StockValuationReport"),
+            new ReportNavigatorDefinition("Item", "Low Stock Alert Report", "LowStockAlertReport"),
             new ReportNavigatorDefinition("Sales", "Sales Details", "Sales Details"),
+            new ReportNavigatorDefinition("Sales", "Item-wise Sales Summary", "ItemwiseSalesSummaryReport"),
+            new ReportNavigatorDefinition("Sales", "Customer-wise Sales Summary", "CustomerwiseSalesSummaryReport"),
+            new ReportNavigatorDefinition("Sales", "Salesman-wise Sales Summary", "SalesmanwiseSalesSummaryReport"),
             new ReportNavigatorDefinition("Sales", "Sales Return Report", "SalesReturn"),
             new ReportNavigatorDefinition("Sales", "Sales Profit", "SalesProfit"),
             new ReportNavigatorDefinition("Sales", "Salesman Incentive Report", "SalesmanIncentiveReport"),
@@ -75,6 +80,7 @@ namespace PosBranch_Win
             new ReportNavigatorDefinition("Purchase", "Purchase Return Report", "PurchaseReturn"),
             new ReportNavigatorDefinition("Customer", "Customer Outstanding Listing", "CustomerOutstandingReport"),
             new ReportNavigatorDefinition("Customer", "Customer Receipt Report", "CustomerReceiptReport"),
+            new ReportNavigatorDefinition("Customer", "Customer Ledger Statement", "CustomerLedgerReport"),
             new ReportNavigatorDefinition("Vendor", "Vendor Outstanding Listing", "VendorOutstandingReport"),
             new ReportNavigatorDefinition("Vendor", "DN/payment", "VendorDNPaymentReport"),
             new ReportNavigatorDefinition("Analysis", "Trading Account", "TradingAccount"),
@@ -2091,6 +2097,31 @@ namespace PosBranch_Win
                 Reports.InventoryReport.frmStockReportAdvanced frmStkRptAdv = new Reports.InventoryReport.frmStockReportAdvanced();
                 OpenFormInTab(frmStkRptAdv, "StockReport");
             }
+            if (e.Tool.Key == "StockValuationReport")
+            {
+                Reports.InventoryReport.frmStockValuationReport frmStkVal = new Reports.InventoryReport.frmStockValuationReport();
+                OpenFormInTab(frmStkVal, "Stock Valuation Report");
+            }
+            if (e.Tool.Key == "LowStockAlertReport")
+            {
+                Reports.InventoryReport.frmLowStockAlertReport frmLowStock = new Reports.InventoryReport.frmLowStockAlertReport();
+                OpenFormInTab(frmLowStock, "Low Stock Alert Report");
+            }
+            if (e.Tool.Key == "CustomerwiseSalesSummaryReport")
+            {
+                Reports.SalesReports.frmCustomerwiseSalesSummaryReport frmCustSales = new Reports.SalesReports.frmCustomerwiseSalesSummaryReport();
+                OpenFormInTab(frmCustSales, "Customer-wise Sales Summary");
+            }
+            if (e.Tool.Key == "SalesmanwiseSalesSummaryReport")
+            {
+                Reports.SalesReports.frmSalesmanwiseSalesSummaryReport frmSalesmanSales = new Reports.SalesReports.frmSalesmanwiseSalesSummaryReport();
+                OpenFormInTab(frmSalesmanSales, "Salesman-wise Sales Summary");
+            }
+            if (e.Tool.Key == "ItemwiseSalesSummaryReport")
+            {
+                Reports.SalesReports.frmItemwiseSalesSummaryReport frmItemSales = new Reports.SalesReports.frmItemwiseSalesSummaryReport();
+                OpenFormInTab(frmItemSales, "Item-wise Sales Summary");
+            }
             if (e.Tool.Key == "ReOrder")
             {
                 Reports.InventoryReport.FrmSmartReorderDashboard reorderDashboard = new Reports.InventoryReport.FrmSmartReorderDashboard();
@@ -2123,6 +2154,11 @@ namespace PosBranch_Win
             {
                 PosBranch_Win.Reports.FinancialReports.frmCustomerReceiptReport customerReceiptReport = new PosBranch_Win.Reports.FinancialReports.frmCustomerReceiptReport();
                 OpenFormInTab(customerReceiptReport, "Customer Receipt Report");
+            }
+            if (e.Tool.Key == "CustomerLedgerReport")
+            {
+                PosBranch_Win.Reports.FinancialReports.frmCustomerLedgerReport customerLedgerReport = new PosBranch_Win.Reports.FinancialReports.frmCustomerLedgerReport();
+                OpenFormInTab(customerLedgerReport, "Customer Ledger Statement");
             }
             if (e.Tool.Key == "VendorOutstandingReport")
             {
@@ -3161,8 +3197,8 @@ namespace PosBranch_Win
                     Infragistics.Win.Alpha.Transparent;
 
                 // ===== BLUE GRADIENT BACKGROUND =====
-                item.Settings.AppearancesSmall.Appearance.BackColor = Color.FromArgb(28, 151, 234);
-                item.Settings.AppearancesSmall.Appearance.BackColor2 = Color.FromArgb(10, 120, 200);
+                item.Settings.AppearancesSmall.Appearance.BackColor = SidebarTheme.AccentPrimary;
+                item.Settings.AppearancesSmall.Appearance.BackColor2 = SidebarTheme.AccentDark;
                 item.Settings.AppearancesSmall.Appearance.BackGradientStyle =
                     Infragistics.Win.GradientStyle.Vertical;
 
@@ -3174,7 +3210,7 @@ namespace PosBranch_Win
                 item.Settings.AppearancesSmall.Appearance.FontData.Bold =
                     Infragistics.Win.DefaultableBoolean.True;
                 item.Settings.AppearancesSmall.Appearance.FontData.SizeInPoints = 8.5f;
-                item.Settings.AppearancesSmall.Appearance.FontData.Name = "Segoe UI";
+                item.Settings.AppearancesSmall.Appearance.FontData.Name = SidebarTheme.FontFamily;
 
                 // ===== CENTER TEXT =====
                 item.Settings.AppearancesSmall.Appearance.TextHAlignAsString = "Center";
@@ -3184,7 +3220,7 @@ namespace PosBranch_Win
                 item.Settings.AppearancesSmall.HotTrackAppearance.BackColor =
                     Color.FromArgb(50, 170, 250);
                 item.Settings.AppearancesSmall.HotTrackAppearance.BackColor2 =
-                    Color.FromArgb(20, 140, 220);
+                    SidebarTheme.AccentDark;
                 item.Settings.AppearancesSmall.HotTrackAppearance.BackGradientStyle =
                     Infragistics.Win.GradientStyle.Vertical;
                 item.Settings.AppearancesSmall.HotTrackAppearance.BorderAlpha =
@@ -3192,7 +3228,7 @@ namespace PosBranch_Win
                 item.Settings.AppearancesSmall.HotTrackAppearance.FontData.Bold =
                     Infragistics.Win.DefaultableBoolean.True;
                 item.Settings.AppearancesSmall.HotTrackAppearance.FontData.SizeInPoints = 8.5f;
-                item.Settings.AppearancesSmall.HotTrackAppearance.FontData.Name = "Segoe UI";
+                item.Settings.AppearancesSmall.HotTrackAppearance.FontData.Name = SidebarTheme.FontFamily;
 
                 // ===== ADD TO FAVOURITE vs REGULAR ITEMS =====
                 if (item.Key == "AddToFavourite")
@@ -3414,7 +3450,7 @@ namespace PosBranch_Win
             {
                 var item = new Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarItem();
                 item.Key = definition.Key;
-                item.Text = definition.Text;
+                item.Text = "      " + definition.Text;
                 group.Items.Add(item);
             }
         }
@@ -3587,60 +3623,64 @@ namespace PosBranch_Win
             item.Settings.Style = Infragistics.Win.UltraWinExplorerBar.ItemStyle.Button;
             item.Settings.ReserveImageSpace = Infragistics.Win.DefaultableBoolean.False;
             item.Settings.UseDefaultImage = Infragistics.Win.DefaultableBoolean.False;
-            item.Settings.Height = 32;
+            item.Settings.Height = SidebarTheme.ItemHeight;
             item.Settings.MaxLines = 1;
-            item.Settings.Indent = 14;
+            item.Settings.Indent = SidebarTheme.ItemIndent;
 
-            // Normal state: transparent background, nice dark blue text, no borders
-            item.Settings.AppearancesSmall.Appearance.ForeColor = Color.FromArgb(45, 75, 110);
-            item.Settings.AppearancesSmall.Appearance.FontData.SizeInPoints = 9.5f;
-            item.Settings.AppearancesSmall.Appearance.FontData.Name = "Segoe UI";
-            item.Settings.AppearancesSmall.Appearance.Cursor = Cursors.Hand;
-            item.Settings.AppearancesSmall.Appearance.TextHAlignAsString = "Left";
-            item.Settings.AppearancesSmall.Appearance.TextVAlignAsString = "Middle";
-            item.Settings.AppearancesSmall.Appearance.BackColor = Color.Transparent;
-            item.Settings.AppearancesSmall.Appearance.BackColor2 = Color.Empty;
-            item.Settings.AppearancesSmall.Appearance.BackGradientStyle = Infragistics.Win.GradientStyle.None;
-            item.Settings.AppearancesSmall.Appearance.BorderAlpha = Infragistics.Win.Alpha.Transparent;
-            item.Settings.AppearancesSmall.Appearance.Image = null;
+            var normal = item.Settings.AppearancesSmall.Appearance;
+            normal.ForeColor = SidebarTheme.TextPrimary;
+            normal.FontData.SizeInPoints = SidebarTheme.ItemFontSize;
+            normal.FontData.Name = SidebarTheme.FontFamily;
+            normal.FontData.Underline = Infragistics.Win.DefaultableBoolean.False;
+            normal.Cursor = Cursors.Hand;
+            normal.TextHAlignAsString = "Left";
+            normal.TextVAlignAsString = "Middle";
+            normal.BackColor = Color.Transparent;
+            normal.BackColor2 = Color.Empty;
+            normal.BackGradientStyle = Infragistics.Win.GradientStyle.None;
+            normal.BorderAlpha = Infragistics.Win.Alpha.Transparent;
+            normal.Image = null;
+            normal.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
+
             item.Settings.AppearancesLarge.Appearance.Image = null;
             item.Settings.AppearancesSmall.ActiveAppearance.Image = null;
             item.Settings.AppearancesLarge.ActiveAppearance.Image = null;
             item.Settings.AppearancesSmall.HotTrackAppearance.Image = null;
             item.Settings.AppearancesLarge.HotTrackAppearance.Image = null;
 
-            item.Settings.AppearancesSmall.Appearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
-            item.Settings.AppearancesSmall.HotTrackAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
-            item.Settings.AppearancesSmall.ActiveAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
             item.Settings.AppearancesLarge.Appearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
             item.Settings.AppearancesLarge.HotTrackAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
             item.Settings.AppearancesLarge.ActiveAppearance.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
 
-            // Active/Selected state: solid clean modern blue
-            item.Settings.AppearancesSmall.ActiveAppearance.BackColor = Color.FromArgb(30, 120, 225);
-            item.Settings.AppearancesSmall.ActiveAppearance.BackColor2 = Color.Empty;
-            item.Settings.AppearancesSmall.ActiveAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.None;
-            item.Settings.AppearancesSmall.ActiveAppearance.BorderColor = Color.FromArgb(20, 100, 200);
-            item.Settings.AppearancesSmall.ActiveAppearance.BorderAlpha = Infragistics.Win.Alpha.Opaque;
-            item.Settings.AppearancesSmall.ActiveAppearance.ForeColor = Color.White;
-            item.Settings.AppearancesSmall.ActiveAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
-            item.Settings.AppearancesSmall.ActiveAppearance.FontData.SizeInPoints = 9.5f;
-            item.Settings.AppearancesSmall.ActiveAppearance.FontData.Name = "Segoe UI";
-            item.Settings.AppearancesSmall.ActiveAppearance.TextHAlignAsString = "Left";
-            item.Settings.AppearancesSmall.ActiveAppearance.TextVAlignAsString = "Middle";
+            // Active/selected — FLAT light blue fill, dark blue bold text. Modern, not dated.
+            var active = item.Settings.AppearancesSmall.ActiveAppearance;
+            active.BackColor = Color.FromArgb(214, 235, 255);
+            active.BackColor2 = Color.Empty;
+            active.BackGradientStyle = Infragistics.Win.GradientStyle.None;
+            active.BorderAlpha = Infragistics.Win.Alpha.Transparent;
+            active.ForeColor = SidebarTheme.TextPrimary;
+            active.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
+            active.FontData.Underline = Infragistics.Win.DefaultableBoolean.False;
+            active.FontData.SizeInPoints = SidebarTheme.ItemFontSize;
+            active.FontData.Name = SidebarTheme.FontFamily;
+            active.TextHAlignAsString = "Left";
+            active.TextVAlignAsString = "Middle";
+            active.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
 
-            // Hover (HotTrack) state: soft modern blue highlight
-            item.Settings.AppearancesSmall.HotTrackAppearance.BackColor = Color.FromArgb(208, 230, 252);
-            item.Settings.AppearancesSmall.HotTrackAppearance.BackColor2 = Color.Empty;
-            item.Settings.AppearancesSmall.HotTrackAppearance.BackGradientStyle = Infragistics.Win.GradientStyle.None;
-            item.Settings.AppearancesSmall.HotTrackAppearance.BorderColor = Color.FromArgb(160, 200, 240);
-            item.Settings.AppearancesSmall.HotTrackAppearance.BorderAlpha = Infragistics.Win.Alpha.Opaque;
-            item.Settings.AppearancesSmall.HotTrackAppearance.ForeColor = Color.FromArgb(15, 65, 125);
-            item.Settings.AppearancesSmall.HotTrackAppearance.FontData.Bold = Infragistics.Win.DefaultableBoolean.True;
-            item.Settings.AppearancesSmall.HotTrackAppearance.FontData.SizeInPoints = 9.5f;
-            item.Settings.AppearancesSmall.HotTrackAppearance.FontData.Name = "Segoe UI";
-            item.Settings.AppearancesSmall.HotTrackAppearance.TextHAlignAsString = "Left";
-            item.Settings.AppearancesSmall.HotTrackAppearance.TextVAlignAsString = "Middle";
+            // Hover — soft tint, flat, no underline
+            var hot = item.Settings.AppearancesSmall.HotTrackAppearance;
+            hot.BackColor = SidebarTheme.HoverBackground;
+            hot.BackColor2 = Color.Empty;
+            hot.BackGradientStyle = Infragistics.Win.GradientStyle.None;
+            hot.BorderAlpha = Infragistics.Win.Alpha.Transparent; // no border either — cleaner than the boxed hover before
+            hot.ForeColor = SidebarTheme.HoverText;
+            hot.FontData.Bold = Infragistics.Win.DefaultableBoolean.False; // don't bold on hover — only active should feel "selected"
+            hot.FontData.Underline = Infragistics.Win.DefaultableBoolean.False;
+            hot.FontData.SizeInPoints = SidebarTheme.ItemFontSize;
+            hot.FontData.Name = SidebarTheme.FontFamily;
+            hot.TextHAlignAsString = "Left";
+            hot.TextVAlignAsString = "Middle";
+            hot.ThemedElementAlpha = Infragistics.Win.Alpha.Transparent;
         }
 
         private void SetActiveReportNavigatorItem(Infragistics.Win.UltraWinExplorerBar.UltraExplorerBarItem activeItem)
@@ -3759,6 +3799,12 @@ namespace PosBranch_Win
                     keyToExecute == "AuditTrail" ||
                     keyToExecute == "VendorDNPaymentReport" ||
                     keyToExecute == "CustomerReceiptReport" ||
+                    keyToExecute == "CustomerLedgerReport" ||
+                    keyToExecute == "StockValuationReport" ||
+                    keyToExecute == "LowStockAlertReport" ||
+                    keyToExecute == "CustomerwiseSalesSummaryReport" ||
+                    keyToExecute == "SalesmanwiseSalesSummaryReport" ||
+                    keyToExecute == "ItemwiseSalesSummaryReport" ||
                     keyToExecute == "SalesmanIncentiveReport" ||
                     keyToExecute == "CounterReport" ||
                     keyToExecute == "ShiftReconciliationReport" ||

@@ -118,7 +118,7 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new System.Drawing.Size(95, 28);
             this.btnClose.TabIndex = 3;
-            this.btnClose.Text = "❌ Close";
+            this.btnClose.Text = "Close";
             this.btnClose.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
             // 
@@ -128,7 +128,7 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.btnPrint.Name = "btnPrint";
             this.btnPrint.Size = new System.Drawing.Size(95, 28);
             this.btnPrint.TabIndex = 4;
-            this.btnPrint.Text = "🖨️ Print";
+            this.btnPrint.Text = "Print";
             this.btnPrint.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             this.btnPrint.Click += new System.EventHandler(this.btnPrint_Click);
             // 
@@ -138,7 +138,7 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.btnExport.Name = "btnExport";
             this.btnExport.Size = new System.Drawing.Size(95, 28);
             this.btnExport.TabIndex = 5;
-            this.btnExport.Text = "📊 Export";
+            this.btnExport.Text = "Export";
             this.btnExport.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             this.btnExport.Click += new System.EventHandler(this.btnExport_Click);
             // 
@@ -148,7 +148,7 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.btnClearFilters.Name = "btnClearFilters";
             this.btnClearFilters.Size = new System.Drawing.Size(95, 28);
             this.btnClearFilters.TabIndex = 9;
-            this.btnClearFilters.Text = "🔄 Clear";
+            this.btnClearFilters.Text = "Clear";
             this.btnClearFilters.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             this.btnClearFilters.Click += new System.EventHandler(this.btnClearFilters_Click);
             // 
@@ -158,7 +158,7 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.btnSearch.Name = "btnSearch";
             this.btnSearch.Size = new System.Drawing.Size(95, 28);
             this.btnSearch.TabIndex = 8;
-            this.btnSearch.Text = "🔍 Search";
+            this.btnSearch.Text = "Search";
             this.btnSearch.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             this.btnSearch.Click += new System.EventHandler(this.btnSearch_Click);
             // 
@@ -177,7 +177,7 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.ultraLabelPreset.Name = "ultraLabelPreset";
             this.ultraLabelPreset.Size = new System.Drawing.Size(80, 23);
             this.ultraLabelPreset.TabIndex = 6;
-            this.ultraLabelPreset.Text = "⚡ Quick:";
+            this.ultraLabelPreset.Text = "Quick:";
             // 
             // ultraDateTimeEditorTo
             // 
@@ -381,7 +381,7 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.ultraLabelTotalProfitCaption.Name = "ultraLabelTotalProfitCaption";
             this.ultraLabelTotalProfitCaption.Size = new System.Drawing.Size(150, 23);
             this.ultraLabelTotalProfitCaption.TabIndex = 8;
-            this.ultraLabelTotalProfitCaption.Text = "💚 Total Profit:";
+            this.ultraLabelTotalProfitCaption.Text = "Total Profit:";
             // 
             // ultraLabelTotalPurchaseValue
             // 
@@ -397,7 +397,7 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.ultraLabelTotalPurchaseCaption.Name = "ultraLabelTotalPurchaseCaption";
             this.ultraLabelTotalPurchaseCaption.Size = new System.Drawing.Size(150, 23);
             this.ultraLabelTotalPurchaseCaption.TabIndex = 6;
-            this.ultraLabelTotalPurchaseCaption.Text = "📥 Total Purchase Qty:";
+            this.ultraLabelTotalPurchaseCaption.Text = "Total Purchase Qty:";
             // 
             // ultraLabelTotalSalesValue
             // 
@@ -413,7 +413,7 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.ultraLabelTotalSalesCaption.Name = "ultraLabelTotalSalesCaption";
             this.ultraLabelTotalSalesCaption.Size = new System.Drawing.Size(150, 23);
             this.ultraLabelTotalSalesCaption.TabIndex = 4;
-            this.ultraLabelTotalSalesCaption.Text = "📤 Total Sales Qty:";
+            this.ultraLabelTotalSalesCaption.Text = "Total Sales Qty:";
             // 
             // ultraLabelTotalValueValue
             // 
@@ -445,7 +445,7 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.ultraLabelTotalItemsCaption.Name = "ultraLabelTotalItemsCaption";
             this.ultraLabelTotalItemsCaption.Size = new System.Drawing.Size(150, 23);
             this.ultraLabelTotalItemsCaption.TabIndex = 0;
-            this.ultraLabelTotalItemsCaption.Text = "📦 Total Items:";
+            this.ultraLabelTotalItemsCaption.Text = "Total Items:";
             // 
             // frmStockReportAdvanced
             // 
@@ -460,7 +460,7 @@ namespace PosBranch_Win.Reports.InventoryReport
             this.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.Name = "frmStockReportAdvanced";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "📊 Stock Report Advanced - Inventory Analysis";
+            this.Text = "Stock Report Advanced - Inventory Analysis";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Load += new System.EventHandler(this.frmStockReportAdvanced_Load);
             this.ultraPanelControls.ClientArea.ResumeLayout(false);

@@ -214,7 +214,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.btnLoad.Name = "btnLoad";
             this.btnLoad.Size = new System.Drawing.Size(95, 28);
             this.btnLoad.TabIndex = 12;
-            this.btnLoad.Text = "🔍 Search";
+            this.btnLoad.Text = "Search";
             this.btnLoad.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
 
             // 
@@ -224,7 +224,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.btnClearFilters.Name = "btnClearFilters";
             this.btnClearFilters.Size = new System.Drawing.Size(95, 28);
             this.btnClearFilters.TabIndex = 13;
-            this.btnClearFilters.Text = "🔄 Clear";
+            this.btnClearFilters.Text = "Clear";
             this.btnClearFilters.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
 
             // 
@@ -234,7 +234,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.btnExport.Name = "btnExport";
             this.btnExport.Size = new System.Drawing.Size(105, 30);
             this.btnExport.TabIndex = 14;
-            this.btnExport.Text = "📊 Export";
+            this.btnExport.Text = "Export";
             this.btnExport.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
 
             // 
@@ -244,7 +244,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new System.Drawing.Size(100, 30);
             this.btnClose.TabIndex = 15;
-            this.btnClose.Text = "❌ Close";
+            this.btnClose.Text = "Close";
             this.btnClose.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
 
             // 
@@ -294,7 +294,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.lblTotalAmountCaption.Name = "lblTotalAmountCaption";
             this.lblTotalAmountCaption.Size = new System.Drawing.Size(180, 25);
             this.lblTotalAmountCaption.TabIndex = 0;
-            this.lblTotalAmountCaption.Text = "💵 Total Amount:";
+            this.lblTotalAmountCaption.Text = "Total Amount:";
 
             // 
             // lblTotalAmount
@@ -355,7 +355,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.MinimumSize = new System.Drawing.Size(1024, 600);
             this.Name = "FrmManualPartyBalanceReport";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "📊 Manual Party Balance Report";
+            this.Text = " Manual Party Balance Report";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
 
             this.ultraPanelControls.ClientArea.ResumeLayout(false);
