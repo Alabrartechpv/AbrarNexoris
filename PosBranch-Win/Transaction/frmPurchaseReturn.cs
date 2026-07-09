@@ -48,6 +48,7 @@ namespace PosBranch_Win.Transaction
         public frmPurchaseReturn()
         {
             InitializeComponent();
+            HidePaymentMethodControls();
 
             // Set KeyPreview to true to enable form-level key handling
             this.KeyPreview = true;
@@ -57,12 +58,6 @@ namespace PosBranch_Win.Transaction
 
             // Add event handler for cmbBranch click event
             cmbBranch.Click += new EventHandler(cmbBranch_Click);
-
-            // Add event handler for cmbPaymntMethod selection change
-            if (cmbPaymntMethod != null)
-            {
-                cmbPaymntMethod.ValueChanged += new EventHandler(cmbPaymntMethod_SelectedIndexChanged);
-            }
 
             // Add KeyDown event handler for TxtBarcode
             TxtBarcode.KeyDown += new KeyEventHandler(TxtBarcode_KeyDown);
@@ -120,6 +115,114 @@ namespace PosBranch_Win.Transaction
             }
         }
 
+        private void HidePaymentMethodControls()
+        {
+            if (cmbPaymntMethod != null)
+            {
+                cmbPaymntMethod.Visible = false;
+                cmbPaymntMethod.Enabled = false;
+                cmbPaymntMethod.TabStop = false;
+            }
+
+            if (ultraPanel6 != null)
+            {
+                foreach (Control control in ultraPanel6.ClientArea.Controls)
+                {
+                    if (control is Label label &&
+                        label.Text.IndexOf("Payment", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        label.Visible = false;
+                    }
+                }
+            }
+        }
+
+        private static string FormatPurchaseNoForDisplay(int purchaseNo)
+        {
+            return purchaseNo > 0 ? $"GRN-{purchaseNo}" : string.Empty;
+        }
+
+        private static string NormalizePurchaseNoText(string purchaseText)
+        {
+            if (string.IsNullOrWhiteSpace(purchaseText))
+            {
+                return string.Empty;
+            }
+
+            string trimmed = purchaseText.Trim();
+            if (trimmed.Equals("WITHOUT GR", StringComparison.OrdinalIgnoreCase))
+            {
+                return "WITHOUT GR";
+            }
+
+            string digits = new string(trimmed.Where(char.IsDigit).ToArray());
+            return string.IsNullOrWhiteSpace(digits) ? trimmed : digits;
+        }
+
+        private bool TryGetPurchaseNoFromTextBox(out int purchaseNo)
+        {
+            return int.TryParse(NormalizePurchaseNoText(textBox1.Text), out purchaseNo);
+        }
+
+        private string GetPurchaseReferenceForSave()
+        {
+            string normalized = NormalizePurchaseNoText(textBox1.Text);
+            if (normalized.Equals("WITHOUT GR", StringComparison.OrdinalIgnoreCase))
+            {
+                return normalized;
+            }
+
+            return int.TryParse(normalized, out int purchaseNo)
+                ? FormatPurchaseNoForDisplay(purchaseNo)
+                : (textBox1.Text ?? string.Empty).Trim();
+        }
+
+        private void ApplyHiddenPaymentDefaults(PReturnMaster target, PReturnMaster existing = null)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            if (existing != null && existing.PaymodeID > 0)
+            {
+                target.PaymodeID = existing.PaymodeID;
+                target.Paymode = existing.Paymode ?? string.Empty;
+                target.PaymodeLedgerID = existing.PaymodeLedgerID;
+                return;
+            }
+
+            PaymodeDDl hiddenPaymode = GetHiddenDefaultPaymode();
+            target.PaymodeID = hiddenPaymode.PayModeID;
+            target.Paymode = hiddenPaymode.PayModeName ?? string.Empty;
+            target.PaymodeLedgerID = 0;
+        }
+
+        private PaymodeDDl GetHiddenDefaultPaymode()
+        {
+            try
+            {
+                PaymodeDDlGrid grid = drop.GetPaymode();
+                var paymodes = grid?.List?.Where(p => p != null && p.PayModeID > 0).ToList();
+                if (paymodes != null && paymodes.Count > 0)
+                {
+                    var preferred = paymodes.FirstOrDefault(p =>
+                        string.Equals(p.PayModeName, "Credit", StringComparison.OrdinalIgnoreCase))
+                        ?? paymodes.FirstOrDefault(p =>
+                            string.Equals(p.PayModeName, "Cash", StringComparison.OrdinalIgnoreCase))
+                        ?? paymodes.First();
+
+                    return preferred;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Unable to load hidden purchase return paymode: {ex.Message}");
+            }
+
+            return new PaymodeDDl { PayModeID = 1, PayModeName = "Credit" };
+        }
+
         private void frmPurchaseReturn_Load(object sender, EventArgs e)
         {
             try
@@ -130,12 +233,6 @@ namespace PosBranch_Win.Transaction
 
                 // Load branch data
                 LoadBranchData();
-
-                // Load payment methods
-                this.RefreshPaymode();
-
-                // Add a delay to ensure payment methods are loaded before continuing
-                Application.DoEvents();
 
                 // DIRECTLY FIX TRACKTRANS TABLE WITH CORRECT PR NUMBER AND SET TxtSRNO
                 DirectlyFixTrackTransTable();
@@ -190,8 +287,7 @@ namespace PosBranch_Win.Transaction
                 // Set the initial focus to the Vendorbutton
                 this.ActiveControl = Vendorbutton;
 
-                // Set default payment method to Cash
-                SetupDefaultPaymentMode();
+                HidePaymentMethodControls();
 
                 // Add resize event handler to ensure grid fills available space
                 this.Resize += frmPurchaseReturn_Resize;
@@ -812,8 +908,8 @@ namespace PosBranch_Win.Transaction
                         return;
                     }
 
-                    // Only attempt to load purchase items if textBox1 contains a valid numeric value
-                    if (int.TryParse(textBox1.Text, out int purchaseNo))
+                    // Only attempt to load purchase items if textBox1 contains a valid purchase number
+                    if (TryGetPurchaseNoFromTextBox(out int purchaseNo))
                     {
                         // Save the original readonly state of TxtBarcode
                         _originalTxtBarcodeReadOnly = TxtBarcode.ReadOnly;
@@ -872,7 +968,10 @@ namespace PosBranch_Win.Transaction
                 }
 
                 // Get the purchase number and vendor ID
-                int purchaseNo = Convert.ToInt32(textBox1.Text);
+                if (!TryGetPurchaseNoFromTextBox(out int purchaseNo))
+                {
+                    return;
+                }
                 int vendorId = Convert.ToInt32(vendorid.Text);
 
                 // Check if the barcode/item ID field has a value
@@ -3918,12 +4017,6 @@ namespace PosBranch_Win.Transaction
                     return;
                 }
 
-                // Validate payment method selection
-                if (!ValidatePaymentMethod())
-                {
-                    return;
-                }
-
                 // Check if the grid has any data
                 bool hasItems = false;
                 DataTable gridDataTable = null;
@@ -4098,8 +4191,8 @@ namespace PosBranch_Win.Transaction
                 prMaster.PReturnDate = ultraDateTimeEditor1.Value != null ? (DateTime)ultraDateTimeEditor1.Value : DateTime.Now;
 
                 // Get purchase invoice details
-                prMaster.PInvoice = !string.IsNullOrEmpty(textBox1.Text) ? textBox1.Text : "";
-                prMaster.InvoiceNo = !string.IsNullOrEmpty(textBox1.Text) ? textBox1.Text : "";
+                prMaster.PInvoice = GetPurchaseReferenceForSave();
+                prMaster.InvoiceNo = prMaster.PInvoice;
 
                 // Handle potential DateTime overflows - ensure dates are within SQL Server valid range
                 DateTime minSqlDate = new DateTime(1753, 1, 1);
@@ -4155,23 +4248,7 @@ namespace PosBranch_Win.Transaction
 
                 prMaster.CreditPeriod = 0;
 
-                // Log selected payment method
-                Infragistics.Win.ValueListItem selectedPaymentItem = cmbPaymntMethod.SelectedItem as Infragistics.Win.ValueListItem;
-                int paymodeLedgerID = 0;
-                if (selectedPaymentItem != null && selectedPaymentItem.DataValue is DataRowView)
-                {
-                    DataRowView selectedPaymentRow = selectedPaymentItem.DataValue as DataRowView;
-                    // Try to get PayModeLedgerID from the selected item if available
-                    if (selectedPaymentRow.Row.Table.Columns.Contains("PayModeLedgerID"))
-                    {
-                        paymodeLedgerID = Convert.ToInt32(selectedPaymentRow["PayModeLedgerID"] ?? 0);
-                    }
-                }
-
-                // Set payment method information
-                prMaster.Paymode = cmbPaymntMethod.Text;
-                prMaster.PaymodeID = Convert.ToInt32(cmbPaymntMethod.Value ?? 0);
-                prMaster.PaymodeLedgerID = paymodeLedgerID; // Will be set from database if 0
+                ApplyHiddenPaymentDefaults(prMaster);
 
                 // Get subtotal
                 decimal subTotal = 0;
@@ -4693,10 +4770,10 @@ namespace PosBranch_Win.Transaction
                     EnsureTxtBarcodeIsWritable();
 
                     DateTime invoiceDate = purchaseDialog.SelectedPurchaseDate;
-                    string invoiceNo = purchaseDialog.SelectedPurchaseNo.ToString();
+                    string invoiceNo = FormatPurchaseNoForDisplay(purchaseNo);
 
                     // Set the purchase number in textBox1
-                    textBox1.Text = purchaseNo.ToString();
+                    textBox1.Text = invoiceNo;
 
                     // Set the purchase date in ultraDateTimeEditor2
                     if (ultraDateTimeEditor2 != null)
@@ -5608,7 +5685,10 @@ namespace PosBranch_Win.Transaction
                         if (!string.IsNullOrEmpty(prMaster.InvoiceNo))
                         {
                             System.Diagnostics.Debug.WriteLine($"Setting invoice number to: {prMaster.InvoiceNo}");
-                            textBox1.Text = prMaster.InvoiceNo;
+                            string purchaseNoText = NormalizePurchaseNoText(prMaster.InvoiceNo);
+                            textBox1.Text = int.TryParse(purchaseNoText, out int loadedPurchaseNo)
+                                ? FormatPurchaseNoForDisplay(loadedPurchaseNo)
+                                : prMaster.InvoiceNo;
                         }
 
                         // Set payment method - only if we have valid payment method data from database
@@ -6668,49 +6748,7 @@ namespace PosBranch_Win.Transaction
                 pr.LedgerID = Convert.ToInt32(vendorid.Text);
                 pr.VendorName = VendorName.Text;
 
-                // Set payment method information from cmbPaymntMethod
-                pr.Paymode = cmbPaymntMethod.Text;
-                pr.PaymodeID = Convert.ToInt32(cmbPaymntMethod.Value ?? 0);
-
-                // Attempt to get PaymodeLedgerID from the selected item in the combo box
-                Infragistics.Win.ValueListItem selectedPaymentItem = cmbPaymntMethod.SelectedItem as Infragistics.Win.ValueListItem;
-                if (selectedPaymentItem != null && selectedPaymentItem.DataValue is DataRowView)
-                {
-                    DataRowView selectedPaymentRow = selectedPaymentItem.DataValue as DataRowView;
-                    if (selectedPaymentRow.DataView.Table.Columns.Contains("LedgerID"))
-                    {
-                        pr.PaymodeLedgerID = Convert.ToInt32(selectedPaymentRow["LedgerID"]);
-                    }
-                }
-
-                // Fallback if PaymodeLedgerID is still 0
-                if (pr.PaymodeLedgerID <= 0 && pr.PaymodeID > 0)
-                {
-                    try
-                    {
-                        using (SqlConnection conn = new SqlConnection(GetConnectionString()))
-                        {
-                            conn.Open();
-                            string ledgerQuery = @"
-                                SELECT TOP 1 LedgerID 
-                                FROM PayMode 
-                                WHERE PayModeID = @PaymodeID";
-                            using (SqlCommand ledgerCmd = new SqlCommand(ledgerQuery, conn))
-                            {
-                                ledgerCmd.Parameters.AddWithValue("@PaymodeID", pr.PaymodeID);
-                                object ledgerResult = ledgerCmd.ExecuteScalar();
-                                if (ledgerResult != null && ledgerResult != DBNull.Value)
-                                {
-                                    pr.PaymodeLedgerID = Convert.ToInt32(ledgerResult);
-                                }
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Error getting PaymodeLedgerID: {ex.Message}");
-                    }
-                }
+                ApplyHiddenPaymentDefaults(pr);
 
                 // Get the PReturnMaster Id for updating the record
                 int prMasterId = 0;
@@ -6783,44 +6821,7 @@ namespace PosBranch_Win.Transaction
                             pr.CancelFlag = existingMaster.CancelFlag;
                             pr.CreditPeriod = existingMaster.CreditPeriod;
 
-                            // Preserve PaymodeLedgerID from existing record, but update payment method from form
-                            pr.PaymodeLedgerID = existingMaster.PaymodeLedgerID;
-
-                            // Update payment method from cmbPaymntMethod if changed
-                            if (cmbPaymntMethod != null && cmbPaymntMethod.SelectedItem != null)
-                            {
-                                pr.Paymode = cmbPaymntMethod.Text;
-                                pr.PaymodeID = Convert.ToInt32(cmbPaymntMethod.Value ?? 0);
-
-                                // Get PaymodeLedgerID if payment method changed
-                                if (pr.PaymodeID != existingMaster.PaymodeID && pr.PaymodeID > 0)
-                                {
-                                    try
-                                    {
-                                        using (SqlConnection conn = new SqlConnection(GetConnectionString()))
-                                        {
-                                            conn.Open();
-                                            string ledgerQuery = @"
-                                                SELECT TOP 1 LedgerID 
-                                                FROM PayMode 
-                                                WHERE PayModeID = @PaymodeID";
-                                            using (SqlCommand ledgerCmd = new SqlCommand(ledgerQuery, conn))
-                                            {
-                                                ledgerCmd.Parameters.AddWithValue("@PaymodeID", pr.PaymodeID);
-                                                object ledgerResult = ledgerCmd.ExecuteScalar();
-                                                if (ledgerResult != null && ledgerResult != DBNull.Value)
-                                                {
-                                                    pr.PaymodeLedgerID = Convert.ToInt32(ledgerResult);
-                                                }
-                                            }
-                                        }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        System.Diagnostics.Debug.WriteLine($"Error getting PaymodeLedgerID: {ex.Message}");
-                                    }
-                                }
-                            }
+                            ApplyHiddenPaymentDefaults(pr, existingMaster);
 
                             // Log the update
                             System.Diagnostics.Debug.WriteLine("=== UPDATING MASTER RECORD ===");
@@ -7384,20 +7385,6 @@ namespace PosBranch_Win.Transaction
                     return;
                 }
 
-                // Validate payment method selection
-                if (cmbPaymntMethod.SelectedIndex <= 0)
-                {
-                    MessageBox.Show("Please select a valid payment method before updating.",
-                                   "Update Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
-                // Replace with validation method
-                if (!ValidatePaymentMethod())
-                {
-                    return;
-                }
-
                 // Set cursor to wait
                 Cursor.Current = Cursors.WaitCursor;
 
@@ -7592,62 +7579,12 @@ namespace PosBranch_Win.Transaction
                     pr.VendorName = VendorName.Text ?? "";
                     pr.LedgerID = !string.IsNullOrEmpty(vendorid.Text) ? Convert.ToInt32(vendorid.Text) : existingPR.LedgerID;
 
-                    // Set payment method information from cmbPaymntMethod
-                    pr.Paymode = cmbPaymntMethod.Text;
+                    ApplyHiddenPaymentDefaults(pr, existingPR);
 
-                    // Safe conversion for PaymodeID
-                    int paymodeId = 0;
-                    if (cmbPaymntMethod.Value != null && cmbPaymntMethod.Value != DBNull.Value)
-                    {
-                        int.TryParse(cmbPaymntMethod.Value.ToString(), out paymodeId);
-                    }
-                    pr.PaymodeID = paymodeId;
-
-                    // Get PaymodeLedgerID from the selected payment method
-                    pr.PaymodeLedgerID = existingPR.PaymodeLedgerID; // Preserve the existing value initially
-
-                    // Try to get PaymodeLedgerID from the selected item
-                    Infragistics.Win.ValueListItem selectedPaymentItem = cmbPaymntMethod.SelectedItem as Infragistics.Win.ValueListItem;
-                    if (selectedPaymentItem != null && selectedPaymentItem.DataValue is DataRowView)
-                    {
-                        DataRowView selectedPaymentRow = selectedPaymentItem.DataValue as DataRowView;
-                        if (selectedPaymentRow.DataView.Table.Columns.Contains("LedgerID"))
-                        {
-                            pr.PaymodeLedgerID = Convert.ToInt32(selectedPaymentRow["LedgerID"]);
-                        }
-                    }
-
-                    // If PaymodeLedgerID is still 0 or unchanged, try to get it from PayMode table
-                    if (pr.PaymodeLedgerID <= 0 || pr.PaymodeID != existingPR.PaymodeID)
-                    {
-                        try
-                        {
-                            using (SqlConnection conn = new SqlConnection(GetConnectionString()))
-                            {
-                                conn.Open();
-                                string ledgerQuery = @"
-                                    SELECT TOP 1 LedgerID 
-                                    FROM PayMode 
-                                    WHERE PayModeID = @PaymodeID";
-                                using (SqlCommand ledgerCmd = new SqlCommand(ledgerQuery, conn))
-                                {
-                                    ledgerCmd.Parameters.AddWithValue("@PaymodeID", pr.PaymodeID);
-                                    object ledgerResult = ledgerCmd.ExecuteScalar();
-                                    if (ledgerResult != null && ledgerResult != DBNull.Value)
-                                    {
-                                        pr.PaymodeLedgerID = Convert.ToInt32(ledgerResult);
-                                    }
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Error getting PaymodeLedgerID: {ex.Message}");
-                        }
-                    }
-
-                    // Set other fields from existing record
-                    pr.InvoiceNo = existingPR.InvoiceNo ?? "";
+                    // Keep the purchase reference aligned with the visible purchase number.
+                    pr.InvoiceNo = !string.IsNullOrWhiteSpace(textBox1.Text)
+                        ? GetPurchaseReferenceForSave()
+                        : (existingPR.InvoiceNo ?? string.Empty);
 
                     // Get invoice date from form control (ultraDateTimeEditor2) if available, otherwise use existing
                     DateTime minSqlDate = new DateTime(1753, 1, 1);
@@ -7728,12 +7665,6 @@ namespace PosBranch_Win.Transaction
 
                     // Track changes made for the success message
                     List<string> changesMade = new List<string>();
-
-                    // Track payment method change
-                    if (existingPR.PaymodeID != pr.PaymodeID || existingPR.Paymode != pr.Paymode)
-                    {
-                        changesMade.Add($"Payment Method: {existingPR.Paymode ?? "N/A"} → {pr.Paymode}");
-                    }
 
                     // Track vendor change
                     if (existingPR.LedgerID != pr.LedgerID || existingPR.VendorName != pr.VendorName)
@@ -8935,7 +8866,7 @@ namespace PosBranch_Win.Transaction
                 InvoiceNo = prMaster.InvoiceNo ?? "",
                 InvoiceDate = prMaster.PReturnDate,
                 TotalAmount = (decimal)prMaster.GrandTotal,
-                PaymentMethod = cmbPaymntMethod?.Text ?? "Cash",
+                PaymentMethod = prMaster.Paymode ?? string.Empty,
                 VendorLedgerId = (int)prMaster.LedgerID
             };
             return debitNote;

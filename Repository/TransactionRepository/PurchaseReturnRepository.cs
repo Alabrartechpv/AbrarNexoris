@@ -196,13 +196,6 @@ namespace Repository.TransactionRepository
 
         public string savePR(PReturnMaster pr, PReturnDetails details, DataGridView dgvInvoice)
         {
-            // Validate payment method - check if PaymodeID is valid (must be greater than 0)
-            if (string.IsNullOrWhiteSpace(pr.Paymode) || pr.PaymodeID <= 0)
-            {
-                System.Diagnostics.Debug.WriteLine($"Payment method not properly selected: Paymode={pr.Paymode}, PaymodeID={pr.PaymodeID}");
-                return "Error: Payment method is mandatory. Please select a payment method.";
-            }
-
             // Check if this is a direct return (not linked to a purchase invoice)
             bool isDirectReturn = false;
             if (pr.PInvoice == "WITHOUT GR" || pr.InvoiceNo == "WITHOUT GR")
@@ -557,7 +550,7 @@ namespace Repository.TransactionRepository
                         cmd.Parameters.AddWithValue("@LedgerID", pr.LedgerID);
                         cmd.Parameters.AddWithValue("@VendorName", pr.VendorName ?? "");
                         cmd.Parameters.AddWithValue("@PaymodeID", pr.PaymodeID);
-                        cmd.Parameters.AddWithValue("@Paymode", pr.Paymode);
+                        cmd.Parameters.AddWithValue("@Paymode", pr.Paymode ?? string.Empty);
                         cmd.Parameters.AddWithValue("@PaymodeLedgerID", pr.PaymodeLedgerID);
                         cmd.Parameters.AddWithValue("@CreditPeriod", pr.CreditPeriod);
                         cmd.Parameters.AddWithValue("@SubTotal", pr.SubTotal);
@@ -1823,16 +1816,6 @@ namespace Repository.TransactionRepository
 
             try
             {
-                // Validate payment method if this is the first record - check if PaymodeID is valid (must be greater than 0)
-                if (isFirstRecord)
-                {
-                    if (string.IsNullOrWhiteSpace(pr.Paymode) || pr.PaymodeID <= 0)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Payment method not properly selected: Paymode={pr.Paymode}, PaymodeID={pr.PaymodeID}");
-                        throw new Exception("Payment method is mandatory. Please select a payment method.");
-                    }
-                }
-
                 // Validate reason only if the item is selected
                 if (details != null && details.ItemID > 0)
                 {

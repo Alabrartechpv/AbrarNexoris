@@ -4,6 +4,7 @@ using Repository.ReportRepository;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Globalization;
@@ -43,7 +44,11 @@ namespace PosBranch_Win.Dashboard
             if (cmbAnalysisMode != null && !cmbAnalysisMode.Items.Contains("Yearly"))
                 cmbAnalysisMode.Items.Add("Yearly");
             Load += FrmStockAnalytics_Load;
-            Resize += (s, e) => InvalidateCharts();
+            Resize += (s, e) =>
+            {
+                NormalizeMetricLabelBounds();
+                InvalidateCharts();
+            };
             cmbAnalysisMode.SelectedIndexChanged += CmbAnalysisMode_SelectedIndexChanged;
             lblSummary.Paint += LblSummary_Paint;
             lblSummary.Resize += (s, e) => UpdateSummaryCanvasSize();
@@ -58,9 +63,11 @@ namespace PosBranch_Win.Dashboard
             gridOutStock.CellClick += GridOutStock_CellClick;
             trendCanvas.Click += TrendCanvas_Click;
             itemGraphCanvas.Click += ItemGraphCanvas_Click;
+            WireStockValueDrilldownClicks();
             lblFastMoving.Cursor = Cursors.Hand;
             lblSlowMoving.Cursor = Cursors.Hand;
             lblDeadStock.Cursor = Cursors.Hand;
+            cardStockValue.Cursor = Cursors.Hand;
             gridTopItems.Cursor = Cursors.Hand;
             gridLowStock.Cursor = Cursors.Hand;
             gridOutStock.Cursor = Cursors.Hand;
@@ -175,42 +182,57 @@ namespace PosBranch_Win.Dashboard
         {
             try
             {
-                List<StockReportItem> items;
+                List<StockReportItem> rangeItems;
+                List<StockReportItem> currentItems;
                 using (StockReportAdvanceRepo repository = new StockReportAdvanceRepo())
                 {
-                    items = repository.GetStockReport(new StockReportFilter
+                    rangeItems = repository.GetStockReport(new StockReportFilter
                     {
                         FromDate = _fromDate,
-                        ToDate = _toDate,
+                        ToDate = EndOfDay(_toDate),
                         CompanyId = GetCompanyId(),
                         BranchId = GetBranchId(),
                         FinYearId = GetFinYearId()
                     });
                 }
 
-                _analytics = BuildAnalytics(items);
+                using (StockReportAdvanceRepo repository = new StockReportAdvanceRepo())
+                {
+                    currentItems = repository.GetStockReport(new StockReportFilter
+                    {
+                        FromDate = new DateTime(1753, 1, 1),
+                        ToDate = EndOfDay(DateTime.Today),
+                        CompanyId = GetCompanyId(),
+                        BranchId = GetBranchId(),
+                        FinYearId = GetFinYearId()
+                    });
+                }
+
+                _analytics = BuildAnalytics(rangeItems, currentItems);
             }
             catch
             {
-                _analytics = BuildAnalytics(SampleStockItems());
+                List<StockReportItem> sampleItems = SampleStockItems();
+                _analytics = BuildAnalytics(sampleItems, sampleItems);
             }
 
             BindAnalytics();
         }
 
-        private StockAnalyticsOverview BuildAnalytics(IList<StockReportItem> sourceItems)
+        private StockAnalyticsOverview BuildAnalytics(IList<StockReportItem> rangeSourceItems, IList<StockReportItem> currentSourceItems)
         {
-            List<StockReportItem> items = (sourceItems ?? new List<StockReportItem>()).Where(x => x != null).ToList();
-            decimal totalValue = items.Sum(x => x.StockValue);
-            decimal rangeStockValue = items.Sum(x => (x.ClosingStock - x.OpeningStock) * x.Cost);
-            decimal totalQty = items.Sum(x => x.ClosingStock);
-            int lowStock = items.Count(IsLowRiskStock);
-            int outStock = items.Count(x => x.ClosingStock <= 0);
-            decimal totalMovementOut = items.Sum(x => x.TotalOut);
-            decimal totalIn = items.Sum(x => x.TotalIn);
+            List<StockReportItem> rangeItems = (rangeSourceItems ?? new List<StockReportItem>()).Where(x => x != null).ToList();
+            List<StockReportItem> currentItems = (currentSourceItems ?? rangeItems).Where(x => x != null).ToList();
+            decimal currentStockValue = currentItems.Sum(x => x.StockValue);
+            decimal rangeStockValue = rangeItems.Sum(x => GetRangeStockValue(x));
+            decimal totalQty = currentItems.Sum(x => x.ClosingStock);
+            int lowStock = currentItems.Count(IsLowRiskStock);
+            int outStock = currentItems.Count(x => x.ClosingStock <= 0);
+            decimal totalMovementOut = rangeItems.Sum(x => x.TotalOut);
+            decimal totalIn = rangeItems.Sum(x => x.TotalIn);
             decimal turnover = totalQty > 0 ? totalMovementOut / Math.Max(1, totalQty) : 0;
-            decimal accuracy = items.Count == 0 ? 0 : items.Count(x => x.ClosingStock >= 0) * 100M / items.Count;
-            List<StockItemRow> allStockItems = items.OrderByDescending(x => x.ClosingStock).Select((x, i) => new StockItemRow
+            decimal accuracy = currentItems.Count == 0 ? 0 : currentItems.Count(x => x.ClosingStock >= 0) * 100M / currentItems.Count;
+            List<StockItemRow> allStockItems = currentItems.OrderByDescending(x => x.ClosingStock).Select((x, i) => new StockItemRow
             {
                 Rank = i + 1,
                 ItemName = ShortLabel(x.ItemName, 34),
@@ -224,19 +246,20 @@ namespace PosBranch_Win.Dashboard
             {
                 FromDate = _fromDate,
                 ToDate = _toDate,
-                TotalStockValue = totalValue,
+                TotalStockValue = currentStockValue,
                 RangeStockValue = rangeStockValue,
-                TotalItems = items.Count,
+                TotalItems = currentItems.Count,
                 StockQuantity = totalQty,
                 LowStockItems = lowStock,
                 OutOfStockItems = outStock,
-                AverageItemValue = items.Count == 0 ? 0 : totalValue / items.Count,
+                AverageItemValue = currentItems.Count == 0 ? 0 : currentStockValue / currentItems.Count,
                 StockTurnoverRate = turnover,
                 StockAccuracyPercent = accuracy,
                 StockIn = totalIn,
                 StockOut = totalMovementOut,
-                Trend = BuildTrend(totalValue),
+                Trend = BuildTrend(currentStockValue),
                 AllStockItems = allStockItems,
+                StockValueDetails = BuildStockValueDetails(rangeItems),
                 TopItems = allStockItems.Take(10).Select((x, i) => new StockItemRow
                 {
                     Rank = i + 1,
@@ -246,7 +269,7 @@ namespace PosBranch_Win.Dashboard
                     Cost = x.Cost,
                     Value = x.Value
                 }).ToList(),
-                LowStock = items.Where(IsLowRiskStock).OrderBy(x => x.ClosingStock).Select((x, i) => new LowStockRow
+                LowStock = currentItems.Where(IsLowRiskStock).OrderBy(x => x.ClosingStock).Select((x, i) => new LowStockRow
                 {
                     Rank = i + 1,
                     ItemName = ShortLabel(x.ItemName, 34),
@@ -254,7 +277,7 @@ namespace PosBranch_Win.Dashboard
                     ReorderLevel = x.OrderedStock.ToString("N2", _culture),
                     Status = x.ClosingStock <= 0 ? "Out" : "Low"
                 }).ToList(),
-                OutStock = items.Where(x => x.ClosingStock <= 0).Select((x, i) => new OutStockRow
+                OutStock = currentItems.Where(x => x.ClosingStock <= 0).Select((x, i) => new OutStockRow
                 {
                     Rank = i + 1,
                     ItemName = ShortLabel(x.ItemName, 34),
@@ -262,13 +285,13 @@ namespace PosBranch_Win.Dashboard
                     CurrentStock = x.ClosingStock.ToString("N2", _culture),
                     Status = "Out of Stock"
                 }).ToList(),
-                CategoryDistribution = items.GroupBy(x => string.IsNullOrWhiteSpace(x.CategoryName) ? "Others" : x.CategoryName)
+                CategoryDistribution = currentItems.GroupBy(x => string.IsNullOrWhiteSpace(x.CategoryName) ? "Others" : x.CategoryName)
                     .Select(g => new StockCategoryMetric { Name = g.Key, Value = g.Sum(x => x.StockValue), Quantity = g.Sum(x => x.ClosingStock) })
                     .OrderByDescending(x => x.Value)
                     .ToList(),
-                FastMoving = BuildMovementRows(items.Where(x => x.Sales > 20).OrderByDescending(x => x.Sales)),
-                SlowMoving = BuildMovementRows(items.Where(x => x.Sales > 0 && x.Sales <= 20).OrderBy(x => x.Sales)),
-                DeadStock = BuildMovementRows(items.Where(x => x.Sales <= 0 && x.ClosingStock > 0).OrderByDescending(x => x.ClosingStock))
+                FastMoving = BuildMovementRows(rangeItems.Where(x => x.Sales > 20).OrderByDescending(x => x.Sales)),
+                SlowMoving = BuildMovementRows(rangeItems.Where(x => x.Sales > 0 && x.Sales <= 20).OrderBy(x => x.Sales)),
+                DeadStock = BuildMovementRows(currentItems.Where(x => x.ClosingStock > 0 && rangeItems.All(r => r.ItemId != x.ItemId || r.Sales <= 0)).OrderByDescending(x => x.ClosingStock))
             };
 
             overview.FastMovingItems = overview.FastMoving.Count;
@@ -309,11 +332,12 @@ namespace PosBranch_Win.Dashboard
 
         private void BindAnalytics()
         {
+            NormalizeMetricLabelBounds();
             dtFrom.Value = _fromDate;
             dtTo.Value = _toDate;
-            lblCurrentStockValue.Text = Money(_analytics.TotalStockValue);
+            SetMetricMoney(lblCurrentStockValue, _analytics.TotalStockValue);
             lblTotalItems.Text = _analytics.TotalItems.ToString("N0", _culture);
-            lblStockValue.Text = Money(_analytics.RangeStockValue);
+            SetMetricMoney(lblStockValue, _analytics.RangeStockValue);
             lblStockQuantity.Text = _analytics.StockQuantity.ToString("N2", _culture);
             lblLowStock.Text = _analytics.LowStockItems.ToString("N0", _culture);
             lblOutStock.Text = _analytics.OutOfStockItems.ToString("N0", _culture);
@@ -359,6 +383,173 @@ namespace PosBranch_Win.Dashboard
                 else
                     column.FillWeight = 75;
             }
+        }
+
+        private void WireStockValueDrilldownClicks()
+        {
+            if (cardStockValue == null)
+                return;
+
+            cardStockValue.Click += StockValueCard_Click;
+            foreach (Control control in cardStockValue.Controls)
+            {
+                control.Click += StockValueCard_Click;
+                control.Cursor = Cursors.Hand;
+            }
+        }
+
+        private void StockValueCard_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                DataTable rows;
+                using (StockReportAdvanceRepo repository = new StockReportAdvanceRepo())
+                {
+                    rows = repository.GetStockTransactionValues(new StockReportFilter
+                    {
+                        FromDate = _fromDate,
+                        ToDate = _toDate,
+                        CompanyId = GetCompanyId(),
+                        BranchId = GetBranchId(),
+                        FinYearId = GetFinYearId()
+                    });
+                }
+
+                string title = string.Format(_culture, "Stock Value Details ({0:dd MMM yyyy} - {1:dd MMM yyyy})", _fromDate, _toDate);
+                ShowStockTransactionGridPopup(title, rows);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Stock value details could not be loaded.\n\n" + ex.Message,
+                    "Stock Value Details", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        private decimal GetRangeStockValue(StockReportItem item)
+        {
+            if (item == null)
+                return 0;
+
+            decimal purchasedValue = (item.Purchase + item.SalesReturn + item.StockAdjustmentIn + item.StockTransferIn) * item.Cost;
+            decimal soldValue = (item.Sales + item.PurchaseReturn + item.StockAdjustmentOut + item.StockTransferOut) * item.Cost;
+            return purchasedValue + soldValue;
+        }
+
+        private void NormalizeMetricLabelBounds()
+        {
+            StretchMetricLabels(cardCurrentStockValue, lblCurrentStockValueTitle, lblCurrentStockValue, lblCurrentStockValueFooter);
+            StretchMetricLabels(cardStockValue, lblStockValueTitle, lblStockValue, lblStockValueFooter);
+        }
+
+        private void StretchMetricLabels(Panel card, params Label[] labels)
+        {
+            if (card == null || labels == null)
+                return;
+
+            foreach (Label label in labels.Where(x => x != null))
+            {
+                label.AutoSize = false;
+                label.AutoEllipsis = false;
+                label.Width = Math.Max(70, card.ClientSize.Width - label.Left - 8);
+            }
+        }
+
+        private void SetMetricMoney(Label label, decimal value)
+        {
+            if (label == null)
+                return;
+
+            label.Text = Money(value);
+            FitMetricLabel(label);
+        }
+
+        private void FitMetricLabel(Label label)
+        {
+            if (label == null || string.IsNullOrWhiteSpace(label.Text))
+                return;
+
+            Font baseFont = new Font("Segoe UI Semibold", 10.2F, FontStyle.Bold);
+            label.Font = baseFont;
+
+            using (Graphics graphics = label.CreateGraphics())
+            {
+                while (label.Font.SizeInPoints > 7.2F &&
+                       graphics.MeasureString(label.Text, label.Font).Width > Math.Max(1, label.ClientSize.Width))
+                {
+                    Font oldFont = label.Font;
+                    label.Font = new Font(oldFont.FontFamily, oldFont.SizeInPoints - 0.4F, oldFont.Style);
+                    if (!ReferenceEquals(oldFont, baseFont))
+                        oldFont.Dispose();
+                }
+            }
+        }
+
+        private List<StockValueDetailRow> BuildStockValueDetails(IEnumerable<StockReportItem> items)
+        {
+            List<StockValueDetailRow> rows = new List<StockValueDetailRow>();
+            int rank = 1;
+
+            foreach (StockReportItem item in (items ?? Enumerable.Empty<StockReportItem>()).Where(x => x != null))
+            {
+                decimal purchasedQty = item.Purchase + item.SalesReturn + item.StockAdjustmentIn + item.StockTransferIn;
+                decimal soldQty = item.Sales + item.PurchaseReturn + item.StockAdjustmentOut + item.StockTransferOut;
+
+                if (purchasedQty > 0)
+                {
+                    rows.Add(CreateStockValueDetailRow(rank++, "Purchased", item, purchasedQty));
+                }
+
+                if (soldQty > 0)
+                {
+                    rows.Add(CreateStockValueDetailRow(rank++, "Sold", item, soldQty));
+                }
+            }
+
+            return rows
+                .OrderBy(x => x.ItemName)
+                .ThenBy(x => x.Movement)
+                .Select((x, i) =>
+                {
+                    x.Rank = i + 1;
+                    return x;
+                })
+                .ToList();
+        }
+
+        private StockValueDetailRow CreateStockValueDetailRow(int rank, string movement, StockReportItem item, decimal qty)
+        {
+            return new StockValueDetailRow
+            {
+                Rank = rank,
+                Movement = movement,
+                ItemName = ShortLabel(item.ItemName, 44),
+                Cost = Money(item.Cost),
+                SellingPrice = Money(GetSellingPrice(item)),
+                Qty = qty.ToString("N2", _culture),
+                StockValue = Money(qty * item.Cost)
+            };
+        }
+
+        private decimal GetSellingPrice(StockReportItem item)
+        {
+            if (item == null)
+                return 0;
+
+            if (item.RetailPrice > 0)
+                return item.RetailPrice;
+
+            if (item.WholeSalePrice > 0)
+                return item.WholeSalePrice;
+
+            if (item.CreditPrice > 0)
+                return item.CreditPrice;
+
+            return item.Cost;
+        }
+
+        private DateTime EndOfDay(DateTime date)
+        {
+            return date.Date.AddDays(1).AddTicks(-1);
         }
 
         private void InvalidateCharts()
@@ -864,6 +1055,119 @@ namespace PosBranch_Win.Dashboard
             close.BringToFront();
             popup.Controls.Add(card);
             popup.ShowDialog(this);
+        }
+
+        private void ShowStockTransactionGridPopup(string popupTitle, DataTable rows)
+        {
+            Form popup = new Form
+            {
+                Text = popupTitle,
+                StartPosition = FormStartPosition.CenterParent,
+                Size = new Size(960, 560),
+                MinimizeBox = false,
+                MaximizeBox = false,
+                ShowIcon = false,
+                BackColor = PageBackColor,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                Padding = new Padding(14)
+            };
+
+            Panel card = new Panel
+            {
+                BackColor = CardBackColor,
+                Dock = DockStyle.Fill,
+                Padding = new Padding(12, 10, 12, 12)
+            };
+            card.Paint += Card_Paint;
+
+            Label title = new Label
+            {
+                Dock = DockStyle.Top,
+                Height = 32,
+                Text = popupTitle,
+                Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold),
+                ForeColor = TextBlue,
+                Padding = new Padding(3, 3, 0, 0)
+            };
+
+            Button close = new Button
+            {
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BackColor = AccentBlue,
+                FlatStyle = FlatStyle.Flat,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI Semibold", 8.5F, FontStyle.Bold),
+                Location = new Point(popup.ClientSize.Width - 105, 16),
+                Size = new Size(72, 28),
+                Text = "Close"
+            };
+            close.FlatAppearance.BorderSize = 0;
+            close.Click += (s, e) => popup.Close();
+
+            DataGridView detailGrid = CreateStockTransactionGrid(rows ?? new DataTable());
+            card.Controls.Add(detailGrid);
+            card.Controls.Add(title);
+            card.Controls.Add(close);
+            close.BringToFront();
+            popup.Controls.Add(card);
+            popup.ShowDialog(this);
+        }
+
+        private DataGridView CreateStockTransactionGrid(DataTable rows)
+        {
+            DataGridView grid = new DataGridView
+            {
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                AllowUserToResizeRows = false,
+                AutoGenerateColumns = true,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                BackgroundColor = CardBackColor,
+                BorderStyle = BorderStyle.None,
+                Dock = DockStyle.Fill,
+                EnableHeadersVisualStyles = false,
+                GridColor = Color.FromArgb(220, 233, 246),
+                ReadOnly = true,
+                RowHeadersVisible = false,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                DataSource = rows
+            };
+            grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(232, 241, 252);
+            grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
+            grid.ColumnHeadersDefaultCellStyle.ForeColor = TextBlue;
+            grid.ColumnHeadersHeight = 32;
+            grid.DefaultCellStyle.Font = new Font("Segoe UI", 9F);
+            grid.DefaultCellStyle.ForeColor = Color.FromArgb(36, 64, 105);
+            grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(215, 232, 250);
+            grid.DefaultCellStyle.SelectionForeColor = TextBlue;
+            grid.RowTemplate.Height = 28;
+
+            foreach (DataGridViewColumn column in grid.Columns)
+            {
+                column.SortMode = DataGridViewColumnSortMode.NotSortable;
+                if (column.Name == "ItemName")
+                    column.FillWeight = 160;
+                else if (column.Name == "TransactionDate")
+                    column.FillWeight = 92;
+                else if (column.Name == "Movement")
+                    column.FillWeight = 98;
+                else if (column.Name == "DocNumber")
+                    column.FillWeight = 82;
+                else
+                    column.FillWeight = 78;
+
+                if (column.ValueType == typeof(decimal) || column.Name == "Qty" || column.Name == "Cost" ||
+                    column.Name == "SellingPrice" || column.Name == "StockValue")
+                {
+                    column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                    column.DefaultCellStyle.Format = "N2";
+                }
+
+                if (column.Name == "TransactionDate")
+                    column.DefaultCellStyle.Format = "dd-MMM-yyyy";
+            }
+
+            return grid;
         }
 
         private void ShowChartPopup<T>(string popupTitle, IEnumerable<T> rows, Action<Graphics, Rectangle> drawChart)
@@ -1668,6 +1972,7 @@ namespace PosBranch_Win.Dashboard
             public List<StockTrendPoint> Trend { get; set; } = new List<StockTrendPoint>();
             public List<StockItemRow> AllStockItems { get; set; } = new List<StockItemRow>();
             public List<StockItemRow> TopItems { get; set; } = new List<StockItemRow>();
+            public List<StockValueDetailRow> StockValueDetails { get; set; } = new List<StockValueDetailRow>();
             public List<LowStockRow> LowStock { get; set; } = new List<LowStockRow>();
             public List<OutStockRow> OutStock { get; set; } = new List<OutStockRow>();
             public List<MovementStockRow> FastMoving { get; set; } = new List<MovementStockRow>();
@@ -1697,6 +2002,17 @@ namespace PosBranch_Win.Dashboard
             public string Quantity { get; set; }
             public string Cost { get; set; }
             public string Value { get; set; }
+        }
+
+        private sealed class StockValueDetailRow
+        {
+            public int Rank { get; set; }
+            public string Movement { get; set; }
+            public string ItemName { get; set; }
+            public string Cost { get; set; }
+            public string SellingPrice { get; set; }
+            public string Qty { get; set; }
+            public string StockValue { get; set; }
         }
 
         private sealed class TrendDetailRow

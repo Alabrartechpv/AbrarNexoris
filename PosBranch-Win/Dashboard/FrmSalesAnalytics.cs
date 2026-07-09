@@ -1,7 +1,10 @@
+using ModelClass;
+using ModelClass.Report;
 using Repository.ReportRepository;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Globalization;
@@ -165,6 +168,7 @@ namespace PosBranch_Win.Dashboard
             itemMapCanvas.Cursor = Cursors.Hand;
             gridTopQty.Cursor = Cursors.Hand;
             gridTopAmount.Cursor = Cursors.Hand;
+            WireAverageOrderStockValueDrilldown();
             trendCanvas.AutoScroll = true;
             trendCanvas.Resize += (s, e) =>
             {
@@ -473,6 +477,129 @@ namespace PosBranch_Win.Dashboard
             ShowSalesGridPopup("All Items Sold By Amount - " + FormatDateRange(), BuildItemSalesRows(items));
         }
 
+        private void WireAverageOrderStockValueDrilldown()
+        {
+            if (cardAverageOrder != null)
+            {
+                cardAverageOrder.Cursor = Cursors.Hand;
+                cardAverageOrder.Click -= AverageOrderStockValue_Click;
+                cardAverageOrder.Click += AverageOrderStockValue_Click;
+
+                foreach (Control control in cardAverageOrder.Controls)
+                {
+                    control.Cursor = Cursors.Hand;
+                    control.Click -= AverageOrderStockValue_Click;
+                    control.Click += AverageOrderStockValue_Click;
+                }
+            }
+
+            if (lblAverageOrder != null)
+            {
+                lblAverageOrder.Cursor = Cursors.Hand;
+                lblAverageOrder.Click -= AverageOrderStockValue_Click;
+                lblAverageOrder.Click += AverageOrderStockValue_Click;
+            }
+        }
+
+        private void AverageOrderStockValue_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                DataTable rows;
+                using (StockReportAdvanceRepo repository = new StockReportAdvanceRepo())
+                {
+                    rows = repository.GetStockTransactionValues(new StockReportFilter
+                    {
+                        FromDate = _fromDate,
+                        ToDate = _toDate,
+                        CompanyId = GetCompanyId(),
+                        BranchId = GetBranchId(),
+                        FinYearId = GetFinYearId()
+                    });
+                }
+
+                ShowStockTransactionGridPopup("Stock Transaction Values - " + FormatDateRange(), rows);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Stock transaction values could not be loaded.\n\n" + ex.Message,
+                    "Stock Transaction Values", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        private void ShowStockTransactionGridPopup(string popupTitle, DataTable rows)
+        {
+            Form popup = CreatePopupForm(popupTitle, new Size(960, 560));
+            Panel card = CreatePopupCard();
+            Label title = CreatePopupTitle(popupTitle);
+            Button close = CreatePopupCloseButton(popup);
+
+            DataGridView detailGrid = CreatePopupGrid(rows ?? new DataTable());
+            card.Controls.Add(detailGrid);
+            card.Controls.Add(title);
+            card.Controls.Add(close);
+            close.BringToFront();
+            popup.Controls.Add(card);
+            popup.ShowDialog(this);
+        }
+
+        private DataGridView CreatePopupGrid(DataTable rows)
+        {
+            DataGridView grid = new DataGridView
+            {
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                AllowUserToResizeRows = false,
+                AutoGenerateColumns = true,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                BackgroundColor = CardBackColor,
+                BorderStyle = BorderStyle.None,
+                Dock = DockStyle.Fill,
+                EnableHeadersVisualStyles = false,
+                GridColor = Color.FromArgb(220, 233, 246),
+                ReadOnly = true,
+                RowHeadersVisible = false,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                DataSource = rows
+            };
+            grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(232, 241, 252);
+            grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
+            grid.ColumnHeadersDefaultCellStyle.ForeColor = TextBlue;
+            grid.ColumnHeadersHeight = 32;
+            grid.DefaultCellStyle.Font = new Font("Segoe UI", 9F);
+            grid.DefaultCellStyle.ForeColor = Color.FromArgb(36, 64, 105);
+            grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(215, 232, 250);
+            grid.DefaultCellStyle.SelectionForeColor = TextBlue;
+            grid.RowTemplate.Height = 28;
+
+            foreach (DataGridViewColumn column in grid.Columns)
+            {
+                column.SortMode = DataGridViewColumnSortMode.NotSortable;
+                if (column.Name == "ItemName")
+                    column.FillWeight = 160;
+                else if (column.Name == "TransactionDate")
+                    column.FillWeight = 92;
+                else if (column.Name == "Movement")
+                    column.FillWeight = 98;
+                else if (column.Name == "DocNumber")
+                    column.FillWeight = 82;
+                else
+                    column.FillWeight = 78;
+
+                if (column.ValueType == typeof(decimal) || column.Name == "Qty" || column.Name == "Cost" ||
+                    column.Name == "SellingPrice" || column.Name == "StockValue")
+                {
+                    column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                    column.DefaultCellStyle.Format = "N2";
+                }
+
+                if (column.Name == "TransactionDate")
+                    column.DefaultCellStyle.Format = "dd-MMM-yyyy";
+            }
+
+            return grid;
+        }
+
         private void PaymentCanvas_Paint(object sender, PaintEventArgs e)
         {
             Rectangle bounds = paymentCanvas.ClientRectangle;
@@ -646,6 +773,30 @@ namespace PosBranch_Win.Dashboard
         private string FormatDateRange()
         {
             return _fromDate.ToString("dd MMM yyyy", _culture) + " to " + _toDate.ToString("dd MMM yyyy", _culture);
+        }
+
+        private int GetCompanyId()
+        {
+            if (SessionContext.IsInitialized && SessionContext.CompanyId > 0)
+                return SessionContext.CompanyId;
+            int value;
+            return int.TryParse(DataBase.CompanyId, out value) && value > 0 ? value : 1;
+        }
+
+        private int GetBranchId()
+        {
+            if (SessionContext.IsInitialized && SessionContext.BranchId > 0)
+                return SessionContext.BranchId;
+            int value;
+            return int.TryParse(DataBase.BranchId, out value) && value > 0 ? value : 1;
+        }
+
+        private int GetFinYearId()
+        {
+            if (SessionContext.IsInitialized && SessionContext.FinYearId > 0)
+                return SessionContext.FinYearId;
+            int value;
+            return int.TryParse(DataBase.FinyearId, out value) && value > 0 ? value : 1;
         }
 
         private List<SalesTrendPoint> SampleSalesTrend()
