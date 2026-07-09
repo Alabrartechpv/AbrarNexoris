@@ -6,6 +6,7 @@ namespace PosBranch_Win
         private System.Windows.Forms.PictureBox pictureBoxLogo;
         private System.Windows.Forms.Label lblLoading;
         private System.Windows.Forms.PictureBox picLoader;
+        private System.Windows.Forms.Panel pnlMain;
 
         protected override void Dispose(bool disposing)
         {
@@ -21,8 +22,10 @@ namespace PosBranch_Win
             this.lblLoading = new System.Windows.Forms.Label();
             this.picLoader = new System.Windows.Forms.PictureBox();
             this.pictureBoxLogo = new System.Windows.Forms.PictureBox();
+            this.pnlMain = new System.Windows.Forms.Panel();
             ((System.ComponentModel.ISupportInitialize)(this.picLoader)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLogo)).BeginInit();
+            this.pnlMain.SuspendLayout();
             this.SuspendLayout();
             // 
             // lblLoading
@@ -47,22 +50,31 @@ namespace PosBranch_Win
             // pictureBoxLogo
             // 
             this.pictureBoxLogo.Image = global::PosBranch_Win.Properties.Resources.splash_logo1;
-            this.pictureBoxLogo.Location = new System.Drawing.Point(-6, -62);
+            this.pictureBoxLogo.Location = new System.Drawing.Point(0, 0);
             this.pictureBoxLogo.Name = "pictureBoxLogo";
-            this.pictureBoxLogo.Size = new System.Drawing.Size(671, 438);
+            this.pictureBoxLogo.Size = new System.Drawing.Size(594, 344);
             this.pictureBoxLogo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBoxLogo.TabIndex = 0;
             this.pictureBoxLogo.TabStop = false;
+            // 
+            // pnlMain
+            // 
+            this.pnlMain.BackColor = System.Drawing.Color.White;
+            this.pnlMain.Controls.Add(this.picLoader);
+            this.pnlMain.Controls.Add(this.lblLoading);
+            this.pnlMain.Controls.Add(this.pictureBoxLogo);
+            this.pnlMain.Location = new System.Drawing.Point(3, 3);
+            this.pnlMain.Name = "pnlMain";
+            this.pnlMain.Size = new System.Drawing.Size(594, 344);
+            this.pnlMain.TabIndex = 3;
             // 
             // FrmSplashScreen
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.White;
+            this.BackColor = System.Drawing.Color.Black;
             this.ClientSize = new System.Drawing.Size(600, 350);
-            this.Controls.Add(this.picLoader);
-            this.Controls.Add(this.lblLoading);
-            this.Controls.Add(this.pictureBoxLogo);
+            this.Controls.Add(this.pnlMain);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "FrmSplashScreen";
             this.ShowInTaskbar = false;
@@ -71,6 +83,8 @@ namespace PosBranch_Win
             this.Load += new System.EventHandler(this.FrmSplashScreen_Load);
             ((System.ComponentModel.ISupportInitialize)(this.picLoader)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLogo)).EndInit();
+            this.pnlMain.ResumeLayout(false);
+            this.pnlMain.PerformLayout();
             this.ResumeLayout(false);
 
         }

@@ -138,9 +138,6 @@ namespace PosBranch_Win
             animTimer.Interval = 20;
             animTimer.Tick += AnimTimer_Tick;
             animTimer.Start();
-
-            // Wire pnlRight paint event for border
-            pnlRight.Paint += pnlRight_Paint;
         }
 
         private void timer1_Tick(object sender, EventArgs e)
@@ -544,25 +541,7 @@ namespace PosBranch_Win
             }
         }
 
-        private void pnlLeft_Paint(object sender, PaintEventArgs e)
-        {
-            using (Pen p = new Pen(Color.Cyan, 4))
-            {
-                e.Graphics.DrawLine(p, 0, 0, pnlLeft.Width, 0); // top
-                e.Graphics.DrawLine(p, 0, 0, 0, pnlLeft.Height); // left
-                e.Graphics.DrawLine(p, 0, pnlLeft.Height, pnlLeft.Width, pnlLeft.Height); // bottom
-            }
-        }
 
-        private void pnlRight_Paint(object sender, PaintEventArgs e)
-        {
-            using (Pen p = new Pen(Color.Cyan, 4))
-            {
-                e.Graphics.DrawLine(p, 0, 0, pnlRight.Width, 0); // top
-                e.Graphics.DrawLine(p, pnlRight.Width, 0, pnlRight.Width, pnlRight.Height); // right
-                e.Graphics.DrawLine(p, 0, pnlRight.Height, pnlRight.Width, pnlRight.Height); // bottom
-            }
-        }
 
         private void AnimTimer_Tick(object sender, EventArgs e)
         {
@@ -586,9 +565,6 @@ namespace PosBranch_Win
             ultraPictureBox1.Location = new Point(newX, picOriginalLocation.Y);
         }
 
-        private void pnlRight_Paint_1(object sender, PaintEventArgs e)
-        {
-            ;
-        }
+
     }
 }
