@@ -101,11 +101,16 @@
     <Compile Include="ReportRepository\BankStatementReportRepository.cs" />
     <Compile Include="ReportRepository\CombinedPartyBalanceReportRepository.cs" />
     <Compile Include="ReportRepository\CustomerOutstandingReportRepository.cs" />
+    <Compile Include="ReportRepository\CustomerLedgerReportRepository.cs" />
     <Compile Include="ReportRepository\CustomerReceiptReportRepository.cs" />
     <Compile Include="ReportRepository\DashboardOverviewRepository.cs" />
     <Compile Include="ReportRepository\FinalAnalysisRepository.cs" />
     <Compile Include="ReportRepository\DayBookRepository.cs" />
     <Compile Include="ReportRepository\StockReportAdvanceRepo.cs" />
+    <Compile Include="ReportRepository\CustomerwiseSalesSummaryRepo.cs" />
+    <Compile Include="ReportRepository\SalesmanwiseSalesSummaryRepo.cs" />
+    <Compile Include="ReportRepository\ItemwiseSalesSummaryRepo.cs" />
+    <Compile Include="ReportRepository\LowStockAlertRepo.cs" />
     <Compile Include="ReportRepository\VendorPaymentReportRepository.cs" />
     <Compile Include="ReportRepository\VendorOutstandingReportRepository.cs" />
     <Compile Include="SettingsRepo\ItemStockActivityLogRepository.cs" />

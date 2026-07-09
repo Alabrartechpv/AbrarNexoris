@@ -1114,6 +1114,42 @@
     <Compile Include="Reports\SalesReports\frmSalesProfit.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Reports\FinancialReports\frmCustomerLedgerReport.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reports\FinancialReports\frmCustomerLedgerReport.Designer.cs">
+      <DependentUpon>frmCustomerLedgerReport.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Reports\InventoryReport\frmStockValuationReport.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reports\InventoryReport\frmStockValuationReport.Designer.cs">
+      <DependentUpon>frmStockValuationReport.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Reports\InventoryReport\frmLowStockAlertReport.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reports\InventoryReport\frmLowStockAlertReport.Designer.cs">
+      <DependentUpon>frmLowStockAlertReport.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Reports\SalesReports\frmCustomerwiseSalesSummaryReport.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reports\SalesReports\frmCustomerwiseSalesSummaryReport.Designer.cs">
+      <DependentUpon>frmCustomerwiseSalesSummaryReport.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Reports\SalesReports\frmSalesmanwiseSalesSummaryReport.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reports\SalesReports\frmSalesmanwiseSalesSummaryReport.Designer.cs">
+      <DependentUpon>frmSalesmanwiseSalesSummaryReport.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Reports\SalesReports\frmItemwiseSalesSummaryReport.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reports\SalesReports\frmItemwiseSalesSummaryReport.Designer.cs">
+      <DependentUpon>frmItemwiseSalesSummaryReport.cs</DependentUpon>
+    </Compile>
     <Compile Include="Reports\SalesReports\frmCounterReport.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1655,6 +1691,24 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Reports\SalesReports\frmSalesProfit.resx">
       <DependentUpon>frmSalesProfit.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Reports\FinancialReports\frmCustomerLedgerReport.resx">
+      <DependentUpon>frmCustomerLedgerReport.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Reports\InventoryReport\frmStockValuationReport.resx">
+      <DependentUpon>frmStockValuationReport.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Reports\InventoryReport\frmLowStockAlertReport.resx">
+      <DependentUpon>frmLowStockAlertReport.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Reports\SalesReports\frmCustomerwiseSalesSummaryReport.resx">
+      <DependentUpon>frmCustomerwiseSalesSummaryReport.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Reports\SalesReports\frmSalesmanwiseSalesSummaryReport.resx">
+      <DependentUpon>frmSalesmanwiseSalesSummaryReport.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Reports\SalesReports\frmItemwiseSalesSummaryReport.resx">
+      <DependentUpon>frmItemwiseSalesSummaryReport.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Reports\SalesReports\frmCounterReport.resx">
       <DependentUpon>frmCounterReport.cs</DependentUpon>

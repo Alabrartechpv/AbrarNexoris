@@ -93,10 +93,15 @@
     <Compile Include="Report\BankStatementReportModel.cs" />
     <Compile Include="Report\CombinedPartyBalanceReportModel.cs" />
     <Compile Include="Report\CustomerOutstandingReportModel.cs" />
+    <Compile Include="Report\CustomerLedgerReportModel.cs" />
     <Compile Include="Report\CustomerReceiptReportModel.cs" />
     <Compile Include="Report\DayBookModel.cs" />
     <Compile Include="Report\VendorPaymentReportModel.cs" />
     <Compile Include="Report\VendorOutstandingReportModel.cs" />
+    <Compile Include="Report\CustomerwiseSalesSummaryModel.cs" />
+    <Compile Include="Report\SalesmanwiseSalesSummaryModel.cs" />
+    <Compile Include="Report\ItemwiseSalesSummaryModel.cs" />
+    <Compile Include="Report\LowStockAlertModel.cs" />
     <Compile Include="SessionContext.cs" />
     <Compile Include="Settings\POSSetting.cs" />
     <Compile Include="Settings\FinancialYearModel.cs" />

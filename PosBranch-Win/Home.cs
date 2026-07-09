@@ -65,7 +65,12 @@ namespace PosBranch_Win
             new ReportNavigatorDefinition("Item", "Item Report", "ItemReport"),
             new ReportNavigatorDefinition("Item", "Stock Report Advanced", "StockReportAdv", "StockReport"),
             new ReportNavigatorDefinition("Item", "Inventory Audit Trail", "AuditTrail"),
+            new ReportNavigatorDefinition("Item", "Stock Valuation Report", "StockValuationReport"),
+            new ReportNavigatorDefinition("Item", "Low Stock Alert Report", "LowStockAlertReport"),
             new ReportNavigatorDefinition("Sales", "Sales Details", "Sales Details"),
+            new ReportNavigatorDefinition("Sales", "Item-wise Sales Summary", "ItemwiseSalesSummaryReport"),
+            new ReportNavigatorDefinition("Sales", "Customer-wise Sales Summary", "CustomerwiseSalesSummaryReport"),
+            new ReportNavigatorDefinition("Sales", "Salesman-wise Sales Summary", "SalesmanwiseSalesSummaryReport"),
             new ReportNavigatorDefinition("Sales", "Sales Return Report", "SalesReturn"),
             new ReportNavigatorDefinition("Sales", "Sales Profit", "SalesProfit"),
             new ReportNavigatorDefinition("Sales", "Salesman Incentive Report", "SalesmanIncentiveReport"),
@@ -75,6 +80,7 @@ namespace PosBranch_Win
             new ReportNavigatorDefinition("Purchase", "Purchase Return Report", "PurchaseReturn"),
             new ReportNavigatorDefinition("Customer", "Customer Outstanding Listing", "CustomerOutstandingReport"),
             new ReportNavigatorDefinition("Customer", "Customer Receipt Report", "CustomerReceiptReport"),
+            new ReportNavigatorDefinition("Customer", "Customer Ledger Statement", "CustomerLedgerReport"),
             new ReportNavigatorDefinition("Vendor", "Vendor Outstanding Listing", "VendorOutstandingReport"),
             new ReportNavigatorDefinition("Vendor", "DN/payment", "VendorDNPaymentReport"),
             new ReportNavigatorDefinition("Analysis", "Trading Account", "TradingAccount"),
@@ -2091,6 +2097,31 @@ namespace PosBranch_Win
                 Reports.InventoryReport.frmStockReportAdvanced frmStkRptAdv = new Reports.InventoryReport.frmStockReportAdvanced();
                 OpenFormInTab(frmStkRptAdv, "StockReport");
             }
+            if (e.Tool.Key == "StockValuationReport")
+            {
+                Reports.InventoryReport.frmStockValuationReport frmStkVal = new Reports.InventoryReport.frmStockValuationReport();
+                OpenFormInTab(frmStkVal, "Stock Valuation Report");
+            }
+            if (e.Tool.Key == "LowStockAlertReport")
+            {
+                Reports.InventoryReport.frmLowStockAlertReport frmLowStock = new Reports.InventoryReport.frmLowStockAlertReport();
+                OpenFormInTab(frmLowStock, "Low Stock Alert Report");
+            }
+            if (e.Tool.Key == "CustomerwiseSalesSummaryReport")
+            {
+                Reports.SalesReports.frmCustomerwiseSalesSummaryReport frmCustSales = new Reports.SalesReports.frmCustomerwiseSalesSummaryReport();
+                OpenFormInTab(frmCustSales, "Customer-wise Sales Summary");
+            }
+            if (e.Tool.Key == "SalesmanwiseSalesSummaryReport")
+            {
+                Reports.SalesReports.frmSalesmanwiseSalesSummaryReport frmSalesmanSales = new Reports.SalesReports.frmSalesmanwiseSalesSummaryReport();
+                OpenFormInTab(frmSalesmanSales, "Salesman-wise Sales Summary");
+            }
+            if (e.Tool.Key == "ItemwiseSalesSummaryReport")
+            {
+                Reports.SalesReports.frmItemwiseSalesSummaryReport frmItemSales = new Reports.SalesReports.frmItemwiseSalesSummaryReport();
+                OpenFormInTab(frmItemSales, "Item-wise Sales Summary");
+            }
             if (e.Tool.Key == "ReOrder")
             {
                 Reports.InventoryReport.FrmSmartReorderDashboard reorderDashboard = new Reports.InventoryReport.FrmSmartReorderDashboard();
@@ -2123,6 +2154,11 @@ namespace PosBranch_Win
             {
                 PosBranch_Win.Reports.FinancialReports.frmCustomerReceiptReport customerReceiptReport = new PosBranch_Win.Reports.FinancialReports.frmCustomerReceiptReport();
                 OpenFormInTab(customerReceiptReport, "Customer Receipt Report");
+            }
+            if (e.Tool.Key == "CustomerLedgerReport")
+            {
+                PosBranch_Win.Reports.FinancialReports.frmCustomerLedgerReport customerLedgerReport = new PosBranch_Win.Reports.FinancialReports.frmCustomerLedgerReport();
+                OpenFormInTab(customerLedgerReport, "Customer Ledger Statement");
             }
             if (e.Tool.Key == "VendorOutstandingReport")
             {
@@ -3759,6 +3795,12 @@ namespace PosBranch_Win
                     keyToExecute == "AuditTrail" ||
                     keyToExecute == "VendorDNPaymentReport" ||
                     keyToExecute == "CustomerReceiptReport" ||
+                    keyToExecute == "CustomerLedgerReport" ||
+                    keyToExecute == "StockValuationReport" ||
+                    keyToExecute == "LowStockAlertReport" ||
+                    keyToExecute == "CustomerwiseSalesSummaryReport" ||
+                    keyToExecute == "SalesmanwiseSalesSummaryReport" ||
+                    keyToExecute == "ItemwiseSalesSummaryReport" ||
                     keyToExecute == "SalesmanIncentiveReport" ||
                     keyToExecute == "CounterReport" ||
                     keyToExecute == "ShiftReconciliationReport" ||

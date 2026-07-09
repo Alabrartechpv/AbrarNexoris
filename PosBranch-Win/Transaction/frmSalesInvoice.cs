@@ -907,26 +907,6 @@ namespace PosBranch_Win.Transaction
                     button2.Enabled = isAdmin;
                 }
 
-                // Hide the update button by default - only show when loading existing data
-                updtbtn.Visible = false;
-
-                // Ensure hold button and its label are always visible
-                pbxHold.Visible = true;
-                ultraLabel5.Visible = true;
-
-                // Ribbon-only UI: hide the legacy button panel
-                if (ultraPanel3 != null)
-                {
-                    ultraPanel3.Visible = false;
-                }
-                if (pbxHold != null) pbxHold.Visible = false;
-                if (updtbtn != null) updtbtn.Visible = false;
-
-                // Wire up Save button tooltip
-                if (ultraPictureBox4 != null)
-                {
-                    ultraPictureBox4.MouseHover += ultraPictureBox4_MouseHover;
-                }
 
                 // Hide ultraPanel7 when form is first loaded
                 ultraPanel7.Visible = false;
@@ -1061,7 +1041,6 @@ namespace PosBranch_Win.Transaction
                 button5.Click += (s, args) => HideReceiptPanel();
                 button2.Click += (s, args) => HideReceiptPanel(); // F6
                 cmbPaymt.ValueChanged += (s, args) => HideReceiptPanel();
-                ultraPictureBox1.Click += (s, args) => HideReceiptPanel(); // F1
                 button3.Click += (s, args) => HideReceiptPanel();
                 button4.Click += (s, args) => HideReceiptPanel();
                 cmpPrice.ValueChanged += (s, args) => HideReceiptPanel();
@@ -1078,15 +1057,6 @@ namespace PosBranch_Win.Transaction
                 txtDisc.TextChanged += txtDisc_TextChanged;
                 txtDisc.KeyDown += txtDisc_KeyDown;
 
-                // Add event handler for ultraPictureBox4 click to show payment panel
-                if (Controls.Find("ultraPictureBox4", true).Length > 0)
-                {
-                    var ultraPictureBox4 = Controls.Find("ultraPictureBox4", true)[0] as Infragistics.Win.UltraWinEditors.UltraPictureBox;
-                    if (ultraPictureBox4 != null)
-                    {
-                        ultraPictureBox4.Click += ultraPictureBox4_Click;
-                    }
-                }
 
                 // Add event handlers for Cash/Credit buttons
                 if (Controls.Find("ultraPictureBox5", true).Length > 0 && Controls.Find("ultraPictureBox6", true).Length > 0)
@@ -2755,35 +2725,6 @@ namespace PosBranch_Win.Transaction
             }
         }
 
-        private void pbxSave_MouseHover(object sender, EventArgs e)
-        {
-            toolTip1.Show("Hold", pbxHold);
-        }
-
-        private void ultraPictureBox1_MouseHover(object sender, EventArgs e)
-        {
-            toolTip1.Show("Clear", ultraPictureBox1);
-        }
-
-        private void ultraPictureBox2_MouseHover(object sender, EventArgs e)
-        {
-            toolTip1.SetToolTip(ultraPictureBox2, "Delete");
-        }
-
-        private void pbxExit_MouseHover(object sender, EventArgs e)
-        {
-            toolTip1.Show("Close", pbxExit);
-        }
-
-        private void ultraPictureBox3_MouseHover(object sender, EventArgs e)
-        {
-            toolTip1.Show("Last Bill", ultraPictureBox3);
-        }
-
-        private void ultraPictureBox4_MouseHover(object sender, EventArgs e)
-        {
-            toolTip1.Show("Save", ultraPictureBox4);
-        }
 
         private void pbxExit_Click(object sender, EventArgs e)
         {
@@ -3698,9 +3639,6 @@ namespace PosBranch_Win.Transaction
                 lblBillNo.Text = "Billno";
                 lblBillNo.Visible = false;
 
-                // Reset button visibility
-                updtbtn.Visible = false;
-                ultraPictureBox4.Visible = true;
 
                 ResetGrid();
                 ResetTotals();
@@ -6734,9 +6672,6 @@ namespace PosBranch_Win.Transaction
                 // Sales list edit mode (update)
                 isSalesListEditMode = true;
 
-                // Show update button when loading existing data
-                updtbtn.Visible = true;
-                ultraPictureBox4.Visible = false;
 
                 // Show loading indicator or message
                 Cursor = Cursors.WaitCursor;
