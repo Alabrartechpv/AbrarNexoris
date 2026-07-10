@@ -1453,7 +1453,3 @@ namespace PosBranch_Win
         private Infragistics.Win.UltraWinExplorerBar.UltraExplorerBar ultraExplorerBarSideMenu;
     }
 }
-
-
-
-

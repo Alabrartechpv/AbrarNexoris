@@ -279,35 +279,38 @@ namespace PosBranch_Win
                                     counterName: counterName
                                 );
 
-                                 bool isBillingUser = userLevel?.Equals("Cashier", StringComparison.OrdinalIgnoreCase) == true ||
+                                bool isBillingUser = userLevel?.Equals("Cashier", StringComparison.OrdinalIgnoreCase) == true ||
                                                      userLevel?.Equals("Sales Man", StringComparison.OrdinalIgnoreCase) == true;
 
-                                 if (isBillingUser)
-                                 {
-                                     if (counterId <= 0)
-                                     {
-                                         MessageBox.Show("Counter is not configured for this computer. Please add CounterId to C:\\Connection\\Config.txt before billing.",
-                                             "Counter Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                                         return;
-                                     }
-                                     else
-                                     {
-                                         using (var sessionRepo = new ShiftSessionRepo())
-                                         {
-                                             if (!sessionRepo.StartOrResumeSession())
-                                             {
-                                                 MessageBox.Show("Counter session could not be started. Please contact administrator.",
-                                                     "Counter Session", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                                                 return;
-                                             }
-                                             else if (SessionContext.RequiresClosing)
-                                             {
-                                                 MessageBox.Show("This counter has a pending closing. Please complete closing before continuing transactions.",
-                                                     "Counter Closing Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                                             }
-                                         }
-                                     }
-                                 }
+                                bool needsCounterSession = isBillingUser ||
+                                                           (userLevel?.Equals("Administrator", StringComparison.OrdinalIgnoreCase) == true && counterId > 0);
+
+                                if (needsCounterSession)
+                                {
+                                    if (counterId <= 0)
+                                    {
+                                        MessageBox.Show("Counter is not configured for this computer. Please add CounterId to C:\\Connection\\Config.txt before billing.",
+                                            "Counter Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                        return;
+                                    }
+                                    else
+                                    {
+                                        using (var sessionRepo = new ShiftSessionRepo())
+                                        {
+                                            if (!sessionRepo.StartOrResumeSession())
+                                            {
+                                                MessageBox.Show("Counter session could not be started. Please contact administrator.",
+                                                    "Counter Session", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                                return;
+                                            }
+                                            else if (isBillingUser && SessionContext.RequiresClosing)
+                                            {
+                                                MessageBox.Show("This counter has a pending closing. Please complete closing before continuing transactions.",
+                                                    "Counter Closing Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                            }
+                                        }
+                                    }
+                                }
 
                                 LoadRolePermissions(userLevel, userId);
                             }
