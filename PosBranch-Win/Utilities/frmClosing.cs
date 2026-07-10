@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Printing;
@@ -619,7 +619,7 @@ namespace PosBranch_Win.Utilities
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                     SessionContext.CounterSessionId = 0;
-                    SessionContext.RequiresClosing = true;
+                    SessionContext.RequiresClosing = false;
 
                     ClearForm();
                 }

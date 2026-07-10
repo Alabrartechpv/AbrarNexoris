@@ -88,8 +88,10 @@ END";
                         SessionContext.CounterSessionId = Convert.ToInt64(reader["SessionId"]);
                         SessionContext.LoginTime = Convert.ToDateTime(reader["LoginTime"]);
                         string status = reader["Status"]?.ToString() ?? "Open";
+                        int sessionUserId = Convert.ToInt32(reader["UserId"]);
                         SessionContext.RequiresClosing = !status.Equals("Open", StringComparison.OrdinalIgnoreCase)
-                            || DateTime.Now.Date > SessionContext.LoginTime.Date;
+                            || DateTime.Now.Date > SessionContext.LoginTime.Date
+                            || SessionContext.UserId != sessionUserId;
                     }
                 }
 

@@ -67,6 +67,7 @@ namespace PosBranch_Win
             new ReportNavigatorDefinition("Item", "Inventory Audit Trail", "AuditTrail"),
             new ReportNavigatorDefinition("Item", "Stock Valuation Report", "StockValuationReport"),
             new ReportNavigatorDefinition("Item", "Low Stock Alert Report", "LowStockAlertReport"),
+            new ReportNavigatorDefinition("Item", "Stock Adjustment Report", "StockAdjustmentReport"),
             new ReportNavigatorDefinition("Sales", "Sales Details", "Sales Details"),
             new ReportNavigatorDefinition("Sales", "Item-wise Sales Summary", "ItemwiseSalesSummaryReport"),
             new ReportNavigatorDefinition("Sales", "Customer-wise Sales Summary", "CustomerwiseSalesSummaryReport"),
@@ -2107,6 +2108,11 @@ namespace PosBranch_Win
                 Reports.InventoryReport.frmLowStockAlertReport frmLowStock = new Reports.InventoryReport.frmLowStockAlertReport();
                 OpenFormInTab(frmLowStock, "Low Stock Alert Report");
             }
+            if (e.Tool.Key == "StockAdjustmentReport")
+            {
+                Reports.InventoryReport.frmStockAdjustmentReport frmStockAdjustment = new Reports.InventoryReport.frmStockAdjustmentReport();
+                OpenFormInTab(frmStockAdjustment, "Stock Adjustment Report");
+            }
             if (e.Tool.Key == "CustomerwiseSalesSummaryReport")
             {
                 Reports.SalesReports.frmCustomerwiseSalesSummaryReport frmCustSales = new Reports.SalesReports.frmCustomerwiseSalesSummaryReport();
@@ -3802,6 +3808,7 @@ namespace PosBranch_Win
                     keyToExecute == "CustomerLedgerReport" ||
                     keyToExecute == "StockValuationReport" ||
                     keyToExecute == "LowStockAlertReport" ||
+                    keyToExecute == "StockAdjustmentReport" ||
                     keyToExecute == "CustomerwiseSalesSummaryReport" ||
                     keyToExecute == "SalesmanwiseSalesSummaryReport" ||
                     keyToExecute == "ItemwiseSalesSummaryReport" ||

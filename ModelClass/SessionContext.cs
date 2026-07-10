@@ -455,7 +455,10 @@ namespace ModelClass
             if (LoginTime == DateTime.MinValue)
                 LoginTime = DateTime.Now;
 
-            if (UserLevel?.Equals("Administrator", StringComparison.OrdinalIgnoreCase) == true)
+            bool isBillingUser = UserLevel?.Equals("Cashier", StringComparison.OrdinalIgnoreCase) == true ||
+                                 UserLevel?.Equals("Sales Man", StringComparison.OrdinalIgnoreCase) == true;
+
+            if (!isBillingUser)
             {
                 errorMessage = null;
                 return true;
