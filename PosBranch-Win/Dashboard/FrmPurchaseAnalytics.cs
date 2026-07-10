@@ -129,6 +129,14 @@ namespace PosBranch_Win.Dashboard
             paymentCanvas.Paint += PaymentCanvas_Paint;
             categoryCanvas.Paint -= CategoryCanvas_Paint;
             categoryCanvas.Paint += CategoryCanvas_Paint;
+            gridTopQty.CellClick += GridTopQty_CellClick;
+            gridTopAmount.CellClick += GridTopAmount_CellClick;
+            paymentCanvas.Click += PaymentCanvas_Click;
+            categoryCanvas.Click += CategoryCanvas_Click;
+            gridTopQty.Cursor = Cursors.Hand;
+            gridTopAmount.Cursor = Cursors.Hand;
+            paymentCanvas.Cursor = Cursors.Hand;
+            categoryCanvas.Cursor = Cursors.Hand;
             briefCanvas.Paint -= BriefCanvas_Paint;
             briefCanvas.Paint += BriefCanvas_Paint;
             trendCanvas.AutoScroll = true;
@@ -344,6 +352,66 @@ namespace PosBranch_Win.Dashboard
         private void CategoryCanvas_Paint(object sender, PaintEventArgs e)
         {
             DrawDonutBreakdown(e.Graphics, categoryCanvas.ClientRectangle, GetCategoriesForPaint());
+        }
+
+        private void GridTopQty_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+            DashboardDrilldownPopup.ShowGrid(this,
+                "All Purchased Items by Quantity - " + FormatDateRange(),
+                BuildPurchaseDetailRows(GetItemPurchaseDetails().OrderByDescending(x => x.Qty)));
+        }
+
+        private void GridTopAmount_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+            DashboardDrilldownPopup.ShowGrid(this,
+                "All Purchased Items by Amount - " + FormatDateRange(),
+                BuildPurchaseDetailRows(GetItemPurchaseDetails().OrderByDescending(x => x.Amount)));
+        }
+
+        private void PaymentCanvas_Click(object sender, EventArgs e)
+        {
+            DashboardDrilldownPopup.ShowGrid(this,
+                "Purchase Payment Methods - " + FormatDateRange(),
+                GetPaymentMethodsForPaint());
+        }
+
+        private void CategoryCanvas_Click(object sender, EventArgs e)
+        {
+            DashboardDrilldownPopup.ShowGrid(this,
+                "Purchased Item Categories - " + FormatDateRange(),
+                GetCategoriesForPaint().OrderByDescending(x => x.Amount));
+        }
+
+        private string FormatDateRange()
+        {
+            return _fromDate.ToString("dd MMM yyyy", _culture) + " to " + _toDate.ToString("dd MMM yyyy", _culture);
+        }
+
+        private IList<PurchaseItemDetail> GetItemPurchaseDetails()
+        {
+            return _analytics != null && _analytics.ItemPurchaseDetails != null
+                ? _analytics.ItemPurchaseDetails
+                : new List<PurchaseItemDetail>();
+        }
+
+        private List<PurchaseItemPopupRow> BuildPurchaseDetailRows(IEnumerable<PurchaseItemDetail> details)
+        {
+            return (details ?? Enumerable.Empty<PurchaseItemDetail>())
+                .Where(x => x != null)
+                .Select((x, index) => new PurchaseItemPopupRow
+                {
+                    Rank = index + 1,
+                    PurchaseNo = x.PurchaseNo.ToString(_culture),
+                    ItemName = x.ItemName,
+                    Vendor = x.Vendor,
+                    Qty = x.Qty.ToString("N2", _culture),
+                    Cost = Money(x.Cost),
+                    Amount = Money(x.Amount),
+                    Range = FormatDateRange()
+                })
+                .ToList();
         }
 
         private void BriefCanvas_Paint(object sender, PaintEventArgs e)
@@ -843,6 +911,112 @@ namespace PosBranch_Win.Dashboard
             Wallet,
             Truck,
             Box
+        }
+
+        private class PurchaseItemPopupRow
+        {
+            public int Rank { get; set; }
+            public string PurchaseNo { get; set; }
+            public string ItemName { get; set; }
+            public string Vendor { get; set; }
+            public string Qty { get; set; }
+            public string Cost { get; set; }
+            public string Amount { get; set; }
+            public string Range { get; set; }
+        }
+    }
+
+    internal static class DashboardDrilldownPopup
+    {
+        public static void ShowGrid<T>(IWin32Window owner, string title, IEnumerable<T> rows)
+        {
+            Form popup = new Form
+            {
+                Text = title,
+                StartPosition = FormStartPosition.CenterParent,
+                Size = new Size(820, 470),
+                MinimizeBox = false,
+                MaximizeBox = false,
+                ShowIcon = false,
+                BackColor = Color.FromArgb(230, 245, 253),
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                Padding = new Padding(14)
+            };
+
+            Panel card = new Panel
+            {
+                BackColor = Color.FromArgb(250, 253, 255),
+                Dock = DockStyle.Fill,
+                Padding = new Padding(12, 10, 12, 12)
+            };
+            Label heading = new Label
+            {
+                Dock = DockStyle.Top,
+                Height = 32,
+                Text = title,
+                Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(18, 49, 102),
+                Padding = new Padding(3, 3, 0, 0)
+            };
+            DataGridView grid = new DataGridView
+            {
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                AutoGenerateColumns = true,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                AllowUserToResizeRows = false,
+                BackgroundColor = Color.FromArgb(250, 253, 255),
+                BorderStyle = BorderStyle.None,
+                Dock = DockStyle.Fill,
+                EnableHeadersVisualStyles = false,
+                GridColor = Color.FromArgb(220, 233, 246),
+                ReadOnly = true,
+                RowHeadersVisible = false,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                DataSource = new BindingList<T>((rows ?? Enumerable.Empty<T>()).ToList())
+            };
+            grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(232, 241, 252);
+            grid.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(18, 49, 102);
+            grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
+            grid.ColumnHeadersHeight = 32;
+            grid.DefaultCellStyle.Font = new Font("Segoe UI", 9F);
+            grid.DefaultCellStyle.ForeColor = Color.FromArgb(36, 64, 105);
+            grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(215, 232, 250);
+            grid.DefaultCellStyle.SelectionForeColor = Color.FromArgb(18, 49, 102);
+            grid.RowTemplate.Height = 28;
+            foreach (DataGridViewColumn column in grid.Columns)
+            {
+                column.SortMode = DataGridViewColumnSortMode.NotSortable;
+                if (column.Name == "Rank")
+                    column.FillWeight = 34;
+                else if (column.Name == "ItemName" || column.Name == "Vendor")
+                    column.FillWeight = 125;
+                else if (column.Name == "Range")
+                    column.FillWeight = 115;
+                else
+                    column.FillWeight = 72;
+            }
+
+            Button close = new Button
+            {
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BackColor = Color.FromArgb(54, 126, 235),
+                FlatStyle = FlatStyle.Flat,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold),
+                Location = new Point(popup.ClientSize.Width - 105, 16),
+                Size = new Size(72, 28),
+                Text = "Close"
+            };
+            close.FlatAppearance.BorderSize = 0;
+            close.Click += (s, e) => popup.Close();
+
+            card.Controls.Add(grid);
+            card.Controls.Add(heading);
+            card.Controls.Add(close);
+            close.BringToFront();
+            popup.Controls.Add(card);
+            popup.ShowDialog(owner);
         }
     }
 }

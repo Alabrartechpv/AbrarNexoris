@@ -123,5 +123,290 @@ namespace Repository.ReportRepository
 
             return GetStockReport(filter);
         }
+
+        public DataTable GetStockTransactionValues(ModelClass.Report.StockReportFilter filter)
+        {
+            DataTable result = new DataTable();
+            DataConnection.Open();
+
+            try
+            {
+                string sql = @"
+DECLARE @ExclusiveToDate datetime = DATEADD(DAY, 1, CAST(@ToDate AS date));
+
+SELECT
+    COUNT(*) OVER ()
+        - ROW_NUMBER() OVER (ORDER BY SortDate DESC, SortLogId DESC, SortDocNumber DESC, SortLineNo DESC, ItemName)
+        + 1 AS Rank,
+    Movement,
+    DocNumber,
+    TransactionDate,
+    ItemName,
+    Qty,
+    Cost,
+    SellingPrice,
+    StockValue
+FROM
+(
+    SELECT
+        'Purchase' AS Movement,
+        CAST(PM.PurchaseNo AS nvarchar(50)) AS DocNumber,
+        COALESCE(PAL.CreatedOn, CAST(CAST(PD.PurchaseDate AS date) AS datetime)) AS TransactionDate,
+        ISNULL(NULLIF(IM.[Description], ''), 'Unknown Item') AS ItemName,
+        CAST(((ISNULL(PD.Packing, 0) * ISNULL(PD.Qty, 0)) + ISNULL(PD.Free, 0)) AS decimal(18, 2)) AS Qty,
+        CAST(ISNULL(PD.Cost, 0) AS decimal(18, 2)) AS Cost,
+        CAST(ISNULL(PS.RetailPrice, 0) AS decimal(18, 2)) AS SellingPrice,
+        CAST(CASE WHEN PD.TaxType = 'I'
+            THEN (ISNULL(PD.Cost, 0) * ISNULL(PD.Qty, 0)) - ISNULL(PD.TaxAmt, 0) - ISNULL(PD.CessAmt, 0)
+            ELSE ISNULL(PD.Cost, 0) * ISNULL(PD.Qty, 0)
+        END AS decimal(18, 2)) AS StockValue,
+        COALESCE(PAL.CreatedOn, CAST(CAST(PD.PurchaseDate AS date) AS datetime)) AS SortDate,
+        ISNULL(PAL.ActivityLogId, 0) AS SortLogId,
+        CAST(ISNULL(PM.PurchaseNo, 0) AS bigint) AS SortDocNumber,
+        CAST(ISNULL(PD.SlNo, 0) AS bigint) AS SortLineNo
+    FROM PDetails PD
+    INNER JOIN PMaster PM ON PD.BranchID = PM.BranchId AND PD.FinYearId = PM.FinYearId AND PD.PurchaseNo = PM.PurchaseNo
+    LEFT JOIN ItemMaster IM ON IM.ItemId = PD.ItemID
+    LEFT JOIN PriceSettings PS ON PS.BranchId = PD.BranchId AND PS.ItemId = PD.ItemID AND PS.IsBaseUnit = 'Y'
+    OUTER APPLY
+    (
+        SELECT TOP 1 PAL.ActivityLogId, PAL.CreatedOn
+        FROM PurchaseActivityLog PAL
+        WHERE PAL.TransactionNo = PM.PurchaseNo
+          AND (ISNULL(PAL.CompanyId, 0) = 0 OR ISNULL(PAL.CompanyId, 0) = ISNULL(PM.CompanyId, 0))
+          AND (ISNULL(PAL.BranchId, 0) = 0 OR ISNULL(PAL.BranchId, 0) = ISNULL(PM.BranchId, 0))
+          AND (ISNULL(PAL.FinYearId, 0) = 0 OR ISNULL(PAL.FinYearId, 0) = ISNULL(PM.FinYearId, 0))
+          AND ISNULL(PAL.ActivityType, '') IN ('SAVE', 'UPDATE')
+        ORDER BY PAL.CreatedOn DESC, PAL.ActivityLogId DESC
+    ) PAL
+    WHERE ISNULL(PM.CancelFlag, 0) = 0
+      AND PD.FinYearId = @FinYearId
+      AND PD.CompanyId = @CompanyId
+      AND PD.BranchId = CASE WHEN @BranchId IS NOT NULL AND @BranchId <> 0 THEN @BranchId ELSE PD.BranchId END
+      AND COALESCE(PAL.CreatedOn, CAST(CAST(PD.PurchaseDate AS date) AS datetime)) >= CAST(@FromDate AS date)
+      AND COALESCE(PAL.CreatedOn, CAST(CAST(PD.PurchaseDate AS date) AS datetime)) < @ExclusiveToDate
+
+    UNION ALL
+
+    SELECT
+        'Sold' AS Movement,
+        CAST(SM.BillNo AS nvarchar(50)) AS DocNumber,
+        COALESCE(SAL.CreatedOn, SD.BillDate) AS TransactionDate,
+        ISNULL(NULLIF(IM.[Description], ''), 'Unknown Item') AS ItemName,
+        CAST(ISNULL(SD.Packing, 0) * ISNULL(SD.Qty, 0) AS decimal(18, 2)) AS Qty,
+        CAST(ISNULL(SD.Cost, 0) AS decimal(18, 2)) AS Cost,
+        CAST(CASE WHEN ISNULL(SD.Qty, 0) = 0 THEN ISNULL(PS.RetailPrice, 0) ELSE ISNULL(SD.TotalAmount, 0) / NULLIF(SD.Qty, 0) END AS decimal(18, 2)) AS SellingPrice,
+        CAST(CASE WHEN ISNULL(SM.Status, '') <> 'Hold' THEN ISNULL(SD.Cost, 0) * ISNULL(SD.Qty, 0) ELSE 0 END AS decimal(18, 2)) AS StockValue,
+        COALESCE(SAL.CreatedOn, SD.BillDate) AS SortDate,
+        ISNULL(SAL.ActivityLogId, 0) AS SortLogId,
+        CAST(ISNULL(SM.BillNo, 0) AS bigint) AS SortDocNumber,
+        CAST(ISNULL(SD.SlNo, 0) AS bigint) AS SortLineNo
+    FROM SDetails SD
+    INNER JOIN SMaster SM ON SD.BranchID = SM.BranchId AND SD.FinYearId = SM.FinYearId AND SD.BillNo = SM.BillNo
+    LEFT JOIN ItemMaster IM ON IM.ItemId = SD.ItemID
+    LEFT JOIN PriceSettings PS ON PS.BranchId = SD.BranchId AND PS.ItemId = SD.ItemID AND PS.IsBaseUnit = 'Y'
+    OUTER APPLY
+    (
+        SELECT TOP 1 SAL.ActivityLogId, SAL.CreatedOn
+        FROM SalesActivityLog SAL
+        WHERE SAL.TransactionNo = SM.BillNo
+          AND (ISNULL(SAL.CompanyId, 0) = 0 OR ISNULL(SAL.CompanyId, 0) = ISNULL(SM.CompanyId, 0))
+          AND (ISNULL(SAL.BranchId, 0) = 0 OR ISNULL(SAL.BranchId, 0) = ISNULL(SM.BranchId, 0))
+          AND (ISNULL(SAL.FinYearId, 0) = 0 OR ISNULL(SAL.FinYearId, 0) = ISNULL(SM.FinYearId, 0))
+          AND ISNULL(SAL.ActivityType, '') IN ('SAVE', 'UPDATE', 'HOLD')
+        ORDER BY SAL.CreatedOn DESC, SAL.ActivityLogId DESC
+    ) SAL
+    WHERE ISNULL(SD.CancelFlag, 0) = 0
+      AND ISNULL(SM.CancelFlag, 0) = 0
+      AND SD.FinYearId = @FinYearId
+      AND SD.CompanyId = @CompanyId
+      AND SD.BranchId = CASE WHEN @BranchId IS NOT NULL AND @BranchId <> 0 THEN @BranchId ELSE SD.BranchId END
+      AND COALESCE(SAL.CreatedOn, SD.BillDate) >= CAST(@FromDate AS date)
+      AND COALESCE(SAL.CreatedOn, SD.BillDate) < @ExclusiveToDate
+
+    UNION ALL
+
+    SELECT
+        'Purchase Return' AS Movement,
+        CAST(PRM.PReturnNo AS nvarchar(50)) AS DocNumber,
+        COALESCE(PRAL.CreatedOn, PRD.PReturnDate) AS TransactionDate,
+        ISNULL(NULLIF(IM.[Description], ''), 'Unknown Item') AS ItemName,
+        CAST(ISNULL(PRD.Packing, 0) * ISNULL(PRD.Returned, 0) AS decimal(18, 2)) AS Qty,
+        CAST(ISNULL(PRD.Cost, 0) AS decimal(18, 2)) AS Cost,
+        CAST(ISNULL(PS.RetailPrice, 0) AS decimal(18, 2)) AS SellingPrice,
+        CAST(CASE WHEN PRD.TaxType = 'I'
+            THEN (ISNULL(PRD.Cost, 0) * ISNULL(PRD.Returned, 0)) - ISNULL(PRD.TaxAmt, 0) - ISNULL(PRD.CessAmt, 0)
+            ELSE ISNULL(PRD.Cost, 0) * ISNULL(PRD.Returned, 0)
+        END AS decimal(18, 2)) AS StockValue,
+        COALESCE(PRAL.CreatedOn, PRD.PReturnDate) AS SortDate,
+        ISNULL(PRAL.ActivityLogId, 0) AS SortLogId,
+        CAST(ISNULL(PRM.PReturnNo, 0) AS bigint) AS SortDocNumber,
+        CAST(ISNULL(PRD.SlNo, 0) AS bigint) AS SortLineNo
+    FROM PReturnDetails PRD
+    INNER JOIN PReturnMaster PRM ON PRD.BranchID = PRM.BranchId AND PRD.FinYearId = PRM.FinYearId AND PRD.PReturnNo = PRM.PReturnNo
+    LEFT JOIN ItemMaster IM ON IM.ItemId = PRD.ItemID
+    LEFT JOIN PriceSettings PS ON PS.BranchId = PRD.BranchId AND PS.ItemId = PRD.ItemID AND PS.IsBaseUnit = 'Y'
+    OUTER APPLY
+    (
+        SELECT TOP 1 PRAL.ActivityLogId, PRAL.CreatedOn
+        FROM PurchaseReturnActivityLog PRAL
+        WHERE PRAL.TransactionNo = PRM.PReturnNo
+          AND (ISNULL(PRAL.CompanyId, 0) = 0 OR ISNULL(PRAL.CompanyId, 0) = ISNULL(PRM.CompanyId, 0))
+          AND (ISNULL(PRAL.BranchId, 0) = 0 OR ISNULL(PRAL.BranchId, 0) = ISNULL(PRM.BranchId, 0))
+          AND (ISNULL(PRAL.FinYearId, 0) = 0 OR ISNULL(PRAL.FinYearId, 0) = ISNULL(PRM.FinYearId, 0))
+          AND ISNULL(PRAL.ActivityType, '') IN ('SAVE', 'UPDATE')
+        ORDER BY PRAL.CreatedOn DESC, PRAL.ActivityLogId DESC
+    ) PRAL
+    WHERE ISNULL(PRM.CancelFlag, 0) = 0
+      AND PRD.FinYearId = @FinYearId
+      AND PRD.CompanyId = @CompanyId
+      AND PRD.BranchId = CASE WHEN @BranchId IS NOT NULL AND @BranchId <> 0 THEN @BranchId ELSE PRD.BranchId END
+      AND COALESCE(PRAL.CreatedOn, PRD.PReturnDate) >= CAST(@FromDate AS date)
+      AND COALESCE(PRAL.CreatedOn, PRD.PReturnDate) < @ExclusiveToDate
+
+    UNION ALL
+
+    SELECT
+        'Sales Return' AS Movement,
+        CAST(SRM.SReturnNo AS nvarchar(50)) AS DocNumber,
+        COALESCE(SRAL.CreatedOn, SRD.SReturnDate) AS TransactionDate,
+        ISNULL(NULLIF(IM.[Description], ''), 'Unknown Item') AS ItemName,
+        CAST(ISNULL(SRD.Packing, 0) * ISNULL(SRD.ReturnedQty, 0) AS decimal(18, 2)) AS Qty,
+        CAST(ISNULL(SRD.Cost, 0) AS decimal(18, 2)) AS Cost,
+        CAST(ISNULL(PS.RetailPrice, 0) AS decimal(18, 2)) AS SellingPrice,
+        CAST(ISNULL(SRD.Cost, 0) * ISNULL(SRD.ReturnedQty, 0) AS decimal(18, 2)) AS StockValue,
+        COALESCE(SRAL.CreatedOn, SRD.SReturnDate) AS SortDate,
+        ISNULL(SRAL.ActivityLogId, 0) AS SortLogId,
+        CAST(ISNULL(SRM.SReturnNo, 0) AS bigint) AS SortDocNumber,
+        CAST(ISNULL(SRD.SlNo, 0) AS bigint) AS SortLineNo
+    FROM SReturnDetails SRD
+    INNER JOIN SReturnMaster SRM ON SRD.BranchID = SRM.BranchId AND SRD.FinYearId = SRM.FinYearId AND SRD.SReturnNo = SRM.SReturnNo
+    LEFT JOIN ItemMaster IM ON IM.ItemId = SRD.ItemID
+    LEFT JOIN PriceSettings PS ON PS.BranchId = SRD.BranchId AND PS.ItemId = SRD.ItemID AND PS.IsBaseUnit = 'Y'
+    OUTER APPLY
+    (
+        SELECT TOP 1 SRAL.ActivityLogId, SRAL.CreatedOn
+        FROM SalesReturnActivityLog SRAL
+        WHERE SRAL.TransactionNo = SRM.SReturnNo
+          AND (ISNULL(SRAL.CompanyId, 0) = 0 OR ISNULL(SRAL.CompanyId, 0) = ISNULL(SRM.CompanyId, 0))
+          AND (ISNULL(SRAL.BranchId, 0) = 0 OR ISNULL(SRAL.BranchId, 0) = ISNULL(SRM.BranchId, 0))
+          AND (ISNULL(SRAL.FinYearId, 0) = 0 OR ISNULL(SRAL.FinYearId, 0) = ISNULL(SRM.FinYearId, 0))
+          AND ISNULL(SRAL.ActivityType, '') IN ('SAVE', 'UPDATE')
+        ORDER BY SRAL.CreatedOn DESC, SRAL.ActivityLogId DESC
+    ) SRAL
+    WHERE ISNULL(SRM.CancelFlag, 0) = 0
+      AND SRD.FinYearId = @FinYearId
+      AND SRD.CompanyId = @CompanyId
+      AND SRD.BranchId = CASE WHEN @BranchId IS NOT NULL AND @BranchId <> 0 THEN @BranchId ELSE SRD.BranchId END
+      AND COALESCE(SRAL.CreatedOn, SRD.SReturnDate) >= CAST(@FromDate AS date)
+      AND COALESCE(SRAL.CreatedOn, SRD.SReturnDate) < @ExclusiveToDate
+
+    UNION ALL
+
+    SELECT
+        'Stock In' AS Movement,
+        CAST(SAM.StockAdjustmentNo AS nvarchar(50)) AS DocNumber,
+        COALESCE(SAAL.CreatedOn, SAM.StockAdjustmentDate) AS TransactionDate,
+        ISNULL(NULLIF(IM.[Description], ''), 'Unknown Item') AS ItemName,
+        CAST(ISNULL(UM.Packing, 1) * ISNULL(SAD.QtyDifference, 0) AS decimal(18, 2)) AS Qty,
+        CAST(ISNULL(SAD.Cost, 0) AS decimal(18, 2)) AS Cost,
+        CAST(ISNULL(PS.RetailPrice, 0) AS decimal(18, 2)) AS SellingPrice,
+        CAST(ISNULL(SAD.Cost, 0) * ISNULL(SAD.QtyDifference, 0) AS decimal(18, 2)) AS StockValue,
+        COALESCE(SAAL.CreatedOn, SAM.StockAdjustmentDate) AS SortDate,
+        ISNULL(SAAL.ActivityLogId, 0) AS SortLogId,
+        CAST(ISNULL(SAM.StockAdjustmentNo, 0) AS bigint) AS SortDocNumber,
+        CAST(ISNULL(SAD.SlNo, 0) AS bigint) AS SortLineNo
+    FROM StockAdjustmentDetails SAD
+    INNER JOIN StockAdjustmentMaster SAM ON SAM.Id = SAD.StockAdjustmentMasterId
+    LEFT JOIN ItemMaster IM ON IM.ItemId = SAD.ItemId
+    LEFT JOIN UnitMaster UM ON UM.UnitId = SAD.UnitId
+    LEFT JOIN PriceSettings PS ON PS.BranchId = SAD.BranchId AND PS.ItemId = SAD.ItemId AND PS.IsBaseUnit = 'Y'
+    OUTER APPLY
+    (
+        SELECT TOP 1 SAAL.ActivityLogId, SAAL.CreatedOn
+        FROM StockAdjustmentActivityLog SAAL
+        WHERE SAAL.TransactionNo = SAM.StockAdjustmentNo
+          AND (ISNULL(SAAL.CompanyId, 0) = 0 OR ISNULL(SAAL.CompanyId, 0) = ISNULL(SAM.CompanyId, 0))
+          AND (ISNULL(SAAL.BranchId, 0) = 0 OR ISNULL(SAAL.BranchId, 0) = ISNULL(SAM.BranchId, 0))
+          AND (ISNULL(SAAL.FinYearId, 0) = 0 OR ISNULL(SAAL.FinYearId, 0) = ISNULL(SAM.FinYearId, 0))
+          AND ISNULL(SAAL.ActivityType, '') IN ('SAVE', 'UPDATE')
+        ORDER BY SAAL.CreatedOn DESC, SAAL.ActivityLogId DESC
+    ) SAAL
+    WHERE ISNULL(SAM.CancelFlag, 0) = 0
+      AND SAD.FinYearId = @FinYearId
+      AND SAD.CompanyId = @CompanyId
+      AND SAD.BranchId = CASE WHEN @BranchId IS NOT NULL AND @BranchId <> 0 THEN @BranchId ELSE SAD.BranchId END
+      AND SAD.QtyDifference > 0
+      AND COALESCE(SAAL.CreatedOn, SAM.StockAdjustmentDate) >= CAST(@FromDate AS date)
+      AND COALESCE(SAAL.CreatedOn, SAM.StockAdjustmentDate) < @ExclusiveToDate
+
+    UNION ALL
+
+    SELECT
+        'Stock Out' AS Movement,
+        CAST(SAM.StockAdjustmentNo AS nvarchar(50)) AS DocNumber,
+        COALESCE(SAAL.CreatedOn, SAM.StockAdjustmentDate) AS TransactionDate,
+        ISNULL(NULLIF(IM.[Description], ''), 'Unknown Item') AS ItemName,
+        CAST(ISNULL(UM.Packing, 1) * (ISNULL(SAD.QtyDifference, 0) * -1) AS decimal(18, 2)) AS Qty,
+        CAST(ISNULL(SAD.Cost, 0) AS decimal(18, 2)) AS Cost,
+        CAST(ISNULL(PS.RetailPrice, 0) AS decimal(18, 2)) AS SellingPrice,
+        CAST(ISNULL(SAD.Cost, 0) * (ISNULL(SAD.QtyDifference, 0) * -1) AS decimal(18, 2)) AS StockValue,
+        COALESCE(SAAL.CreatedOn, SAM.StockAdjustmentDate) AS SortDate,
+        ISNULL(SAAL.ActivityLogId, 0) AS SortLogId,
+        CAST(ISNULL(SAM.StockAdjustmentNo, 0) AS bigint) AS SortDocNumber,
+        CAST(ISNULL(SAD.SlNo, 0) AS bigint) AS SortLineNo
+    FROM StockAdjustmentDetails SAD
+    INNER JOIN StockAdjustmentMaster SAM ON SAM.Id = SAD.StockAdjustmentMasterId
+    LEFT JOIN ItemMaster IM ON IM.ItemId = SAD.ItemId
+    LEFT JOIN UnitMaster UM ON UM.UnitId = SAD.UnitId
+    LEFT JOIN PriceSettings PS ON PS.BranchId = SAD.BranchId AND PS.ItemId = SAD.ItemId AND PS.IsBaseUnit = 'Y'
+    OUTER APPLY
+    (
+        SELECT TOP 1 SAAL.ActivityLogId, SAAL.CreatedOn
+        FROM StockAdjustmentActivityLog SAAL
+        WHERE SAAL.TransactionNo = SAM.StockAdjustmentNo
+          AND (ISNULL(SAAL.CompanyId, 0) = 0 OR ISNULL(SAAL.CompanyId, 0) = ISNULL(SAM.CompanyId, 0))
+          AND (ISNULL(SAAL.BranchId, 0) = 0 OR ISNULL(SAAL.BranchId, 0) = ISNULL(SAM.BranchId, 0))
+          AND (ISNULL(SAAL.FinYearId, 0) = 0 OR ISNULL(SAAL.FinYearId, 0) = ISNULL(SAM.FinYearId, 0))
+          AND ISNULL(SAAL.ActivityType, '') IN ('SAVE', 'UPDATE')
+        ORDER BY SAAL.CreatedOn DESC, SAAL.ActivityLogId DESC
+    ) SAAL
+    WHERE ISNULL(SAM.CancelFlag, 0) = 0
+      AND SAD.FinYearId = @FinYearId
+      AND SAD.CompanyId = @CompanyId
+      AND SAD.BranchId = CASE WHEN @BranchId IS NOT NULL AND @BranchId <> 0 THEN @BranchId ELSE SAD.BranchId END
+      AND SAD.QtyDifference < 0
+      AND COALESCE(SAAL.CreatedOn, SAM.StockAdjustmentDate) >= CAST(@FromDate AS date)
+      AND COALESCE(SAAL.CreatedOn, SAM.StockAdjustmentDate) < @ExclusiveToDate
+) rows
+ORDER BY SortDate DESC, SortLogId DESC, SortDocNumber DESC, SortLineNo DESC, ItemName;";
+
+                using (SqlCommand cmd = new SqlCommand(sql, (SqlConnection)DataConnection))
+                {
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandTimeout = 180;
+                    cmd.Parameters.AddWithValue("@FromDate", filter.FromDate.Date);
+                    cmd.Parameters.AddWithValue("@ToDate", filter.ToDate.Date);
+                    cmd.Parameters.AddWithValue("@CompanyId", filter.CompanyId);
+                    cmd.Parameters.AddWithValue("@BranchId", filter.BranchId);
+                    cmd.Parameters.AddWithValue("@FinYearId", filter.FinYearId);
+
+                    using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+                    {
+                        adapter.Fill(result);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error retrieving stock transaction values. {ex.Message}", ex);
+            }
+            finally
+            {
+                DataConnection.Close();
+            }
+
+            return result;
+        }
     }
 }

@@ -1,7 +1,10 @@
+using ModelClass;
+using ModelClass.Report;
 using Repository.ReportRepository;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Globalization;
@@ -28,6 +31,7 @@ namespace PosBranch_Win.Dashboard
         private DateTime _toDate = DateTime.Today;
         private SalesAnalyticsOverview _analytics = new SalesAnalyticsOverview();
         private bool _itemMapSortByAmount = true;
+        private readonly VScrollBar _paymentLegendScroll = new VScrollBar();
 
         public FrmSalesAnalytics()
         {
@@ -148,10 +152,23 @@ namespace PosBranch_Win.Dashboard
             paymentCanvas.Paint += PaymentCanvas_Paint;
             categoryCanvas.Paint -= CategoryCanvas_Paint;
             categoryCanvas.Paint += CategoryCanvas_Paint;
+            paymentCanvas.Click += PaymentCanvas_Click;
+            categoryCanvas.Click += CategoryCanvas_Click;
+            paymentCanvas.Cursor = Cursors.Hand;
+            categoryCanvas.Cursor = Cursors.Hand;
+            paymentCanvas.AutoScroll = false;
+            _paymentLegendScroll.Dock = DockStyle.Right;
+            _paymentLegendScroll.Visible = false;
+            _paymentLegendScroll.Scroll += (s, e) => paymentCanvas.Invalidate();
+            paymentCanvas.Controls.Add(_paymentLegendScroll);
+            _paymentLegendScroll.BringToFront();
+            paymentCanvas.MouseWheel += PaymentCanvas_MouseWheel;
+            paymentCanvas.Resize += (s, e) => ConfigurePaymentCanvasScroll();
             trendCanvas.Cursor = Cursors.Hand;
             itemMapCanvas.Cursor = Cursors.Hand;
             gridTopQty.Cursor = Cursors.Hand;
             gridTopAmount.Cursor = Cursors.Hand;
+            WireAverageOrderStockValueDrilldown();
             trendCanvas.AutoScroll = true;
             trendCanvas.Resize += (s, e) =>
             {
@@ -374,6 +391,7 @@ namespace PosBranch_Win.Dashboard
             if (itemMapCanvas != null) itemMapCanvas.Invalidate();
             if (paymentCanvas != null) paymentCanvas.Invalidate();
             if (categoryCanvas != null) categoryCanvas.Invalidate();
+            ConfigurePaymentCanvasScroll();
         }
 
         private void ConfigureTrendCanvasScroll()
@@ -459,14 +477,182 @@ namespace PosBranch_Win.Dashboard
             ShowSalesGridPopup("All Items Sold By Amount - " + FormatDateRange(), BuildItemSalesRows(items));
         }
 
+        private void WireAverageOrderStockValueDrilldown()
+        {
+            if (cardAverageOrder != null)
+            {
+                cardAverageOrder.Cursor = Cursors.Hand;
+                cardAverageOrder.Click -= AverageOrderStockValue_Click;
+                cardAverageOrder.Click += AverageOrderStockValue_Click;
+
+                foreach (Control control in cardAverageOrder.Controls)
+                {
+                    control.Cursor = Cursors.Hand;
+                    control.Click -= AverageOrderStockValue_Click;
+                    control.Click += AverageOrderStockValue_Click;
+                }
+            }
+
+            if (lblAverageOrder != null)
+            {
+                lblAverageOrder.Cursor = Cursors.Hand;
+                lblAverageOrder.Click -= AverageOrderStockValue_Click;
+                lblAverageOrder.Click += AverageOrderStockValue_Click;
+            }
+        }
+
+        private void AverageOrderStockValue_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                DataTable rows;
+                using (StockReportAdvanceRepo repository = new StockReportAdvanceRepo())
+                {
+                    rows = repository.GetStockTransactionValues(new StockReportFilter
+                    {
+                        FromDate = _fromDate,
+                        ToDate = _toDate,
+                        CompanyId = GetCompanyId(),
+                        BranchId = GetBranchId(),
+                        FinYearId = GetFinYearId()
+                    });
+                }
+
+                ShowStockTransactionGridPopup("Stock Transaction Values - " + FormatDateRange(), rows);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Stock transaction values could not be loaded.\n\n" + ex.Message,
+                    "Stock Transaction Values", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        private void ShowStockTransactionGridPopup(string popupTitle, DataTable rows)
+        {
+            Form popup = CreatePopupForm(popupTitle, new Size(960, 560));
+            Panel card = CreatePopupCard();
+            Label title = CreatePopupTitle(popupTitle);
+            Button close = CreatePopupCloseButton(popup);
+
+            DataGridView detailGrid = CreatePopupGrid(rows ?? new DataTable());
+            card.Controls.Add(detailGrid);
+            card.Controls.Add(title);
+            card.Controls.Add(close);
+            close.BringToFront();
+            popup.Controls.Add(card);
+            popup.ShowDialog(this);
+        }
+
+        private DataGridView CreatePopupGrid(DataTable rows)
+        {
+            DataGridView grid = new DataGridView
+            {
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                AllowUserToResizeRows = false,
+                AutoGenerateColumns = true,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                BackgroundColor = CardBackColor,
+                BorderStyle = BorderStyle.None,
+                Dock = DockStyle.Fill,
+                EnableHeadersVisualStyles = false,
+                GridColor = Color.FromArgb(220, 233, 246),
+                ReadOnly = true,
+                RowHeadersVisible = false,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                DataSource = rows
+            };
+            grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(232, 241, 252);
+            grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
+            grid.ColumnHeadersDefaultCellStyle.ForeColor = TextBlue;
+            grid.ColumnHeadersHeight = 32;
+            grid.DefaultCellStyle.Font = new Font("Segoe UI", 9F);
+            grid.DefaultCellStyle.ForeColor = Color.FromArgb(36, 64, 105);
+            grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(215, 232, 250);
+            grid.DefaultCellStyle.SelectionForeColor = TextBlue;
+            grid.RowTemplate.Height = 28;
+
+            foreach (DataGridViewColumn column in grid.Columns)
+            {
+                column.SortMode = DataGridViewColumnSortMode.NotSortable;
+                if (column.Name == "ItemName")
+                    column.FillWeight = 160;
+                else if (column.Name == "TransactionDate")
+                    column.FillWeight = 92;
+                else if (column.Name == "Movement")
+                    column.FillWeight = 98;
+                else if (column.Name == "DocNumber")
+                    column.FillWeight = 82;
+                else
+                    column.FillWeight = 78;
+
+                if (column.ValueType == typeof(decimal) || column.Name == "Qty" || column.Name == "Cost" ||
+                    column.Name == "SellingPrice" || column.Name == "StockValue")
+                {
+                    column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                    column.DefaultCellStyle.Format = "N2";
+                }
+
+                if (column.Name == "TransactionDate")
+                    column.DefaultCellStyle.Format = "dd-MMM-yyyy";
+            }
+
+            return grid;
+        }
+
         private void PaymentCanvas_Paint(object sender, PaintEventArgs e)
         {
-            DrawDonutBreakdown(e.Graphics, paymentCanvas.ClientRectangle, GetPaymentMethodsForPaint());
+            Rectangle bounds = paymentCanvas.ClientRectangle;
+            if (_paymentLegendScroll.Visible)
+                bounds.Width -= _paymentLegendScroll.Width;
+            DrawDonutBreakdown(e.Graphics, bounds, GetPaymentMethodsForPaint(), _paymentLegendScroll.Value);
         }
 
         private void CategoryCanvas_Paint(object sender, PaintEventArgs e)
         {
             DrawDonutBreakdown(e.Graphics, categoryCanvas.ClientRectangle, GetCategoriesForPaint());
+        }
+
+        private void ConfigurePaymentCanvasScroll()
+        {
+            if (paymentCanvas == null) return;
+            int count = GetPaymentMethodsForPaint().Count;
+            int requiredHeight = 32 + count * 28;
+            int visibleHeight = Math.Max(1, paymentCanvas.ClientSize.Height);
+            _paymentLegendScroll.Visible = requiredHeight > visibleHeight;
+            _paymentLegendScroll.Minimum = 0;
+            _paymentLegendScroll.LargeChange = visibleHeight;
+            _paymentLegendScroll.SmallChange = 28;
+            _paymentLegendScroll.Maximum = Math.Max(0, requiredHeight - 1);
+            int maxValue = Math.Max(0, _paymentLegendScroll.Maximum - _paymentLegendScroll.LargeChange + 1);
+            if (_paymentLegendScroll.Value > maxValue)
+                _paymentLegendScroll.Value = maxValue;
+            paymentCanvas.Invalidate();
+        }
+
+        private void PaymentCanvas_MouseWheel(object sender, MouseEventArgs e)
+        {
+            if (!_paymentLegendScroll.Visible) return;
+            int maxValue = Math.Max(0, _paymentLegendScroll.Maximum - _paymentLegendScroll.LargeChange + 1);
+            int next = _paymentLegendScroll.Value - Math.Sign(e.Delta) * _paymentLegendScroll.SmallChange;
+            _paymentLegendScroll.Value = Math.Max(_paymentLegendScroll.Minimum, Math.Min(maxValue, next));
+            paymentCanvas.Invalidate();
+        }
+
+        private void PaymentCanvas_Click(object sender, EventArgs e)
+        {
+            DashboardDrilldownPopup.ShowGrid(this,
+                "Sales by Payment Method - " + FormatDateRange(),
+                GetPaymentMethodsForPaint().OrderByDescending(x => x.Amount));
+        }
+
+        private void CategoryCanvas_Click(object sender, EventArgs e)
+        {
+            DashboardDrilldownPopup.ShowGrid(this,
+                "Sold Item Categories - " + FormatDateRange(),
+                _analytics != null && _analytics.ItemCategories != null
+                    ? _analytics.ItemCategories
+                    : Enumerable.Empty<SalesItemCategoryDetail>());
         }
 
         private IList<SalesTrendPoint> GetSalesTrendForPaint()
@@ -587,6 +773,30 @@ namespace PosBranch_Win.Dashboard
         private string FormatDateRange()
         {
             return _fromDate.ToString("dd MMM yyyy", _culture) + " to " + _toDate.ToString("dd MMM yyyy", _culture);
+        }
+
+        private int GetCompanyId()
+        {
+            if (SessionContext.IsInitialized && SessionContext.CompanyId > 0)
+                return SessionContext.CompanyId;
+            int value;
+            return int.TryParse(DataBase.CompanyId, out value) && value > 0 ? value : 1;
+        }
+
+        private int GetBranchId()
+        {
+            if (SessionContext.IsInitialized && SessionContext.BranchId > 0)
+                return SessionContext.BranchId;
+            int value;
+            return int.TryParse(DataBase.BranchId, out value) && value > 0 ? value : 1;
+        }
+
+        private int GetFinYearId()
+        {
+            if (SessionContext.IsInitialized && SessionContext.FinYearId > 0)
+                return SessionContext.FinYearId;
+            int value;
+            return int.TryParse(DataBase.FinyearId, out value) && value > 0 ? value : 1;
         }
 
         private List<SalesTrendPoint> SampleSalesTrend()
@@ -758,7 +968,7 @@ namespace PosBranch_Win.Dashboard
             }
         }
 
-        private void DrawDonutBreakdown(Graphics g, Rectangle bounds, IList<SalesBreakdown> items)
+        private void DrawDonutBreakdown(Graphics g, Rectangle bounds, IList<SalesBreakdown> items, int legendOffset = 0)
         {
             PrepareGraphics(g);
             IList<SalesBreakdown> visibleItems = (items ?? new List<SalesBreakdown>()).Where(x => x != null).ToList();
@@ -791,12 +1001,22 @@ namespace PosBranch_Win.Dashboard
                 Rectangle hole = Rectangle.Inflate(pie, -pie.Width / 4, -pie.Height / 4);
                 g.FillEllipse(white, hole);
 
-                int y = bounds.Top + (compact ? 16 : 24);
+                int y = bounds.Top + (compact ? 16 : 24) - legendOffset;
                 int legendX = pie.Right + (compact ? 8 : 16);
                 int amountX = Math.Max(legendX + 118, bounds.Right - 112);
                 int rowHeight = compact ? 28 : 22;
-                for (int i = 0; i < visibleItems.Count && y < bounds.Bottom - 14; i++)
+                GraphicsState legendState = g.Save();
+                g.SetClip(new Rectangle(legendX, bounds.Top, Math.Max(1, bounds.Right - legendX), bounds.Height));
+                for (int i = 0; i < visibleItems.Count; i++)
                 {
+                    if (y + rowHeight < bounds.Top)
+                    {
+                        y += rowHeight;
+                        continue;
+                    }
+                    if (y >= bounds.Bottom)
+                        break;
+
                     using (SolidBrush brush = new SolidBrush(colors[i % colors.Length]))
                         g.FillEllipse(brush, legendX, y + 4, 8, 8);
                     decimal percent = total > 0 ? visibleItems[i].Amount / total * 100M : 0;
@@ -813,6 +1033,7 @@ namespace PosBranch_Win.Dashboard
                     }
                     y += rowHeight;
                 }
+                g.Restore(legendState);
             }
         }
 

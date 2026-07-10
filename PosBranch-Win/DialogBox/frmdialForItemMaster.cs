@@ -2543,9 +2543,9 @@ namespace PosBranch_Win.DialogBox
                         SendItemToPurchaseReturn();
                         return true;
                     }
-                    else if (FormName == "FrmBarcode" || FormName == "frmChangeItemNo")
+                    else if (FormName == "FrmBarcode" || FormName == "frmChangeItemNo" || FormName == "frmvendorpurchasereport")
                     {
-                        // Handle barcode form selection
+                        // Handle simple selection dialogs
                         System.Diagnostics.Debug.WriteLine($"Enter key pressed, selecting item for {FormName}");
                         this.DialogResult = DialogResult.OK;
                         this.Close();
@@ -2593,9 +2593,9 @@ namespace PosBranch_Win.DialogBox
                     System.Diagnostics.Debug.WriteLine("Double-click detected, sending item to Stock Transfer");
                     SendItemToStockTransfer();
                 }
-                else if (FormName == "FrmBarcode" || FormName == "frmChangeItemNo")
+                else if (FormName == "FrmBarcode" || FormName == "frmChangeItemNo" || FormName == "frmvendorpurchasereport")
                 {
-                    // Handle barcode form selection
+                    // Handle simple selection dialogs
                     System.Diagnostics.Debug.WriteLine($"Double-click detected, selecting item for {FormName}");
                     this.DialogResult = DialogResult.OK;
                     this.Close();
@@ -2615,9 +2615,9 @@ namespace PosBranch_Win.DialogBox
             // Items will only be loaded on double-click or Enter key press
 
             // However, for FrmBarcode, we can allow single click for better UX
-            if (FormName == "FrmBarcode" || FormName == "frmChangeItemNo")
+            if (FormName == "FrmBarcode" || FormName == "frmChangeItemNo" || FormName == "frmvendorpurchasereport")
             {
-                // For barcode form, allow single click selection
+                // For simple selection dialogs, allow single click selection
                 this.DialogResult = DialogResult.OK;
                 this.Close();
             }

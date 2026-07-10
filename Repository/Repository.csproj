@@ -113,6 +113,7 @@
     <Compile Include="ReportRepository\LowStockAlertRepo.cs" />
     <Compile Include="ReportRepository\VendorPaymentReportRepository.cs" />
     <Compile Include="ReportRepository\VendorOutstandingReportRepository.cs" />
+    <Compile Include="ReportRepository\VendorPurchaseReportRepository.cs" />
     <Compile Include="SettingsRepo\ItemStockActivityLogRepository.cs" />
     <Compile Include="STOREDPROCEDURE.cs" />
     <Compile Include="TransactionRepository\frmSalesInvoice.cs" />

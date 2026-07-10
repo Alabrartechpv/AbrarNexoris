@@ -87,6 +87,8 @@ namespace PosBranch_Win.Dashboard
             RegisterCardClick(stockPanel, CardStock_Click);
             ConfigureBottomCard(customerPanel, lblCustomerIcon, lblCustomerTitle, Color.FromArgb(77, 202, 72), DashboardBadgeKind.People);
             ConfigureBottomCard(vendorPanel, lblVendorIcon, lblVendorTitle, Color.FromArgb(64, 133, 238), DashboardBadgeKind.Truck);
+            RegisterCardClick(customerPanel, CustomerPanel_Click);
+            RegisterCardClick(vendorPanel, VendorPanel_Click);
             ConfigureBottomCard(duePanel, lblDueIcon, lblDueTitle, Color.FromArgb(245, 141, 35), DashboardBadgeKind.Wallet);
 
             StyleSmallTitle(lblStockTitle);
@@ -177,6 +179,28 @@ namespace PosBranch_Win.Dashboard
         private void CardStock_Click(object sender, EventArgs e)
         {
             OpenStockAnalytics();
+        }
+
+        private void CustomerPanel_Click(object sender, EventArgs e)
+        {
+            DashboardDrilldownPopup.ShowGrid(this, "All Customers",
+                _overview != null
+                    ? _overview.Customers.Select((x, index) => new PartyPopupRow { No = index + 1, Name = x.Name })
+                    : Enumerable.Empty<PartyPopupRow>());
+        }
+
+        private void VendorPanel_Click(object sender, EventArgs e)
+        {
+            DashboardDrilldownPopup.ShowGrid(this, "All Vendors",
+                _overview != null
+                    ? _overview.Vendors.Select((x, index) => new PartyPopupRow { No = index + 1, Name = x.Name })
+                    : Enumerable.Empty<PartyPopupRow>());
+        }
+
+        private class PartyPopupRow
+        {
+            public int No { get; set; }
+            public string Name { get; set; }
         }
 
         private void OpenSalesAnalytics()

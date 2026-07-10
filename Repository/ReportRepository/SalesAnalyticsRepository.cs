@@ -46,6 +46,7 @@ namespace Repository.ReportRepository
                 overview.ItemSales = ReadItemSalesMap(rangeFrom, exclusiveTo);
                 overview.PaymentMethods = ReadBreakdown(rangeFrom, exclusiveTo, SalesBreakdownKind.Payment);
                 overview.Categories = ReadBreakdown(rangeFrom, exclusiveTo, SalesBreakdownKind.Category);
+                overview.ItemCategories = ReadItemCategoryDetails(rangeFrom, exclusiveTo);
                 overview.Customers = ReadBreakdown(rangeFrom, exclusiveTo, SalesBreakdownKind.Customer);
             }
             finally
@@ -236,7 +237,7 @@ ELSE
 IF OBJECT_ID('SDetails', 'U') IS NULL OR OBJECT_ID('SMaster', 'U') IS NULL
     SELECT TOP 0 CAST('' AS nvarchar(120)) AS Name, CAST(0 AS decimal(18,2)) AS Amount, CAST(0 AS int) AS Count
 ELSE
-    SELECT TOP 6
+    SELECT
         'Uncategorised' AS Name,
         ISNULL(SUM(ISNULL(sd.TotalAmount, 0)), 0) AS Amount,
         COUNT(DISTINCT sd.ItemId) AS Count
@@ -253,7 +254,7 @@ ELSE
 IF OBJECT_ID('SDetails', 'U') IS NULL OR OBJECT_ID('SMaster', 'U') IS NULL OR OBJECT_ID('ItemMaster', 'U') IS NULL OR OBJECT_ID('Category', 'U') IS NULL
     SELECT TOP 0 CAST('' AS nvarchar(120)) AS Name, CAST(0 AS decimal(18,2)) AS Amount, CAST(0 AS int) AS Count
 ELSE
-    SELECT TOP 6
+    SELECT
         ISNULL(NULLIF(c.CategoryName, ''), 'Uncategorised') AS Name,
         ISNULL(SUM(ISNULL(sd.TotalAmount, 0)), 0) AS Amount,
         COUNT(DISTINCT sd.ItemId) AS Count
@@ -290,6 +291,41 @@ ELSE
             return kind == SalesBreakdownKind.Payment ? NormalizePaymentBreakdown(result) : result;
         }
 
+        private List<SalesItemCategoryDetail> ReadItemCategoryDetails(DateTime fromDate, DateTime toDate)
+        {
+            string itemCategoryColumn = GetFirstExistingColumn("ItemMaster", "CategoryId", "CategoryID");
+            string categoryKeyColumn = GetFirstExistingColumn("Category", "Id", "CategoryId", "CategoryID");
+            string categoryJoin = !string.IsNullOrEmpty(itemCategoryColumn) && !string.IsNullOrEmpty(categoryKeyColumn)
+                ? $"LEFT JOIN Category c ON c.[{categoryKeyColumn}] = im.[{itemCategoryColumn}]"
+                : string.Empty;
+            string categoryExpression = categoryJoin.Length > 0
+                ? "ISNULL(NULLIF(c.CategoryName, ''), 'Uncategorised')"
+                : "'Uncategorised'";
+
+            string sql = $@"
+IF OBJECT_ID('SDetails', 'U') IS NULL OR OBJECT_ID('SMaster', 'U') IS NULL
+    SELECT TOP 0 CAST('' AS nvarchar(200)) AS ItemName, CAST('' AS nvarchar(120)) AS Category,
+        CAST(0 AS decimal(18,2)) AS Qty, CAST(0 AS decimal(18,2)) AS Amount
+ELSE
+    SELECT
+        ISNULL(NULLIF(sd.ItemName, ''), 'Unknown Item') AS ItemName,
+        {categoryExpression} AS Category,
+        ISNULL(SUM(ISNULL(sd.Qty, 0)), 0) AS Qty,
+        ISNULL(SUM(ISNULL(sd.TotalAmount, 0)), 0) AS Amount
+    FROM SDetails sd
+    INNER JOIN SMaster sm ON sm.BillNo = sd.BillNo AND sm.BranchId = sd.BranchId
+        AND sm.CompanyId = sd.CompanyId AND sm.FinYearId = sd.FinYearId
+    LEFT JOIN ItemMaster im ON im.ItemId = sd.ItemId
+    {categoryJoin}
+    WHERE sm.BranchId = @BranchId AND sm.CompanyId = @CompanyId AND sm.FinYearId = @FinYearId
+      AND ISNULL(sm.CancelFlag, 0) = 0
+      AND sm.BillDate >= @FromDate AND sm.BillDate < @ToDate
+    GROUP BY sd.ItemName, {categoryExpression}
+    ORDER BY Category, ItemName;";
+
+            return DataConnection.Query<SalesItemCategoryDetail>(sql, BuildParameters(fromDate, toDate)).ToList();
+        }
+
         private string BuildPaymentBreakdownSql()
         {
             if (!TableExists("SMaster"))
@@ -314,7 +350,7 @@ ELSE
                     string nameExpression = BuildPaymentNameExpression("sp", detailNameColumn, joinPayMode.Length > 0 ? "pm" : null, payModeNameColumn);
 
                     return $@"
-SELECT TOP 8
+SELECT
     {nameExpression} AS Name,
     ISNULL(SUM(ISNULL(sp.[{detailAmountColumn}], 0)), 0) AS Amount,
     COUNT(DISTINCT sp.BillNo) AS Count
@@ -338,7 +374,7 @@ ORDER BY Amount DESC;";
             string amountExpression = string.IsNullOrEmpty(masterAmountColumn) ? "0" : $"ISNULL(sm.[{masterAmountColumn}], 0)";
 
             return $@"
-SELECT TOP 8
+SELECT
     {masterNameExpression} AS Name,
     ISNULL(SUM({amountExpression}), 0) AS Amount,
     COUNT(1) AS Count
@@ -455,7 +491,16 @@ END;";
         public List<SalesItemMetric> ItemSales { get; set; } = new List<SalesItemMetric>();
         public List<SalesBreakdown> PaymentMethods { get; set; } = new List<SalesBreakdown>();
         public List<SalesBreakdown> Categories { get; set; } = new List<SalesBreakdown>();
+        public List<SalesItemCategoryDetail> ItemCategories { get; set; } = new List<SalesItemCategoryDetail>();
         public List<SalesBreakdown> Customers { get; set; } = new List<SalesBreakdown>();
+    }
+
+    public class SalesItemCategoryDetail
+    {
+        public string ItemName { get; set; }
+        public string Category { get; set; }
+        public decimal Qty { get; set; }
+        public decimal Amount { get; set; }
     }
 
     public class SalesAnalyticsSummary
