@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -1139,6 +1139,12 @@
     <Compile Include="Reports\InventoryReport\frmLowStockAlertReport.Designer.cs">
       <DependentUpon>frmLowStockAlertReport.cs</DependentUpon>
     </Compile>
+    <Compile Include="Reports\InventoryReport\frmStockAdjustmentReport.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reports\InventoryReport\frmStockAdjustmentReport.Designer.cs">
+      <DependentUpon>frmStockAdjustmentReport.cs</DependentUpon>
+    </Compile>
     <Compile Include="Reports\SalesReports\frmCustomerwiseSalesSummaryReport.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1683,6 +1689,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Reports\InventoryReport\FrmSmartReorderDashboard.resx">
       <DependentUpon>FrmSmartReorderDashboard.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Reports\InventoryReport\frmStockAdjustmentReport.resx">
+      <DependentUpon>frmStockAdjustmentReport.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Reports\InventoryReport\frmStockReportAdvanced.resx">
       <DependentUpon>frmStockReportAdvanced.cs</DependentUpon>
