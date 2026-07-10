@@ -1355,13 +1355,37 @@ namespace PosBranch_Win
                 // Get all tools from the toolbar manager
                 foreach (Infragistics.Win.UltraWinToolbars.ToolBase tool in ultraToolbarsManager1.Tools)
                 {
-                    string toolKey = tool.Key?.Trim();
+                    try
+                    {
+                        string toolKey = tool.Key?.Trim();
 
-                    // Check if user has CanView permission for this tool
-                    bool hasPermission = toolKey == "Overview" || SessionContext.CanView(toolKey) || SessionContext.CanView(tool.Key);
-                    tool.SharedProps.Enabled = hasPermission;
+                        // Check if this is a global action tool that should always be enabled
+                        bool isGlobalAction = toolKey == "Save" ||
+                                             toolKey == "Delet" ||
+                                             toolKey == "Clear" ||
+                                             toolKey == "Remove" ||
+                                             toolKey == "Exit" ||
+                                             toolKey == "Report" ||
+                                             toolKey == "LogOff" ||
+                                             toolKey == "LogIn" ||
+                                             toolKey == "ReOrder" ||
+                                             toolKey == "Overview" ||
+                                             toolKey == "Hold" ||
+                                             toolKey == "LastBill";
 
-                    System.Diagnostics.Debug.WriteLine($"Tool '{tool.Key}': Enabled={hasPermission}");
+                        bool hasPermission = isGlobalAction || SessionContext.CanView(toolKey) || SessionContext.CanView(tool.Key);
+                        
+                        if (tool.SharedProps != null)
+                        {
+                            tool.SharedProps.Enabled = hasPermission;
+                        }
+
+                        System.Diagnostics.Debug.WriteLine($"Tool '{tool.Key}': Enabled={hasPermission}");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error applying permission to tool '{tool?.Key}': {ex.Message}");
+                    }
                 }
 
                 System.Diagnostics.Debug.WriteLine($"Applied permissions to {ultraToolbarsManager1.Tools.Count} toolbar items");
@@ -1495,9 +1519,25 @@ namespace PosBranch_Win
             string permissionKey = toolKey;
             if (toolKey == "Roles") permissionKey = "RolePermissions";
 
-            // Check permission before opening any form
-            if (!CheckViewPermission(permissionKey, e.Tool.Key))
-                return;
+            // Check permission before opening any form (skip for global action tools)
+            bool isGlobalAction = toolKey == "Save" ||
+                                 toolKey == "Delet" ||
+                                 toolKey == "Clear" ||
+                                 toolKey == "Remove" ||
+                                 toolKey == "Exit" ||
+                                 toolKey == "Report" ||
+                                 toolKey == "LogOff" ||
+                                 toolKey == "LogIn" ||
+                                 toolKey == "ReOrder" ||
+                                 toolKey == "Overview" ||
+                                 toolKey == "Hold" ||
+                                 toolKey == "LastBill";
+
+            if (!isGlobalAction)
+            {
+                if (!CheckViewPermission(permissionKey, e.Tool.Key))
+                    return;
+            }
 
             // Universal Save button — delegates to the active tab's form save method
             // Covers all forms: FrmPurchase (SavePurchase), most Master/Accounts/Settings forms (btnSave_Click),
