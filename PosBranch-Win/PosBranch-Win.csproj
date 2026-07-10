@@ -1096,6 +1096,9 @@
     <Compile Include="Reports\PurchaseReports\frmvendorpurchasereport.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Reports\PurchaseReports\frmvendorpurchasereport.Designer.cs">
+      <DependentUpon>frmvendorpurchasereport.cs</DependentUpon>
+    </Compile>
     <Compile Include="Reports\SalesReports\frmSalesDetailsReport.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1646,6 +1649,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Reports\InventoryReport\frmStockReportAdvanced.resx">
       <DependentUpon>frmStockReportAdvanced.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Reports\PurchaseReports\frmvendorpurchasereport.resx">
+      <DependentUpon>frmvendorpurchasereport.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Reports\SalesReports\frmSalesDetailsReport.resx">
       <DependentUpon>frmSalesDetailsReport.cs</DependentUpon>

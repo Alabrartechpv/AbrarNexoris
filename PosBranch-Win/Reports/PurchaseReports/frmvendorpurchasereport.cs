@@ -9,10 +9,12 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
+using Infragistics.Win;
+using Infragistics.Win.UltraWinEditors;
 
 namespace PosBranch_Win.Reports.PurchaseReports
 {
-    public class frmvendorpurchasereport : Form
+    public partial class frmvendorpurchasereport : Form
     {
         private readonly Color pageBack = Color.FromArgb(232, 246, 255);
         private readonly Color cardBack = Color.FromArgb(250, 253, 255);
@@ -20,26 +22,8 @@ namespace PosBranch_Win.Reports.PurchaseReports
         private readonly Color navy = Color.FromArgb(20, 55, 120);
         private readonly Color muted = Color.FromArgb(72, 98, 138);
         private readonly Color accent = Color.FromArgb(42, 121, 232);
+        private readonly Color skyBlueOutline = Color.FromArgb(102, 190, 255);
         private readonly CultureInfo culture = new CultureInfo("en-IN");
-
-        private ComboBox cmbQuickDate;
-        private DateTimePicker dtpFrom;
-        private DateTimePicker dtpTo;
-        private TextBox txtVendor;
-        private TextBox txtItem;
-        private Button btnVendor;
-        private Button btnItem;
-        private Button btnClearVendor;
-        private Button btnClearItem;
-        private Button btnApply;
-        private Button btnReset;
-        private Button btnExport;
-        private Label lblTotalRows;
-        private Label lblTotalPurchases;
-        private Label lblTotalQty;
-        private Label lblTotalAmount;
-        private Label lblShowing;
-        private DataGridView gridReport;
 
         private int selectedVendorId;
         private string selectedVendorName = string.Empty;
@@ -47,291 +31,151 @@ namespace PosBranch_Win.Reports.PurchaseReports
         private string selectedItemName = string.Empty;
         private bool suppressQuickDateChange;
         private DataTable currentData = new DataTable();
+        private ReportMode activeMode = ReportMode.Overview;
+
+        private enum ReportMode
+        {
+            Overview,
+            Vendor,
+            Item
+        }
 
         public frmvendorpurchasereport()
         {
-            Text = "Vendor Purchase Report";
-            BackColor = pageBack;
-            Font = new Font("Segoe UI", 9F);
-            MinimumSize = new Size(980, 620);
-            Load += frmvendorpurchasereport_Load;
-            BuildLayout();
+            InitializeComponent();
+            ApplyRuntimeStyles();
         }
 
         private void frmvendorpurchasereport_Load(object sender, EventArgs e)
         {
-            cmbQuickDate.SelectedItem = "Today";
+            cmbQuickDate.Value = "Today";
             ApplyQuickDate();
             LoadReport();
         }
 
-        private void BuildLayout()
+        private void ApplyRuntimeStyles()
         {
-            SuspendLayout();
+            Text = "Vendor Purchase Report";
+            BackColor = pageBack;
+            Font = new Font("Segoe UI", 9F);
+            MinimumSize = new Size(900, 460);
 
-            Panel page = new Panel
-            {
-                Dock = DockStyle.Fill,
-                Padding = new Padding(18, 14, 18, 16),
-                BackColor = pageBack
-            };
+            StyleFilterCombo(cmbQuickDate);
+            StyleFilterDate(dtpFrom);
+            StyleFilterDate(dtpTo);
+            StyleFilterText(txtVendor);
+            StyleFilterText(txtItem);
 
-            Label title = new Label
-            {
-                AutoSize = false,
-                Dock = DockStyle.Top,
-                Height = 34,
-                Text = "Vendor Purchase Report",
-                Font = new Font("Segoe UI Semibold", 13F, FontStyle.Bold),
-                ForeColor = navy,
-                TextAlign = ContentAlignment.MiddleLeft
-            };
+            cmbQuickDate.Items.Clear();
+            cmbQuickDate.Items.Add("Today");
+            cmbQuickDate.Items.Add("Yesterday");
+            cmbQuickDate.Items.Add("Last 7 Days");
+            cmbQuickDate.Items.Add("This Month");
+            cmbQuickDate.Items.Add("Custom");
 
-            Panel filters = CreateCardPanel(112);
-            BuildFilters(filters);
+            AttachCardPaint(panelFilters);
+            AttachCardPaint(panelGrid);
+            AttachCardPaint(panelRowsCard);
+            AttachCardPaint(panelBillsCard);
+            AttachCardPaint(panelQtyCard);
+            AttachCardPaint(panelAmountCard);
 
-            TableLayoutPanel summary = new TableLayoutPanel
-            {
-                Dock = DockStyle.Top,
-                Height = 78,
-                ColumnCount = 4,
-                Padding = new Padding(0, 10, 0, 8)
-            };
-            for (int i = 0; i < 4; i++)
-                summary.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
+            StyleButton(btnVendor, false);
+            StyleButton(btnItem, false);
+            StyleButton(btnClear, false);
+            StyleButton(btnExport, false);
+            StyleButton(btnApply, true);
 
-            lblTotalRows = AddSummaryCard(summary, 0, "Rows", "0");
-            lblTotalPurchases = AddSummaryCard(summary, 1, "Purchase Bills", "0");
-            lblTotalQty = AddSummaryCard(summary, 2, "Quantity", "0.00");
-            lblTotalAmount = AddSummaryCard(summary, 3, "Amount", "Rs 0.00");
-
-            Panel gridCard = CreateCardPanel(0);
-            gridCard.Dock = DockStyle.Fill;
-            gridCard.Padding = new Padding(10, 36, 10, 10);
-
-            lblShowing = new Label
-            {
-                AutoSize = false,
-                Dock = DockStyle.Top,
-                Height = 28,
-                Text = "Showing 0 record(s)",
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold),
-                ForeColor = muted,
-                Padding = new Padding(3, 0, 0, 0),
-                TextAlign = ContentAlignment.MiddleLeft
-            };
-
-            gridReport = new DataGridView
-            {
-                AllowUserToAddRows = false,
-                AllowUserToDeleteRows = false,
-                AllowUserToResizeRows = false,
-                AutoGenerateColumns = true,
-                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
-                BackgroundColor = cardBack,
-                BorderStyle = BorderStyle.None,
-                Dock = DockStyle.Fill,
-                EnableHeadersVisualStyles = false,
-                GridColor = Color.FromArgb(218, 232, 247),
-                ReadOnly = true,
-                RowHeadersVisible = false,
-                SelectionMode = DataGridViewSelectionMode.FullRowSelect
-            };
             StyleGrid();
-
-            gridCard.Controls.Add(gridReport);
-            gridCard.Controls.Add(lblShowing);
-
-            page.Controls.Add(gridCard);
-            page.Controls.Add(summary);
-            page.Controls.Add(filters);
-            page.Controls.Add(title);
-            Controls.Add(page);
-
-            ResumeLayout(false);
         }
 
-        private void BuildFilters(Panel parent)
+        private void AttachCardPaint(Panel panel)
         {
-            TableLayoutPanel layout = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 12,
-                RowCount = 2,
-                Padding = new Padding(12, 10, 12, 10)
-            };
-            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-            for (int i = 0; i < 12; i++)
-                layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 8.333F));
-
-            cmbQuickDate = CreateCombo();
-            cmbQuickDate.Items.AddRange(new object[] { "Today", "Yesterday", "Last 7 Days", "This Month", "Custom" });
-            cmbQuickDate.SelectedIndexChanged += (s, e) =>
-            {
-                if (Convert.ToString(cmbQuickDate.SelectedItem) != "Custom")
-                    ApplyQuickDate();
-            };
-
-            dtpFrom = CreateDatePicker();
-            dtpTo = CreateDatePicker();
-            dtpFrom.ValueChanged += (s, e) => SetCustomQuickDate();
-            dtpTo.ValueChanged += (s, e) => SetCustomQuickDate();
-
-            txtVendor = CreateReadonlyTextBox();
-            txtItem = CreateReadonlyTextBox();
-            btnVendor = CreateButton("Vendor");
-            btnItem = CreateButton("Item");
-            btnClearVendor = CreateButton("Clear");
-            btnClearItem = CreateButton("Clear");
-            btnApply = CreatePrimaryButton("Apply");
-            btnReset = CreateButton("Reset");
-            btnExport = CreateButton("Export");
-
-            btnVendor.Click += (s, e) => SelectVendor();
-            btnItem.Click += (s, e) => SelectItem();
-            btnClearVendor.Click += (s, e) => ClearVendor();
-            btnClearItem.Click += (s, e) => ClearItem();
-            btnApply.Click += (s, e) => LoadReport();
-            btnReset.Click += (s, e) => ResetFilters();
-            btnExport.Click += (s, e) => ExportCurrentData();
-
-            AddLabeledControl(layout, "Quick", cmbQuickDate, 0, 0, 2);
-            AddLabeledControl(layout, "From", dtpFrom, 2, 0, 2);
-            AddLabeledControl(layout, "To", dtpTo, 4, 0, 2);
-            AddLabeledControl(layout, "Vendor", txtVendor, 0, 1, 4);
-            AddLabeledControl(layout, "Item", txtItem, 4, 1, 4);
-
-            layout.Controls.Add(btnApply, 6, 0);
-            layout.SetColumnSpan(btnApply, 1);
-            layout.Controls.Add(btnReset, 7, 0);
-            layout.Controls.Add(btnExport, 8, 0);
-            layout.Controls.Add(btnVendor, 8, 1);
-            layout.Controls.Add(btnClearVendor, 9, 1);
-            layout.Controls.Add(btnItem, 10, 1);
-            layout.Controls.Add(btnClearItem, 11, 1);
-
-            parent.Controls.Add(layout);
+            if (panel != null)
+                panel.Paint += Card_Paint;
         }
 
-        private void AddLabeledControl(TableLayoutPanel layout, string caption, Control control, int column, int row, int columnSpan)
+        private void StyleButton(Button button, bool primary)
         {
-            Panel panel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(0, 0, 8, 2) };
-            Label label = new Label
+            if (button == null)
+                return;
+
+            button.FlatStyle = FlatStyle.Flat;
+            button.Font = new Font("Segoe UI Semibold", 8.5F, FontStyle.Bold);
+            button.ForeColor = primary ? Color.White : navy;
+            button.BackColor = primary ? accent : Color.FromArgb(236, 246, 255);
+            button.UseVisualStyleBackColor = false;
+            button.FlatAppearance.BorderColor = primary ? accent : skyBlueOutline;
+            button.FlatAppearance.BorderSize = primary ? 0 : 1;
+            button.FlatAppearance.MouseOverBackColor = primary ? accent : Color.FromArgb(225, 244, 255);
+            button.FlatAppearance.MouseDownBackColor = primary ? Color.FromArgb(31, 96, 205) : Color.FromArgb(210, 235, 252);
+
+            if (primary)
             {
-                Dock = DockStyle.Top,
-                Height = 18,
-                Text = caption,
-                ForeColor = muted,
-                Font = new Font("Segoe UI Semibold", 8F, FontStyle.Bold)
-            };
-            control.Dock = DockStyle.Fill;
-            panel.Controls.Add(control);
-            panel.Controls.Add(label);
-            layout.Controls.Add(panel, column, row);
-            layout.SetColumnSpan(panel, columnSpan);
+                button.Paint -= ApplyButton_Paint;
+                button.Paint += ApplyButton_Paint;
+            }
         }
 
-        private Panel CreateCardPanel(int height)
+        private void StyleFilterCombo(UltraComboEditor combo)
         {
-            Panel panel = new Panel
-            {
-                BackColor = cardBack,
-                Height = height,
-                Dock = height > 0 ? DockStyle.Top : DockStyle.None,
-                Margin = new Padding(0, 0, 0, 8)
-            };
-            panel.Paint += Card_Paint;
-            return panel;
+            combo.UseAppStyling = false;
+            combo.UseOsThemes = DefaultableBoolean.False;
+            combo.DisplayStyle = EmbeddableElementDisplayStyle.Office2013;
+            combo.BorderStyle = UIElementBorderStyle.Solid;
+            combo.DropDownStyle = Infragistics.Win.DropDownStyle.DropDownList;
+            combo.Appearance.BackColor = Color.White;
+            combo.Appearance.BorderColor = skyBlueOutline;
+            combo.Appearance.ForeColor = navy;
+            combo.Appearance.FontData.Name = "Segoe UI";
+            combo.Appearance.FontData.SizeInPoints = 9F;
+            combo.ButtonStyle = UIElementButtonStyle.Office2003ToolbarButton;
         }
 
-        private Label AddSummaryCard(TableLayoutPanel parent, int column, string title, string value)
+        private void StyleFilterDate(UltraDateTimeEditor editor)
         {
-            Panel card = CreateCardPanel(0);
-            card.Dock = DockStyle.Fill;
-            card.Margin = new Padding(column == 0 ? 0 : 6, 0, column == 3 ? 0 : 6, 0);
-            card.Padding = new Padding(14, 8, 12, 8);
-
-            Label titleLabel = new Label
-            {
-                Dock = DockStyle.Top,
-                Height = 20,
-                Text = title,
-                ForeColor = muted,
-                Font = new Font("Segoe UI Semibold", 8F, FontStyle.Bold)
-            };
-            Label valueLabel = new Label
-            {
-                Dock = DockStyle.Fill,
-                Text = value,
-                ForeColor = navy,
-                Font = new Font("Segoe UI Semibold", 15F, FontStyle.Bold),
-                TextAlign = ContentAlignment.MiddleLeft
-            };
-
-            card.Controls.Add(valueLabel);
-            card.Controls.Add(titleLabel);
-            parent.Controls.Add(card, column, 0);
-            return valueLabel;
+            editor.UseAppStyling = false;
+            editor.UseOsThemes = DefaultableBoolean.False;
+            editor.DisplayStyle = EmbeddableElementDisplayStyle.Office2013;
+            editor.BorderStyle = UIElementBorderStyle.Solid;
+            editor.Appearance.BackColor = Color.White;
+            editor.Appearance.BorderColor = skyBlueOutline;
+            editor.Appearance.ForeColor = navy;
+            editor.Appearance.FontData.Name = "Segoe UI";
+            editor.Appearance.FontData.SizeInPoints = 9F;
+            editor.ButtonStyle = UIElementButtonStyle.Office2003ToolbarButton;
+            editor.DropDownButtonDisplayStyle = ButtonDisplayStyle.Always;
+            editor.FormatString = "dd-MMM-yyyy";
+            editor.MaskInput = "{date}";
         }
 
-        private ComboBox CreateCombo()
+        private void StyleFilterText(UltraTextEditor editor)
         {
-            return new ComboBox
-            {
-                DropDownStyle = ComboBoxStyle.DropDownList,
-                Font = new Font("Segoe UI", 9F)
-            };
+            editor.UseAppStyling = false;
+            editor.UseOsThemes = DefaultableBoolean.False;
+            editor.DisplayStyle = EmbeddableElementDisplayStyle.Office2013;
+            editor.BorderStyle = UIElementBorderStyle.Solid;
+            editor.Appearance.BackColor = Color.White;
+            editor.Appearance.BorderColor = skyBlueOutline;
+            editor.Appearance.ForeColor = navy;
+            editor.Appearance.FontData.Name = "Segoe UI";
+            editor.Appearance.FontData.SizeInPoints = 9F;
         }
 
-        private DateTimePicker CreateDatePicker()
+        private void ApplyButton_Paint(object sender, PaintEventArgs e)
         {
-            return new DateTimePicker
-            {
-                Format = DateTimePickerFormat.Custom,
-                CustomFormat = "dd-MMM-yyyy",
-                Font = new Font("Segoe UI", 9F)
-            };
-        }
+            using (SolidBrush brush = new SolidBrush(accent))
+                e.Graphics.FillRectangle(brush, btnApply.ClientRectangle);
 
-        private TextBox CreateReadonlyTextBox()
-        {
-            return new TextBox
-            {
-                ReadOnly = true,
-                BackColor = Color.White,
-                BorderStyle = BorderStyle.FixedSingle,
-                Font = new Font("Segoe UI", 9F)
-            };
-        }
-
-        private Button CreateButton(string text)
-        {
-            Button button = new Button
-            {
-                Text = text,
-                Dock = DockStyle.Fill,
-                FlatStyle = FlatStyle.Flat,
-                BackColor = Color.FromArgb(236, 246, 255),
-                ForeColor = navy,
-                Font = new Font("Segoe UI Semibold", 8.5F, FontStyle.Bold),
-                Margin = new Padding(4, 20, 4, 3)
-            };
-            button.FlatAppearance.BorderColor = Color.FromArgb(169, 209, 240);
-            return button;
-        }
-
-        private Button CreatePrimaryButton(string text)
-        {
-            Button button = CreateButton(text);
-            button.BackColor = accent;
-            button.ForeColor = Color.White;
-            button.FlatAppearance.BorderSize = 0;
-            return button;
+            TextRenderer.DrawText(e.Graphics, btnApply.Text, btnApply.Font, btnApply.ClientRectangle,
+                Color.White, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine);
         }
 
         private void StyleGrid()
         {
+            if (gridReport == null)
+                return;
+
             gridReport.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(226, 239, 252);
             gridReport.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
             gridReport.ColumnHeadersDefaultCellStyle.ForeColor = navy;
@@ -343,6 +187,54 @@ namespace PosBranch_Win.Reports.PurchaseReports
             gridReport.RowTemplate.Height = 28;
         }
 
+        private void cmbQuickDate_ValueChanged(object sender, EventArgs e)
+        {
+            if (GetQuickDateText() != "Custom")
+                ApplyQuickDate();
+        }
+
+        private void DatePicker_ValueChanged(object sender, EventArgs e)
+        {
+            SetCustomQuickDate();
+        }
+
+        private void btnVendor_Click(object sender, EventArgs e)
+        {
+            if (selectedVendorId > 0 && activeMode != ReportMode.Vendor)
+            {
+                SetActiveMode(ReportMode.Vendor, true);
+                return;
+            }
+
+            SelectVendor();
+        }
+
+        private void btnItem_Click(object sender, EventArgs e)
+        {
+            if (selectedItemId > 0 && activeMode != ReportMode.Item)
+            {
+                SetActiveMode(ReportMode.Item, true);
+                return;
+            }
+
+            SelectItem();
+        }
+
+        private void btnApply_Click(object sender, EventArgs e)
+        {
+            LoadReport();
+        }
+
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            ResetFilters();
+        }
+
+        private void btnExport_Click(object sender, EventArgs e)
+        {
+            ExportCurrentData();
+        }
+
         private void SelectVendor()
         {
             using (frmVendorDig dialog = new frmVendorDig())
@@ -352,7 +244,7 @@ namespace PosBranch_Win.Reports.PurchaseReports
                     selectedVendorId = dialog.SelectedVendorId;
                     selectedVendorName = dialog.SelectedVendorName ?? string.Empty;
                     txtVendor.Text = selectedVendorName;
-                    LoadReport();
+                    SetActiveMode(ReportMode.Vendor, true);
                 }
             }
         }
@@ -369,25 +261,9 @@ namespace PosBranch_Win.Reports.PurchaseReports
                     if (string.IsNullOrWhiteSpace(selectedItemName))
                         selectedItemName = GetDictionaryString(data, "ItemName");
                     txtItem.Text = selectedItemName;
-                    LoadReport();
+                    SetActiveMode(ReportMode.Item, true);
                 }
             }
-        }
-
-        private void ClearVendor()
-        {
-            selectedVendorId = 0;
-            selectedVendorName = string.Empty;
-            txtVendor.Clear();
-            LoadReport();
-        }
-
-        private void ClearItem()
-        {
-            selectedItemId = 0;
-            selectedItemName = string.Empty;
-            txtItem.Clear();
-            LoadReport();
         }
 
         private void ResetFilters()
@@ -396,10 +272,12 @@ namespace PosBranch_Win.Reports.PurchaseReports
             selectedItemId = 0;
             selectedVendorName = string.Empty;
             selectedItemName = string.Empty;
+            activeMode = ReportMode.Overview;
             txtVendor.Clear();
             txtItem.Clear();
-            cmbQuickDate.SelectedItem = "Today";
+            cmbQuickDate.Value = "Today";
             ApplyQuickDate();
+            UpdateModeButtons();
             LoadReport();
         }
 
@@ -409,14 +287,17 @@ namespace PosBranch_Win.Reports.PurchaseReports
             {
                 using (VendorPurchaseReportRepository repo = new VendorPurchaseReportRepository())
                 {
-                    currentData = selectedItemId > 0
+                    currentData = activeMode == ReportMode.Item && selectedItemId > 0
                         ? repo.GetItemVendorPurchases(GetDateValue(dtpFrom), GetDateValue(dtpTo), selectedItemId, GetCompanyId(), GetBranchId(), GetFinYearId())
-                        : repo.GetVendorPurchases(GetDateValue(dtpFrom), GetDateValue(dtpTo), selectedVendorId, 0, GetCompanyId(), GetBranchId(), GetFinYearId());
+                        : repo.GetVendorPurchases(GetDateValue(dtpFrom), GetDateValue(dtpTo),
+                            activeMode == ReportMode.Vendor ? selectedVendorId : 0,
+                            0, GetCompanyId(), GetBranchId(), GetFinYearId());
                 }
 
                 gridReport.DataSource = currentData;
                 ConfigureGridColumns();
                 UpdateSummary();
+                UpdateModeButtons();
             }
             catch (Exception ex)
             {
@@ -429,6 +310,18 @@ namespace PosBranch_Win.Reports.PurchaseReports
         {
             if (gridReport.Columns.Count == 0)
                 return;
+
+            if (activeMode == ReportMode.Item && selectedItemId > 0)
+            {
+                ConfigureItemVendorGridColumns();
+                return;
+            }
+
+            if (activeMode == ReportMode.Vendor && selectedVendorId > 0)
+            {
+                ConfigureVendorDetailGridColumns();
+                return;
+            }
 
             SetColumn("Rank", "#", 55);
             SetColumn("Vendor", "Vendor", 190);
@@ -450,6 +343,46 @@ namespace PosBranch_Win.Reports.PurchaseReports
             }
         }
 
+        private void ConfigureVendorDetailGridColumns()
+        {
+            foreach (DataGridViewColumn column in gridReport.Columns)
+            {
+                column.Visible = false;
+                column.SortMode = DataGridViewColumnSortMode.Automatic;
+            }
+
+            int displayIndex = 0;
+            ShowColumn("PurchaseDate", "Purchase Date", 140, displayIndex++, "dd-MMM-yyyy");
+            ShowColumn("InvoiceDate", "Invoice Date", 140, displayIndex++, "dd-MMM-yyyy");
+            ShowColumn("PurchaseNo", "Purchase No", 120, displayIndex++);
+            ShowColumn("GRNNumber", "GRN No", 120, displayIndex++);
+            ShowColumn("ItemName", "Item Name", 320, displayIndex++);
+
+            if (gridReport.Columns.Contains("TotalAmount"))
+                ShowColumn("TotalAmount", "Total Amount", 150, displayIndex++, "N2", true);
+            else
+                ShowColumn("Amount", "Total Amount", 150, displayIndex++, "N2", true);
+        }
+
+        private void ConfigureItemVendorGridColumns()
+        {
+            foreach (DataGridViewColumn column in gridReport.Columns)
+            {
+                column.Visible = false;
+                column.SortMode = DataGridViewColumnSortMode.Automatic;
+            }
+
+            int displayIndex = 0;
+            ShowColumn("Vendor", "Vendor", 260, displayIndex++);
+            ShowColumn("PurchaseDate", "Purchase Date", 140, displayIndex++, "dd-MMM-yyyy");
+            ShowColumn("InvoiceDate", "Invoice Date", 140, displayIndex++, "dd-MMM-yyyy");
+
+            if (gridReport.Columns.Contains("Amount"))
+                ShowColumn("Amount", "Amount", 140, displayIndex++, "N2", true);
+            else
+                ShowColumn("TotalAmount", "Amount", 140, displayIndex++, "N2", true);
+        }
+
         private void SetColumn(string name, string caption, int width, string format = null, bool alignRight = false)
         {
             if (!gridReport.Columns.Contains(name))
@@ -464,6 +397,51 @@ namespace PosBranch_Win.Reports.PurchaseReports
                 column.DefaultCellStyle.Format = format;
             if (alignRight)
                 column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+        }
+
+        private void ShowColumn(string name, string caption, int width, int displayIndex, string format = null, bool alignRight = false)
+        {
+            if (!gridReport.Columns.Contains(name))
+                return;
+
+            SetColumn(name, caption, width, format, alignRight);
+            DataGridViewColumn column = gridReport.Columns[name];
+            column.Visible = true;
+            column.DisplayIndex = displayIndex;
+        }
+
+        private void SetActiveMode(ReportMode mode, bool reload)
+        {
+            activeMode = CanUseMode(mode) ? mode : ReportMode.Overview;
+            UpdateModeButtons();
+
+            if (reload)
+                LoadReport();
+        }
+
+        private bool CanUseMode(ReportMode mode)
+        {
+            if (mode == ReportMode.Vendor)
+                return selectedVendorId > 0;
+            if (mode == ReportMode.Item)
+                return selectedItemId > 0;
+            return true;
+        }
+
+        private void UpdateModeButtons()
+        {
+            SetModeButtonState(btnVendor, activeMode == ReportMode.Vendor && selectedVendorId > 0);
+            SetModeButtonState(btnItem, activeMode == ReportMode.Item && selectedItemId > 0);
+        }
+
+        private void SetModeButtonState(Button button, bool active)
+        {
+            if (button == null)
+                return;
+
+            button.BackColor = active ? Color.FromArgb(218, 239, 255) : Color.FromArgb(236, 246, 255);
+            button.FlatAppearance.BorderColor = active ? accent : skyBlueOutline;
+            button.ForeColor = active ? accent : navy;
         }
 
         private void UpdateSummary()
@@ -503,7 +481,7 @@ namespace PosBranch_Win.Reports.PurchaseReports
         {
             suppressQuickDateChange = true;
             DateTime today = DateTime.Today;
-            string selected = Convert.ToString(cmbQuickDate.SelectedItem);
+            string selected = GetQuickDateText();
             DateTime from = today;
             DateTime to = today;
 
@@ -531,13 +509,20 @@ namespace PosBranch_Win.Reports.PurchaseReports
             if (suppressQuickDateChange)
                 return;
 
-            if (cmbQuickDate != null && Convert.ToString(cmbQuickDate.SelectedItem) != "Custom")
-                cmbQuickDate.SelectedItem = "Custom";
+            if (cmbQuickDate != null && GetQuickDateText() != "Custom")
+                cmbQuickDate.Value = "Custom";
         }
 
-        private DateTime GetDateValue(DateTimePicker picker)
+        private DateTime GetDateValue(UltraDateTimeEditor picker)
         {
-            return picker.Value.Date;
+            if (picker.Value == null || picker.Value == DBNull.Value)
+                return DateTime.Today;
+            return Convert.ToDateTime(picker.Value).Date;
+        }
+
+        private string GetQuickDateText()
+        {
+            return Convert.ToString(cmbQuickDate.Value ?? cmbQuickDate.Text);
         }
 
         private int GetCompanyId()
@@ -566,17 +551,40 @@ namespace PosBranch_Win.Reports.PurchaseReports
 
         private int GetDictionaryInt(System.Collections.Generic.Dictionary<string, object> data, string key)
         {
-            if (data == null || !data.ContainsKey(key) || data[key] == null)
+            object rawValue;
+            if (!TryGetDictionaryValue(data, key, out rawValue) || rawValue == null)
                 return 0;
             int value;
-            return int.TryParse(Convert.ToString(data[key]), out value) ? value : 0;
+            return int.TryParse(Convert.ToString(rawValue), out value) ? value : 0;
         }
 
         private string GetDictionaryString(System.Collections.Generic.Dictionary<string, object> data, string key)
         {
-            if (data == null || !data.ContainsKey(key) || data[key] == null)
+            object rawValue;
+            if (!TryGetDictionaryValue(data, key, out rawValue) || rawValue == null)
                 return string.Empty;
-            return Convert.ToString(data[key]);
+            return Convert.ToString(rawValue);
+        }
+
+        private bool TryGetDictionaryValue(System.Collections.Generic.Dictionary<string, object> data, string key, out object value)
+        {
+            value = null;
+            if (data == null || string.IsNullOrWhiteSpace(key))
+                return false;
+
+            if (data.TryGetValue(key, out value))
+                return true;
+
+            foreach (System.Collections.Generic.KeyValuePair<string, object> pair in data)
+            {
+                if (string.Equals(pair.Key, key, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = pair.Value;
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private decimal ToDecimal(DataRow row, string column)
@@ -647,9 +655,12 @@ namespace PosBranch_Win.Reports.PurchaseReports
             if (panel == null)
                 return;
 
+            if (panel.Width < 4 || panel.Height < 4)
+                return;
+
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
             Rectangle rect = new Rectangle(0, 0, panel.Width - 1, panel.Height - 1);
-            using (GraphicsPath path = RoundedRect(rect, 7))
+            using (GraphicsPath path = RoundedRect(rect, Math.Min(7, Math.Min(rect.Width, rect.Height) / 2)))
             using (SolidBrush brush = new SolidBrush(panel.BackColor))
             using (Pen pen = new Pen(border))
             {
@@ -660,6 +671,10 @@ namespace PosBranch_Win.Reports.PurchaseReports
 
         private GraphicsPath RoundedRect(Rectangle bounds, int radius)
         {
+            if (bounds.Width <= 0 || bounds.Height <= 0)
+                return new GraphicsPath();
+
+            radius = Math.Max(1, Math.Min(radius, Math.Min(bounds.Width, bounds.Height) / 2));
             int diameter = radius * 2;
             GraphicsPath path = new GraphicsPath();
             path.AddArc(bounds.Left, bounds.Top, diameter, diameter, 180, 90);

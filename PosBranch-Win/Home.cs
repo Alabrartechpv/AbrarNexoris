@@ -3763,6 +3763,7 @@ namespace PosBranch_Win
                 
                 if (ultraToolbarsManager1.Tools.Exists(keyToExecute) ||
                     keyToExecute == "AuditTrail" ||
+                    keyToExecute == "VendorPurchaseReport" ||
                     keyToExecute == "VendorDNPaymentReport" ||
                     keyToExecute == "CustomerReceiptReport" ||
                     keyToExecute == "SalesmanIncentiveReport" ||
