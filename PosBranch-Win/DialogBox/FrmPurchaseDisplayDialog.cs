@@ -30,6 +30,7 @@ namespace PosBranch_Win.DialogBox
         private DataTable originalDataTable = null; // Store the original data
         private bool isAscendingSort = false; // Default to descending (newest first)
         private System.Windows.Forms.ToolTip toolTip = new System.Windows.Forms.ToolTip(); // ToolTip control for feedback
+        private bool _isSelectingPurchase;
 
         // Virtual keyboard variables
         private Infragistics.Win.Misc.UltraPanel keyboardPanel;
@@ -1118,8 +1119,12 @@ namespace PosBranch_Win.DialogBox
         /// </summary>
         private void Panel5_OKClick(object sender, EventArgs e)
         {
+            if (_isSelectingPurchase)
+                return;
+
             try
             {
+                _isSelectingPurchase = true;
                 if (ultraGrid1.ActiveRow != null)
                 {
                     // Get the selected Pid
@@ -1164,6 +1169,7 @@ namespace PosBranch_Win.DialogBox
             {
                 System.Diagnostics.Debug.WriteLine($"Error in OK panel click: {ex.Message}");
                 MessageBox.Show($"Error loading purchase: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                _isSelectingPurchase = false;
             }
         }
 

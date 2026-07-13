@@ -28,10 +28,10 @@ namespace PosBranch_Win.Reports.PurchaseReports
         /// </summary>
         private void InitializeComponent()
         {
-            Infragistics.Win.Appearance appearance5 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance6 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance7 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance8 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance1 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance2 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance3 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance4 = new Infragistics.Win.Appearance();
             this.panelPage = new System.Windows.Forms.Panel();
             this.tableContent = new System.Windows.Forms.TableLayoutPanel();
             this.panelGrid = new System.Windows.Forms.Panel();
@@ -233,8 +233,8 @@ namespace PosBranch_Win.Reports.PurchaseReports
             // 
             // ultraLabel1
             // 
-            appearance5.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(55)))), ((int)(((byte)(120)))));
-            this.ultraLabel1.Appearance = appearance5;
+            appearance1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(55)))), ((int)(((byte)(120)))));
+            this.ultraLabel1.Appearance = appearance1;
             this.ultraLabel1.Location = new System.Drawing.Point(10, 2);
             this.ultraLabel1.Name = "ultraLabel1";
             this.ultraLabel1.Size = new System.Drawing.Size(34, 15);
@@ -268,8 +268,8 @@ namespace PosBranch_Win.Reports.PurchaseReports
             // 
             // ultraLabel4
             // 
-            appearance6.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(55)))), ((int)(((byte)(120)))));
-            this.ultraLabel4.Appearance = appearance6;
+            appearance2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(55)))), ((int)(((byte)(120)))));
+            this.ultraLabel4.Appearance = appearance2;
             this.ultraLabel4.Location = new System.Drawing.Point(9, 3);
             this.ultraLabel4.Name = "ultraLabel4";
             this.ultraLabel4.Size = new System.Drawing.Size(82, 15);
@@ -303,8 +303,8 @@ namespace PosBranch_Win.Reports.PurchaseReports
             // 
             // ultraLabel3
             // 
-            appearance7.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(55)))), ((int)(((byte)(120)))));
-            this.ultraLabel3.Appearance = appearance7;
+            appearance3.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(55)))), ((int)(((byte)(120)))));
+            this.ultraLabel3.Appearance = appearance3;
             this.ultraLabel3.Location = new System.Drawing.Point(11, 3);
             this.ultraLabel3.Name = "ultraLabel3";
             this.ultraLabel3.Size = new System.Drawing.Size(53, 15);
@@ -338,8 +338,8 @@ namespace PosBranch_Win.Reports.PurchaseReports
             // 
             // Amount
             // 
-            appearance8.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(55)))), ((int)(((byte)(120)))));
-            this.Amount.Appearance = appearance8;
+            appearance4.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(55)))), ((int)(((byte)(120)))));
+            this.Amount.Appearance = appearance4;
             this.Amount.Location = new System.Drawing.Point(13, 3);
             this.Amount.Name = "Amount";
             this.Amount.Size = new System.Drawing.Size(56, 15);

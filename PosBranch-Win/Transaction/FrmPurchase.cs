@@ -99,6 +99,13 @@ namespace PosBranch_Win.Transaction
         // Flag to track if the user manually changed label4 (Net Total) via ".." shortcut in txtBarcode
         private bool _isNetTotalManuallySet = false;
 
+        // Read-only state for paid/half-paid purchases
+        private bool _isReadOnly = false;
+        private int _lastReadOnlyNotifiedPurchaseId = -1;   // tracks which PID already showed the read-only notice
+        private const string MsgReadOnlyModeTitle = "Read-Only Mode";
+        private const string MsgReadOnlyModeDetails = "GRN-{0} has vendor payment against it.\nPaid amount: {1:N2}\n\nLoaded in READ-ONLY mode. You cannot edit, add, or delete items.";
+        private const string MsgReadOnlyBlock = "This purchase is in read-only mode because it has payments against it.";
+
         // Layout state for PO section toggle in the purchase screen
         private int _poPanelLeft;
         private int _poPanelTop;
@@ -1732,6 +1739,52 @@ namespace PosBranch_Win.Transaction
                 SetEditorBackColor(txtBilledBy, defaultBackColor);
         }
 
+        private void SetFormReadOnly(bool readOnly)
+        {
+            _isReadOnly = readOnly;
+
+            // Disable/Enable input controls
+            txtBarcode.Enabled = !readOnly;
+            txtInvoiceNo.Enabled = !readOnly;
+            txtBilledBy.Enabled = !readOnly;
+            txtRoundOff.Enabled = !readOnly;
+            txtRemark.Enabled = !readOnly;
+            textBox1.Enabled = !readOnly;
+
+            CmboVendor.Enabled = !readOnly;
+            CmboPayment.Enabled = !readOnly;
+            CmboBranch.Enabled = !readOnly;
+
+            DtpInoviceDate.Enabled = !readOnly;
+            dtpPurchaseDate.Enabled = !readOnly;
+
+            // Enable / Disable lookup/action helper buttons
+            button1.Enabled = !readOnly; // F11 vendor
+            button3.Enabled = !readOnly; // F6 lookup
+
+            // Hide/Show Save, Update, Delete, Exit/Remove, and Clear grid buttons
+            ultraPictureBox2.Visible = !readOnly; // Delete button
+            pbxExit.Visible = !readOnly;         // Remove selected item
+
+            Control clearGrid1Btn = this.Controls.Find("button6", true).FirstOrDefault();
+            if (clearGrid1Btn != null)
+            {
+                clearGrid1Btn.Enabled = !readOnly;
+            }
+            Control clearGrid2Btn = this.Controls.Find("button7", true).FirstOrDefault();
+            if (clearGrid2Btn != null)
+            {
+                clearGrid2Btn.Enabled = !readOnly;
+            }
+
+            if (ultraGrid1 != null && ultraGrid1.DisplayLayout != null && ultraGrid1.DisplayLayout.Override != null)
+            {
+                ultraGrid1.DisplayLayout.Override.AllowUpdate = readOnly
+                    ? Infragistics.Win.DefaultableBoolean.False
+                    : Infragistics.Win.DefaultableBoolean.True;
+            }
+        }
+
         private static void SetEditorBackColor(Infragistics.Win.UltraWinEditors.UltraTextEditor editor, Color color)
         {
             if (editor == null)
@@ -2222,6 +2275,15 @@ namespace PosBranch_Win.Transaction
 
         private bool EnsurePurchaseRowEditable(UltraGridRow row, bool showMessage)
         {
+            if (_isReadOnly)
+            {
+                if (showMessage)
+                {
+                    MessageBox.Show(MsgReadOnlyBlock, MsgReadOnlyModeTitle, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+                return false;
+            }
+
             ItemStatusRuleInfo status = GetPurchaseRowStatus(row);
             if (!status.BlockPurchase)
             {
@@ -2939,6 +3001,12 @@ namespace PosBranch_Win.Transaction
         {
             try
             {
+                if (_isReadOnly)
+                {
+                    MessageBox.Show(MsgReadOnlyBlock, MsgReadOnlyModeTitle, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
                 int itemIdValue = 0;
                 int.TryParse(itemId, out itemIdValue);
                 ItemStatusRuleInfo selectedStatus;
@@ -4566,6 +4634,24 @@ namespace PosBranch_Win.Transaction
 
         private void FrmPurchase_KeyDown(object sender, KeyEventArgs e)
         {
+            // Block modification shortcuts when form is in read-only mode
+            if (_isReadOnly)
+            {
+                bool isModifyingKey = e.KeyCode == Keys.F7   // Item selection
+                    || e.KeyCode == Keys.F11  // Vendor dialog
+                    || e.KeyCode == Keys.F2   // Row edit
+                    || e.KeyCode == Keys.F8   // Save / Update
+                    || e.KeyCode == Keys.F12; // Delete
+
+                if (isModifyingKey)
+                {
+                    MessageBox.Show(MsgReadOnlyBlock, MsgReadOnlyModeTitle, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    return;
+                }
+            }
+
             if (e.KeyCode == Keys.F5)
             {
                 // Toggle NewBaseCost column visibility
@@ -5131,6 +5217,12 @@ namespace PosBranch_Win.Transaction
         {
             try
             {
+                if (_isReadOnly)
+                {
+                    MessageBox.Show(MsgReadOnlyBlock, MsgReadOnlyModeTitle, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
                 // Get the DataTable from the UltraGrid
                 DataTable dt = ultraGrid1.DataSource as DataTable;
                 if (dt == null) return;
@@ -5270,6 +5362,12 @@ namespace PosBranch_Win.Transaction
 
         public void SavePurchase()
         {
+            if (_isReadOnly)
+            {
+                MessageBox.Show(MsgReadOnlyBlock, MsgReadOnlyModeTitle, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             try
             {
                 if (!ShiftSessionGuard.CanDoTransaction(out string transactionError))
@@ -5536,6 +5634,8 @@ namespace PosBranch_Win.Transaction
             _isLoadingPurchaseForActivitySnapshot = true;
             try
             {
+                SetFormReadOnly(false);
+                _lastReadOnlyNotifiedPurchaseId = -1;
                 _originalSellingPrices.Clear();
                 ClearPurchaseHeaderActivitySnapshot();
                 // Generate and display next purchase number dynamically
@@ -6313,6 +6413,7 @@ namespace PosBranch_Win.Transaction
         // Method to handle loading purchase data from the display dialog
         public void LoadPurchaseData(int purchaseId)
         {
+            bool isPaidOrHalfPaid = false;
             try
             {
                 _isLoadingPurchaseForActivitySnapshot = true;
@@ -6329,9 +6430,22 @@ namespace PosBranch_Win.Transaction
 
                 if (purchaseInvoiceGrid != null && purchaseInvoiceGrid.Listpmaster != null && purchaseInvoiceGrid.Listpmaster.Count() > 0)
                 {
+                    PurchaseMaster loadedMaster = purchaseInvoiceGrid.Listpmaster.First();
+                    isPaidOrHalfPaid = loadedMaster.PayedAmount > 0;
+
+                    if (isPaidOrHalfPaid && _lastReadOnlyNotifiedPurchaseId != purchaseId)
+                    {
+                        _lastReadOnlyNotifiedPurchaseId = purchaseId;
+                        MessageBox.Show(
+                            string.Format(MsgReadOnlyModeDetails, loadedMaster.PurchaseNo, loadedMaster.PayedAmount),
+                            MsgReadOnlyModeTitle,
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
+                    }
+
                     // Toggle button visibility - hide save button, show update button
                     pbxSave.Visible = false;
-                    ultraPictureBox4.Visible = true;
+                    ultraPictureBox4.Visible = !isPaidOrHalfPaid;
 
                     // Load master data to form controls
                     foreach (PurchaseMaster pm in purchaseInvoiceGrid.Listpmaster)
@@ -6600,6 +6714,9 @@ namespace PosBranch_Win.Transaction
                     }
 
                     CapturePurchaseHeaderActivitySnapshot();
+
+                    // Apply read-only mode if the purchase has existing payments
+                    SetFormReadOnly(isPaidOrHalfPaid);
                 }
             }
             catch (Exception ex)
@@ -6617,6 +6734,12 @@ namespace PosBranch_Win.Transaction
         // Add UpdatePurchase method to handle update operation
         public void UpdatePurchase()
         {
+            if (_isReadOnly)
+            {
+                MessageBox.Show(MsgReadOnlyBlock, MsgReadOnlyModeTitle, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             if (_isUpdatingPurchase)
             {
                 return;
@@ -7171,6 +7294,12 @@ namespace PosBranch_Win.Transaction
         // Add DeletePurchase method
         public void DeletePurchase()
         {
+            if (_isReadOnly)
+            {
+                MessageBox.Show(MsgReadOnlyBlock, MsgReadOnlyModeTitle, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             try
             {
                 // Make sure we have the required data

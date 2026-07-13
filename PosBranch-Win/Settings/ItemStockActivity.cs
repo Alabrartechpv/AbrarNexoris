@@ -968,7 +968,7 @@ namespace PosBranch_Win.Settings
                     builder.Append(EscapeCsv(currentData.Columns[i].ColumnName));
                 }
                 builder.AppendLine();
-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
                 foreach (DataRow row in currentData.Rows)
                 {
                     for (int i = 0; i < currentData.Columns.Count; i++)
