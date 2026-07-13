@@ -5159,6 +5159,8 @@ namespace PosBranch_Win.Transaction
 
         private void DisplayCreditNote(CreditNote creditNote)
         {
+            bool applyCreditNoteOpened = false;
+
             // Create a form to display the credit note
             Form creditNoteForm = new Form();
             creditNoteForm.Text = "Credit Note";
@@ -5329,15 +5331,19 @@ namespace PosBranch_Win.Transaction
             printButton.Click += (sender, e) => PrintCreditNote(creditNote);
 
             Button viewReceiptButton = new Button();
-            viewReceiptButton.Text = "View Receipt";
-            viewReceiptButton.Size = new Size(100, 30);
+            viewReceiptButton.Text = "Apply Credit Note";
+            viewReceiptButton.Size = new Size(120, 30);
             viewReceiptButton.Location = new Point(170, 510);
-            viewReceiptButton.Click += (sender, e) => OpenReceiptForm(creditNote, creditNoteForm);
+            viewReceiptButton.Click += (sender, e) =>
+            {
+                applyCreditNoteOpened = true;
+                OpenReceiptForm(creditNote, creditNoteForm);
+            };
 
             Button closeButton = new Button();
             closeButton.Text = "Close";
             closeButton.Size = new Size(100, 30);
-            closeButton.Location = new Point(290, 510);
+            closeButton.Location = new Point(310, 510);
             closeButton.Click += (sender, e) => creditNoteForm.Close();
 
             // Add controls to the panel
@@ -5360,6 +5366,59 @@ namespace PosBranch_Win.Transaction
 
             // Show the form
             creditNoteForm.ShowDialog();
+
+            if (!applyCreditNoteOpened)
+            {
+                EnsureCreditNoteMasterExists(creditNote);
+            }
+        }
+
+        private void EnsureCreditNoteMasterExists(CreditNote creditNote)
+        {
+            try
+            {
+                if (creditNote == null || SReturn == null || SReturn.SReturnNo <= 0)
+                {
+                    return;
+                }
+
+                var creditNoteRepo = new Repository.Accounts.CreditNoteRepository();
+                DataTable existingCreditNote = creditNoteRepo.GetCreditNoteBySReturnNo(
+                    SReturn.SReturnNo,
+                    SessionContext.BranchId,
+                    SessionContext.FinYearId);
+
+                if (existingCreditNote != null && existingCreditNote.Rows.Count > 0)
+                {
+                    return;
+                }
+
+                var master = new ModelClass.Accounts.CreditNoteMaster
+                {
+                    CompanyId = SessionContext.CompanyId,
+                    BranchId = SessionContext.BranchId,
+                    FinYearId = SessionContext.FinYearId,
+                    VoucherId = Convert.ToInt32(SReturn.VoucherID),
+                    VoucherDate = DateTime.Now,
+                    CustomerLedgerId = Convert.ToInt32(SReturn.LedgerID),
+                    CustomerName = SReturn.CustomerName,
+                    SReturnNo = SReturn.SReturnNo,
+                    InvoiceNo = SReturn.InvoiceNo ?? string.Empty,
+                    CreditAmount = Convert.ToDouble(creditNote.TotalAmount),
+                    PaymentMethodLedgerId = 1,
+                    Narration = "Auto-generated store credit from Sales Return",
+                    UserId = SessionContext.UserId
+                };
+
+                creditNoteRepo.SaveCreditNote(
+                    master,
+                    new List<ModelClass.Accounts.CreditNoteDetails>(),
+                    skipVoucherCreation: true);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error ensuring credit note master exists: {ex.Message}");
+            }
         }
 
         private void PrintCreditNote(CreditNote creditNote)
@@ -5390,26 +5449,20 @@ namespace PosBranch_Win.Transaction
                 string customerName = creditNote.CustomerName;
                 decimal returnedAmount = (decimal)creditNote.TotalAmount;
 
-                // Create and configure the receipt form
-                var receiptForm = new PosBranch_Win.Accounts.FrmReceipt();
-
-                // Set customer information
-                receiptForm.SetCustomerInfo(customerLedgerId, customerName);
-
-                // Set the returned amount as the total received amount
-                // Find the txtReceivedAmount control and set its value
-                var txtReceivedAmountControl = receiptForm.Controls.Find("txtReceivedAmount", true);
-                if (txtReceivedAmountControl.Length > 0 && txtReceivedAmountControl[0] is Infragistics.Win.UltraWinEditors.UltraTextEditor)
-                {
-                    var txtReceivedAmount = (Infragistics.Win.UltraWinEditors.UltraTextEditor)txtReceivedAmountControl[0];
-                    txtReceivedAmount.Text = returnedAmount.ToString("0.00");
-                }
+                // Create and configure the Credit Note form instead of Receipt form
+                var creditNoteFormInstance = new PosBranch_Win.Accounts.FrmCreditNote(
+                    creditNote.CreditNoteNo,
+                    customerLedgerId,
+                    customerName,
+                    creditNote.InvoiceNo,
+                    (double)returnedAmount
+                );
 
                 // Close the credit note form
                 creditNoteForm.Close();
 
-                // Open the receipt form in a new tab
-                OpenReceiptInTab(receiptForm, $"Receipt - {customerName}");
+                // Open the credit note form in a new tab
+                OpenReceiptInTab(creditNoteFormInstance, $"Credit Note - {customerName}");
             }
             catch (Exception ex)
             {

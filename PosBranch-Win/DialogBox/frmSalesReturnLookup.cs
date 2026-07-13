@@ -137,19 +137,9 @@ namespace PosBranch_Win.DialogBox
         {
             try
             {
-                if (_customerLedgerId > 0)
-                {
-                    salesReturnData = salesReturnRepo.GetPendingByCustomer(_customerLedgerId)
-                        .OrderByDescending(sr => sr.SReturnNo)
-                        .ToList();
-                }
-                else
-                {
-                    salesReturnData = salesReturnRepo.GetAll()
-                        .Where(sr => sr.PaymodeID == 1) // Credit sales
-                        .OrderByDescending(sr => sr.SReturnNo)
-                        .ToList();
-                }
+                salesReturnData = salesReturnRepo.GetPendingByCustomer(_customerLedgerId)
+                    .OrderByDescending(sr => sr.SReturnNo)
+                    .ToList();
 
                 ultraGrid1.DataSource = salesReturnData;
 
@@ -196,7 +186,17 @@ namespace PosBranch_Win.DialogBox
                 var sr = ultraGrid1.ActiveRow.ListObject as SRgetAll;
                 if (sr != null)
                 {
-                    OnSalesReturnSelected?.Invoke(sr.SReturnNo, (int)sr.LedgerID, sr.CustomerName, sr.InvoiceNo, (double)sr.GrandTotal, sr.PaymodeID);
+                    int finalLedgerId = (int)sr.LedgerID;
+                    if (finalLedgerId == 0)
+                    {
+                        var fullReturn = salesReturnRepo.GetBySalesReturnId(sr.SReturnNo);
+                        if (fullReturn != null)
+                        {
+                            finalLedgerId = (int)fullReturn.LedgerID;
+                        }
+                    }
+
+                    OnSalesReturnSelected?.Invoke(sr.SReturnNo, finalLedgerId, sr.CustomerName, sr.InvoiceNo, (double)sr.GrandTotal, sr.PaymodeID);
                     this.DialogResult = DialogResult.OK;
                     this.Close();
                 }

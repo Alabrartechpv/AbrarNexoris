@@ -85,6 +85,37 @@ namespace Repository.Accounts
             }
         }
 
+        public DataRow GetInvoiceByPurchaseNo(string purchaseNo, int vendorId, int branchId)
+        {
+            if (DataConnection.State == ConnectionState.Open)
+                DataConnection.Close();
+
+            DataConnection.Open();
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand("SELECT PurchaseNo AS BillNo, PurchaseDate AS BillDate, DueDate, GrandTotal AS InvoiceAmount, ISNULL(PayedAmount, 0) AS PaidAmount, ISNULL(GrandTotal - PayedAmount, 0) AS Balance FROM PMaster WHERE PurchaseNo = @PurchaseNo AND LedgerID = @LedgerID AND BranchId = @BranchId AND CancelFlag = 0", (SqlConnection)DataConnection))
+                {
+                    cmd.Parameters.AddWithValue("@PurchaseNo", purchaseNo);
+                    cmd.Parameters.AddWithValue("@LedgerID", vendorId);
+                    cmd.Parameters.AddWithValue("@BranchId", branchId);
+
+                    DataTable dt = new DataTable();
+                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                    {
+                        da.Fill(dt);
+                    }
+                    if (dt.Rows.Count > 0)
+                        return dt.Rows[0];
+                }
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                    DataConnection.Close();
+            }
+            return null;
+        }
+
         /// <summary>
         /// Get all invoices for vendor
         /// </summary>

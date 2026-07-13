@@ -1969,6 +1969,7 @@ namespace Repository.TransactionRepository
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in GetPendingByCustomer: {ex.Message}");
+                throw;
             }
             finally
             {
@@ -1980,9 +1981,7 @@ namespace Repository.TransactionRepository
         }
 
         /// <summary>
-        /// Checks if a Credit Note already exists for a given Sales Return.
-        /// </summary>
-        private bool HasCreditNote(int sReturnNo)
+        public bool HasCreditNote(int sReturnNo)
         {
             try
             {

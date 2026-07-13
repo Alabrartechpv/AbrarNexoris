@@ -606,21 +606,12 @@ namespace Repository.Accounts
                     returnedAmount = 0m;
                 }
 
-                decimal maxPaidAndReturned = receivedAmount + returnedAmount;
-                if (invoiceAmount > 0m && maxPaidAndReturned > invoiceAmount)
+                if (invoiceAmount > 0m && receivedAmount > invoiceAmount)
                 {
-                    if (receivedAmount > invoiceAmount)
-                    {
-                        receivedAmount = invoiceAmount;
-                        returnedAmount = 0m;
-                    }
-                    else
-                    {
-                        returnedAmount = invoiceAmount - receivedAmount;
-                    }
+                    receivedAmount = invoiceAmount;
                 }
 
-                decimal balance = invoiceAmount - receivedAmount - returnedAmount;
+                decimal balance = invoiceAmount - receivedAmount;
                 if (balance < 0m)
                 {
                     balance = 0m;
@@ -800,27 +791,10 @@ namespace Repository.Accounts
                     balanceToSet = 0m;
                 }
 
-                decimal returnedAmount = 0m;
-                using (SqlCommand returnCmd = new SqlCommand(
-                    @"SELECT ISNULL(SUM(GrandTotal), 0) 
-                      FROM SReturnMaster 
-                      WHERE InvoiceNo = @BillNo 
-                        AND BranchId = @BranchId 
-                        AND CancelFlag = 0", conn, transaction))
-                {
-                    returnCmd.Parameters.AddWithValue("@BillNo", billNo);
-                    returnCmd.Parameters.AddWithValue("@BranchId", SessionContext.BranchId);
-                    object retResult = returnCmd.ExecuteScalar();
-                    if (retResult != null && retResult != DBNull.Value)
-                    {
-                        returnedAmount = Convert.ToDecimal(retResult);
-                    }
-                }
-
                 decimal receivedAmountToSet = Math.Round(receivedFromDb + adjustedAmount, 3, MidpointRounding.AwayFromZero);
                 if (isFullyPaid)
                 {
-                    receivedAmountToSet = Math.Round(netAmount - returnedAmount, 3, MidpointRounding.AwayFromZero);
+                    receivedAmountToSet = Math.Round(netAmount, 3, MidpointRounding.AwayFromZero);
                 }
 
                 if (netAmount > 0m)

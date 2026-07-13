@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -85,6 +85,42 @@ namespace Repository.Accounts
             }
         }
 
+        public DataRow GetInvoiceByBillNo(string billNo, int customerId, int branchId)
+        {
+            if (DataConnection.State == ConnectionState.Open)
+                DataConnection.Close();
+
+            DataConnection.Open();
+            try
+            {
+                string query = "SELECT BillNo, BillDate, DueDate, NetAmount AS InvoiceAmount, ISNULL(ReceivedAmount, 0) AS ReceivedAmount, " +
+                               "ISNULL((SELECT SUM(GrandTotal) FROM SReturnMaster WHERE InvoiceNo = CAST(SMaster.BillNo AS varchar(50)) AND BranchId = @BranchId AND CompanyId = SMaster.CompanyId AND FinYearId = SMaster.FinYearId AND CancelFlag = 0), 0) AS ReturnedAmount, " +
+                               "CASE WHEN (NetAmount - ISNULL(ReceivedAmount, 0)) < 0 THEN 0 " +
+                               "ELSE (NetAmount - ISNULL(ReceivedAmount, 0)) END AS Balance " +
+                               "FROM SMaster WHERE BillNo = @BillNo AND LedgerID = @LedgerID AND BranchId = @BranchId AND CancelFlag = 0";
+                using (SqlCommand cmd = new SqlCommand(query, (SqlConnection)DataConnection))
+                {
+                    cmd.Parameters.AddWithValue("@BillNo", billNo);
+                    cmd.Parameters.AddWithValue("@LedgerID", customerId);
+                    cmd.Parameters.AddWithValue("@BranchId", branchId);
+
+                    DataTable dt = new DataTable();
+                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                    {
+                        da.Fill(dt);
+                    }
+                    if (dt.Rows.Count > 0)
+                        return dt.Rows[0];
+                }
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                    DataConnection.Close();
+            }
+            return null;
+        }
+
         /// <summary>
         /// Get all invoices for customer
         /// </summary>
@@ -168,10 +204,14 @@ namespace Repository.Accounts
         /// <param name="skipVoucherCreation">If true, skip voucher creation (used when coming from Sales Return which already created vouchers)</param>
         public bool SaveCreditNote(CreditNoteMaster master, List<CreditNoteDetails> details, bool skipVoucherCreation = false)
         {
-            if (master == null || details == null || !details.Any())
-            {
+            if (master == null)
                 return false;
-            }
+
+            // details may be null or empty for fully-paid invoice returns.
+            // In that case the credit amount is saved on the master only and
+            // remains available as store credit for the customer.
+            if (details == null)
+                details = new List<CreditNoteDetails>();
 
             using (SqlConnection conn = (SqlConnection)DataConnection)
             {
@@ -249,36 +289,48 @@ namespace Repository.Accounts
                                 }
                             }
 
-                            // 3. Insert into CreditNoteDetails for each selected invoice
+                            // 3. Insert detail rows for each invoice that had credit applied.
+                            // Rows with CreditAmount = 0 (fully-paid invoice audit rows)
+                            // are skipped for now and will be handled in Phase 2.
                             foreach (var detail in details)
                             {
-                                if (detail.CreditAmount > 0)
-                                {
-                                    using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE._CreditNoteDetails, conn, transaction))
-                                    {
-                                        cmd.CommandType = CommandType.StoredProcedure;
-                                        cmd.Parameters.AddWithValue("@BranchId", master.BranchId);
-                                        cmd.Parameters.AddWithValue("@FinYearId", finYearId);
-                                        cmd.Parameters.AddWithValue("@CustomerLedgerId", master.CustomerLedgerId);
-                                        cmd.Parameters.AddWithValue("@CreditNoteMasterId", master.Id);
-                                        cmd.Parameters.AddWithValue("@BillNo", detail.BillNo);
-                                        cmd.Parameters.AddWithValue("@BillDate", detail.BillDate);
-                                        cmd.Parameters.AddWithValue("@BillAmount", detail.BillAmount);
-                                        cmd.Parameters.AddWithValue("@CreditAmount", detail.CreditAmount);
-                                        cmd.Parameters.AddWithValue("@BalanceAmount", detail.BalanceAmount);
-                                        cmd.Parameters.AddWithValue("@OldBillAmount", detail.OldBillAmount);
-                                        cmd.Parameters.AddWithValue("@OldCreditAmount", 0);
-                                        cmd.Parameters.AddWithValue("@_Operation", "CREATE");
+                                if (detail.CreditAmount <= 0)
+                                    continue;
 
-                                        var detailResult = cmd.ExecuteScalar();
-                                        if (detailResult == null || !detailResult.ToString().StartsWith("SUCCESS"))
-                                        {
-                                            transaction.Rollback();
-                                            return false;
-                                        }
+                                using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE._CreditNoteDetails, conn, transaction))
+                                {
+                                    cmd.CommandType = CommandType.StoredProcedure;
+                                    cmd.Parameters.AddWithValue("@BranchId", master.BranchId);
+                                    cmd.Parameters.AddWithValue("@FinYearId", finYearId);
+                                    cmd.Parameters.AddWithValue("@CustomerLedgerId", master.CustomerLedgerId);
+                                    cmd.Parameters.AddWithValue("@CreditNoteMasterId", master.Id);
+                                    cmd.Parameters.AddWithValue("@BillNo", detail.BillNo);
+                                    cmd.Parameters.AddWithValue("@BillDate", detail.BillDate);
+                                    cmd.Parameters.AddWithValue("@BillAmount", detail.BillAmount);
+                                    cmd.Parameters.AddWithValue("@CreditAmount", detail.CreditAmount);
+                                    cmd.Parameters.AddWithValue("@BalanceAmount", detail.BalanceAmount);
+                                    cmd.Parameters.AddWithValue("@OldBillAmount", detail.OldBillAmount);
+                                    cmd.Parameters.AddWithValue("@OldCreditAmount", 0);
+                                    cmd.Parameters.AddWithValue("@_Operation", "CREATE");
+
+                                    var detailResult = cmd.ExecuteScalar();
+                                    if (detailResult == null || !detailResult.ToString().StartsWith("SUCCESS"))
+                                    {
+                                        transaction.Rollback();
+                                        return false;
                                     }
                                 }
                             }
+
+                            // Phase 2: Stamp the lifecycle fields on the master object.
+                            // AppliedAmount = sum of all detail rows that were inserted (CreditAmount > 0).
+                            // RemainingAmount and Status derive automatically from the model's
+                            // computed properties — no DB schema change required at this stage.
+                            master.AppliedAmount = details
+                                .Where(d => d.CreditAmount > 0)
+                                .Sum(d => d.CreditAmount);
+                            // master.Status  → "Open" / "Partial" / "Closed"  (computed property)
+                            // master.RemainingAmount → CreditAmount - AppliedAmount (computed property)
 
                             // 4. Create Voucher Entries - Double entry system
                             // Skip voucher creation if coming from Sales Return (vouchers already created)

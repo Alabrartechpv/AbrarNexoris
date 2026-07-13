@@ -231,8 +231,12 @@ namespace PosBranch_Win.Accounts
             if (decimal.TryParse(textBox1.Text, out decimal amount))
             {
                 totalPaymentAmount = amount;
-                UpdateAdjustedAmounts();
             }
+            else
+            {
+                totalPaymentAmount = 0m;
+            }
+            UpdateAdjustedAmounts();
         }
 
         private void RadioButton_CheckedChanged(object sender, EventArgs e)
@@ -585,6 +589,17 @@ namespace PosBranch_Win.Accounts
         private void UpdateAdjustedAmounts()
         {
             isAdjusting = true;
+            
+            // Reset all rows first
+            foreach (UltraGridRow row in ultraGrid1.Rows)
+            {
+                if (row.Cells.Exists("AdjustedAmount"))
+                {
+                    row.Cells["AdjustedAmount"].Value = 0m;
+                }
+                UpdateRowBalance(row);
+            }
+
             decimal remainingAmount = totalPaymentAmount;
             // Get selected rows in selection order
             var selectedRows = ultraGrid1.Rows
@@ -593,15 +608,7 @@ namespace PosBranch_Win.Accounts
                               Convert.ToBoolean(row.Cells["Select"].Value))
                 .OrderBy(row => row.Index) // Use row.Index for simple top-to-bottom order
                 .ToList();
-            // Reset all unselected rows
-            foreach (UltraGridRow row in ultraGrid1.Rows)
-            {
-                if (!selectedRows.Contains(row))
-                {
-                    row.Cells["AdjustedAmount"].Value = 0m;
-                    UpdateRowBalance(row);
-                }
-            }
+
             // Distribute amount to selected rows in order
             foreach (var row in selectedRows)
             {

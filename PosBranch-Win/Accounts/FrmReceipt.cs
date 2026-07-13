@@ -322,10 +322,7 @@ namespace PosBranch_Win.Accounts
                     // not the grid Balance column because Balance is already reduced by Adjusted Amount.
                     decimal invoiceAmount = row.Cells["InvoiceAmount"].Value != null ? Convert.ToDecimal(row.Cells["InvoiceAmount"].Value) : 0m;
                     decimal alreadyReceived = row.Cells["ReceivedAmount"].Value != null ? Convert.ToDecimal(row.Cells["ReceivedAmount"].Value) : 0m;
-                    decimal returnedAmount = row.Cells.Exists("ReturnedAmount") && row.Cells["ReturnedAmount"].Value != null && row.Cells["ReturnedAmount"].Value != DBNull.Value
-                        ? Convert.ToDecimal(row.Cells["ReturnedAmount"].Value)
-                        : 0m;
-                    decimal originalOutstanding = invoiceAmount - alreadyReceived - returnedAmount;
+                    decimal originalOutstanding = invoiceAmount - alreadyReceived;
                     if (originalOutstanding < 0m)
                     {
                         originalOutstanding = 0m;
@@ -953,12 +950,8 @@ namespace PosBranch_Win.Accounts
                 decimal invoiceAmount = Convert.ToDecimal(row.Cells["InvoiceAmount"].Value);
                 decimal receivedAmount = Convert.ToDecimal(row.Cells["ReceivedAmount"].Value);
                 decimal adjustedAmount = Convert.ToDecimal(row.Cells["Adjusted Amount"].Value);
-                decimal returnedAmount = row.Cells.Exists("ReturnedAmount") && row.Cells["ReturnedAmount"].Value != null && row.Cells["ReturnedAmount"].Value != DBNull.Value
-                    ? Convert.ToDecimal(row.Cells["ReturnedAmount"].Value)
-                    : 0m;
-
-                // Original balance = InvoiceAmount - ReceivedAmount - ReturnedAmount
-                decimal originalBalance = invoiceAmount - receivedAmount - returnedAmount;
+                // Original balance = InvoiceAmount - ReceivedAmount. Credit notes update ReceivedAmount.
+                decimal originalBalance = invoiceAmount - receivedAmount;
                 // New balance = Original balance - Adjusted amount
                 row.Cells["Balance"].Value = originalBalance - adjustedAmount;
             }
@@ -999,11 +992,16 @@ namespace PosBranch_Win.Accounts
             if (decimal.TryParse(txtReceivedAmount.Text, out decimal amount))
             {
                 totalReceivedAmount = amount;
-                // Redistribute amounts when total received amount changes
-                if (ultraGrid1.Rows.Count > 0)
-                {
-                    DistributeAdjustedAmounts();
-                }
+            }
+            else
+            {
+                totalReceivedAmount = 0m;
+            }
+
+            // Redistribute amounts when total received amount changes
+            if (ultraGrid1.Rows.Count > 0)
+            {
+                DistributeAdjustedAmounts();
             }
         }
 
