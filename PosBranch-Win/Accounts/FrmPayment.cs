@@ -29,6 +29,9 @@ namespace PosBranch_Win.Accounts
         private int currentCompanyId = ModelClass.SessionContext.CompanyId;
         private int currentBranchId = ModelClass.SessionContext.BranchId; // Use SessionContext instead of hardcoded value
         private int currentUserId = ModelClass.SessionContext.UserId; // Use SessionContext instead of hardcoded value
+        private int currentPaymentMasterId = 0;
+        private const string PaymentStatusActive = "Active";
+        private const string PaymentStatusCancel = "Cancel";
 
         public FrmPayment()
         {
@@ -41,6 +44,7 @@ namespace PosBranch_Win.Accounts
             InitializeEventHandlers();
             paymentRepo = new VendorPaymentRepository();
             LoadPaymentMethods();
+            InitializePaymentStatusCombo();
 
             // Ensure outstanding is selected by default
             rdbtnoutstanding.Checked = true;
@@ -155,6 +159,15 @@ namespace PosBranch_Win.Accounts
                     }
                 }
             }
+        }
+
+        private void InitializePaymentStatusCombo()
+        {
+            ultraTextEditor2.Items.Clear();
+            ultraTextEditor2.Items.Add(PaymentStatusActive, PaymentStatusActive);
+            ultraTextEditor2.Items.Add(PaymentStatusCancel, PaymentStatusCancel);
+            ultraTextEditor2.DropDownStyle = Infragistics.Win.DropDownStyle.DropDownList;
+            ultraTextEditor2.Value = PaymentStatusActive;
         }
 
         private void InitializeEventHandlers()
@@ -820,8 +833,14 @@ namespace PosBranch_Win.Accounts
 
         private void UltraPictureBox4_Click(object sender, EventArgs e)
         {
-            // TODO: Implement or call your update logic here
-            MessageBox.Show("Update functionality not implemented yet.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            if (IsCancelStatusSelected())
+            {
+                CancelLoadedPayment();
+                return;
+            }
+
+            MessageBox.Show("Please select Cancel status to cancel/reverse a loaded vendor payment.",
+                "Payment Status", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void UltraPictureBox1_Click(object sender, EventArgs e)
@@ -838,6 +857,12 @@ namespace PosBranch_Win.Accounts
         {
             try
             {
+                if (IsCancelStatusSelected())
+                {
+                    CancelLoadedPayment();
+                    return;
+                }
+
                 if (!ValidatePayment())
                 {
                     return;
@@ -997,9 +1022,11 @@ namespace PosBranch_Win.Accounts
             txtVendorName.Text = "";
             textBox4.Text = "";
             currentVendorLedgerId = 0;
+            currentPaymentMasterId = 0;
             CmboPayment.SelectedIndex = -1;
             textBox1.Text = "0";
             textBox2.Text = "";
+            ultraTextEditor2.Value = PaymentStatusActive;
             richTextBox2.Text = "";
             dtpPurchaseDate.Value = DateTime.Now;
             ultraGrid1.DataSource = CreateEmptyInvoiceTable();
@@ -1009,6 +1036,63 @@ namespace PosBranch_Win.Accounts
             totalPaymentAmount = 0;
             // Re-initialize the repository to ensure connection string is set
             paymentRepo = new VendorPaymentRepository();
+        }
+
+        private bool IsCancelStatusSelected()
+        {
+            string status = Convert.ToString(ultraTextEditor2.Value ?? ultraTextEditor2.Text);
+            return string.Equals(status, PaymentStatusCancel, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void CancelLoadedPayment()
+        {
+            try
+            {
+                if (currentPaymentMasterId <= 0)
+                {
+                    MessageBox.Show("Please load an existing vendor payment before selecting Cancel.",
+                        "Payment Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    ultraTextEditor2.Value = PaymentStatusActive;
+                    return;
+                }
+
+                string voucherText = string.IsNullOrWhiteSpace(txtPurchaseNo.Text) ? currentPaymentMasterId.ToString() : txtPurchaseNo.Text.Trim();
+                DialogResult confirm = MessageBox.Show(
+                    "Do you want to cancel/reverse vendor payment voucher " + voucherText + "?"
+                    + Environment.NewLine + Environment.NewLine
+                    + "All active bill allocations in this payment voucher will be reversed and the payment will be preserved as cancelled.",
+                    "Cancel Vendor Payment",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                if (confirm != DialogResult.Yes)
+                {
+                    ultraTextEditor2.Value = PaymentStatusActive;
+                    return;
+                }
+
+                VendorPaymentRepository.PurchasePaymentCancellationSummary cancelled =
+                    paymentRepo.CancelVendorPayment(
+                        currentPaymentMasterId,
+                        currentBranchId,
+                        currentUserId,
+                        "Cancelled from Payment screen");
+
+                MessageBox.Show(
+                    "Vendor payment cancelled successfully."
+                    + Environment.NewLine + "Cancelled voucher(s): " + cancelled.PaymentVoucherCount
+                    + Environment.NewLine + "Reversed amount: " + cancelled.PaymentAmount.ToString("N2"),
+                    "Payment Cancelled",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+
+                ClearForm();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error cancelling payment: " + ex.Message,
+                    "Payment Cancellation Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void btnViewPayment_Click(object sender, EventArgs e)
@@ -1282,9 +1366,13 @@ namespace PosBranch_Win.Accounts
                 isAdjusting = true;
                 DataRow master = ds.Tables[0].Rows[0];
 
+                currentPaymentMasterId = master.Table.Columns.Contains("Id") && master["Id"] != DBNull.Value
+                    ? Convert.ToInt32(master["Id"])
+                    : 0;
                 txtPurchaseNo.Text = master["VoucherId"].ToString();
                 currentVendorLedgerId = Convert.ToInt32(master["VendorLedgerId"]);
                 textBox4.Text = currentVendorLedgerId.ToString();
+                ultraTextEditor2.Value = PaymentStatusActive;
                 
                 // Get vendor name from the 3rd table if available (Vendor Info / Balance)
                 if (ds.Tables.Count > 2 && ds.Tables[2].Rows.Count > 0)
