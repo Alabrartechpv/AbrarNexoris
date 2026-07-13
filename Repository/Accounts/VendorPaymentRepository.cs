@@ -13,6 +13,15 @@ namespace Repository.Accounts
 {
     public class VendorPaymentRepository : BaseRepostitory
     {
+        private const string VendorPaymentVoucherType = "VENDPAY";
+
+        public class PurchasePaymentCancellationSummary
+        {
+            public int PaymentVoucherCount { get; set; }
+            public decimal PaymentAmount { get; set; }
+            public DateTime LastPaymentDate { get; set; }
+        }
+
         public VendorPurchasedInfoGrid getPurchasedInfoForPayment(int LedgerId)
         {
             VendorPurchasedInfoGrid objVendorPurchasedInfo = new VendorPurchasedInfoGrid();
@@ -85,7 +94,7 @@ namespace Repository.Accounts
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@BranchID", branchId);
                     cmd.Parameters.AddWithValue("@FinYearID", defaultFinYearId);
-                    cmd.Parameters.AddWithValue("@VoucherType", "VENDPAY");
+                    cmd.Parameters.AddWithValue("@VoucherType", VendorPaymentVoucherType);
                     cmd.Parameters.AddWithValue("@_Operation", "GENERATENUMBER");
 
                     object result = cmd.ExecuteScalar();
@@ -224,7 +233,7 @@ namespace Repository.Accounts
                         cmd.Parameters.AddWithValue("@VoucherDate", currentVoucherDate);
                         cmd.Parameters.AddWithValue("@VoucherNumber", string.IsNullOrWhiteSpace(voucher.VoucherNo) ? master.VoucherNo ?? "" : voucher.VoucherNo);
                         cmd.Parameters.AddWithValue("@LedgerID", ledgerId);
-                        cmd.Parameters.AddWithValue("@VoucherType", "VENDPAY");
+                        cmd.Parameters.AddWithValue("@VoucherType", VendorPaymentVoucherType);
                         cmd.Parameters.AddWithValue("@Debit", (float)voucher.DebitAmount);
                         cmd.Parameters.AddWithValue("@Credit", (float)voucher.CreditAmount);
                         cmd.Parameters.AddWithValue("@Narration", string.IsNullOrWhiteSpace(voucher.Narration) ? $"Payment to {master.VendorName}" : voucher.Narration);
@@ -558,12 +567,16 @@ namespace Repository.Accounts
             DataConnection.Open();
             try
             {
-                using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE._VendorPaymentMaster, (SqlConnection)DataConnection))
+                using (SqlCommand cmd = new SqlCommand(@"
+SELECT BillNo, BillDate, BillAmount, PaymentAmount, BalanceAmount
+FROM VendorPaymentDetails
+WHERE VendorLedgerId = @VendorLedgerId
+  AND BillNo = @BillNo
+  AND ISNULL(CancelFlag, 0) = 0
+ORDER BY BillDate DESC, PaymentMasterId DESC", (SqlConnection)DataConnection))
                 {
-                    cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@VendorLedgerId", vendorLedgerId);
-                    cmd.Parameters.AddWithValue("@BillNoUntil", billNo);
-                    cmd.Parameters.AddWithValue("@_Operation", "VIEWPAYMENT");
+                    cmd.Parameters.AddWithValue("@BillNo", billNo);
 
                     DataTable dt = new DataTable();
                     using (SqlDataAdapter da = new SqlDataAdapter(cmd))
@@ -584,6 +597,345 @@ namespace Repository.Accounts
             }
         }
 
+        public PurchasePaymentCancellationSummary GetActivePaymentSummaryForPurchase(int purchaseNo, int branchId, int vendorLedgerId)
+        {
+            DataConnection.Open();
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand(@"
+SELECT
+    COUNT(DISTINCT VPM.Id) AS PaymentVoucherCount,
+    ISNULL(SUM(ISNULL(VPD.PaymentAmount, 0)), 0) AS PaymentAmount,
+    MAX(VPM.VoucherDate) AS LastPaymentDate
+FROM VendorPaymentMaster VPM
+INNER JOIN VendorPaymentDetails VPD ON VPD.PaymentMasterId = VPM.Id
+WHERE ISNULL(VPM.CancelFlag, 0) = 0
+  AND ISNULL(VPD.CancelFlag, 0) = 0
+  AND VPM.BranchId = @BranchId
+  AND VPD.BillNo = @PurchaseNo
+  AND VPD.VendorLedgerId = @VendorLedgerId", (SqlConnection)DataConnection))
+                {
+                    cmd.Parameters.AddWithValue("@PurchaseNo", purchaseNo);
+                    cmd.Parameters.AddWithValue("@BranchId", branchId);
+                    cmd.Parameters.AddWithValue("@VendorLedgerId", vendorLedgerId);
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (!reader.Read())
+                            return new PurchasePaymentCancellationSummary();
+
+                        return new PurchasePaymentCancellationSummary
+                        {
+                            PaymentVoucherCount = reader["PaymentVoucherCount"] == DBNull.Value ? 0 : Convert.ToInt32(reader["PaymentVoucherCount"]),
+                            PaymentAmount = reader["PaymentAmount"] == DBNull.Value ? 0m : Convert.ToDecimal(reader["PaymentAmount"]),
+                            LastPaymentDate = reader["LastPaymentDate"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(reader["LastPaymentDate"])
+                        };
+                    }
+                }
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                    DataConnection.Close();
+            }
+        }
+
+        public PurchasePaymentCancellationSummary CancelVendorPayment(int paymentMasterId, int branchId, int userId, string reason)
+        {
+            DataConnection.Open();
+            SqlTransaction transaction = null;
+
+            try
+            {
+                transaction = ((SqlConnection)DataConnection).BeginTransaction();
+
+                DataTable activeDetails = new DataTable();
+                int voucherId;
+                DateTime voucherDate;
+
+                using (SqlCommand masterCmd = new SqlCommand(@"
+SELECT Id, BranchId, VoucherId, VoucherDate
+FROM VendorPaymentMaster
+WHERE Id = @PaymentMasterId
+  AND BranchId = @BranchId
+  AND ISNULL(CancelFlag, 0) = 0", (SqlConnection)DataConnection, transaction))
+                {
+                    masterCmd.Parameters.AddWithValue("@PaymentMasterId", paymentMasterId);
+                    masterCmd.Parameters.AddWithValue("@BranchId", branchId);
+
+                    using (SqlDataReader reader = masterCmd.ExecuteReader())
+                    {
+                        if (!reader.Read())
+                            throw new Exception("This vendor payment is already cancelled or could not be found.");
+
+                        voucherId = Convert.ToInt32(reader["VoucherId"]);
+                        voucherDate = reader["VoucherDate"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(reader["VoucherDate"]);
+                    }
+                }
+
+                using (SqlCommand detailsCmd = new SqlCommand(@"
+SELECT BranchId, BillNo, VendorLedgerId, ISNULL(PaymentAmount, 0) AS PaymentAmount
+FROM VendorPaymentDetails
+WHERE PaymentMasterId = @PaymentMasterId
+  AND ISNULL(CancelFlag, 0) = 0", (SqlConnection)DataConnection, transaction))
+                {
+                    detailsCmd.Parameters.AddWithValue("@PaymentMasterId", paymentMasterId);
+                    using (SqlDataAdapter adapter = new SqlDataAdapter(detailsCmd))
+                    {
+                        adapter.Fill(activeDetails);
+                    }
+                }
+
+                if (activeDetails.Rows.Count == 0)
+                    throw new Exception("No active payment allocations were found for this voucher.");
+
+                decimal totalReversed = 0m;
+                foreach (DataRow detailRow in activeDetails.Rows)
+                {
+                    int detailBranchId = Convert.ToInt32(detailRow["BranchId"]);
+                    int billNo = Convert.ToInt32(detailRow["BillNo"]);
+                    int vendorLedgerId = Convert.ToInt32(Convert.ToDecimal(detailRow["VendorLedgerId"]));
+                    decimal paymentAmount = Convert.ToDecimal(detailRow["PaymentAmount"]);
+
+                    using (SqlCommand reverseCmd = new SqlCommand(@"
+UPDATE PMaster
+SET PayedAmount = CASE
+        WHEN ROUND(ISNULL(PayedAmount, 0) - @PaymentAmount, 2) < 0 THEN 0
+        ELSE ROUND(ISNULL(PayedAmount, 0) - @PaymentAmount, 2)
+    END,
+    Paid = 0
+WHERE CancelFlag = 0
+  AND PurchaseNo = @BillNo
+  AND BranchId = @BranchId
+  AND LedgerID = @VendorLedgerId", (SqlConnection)DataConnection, transaction))
+                    {
+                        reverseCmd.Parameters.AddWithValue("@PaymentAmount", (float)paymentAmount);
+                        reverseCmd.Parameters.AddWithValue("@BillNo", billNo);
+                        reverseCmd.Parameters.AddWithValue("@BranchId", detailBranchId);
+                        reverseCmd.Parameters.AddWithValue("@VendorLedgerId", vendorLedgerId);
+                        reverseCmd.ExecuteNonQuery();
+                    }
+
+                    totalReversed += paymentAmount;
+                }
+
+                using (SqlCommand cancelDetailsCmd = new SqlCommand(@"
+UPDATE VendorPaymentDetails
+SET CancelFlag = 1
+WHERE PaymentMasterId = @PaymentMasterId
+  AND ISNULL(CancelFlag, 0) = 0", (SqlConnection)DataConnection, transaction))
+                {
+                    cancelDetailsCmd.Parameters.AddWithValue("@PaymentMasterId", paymentMasterId);
+                    cancelDetailsCmd.ExecuteNonQuery();
+                }
+
+                using (SqlCommand cancelMasterCmd = new SqlCommand(@"
+UPDATE VendorPaymentMaster
+SET CancelFlag = 1,
+    Narration = LEFT(ISNULL(Narration, '') + @CancelNote, 4000)
+WHERE Id = @PaymentMasterId
+  AND ISNULL(CancelFlag, 0) = 0", (SqlConnection)DataConnection, transaction))
+                {
+                    string cancelNote = " | Cancelled";
+                    if (!string.IsNullOrWhiteSpace(reason))
+                        cancelNote += ": " + reason.Trim();
+
+                    cancelMasterCmd.Parameters.AddWithValue("@CancelNote", cancelNote);
+                    cancelMasterCmd.Parameters.AddWithValue("@PaymentMasterId", paymentMasterId);
+                    cancelMasterCmd.ExecuteNonQuery();
+                }
+
+                using (SqlCommand cancelVoucherCmd = new SqlCommand(@"
+UPDATE Vouchers
+SET CancelFlag = 1
+WHERE BranchID = @BranchId
+  AND VoucherID = @VoucherId
+  AND VoucherType = @VoucherType
+  AND ISNULL(CancelFlag, 0) = 0", (SqlConnection)DataConnection, transaction))
+                {
+                    cancelVoucherCmd.Parameters.AddWithValue("@BranchId", branchId);
+                    cancelVoucherCmd.Parameters.AddWithValue("@VoucherId", voucherId);
+                    cancelVoucherCmd.Parameters.AddWithValue("@VoucherType", VendorPaymentVoucherType);
+                    cancelVoucherCmd.ExecuteNonQuery();
+                }
+
+                transaction.Commit();
+                return new PurchasePaymentCancellationSummary
+                {
+                    PaymentVoucherCount = 1,
+                    PaymentAmount = totalReversed,
+                    LastPaymentDate = voucherDate
+                };
+            }
+            catch
+            {
+                if (transaction != null)
+                    transaction.Rollback();
+                throw;
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                    DataConnection.Close();
+            }
+        }
+
+        public PurchasePaymentCancellationSummary CancelPaymentsForPurchaseEdit(int purchaseNo, int branchId, int vendorLedgerId, int userId, string reason)
+        {
+            DataConnection.Open();
+            SqlTransaction transaction = null;
+
+            try
+            {
+                transaction = ((SqlConnection)DataConnection).BeginTransaction();
+
+                DataTable affectedMasters = new DataTable();
+                using (SqlCommand cmd = new SqlCommand(@"
+SELECT DISTINCT VPM.Id, VPM.BranchId, VPM.VoucherId, VPM.VoucherDate
+FROM VendorPaymentMaster VPM
+INNER JOIN VendorPaymentDetails VPD ON VPD.PaymentMasterId = VPM.Id
+WHERE ISNULL(VPM.CancelFlag, 0) = 0
+  AND ISNULL(VPD.CancelFlag, 0) = 0
+  AND VPM.BranchId = @BranchId
+  AND VPD.BillNo = @PurchaseNo
+  AND VPD.VendorLedgerId = @VendorLedgerId", (SqlConnection)DataConnection, transaction))
+                {
+                    cmd.Parameters.AddWithValue("@PurchaseNo", purchaseNo);
+                    cmd.Parameters.AddWithValue("@BranchId", branchId);
+                    cmd.Parameters.AddWithValue("@VendorLedgerId", vendorLedgerId);
+
+                    using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+                    {
+                        adapter.Fill(affectedMasters);
+                    }
+                }
+
+                if (affectedMasters.Rows.Count == 0)
+                {
+                    transaction.Commit();
+                    return new PurchasePaymentCancellationSummary();
+                }
+
+                decimal totalReversedForPurchase = 0m;
+                DateTime lastPaymentDate = DateTime.MinValue;
+
+                foreach (DataRow masterRow in affectedMasters.Rows)
+                {
+                    int paymentMasterId = Convert.ToInt32(masterRow["Id"]);
+                    int paymentBranchId = Convert.ToInt32(masterRow["BranchId"]);
+                    int voucherId = Convert.ToInt32(masterRow["VoucherId"]);
+                    if (masterRow["VoucherDate"] != DBNull.Value)
+                    {
+                        DateTime voucherDate = Convert.ToDateTime(masterRow["VoucherDate"]);
+                        if (voucherDate > lastPaymentDate)
+                            lastPaymentDate = voucherDate;
+                    }
+
+                    DataTable activeDetails = new DataTable();
+                    using (SqlCommand detailsCmd = new SqlCommand(@"
+SELECT BranchId, BillNo, VendorLedgerId, ISNULL(PaymentAmount, 0) AS PaymentAmount
+FROM VendorPaymentDetails
+WHERE PaymentMasterId = @PaymentMasterId
+  AND ISNULL(CancelFlag, 0) = 0", (SqlConnection)DataConnection, transaction))
+                    {
+                        detailsCmd.Parameters.AddWithValue("@PaymentMasterId", paymentMasterId);
+                        using (SqlDataAdapter adapter = new SqlDataAdapter(detailsCmd))
+                        {
+                            adapter.Fill(activeDetails);
+                        }
+                    }
+
+                    foreach (DataRow detailRow in activeDetails.Rows)
+                    {
+                        int detailBranchId = Convert.ToInt32(detailRow["BranchId"]);
+                        int detailBillNo = Convert.ToInt32(detailRow["BillNo"]);
+                        int detailVendorLedgerId = Convert.ToInt32(Convert.ToDecimal(detailRow["VendorLedgerId"]));
+                        decimal paymentAmount = Convert.ToDecimal(detailRow["PaymentAmount"]);
+
+                        using (SqlCommand reverseCmd = new SqlCommand(@"
+UPDATE PMaster
+SET PayedAmount = CASE
+        WHEN ROUND(ISNULL(PayedAmount, 0) - @PaymentAmount, 2) < 0 THEN 0
+        ELSE ROUND(ISNULL(PayedAmount, 0) - @PaymentAmount, 2)
+    END,
+    Paid = 0
+WHERE CancelFlag = 0
+  AND PurchaseNo = @BillNo
+  AND BranchId = @BranchId
+  AND LedgerID = @VendorLedgerId", (SqlConnection)DataConnection, transaction))
+                        {
+                            reverseCmd.Parameters.AddWithValue("@PaymentAmount", (float)paymentAmount);
+                            reverseCmd.Parameters.AddWithValue("@BillNo", detailBillNo);
+                            reverseCmd.Parameters.AddWithValue("@BranchId", detailBranchId);
+                            reverseCmd.Parameters.AddWithValue("@VendorLedgerId", detailVendorLedgerId);
+                            reverseCmd.ExecuteNonQuery();
+                        }
+
+                        if (detailBillNo == purchaseNo && detailBranchId == branchId && detailVendorLedgerId == vendorLedgerId)
+                            totalReversedForPurchase += paymentAmount;
+                    }
+
+                    using (SqlCommand cancelDetailsCmd = new SqlCommand(@"
+UPDATE VendorPaymentDetails
+SET CancelFlag = 1
+WHERE PaymentMasterId = @PaymentMasterId
+  AND ISNULL(CancelFlag, 0) = 0", (SqlConnection)DataConnection, transaction))
+                    {
+                        cancelDetailsCmd.Parameters.AddWithValue("@PaymentMasterId", paymentMasterId);
+                        cancelDetailsCmd.ExecuteNonQuery();
+                    }
+
+                    using (SqlCommand cancelMasterCmd = new SqlCommand(@"
+UPDATE VendorPaymentMaster
+SET CancelFlag = 1,
+    Narration = LEFT(ISNULL(Narration, '') + @CancelNote, 4000)
+WHERE Id = @PaymentMasterId
+  AND ISNULL(CancelFlag, 0) = 0", (SqlConnection)DataConnection, transaction))
+                    {
+                        string cancelNote = " | Cancelled for purchase edit GRN-" + purchaseNo;
+                        if (!string.IsNullOrWhiteSpace(reason))
+                            cancelNote += ": " + reason.Trim();
+                        cancelMasterCmd.Parameters.AddWithValue("@CancelNote", cancelNote);
+                        cancelMasterCmd.Parameters.AddWithValue("@PaymentMasterId", paymentMasterId);
+                        cancelMasterCmd.ExecuteNonQuery();
+                    }
+
+                    using (SqlCommand cancelVoucherCmd = new SqlCommand(@"
+UPDATE Vouchers
+SET CancelFlag = 1
+WHERE BranchID = @BranchId
+  AND VoucherID = @VoucherId
+  AND VoucherType = @VoucherType
+  AND ISNULL(CancelFlag, 0) = 0", (SqlConnection)DataConnection, transaction))
+                    {
+                        cancelVoucherCmd.Parameters.AddWithValue("@BranchId", paymentBranchId);
+                        cancelVoucherCmd.Parameters.AddWithValue("@VoucherId", voucherId);
+                        cancelVoucherCmd.Parameters.AddWithValue("@VoucherType", VendorPaymentVoucherType);
+                        cancelVoucherCmd.ExecuteNonQuery();
+                    }
+                }
+
+                transaction.Commit();
+                return new PurchasePaymentCancellationSummary
+                {
+                    PaymentVoucherCount = affectedMasters.Rows.Count,
+                    PaymentAmount = totalReversedForPurchase,
+                    LastPaymentDate = lastPaymentDate
+                };
+            }
+            catch
+            {
+                if (transaction != null)
+                    transaction.Rollback();
+                throw;
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                    DataConnection.Close();
+            }
+        }
+
         public DataTable GetAllPayments(int branchId)
         {
             DataTable dt = new DataTable();
@@ -594,7 +946,7 @@ namespace Repository.Accounts
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@BranchId", branchId);
-                    cmd.Parameters.AddWithValue("@VoucherType", "VENDPAY");
+                    cmd.Parameters.AddWithValue("@VoucherType", VendorPaymentVoucherType);
                     cmd.Parameters.AddWithValue("@_Operation", "GETALL");
                     cmd.Parameters.AddWithValue("@PageIndex", 0);
                     cmd.Parameters.AddWithValue("@PageSize", 1000);

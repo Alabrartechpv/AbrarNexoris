@@ -393,7 +393,7 @@ namespace PosBranch_Win.Transaction
             this.BtnDial.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BtnDial.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.BtnDial.ForeColor = System.Drawing.Color.Aquamarine;
-            this.BtnDial.Location = new System.Drawing.Point(192, 33);
+            this.BtnDial.Location = new System.Drawing.Point(201, 34);
             this.BtnDial.Name = "BtnDial";
             this.BtnDial.Size = new System.Drawing.Size(49, 33);
             this.BtnDial.TabIndex = 37;
