@@ -30,6 +30,7 @@ namespace PosBranch_Win.Accounts
         {
             Infragistics.Win.Appearance appearance1 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance2 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance3 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance4 = new Infragistics.Win.Appearance();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmPayment));
             Infragistics.Win.Appearance appearance5 = new Infragistics.Win.Appearance();
@@ -37,6 +38,12 @@ namespace PosBranch_Win.Accounts
             Infragistics.Win.Appearance appearance7 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance8 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance9 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance23 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance22 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance27 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance24 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance26 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance28 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance10 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance11 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance12 = new Infragistics.Win.Appearance();
@@ -49,16 +56,9 @@ namespace PosBranch_Win.Accounts
             Infragistics.Win.Appearance appearance19 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance20 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance21 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance22 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance23 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance24 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance25 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance26 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance27 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance28 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance29 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance30 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance31 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance29 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance32 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance33 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance34 = new Infragistics.Win.Appearance();
@@ -70,11 +70,13 @@ namespace PosBranch_Win.Accounts
             Infragistics.Win.Appearance appearance40 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance41 = new Infragistics.Win.Appearance();
             Infragistics.Win.Appearance appearance42 = new Infragistics.Win.Appearance();
-            Infragistics.Win.Appearance appearance3 = new Infragistics.Win.Appearance();
+            Infragistics.Win.Appearance appearance30 = new Infragistics.Win.Appearance();
             this.ultraPanel1 = new Infragistics.Win.Misc.UltraPanel();
             this.label1 = new System.Windows.Forms.Label();
             this.ultraTextEditor1 = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.gboxPaymentInfo = new System.Windows.Forms.GroupBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.ultraTextEditor2 = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
             this.ultraPictureBox7 = new Infragistics.Win.UltraWinEditors.UltraPictureBox();
             this.textBox2 = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
             this.dtpPurchaseDate = new Infragistics.Win.UltraWinEditors.UltraDateTimeEditor();
@@ -86,8 +88,8 @@ namespace PosBranch_Win.Accounts
             this.lblPaymentMethod = new System.Windows.Forms.Label();
             this.lblPaymentVoucherDate = new System.Windows.Forms.Label();
             this.lblSalesPerson = new System.Windows.Forms.Label();
-            this.ultraPanel6 = new Infragistics.Win.Misc.UltraPanel();
-            this.ultraLabel7 = new Infragistics.Win.Misc.UltraLabel();
+            this.ultraTextEditor3 = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.lblCancelledGrn = new System.Windows.Forms.Label();
             this.ultraPictureBox2 = new Infragistics.Win.UltraWinEditors.UltraPictureBox();
             this.ultraLabel10 = new Infragistics.Win.Misc.UltraLabel();
             this.ultraPictureBox1 = new Infragistics.Win.UltraWinEditors.UltraPictureBox();
@@ -104,6 +106,7 @@ namespace PosBranch_Win.Accounts
             this.rdbtnoutstanding = new System.Windows.Forms.RadioButton();
             this.ultraPanel2 = new Infragistics.Win.Misc.UltraPanel();
             this.ultraPictureBox10 = new Infragistics.Win.UltraWinEditors.UltraPictureBox();
+            this.ultraPictureBox11 = new Infragistics.Win.UltraWinEditors.UltraPictureBox();
             this.ultraPanel3 = new Infragistics.Win.Misc.UltraPanel();
             this.ultraPictureBox5 = new Infragistics.Win.UltraWinEditors.UltraPictureBox();
             this.ultraPanel9 = new Infragistics.Win.Misc.UltraPanel();
@@ -122,19 +125,19 @@ namespace PosBranch_Win.Accounts
             this.lblOutStanding = new System.Windows.Forms.Label();
             this.lblVendorName = new System.Windows.Forms.Label();
             this.lblDocNo = new System.Windows.Forms.Label();
-            this.ultraTextEditor2 = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
-            this.label2 = new System.Windows.Forms.Label();
+            this.ultraTextEditor4 = new Infragistics.Win.UltraWinEditors.UltraTextEditor();
+            this.label3 = new System.Windows.Forms.Label();
             this.ultraPanel1.ClientArea.SuspendLayout();
             this.ultraPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.ultraTextEditor1)).BeginInit();
             this.gboxPaymentInfo.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraTextEditor2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.textBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dtpPurchaseDate)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.richTextBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.CmboPayment)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.textBox1)).BeginInit();
-            this.ultraPanel6.ClientArea.SuspendLayout();
-            this.ultraPanel6.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraTextEditor3)).BeginInit();
             this.ultraPanel5.ClientArea.SuspendLayout();
             this.ultraPanel5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.ultraGrid1)).BeginInit();
@@ -155,7 +158,7 @@ namespace PosBranch_Win.Accounts
             ((System.ComponentModel.ISupportInitialize)(this.txtOutstanding)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtVendorName)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.textBox4)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.ultraTextEditor2)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraTextEditor4)).BeginInit();
             this.SuspendLayout();
             // 
             // ultraPanel1
@@ -170,7 +173,6 @@ namespace PosBranch_Win.Accounts
             this.ultraPanel1.ClientArea.Controls.Add(this.label1);
             this.ultraPanel1.ClientArea.Controls.Add(this.ultraTextEditor1);
             this.ultraPanel1.ClientArea.Controls.Add(this.gboxPaymentInfo);
-            this.ultraPanel1.ClientArea.Controls.Add(this.ultraPanel6);
             this.ultraPanel1.ClientArea.Controls.Add(this.ultraPanel5);
             this.ultraPanel1.ClientArea.Controls.Add(this.radioBtnAllDocument);
             this.ultraPanel1.ClientArea.Controls.Add(this.ultraPanel4);
@@ -187,7 +189,7 @@ namespace PosBranch_Win.Accounts
             this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(1051, 220);
+            this.label1.Location = new System.Drawing.Point(1096, 221);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(118, 17);
             this.label1.TabIndex = 74;
@@ -204,10 +206,10 @@ namespace PosBranch_Win.Accounts
             this.ultraTextEditor1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.ultraTextEditor1.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
             this.ultraTextEditor1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
-            this.ultraTextEditor1.Location = new System.Drawing.Point(1173, 218);
+            this.ultraTextEditor1.Location = new System.Drawing.Point(1220, 218);
             this.ultraTextEditor1.Multiline = true;
             this.ultraTextEditor1.Name = "ultraTextEditor1";
-            this.ultraTextEditor1.Size = new System.Drawing.Size(160, 21);
+            this.ultraTextEditor1.Size = new System.Drawing.Size(113, 21);
             this.ultraTextEditor1.TabIndex = 73;
             this.ultraTextEditor1.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             // 
@@ -235,6 +237,34 @@ namespace PosBranch_Win.Accounts
             this.gboxPaymentInfo.TabStop = false;
             this.gboxPaymentInfo.Text = "Payment Information";
             // 
+            // label2
+            // 
+            this.label2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
+            this.label2.Location = new System.Drawing.Point(1156, 83);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(45, 16);
+            this.label2.TabIndex = 77;
+            this.label2.Text = "Status";
+            // 
+            // ultraTextEditor2
+            // 
+            this.ultraTextEditor2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            appearance3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+            appearance3.BorderColor = System.Drawing.Color.DeepSkyBlue;
+            appearance3.TextHAlignAsString = "Center";
+            appearance3.TextVAlignAsString = "Middle";
+            this.ultraTextEditor2.Appearance = appearance3;
+            this.ultraTextEditor2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+            this.ultraTextEditor2.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
+            this.ultraTextEditor2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
+            this.ultraTextEditor2.Location = new System.Drawing.Point(1207, 81);
+            this.ultraTextEditor2.Name = "ultraTextEditor2";
+            this.ultraTextEditor2.Size = new System.Drawing.Size(113, 22);
+            this.ultraTextEditor2.TabIndex = 75;
+            this.ultraTextEditor2.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+            // 
             // ultraPictureBox7
             // 
             this.ultraPictureBox7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -258,10 +288,10 @@ namespace PosBranch_Win.Accounts
             this.textBox2.BackColor = System.Drawing.Color.White;
             this.textBox2.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
             this.textBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
-            this.textBox2.Location = new System.Drawing.Point(1160, 54);
+            this.textBox2.Location = new System.Drawing.Point(1207, 54);
             this.textBox2.Multiline = true;
             this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(160, 21);
+            this.textBox2.Size = new System.Drawing.Size(113, 21);
             this.textBox2.TabIndex = 75;
             this.textBox2.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             // 
@@ -274,9 +304,9 @@ namespace PosBranch_Win.Accounts
             this.dtpPurchaseDate.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
             this.dtpPurchaseDate.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
             this.dtpPurchaseDate.DateTime = new System.DateTime(2025, 7, 30, 0, 0, 0, 0);
-            this.dtpPurchaseDate.Location = new System.Drawing.Point(1160, 22);
+            this.dtpPurchaseDate.Location = new System.Drawing.Point(1207, 22);
             this.dtpPurchaseDate.Name = "dtpPurchaseDate";
-            this.dtpPurchaseDate.Size = new System.Drawing.Size(160, 19);
+            this.dtpPurchaseDate.Size = new System.Drawing.Size(113, 19);
             this.dtpPurchaseDate.TabIndex = 74;
             this.dtpPurchaseDate.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             this.dtpPurchaseDate.Value = new System.DateTime(2025, 7, 30, 0, 0, 0, 0);
@@ -292,7 +322,7 @@ namespace PosBranch_Win.Accounts
             this.richTextBox2.Location = new System.Drawing.Point(121, 63);
             this.richTextBox2.Multiline = true;
             this.richTextBox2.Name = "richTextBox2";
-            this.richTextBox2.Size = new System.Drawing.Size(921, 36);
+            this.richTextBox2.Size = new System.Drawing.Size(932, 36);
             this.richTextBox2.TabIndex = 73;
             this.richTextBox2.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             // 
@@ -361,7 +391,7 @@ namespace PosBranch_Win.Accounts
             this.lblPaymentVoucherDate.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.lblPaymentVoucherDate.AutoSize = true;
             this.lblPaymentVoucherDate.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
-            this.lblPaymentVoucherDate.Location = new System.Drawing.Point(1120, 24);
+            this.lblPaymentVoucherDate.Location = new System.Drawing.Point(1156, 25);
             this.lblPaymentVoucherDate.Name = "lblPaymentVoucherDate";
             this.lblPaymentVoucherDate.Size = new System.Drawing.Size(37, 16);
             this.lblPaymentVoucherDate.TabIndex = 12;
@@ -372,77 +402,64 @@ namespace PosBranch_Win.Accounts
             this.lblSalesPerson.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.lblSalesPerson.AutoSize = true;
             this.lblSalesPerson.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
-            this.lblSalesPerson.Location = new System.Drawing.Point(1067, 57);
+            this.lblSalesPerson.Location = new System.Drawing.Point(1112, 56);
             this.lblSalesPerson.Name = "lblSalesPerson";
             this.lblSalesPerson.Size = new System.Drawing.Size(89, 16);
             this.lblSalesPerson.TabIndex = 10;
             this.lblSalesPerson.Text = "Sales Person";
             // 
-            // ultraPanel6
+            // ultraTextEditor3
             // 
-            this.ultraPanel6.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.ultraPanel6.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
+            this.ultraTextEditor3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.ultraTextEditor3.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
+            this.ultraTextEditor3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
+            this.ultraTextEditor3.Location = new System.Drawing.Point(1159, 64);
+            this.ultraTextEditor3.Name = "ultraTextEditor3";
+            this.ultraTextEditor3.ReadOnly = true;
+            this.ultraTextEditor3.Size = new System.Drawing.Size(161, 22);
+            this.ultraTextEditor3.TabIndex = 78;
+            this.ultraTextEditor3.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             // 
-            // ultraPanel6.ClientArea
+            // lblCancelledGrn
             // 
-            this.ultraPanel6.ClientArea.Controls.Add(this.ultraLabel7);
-            this.ultraPanel6.ClientArea.Controls.Add(this.ultraPictureBox2);
-            this.ultraPanel6.ClientArea.Controls.Add(this.ultraLabel10);
-            this.ultraPanel6.ClientArea.Controls.Add(this.ultraPictureBox1);
-            this.ultraPanel6.ClientArea.Controls.Add(this.ultraLabel11);
-            this.ultraPanel6.ClientArea.Controls.Add(this.ultraPictureBox3);
-            this.ultraPanel6.ClientArea.Controls.Add(this.ultraPictureBox4);
-            this.ultraPanel6.Location = new System.Drawing.Point(1148, 243);
-            this.ultraPanel6.Name = "ultraPanel6";
-            this.ultraPanel6.Size = new System.Drawing.Size(195, 203);
-            this.ultraPanel6.TabIndex = 25;
-            // 
-            // ultraLabel7
-            // 
-            appearance10.BackColor = System.Drawing.Color.LightSkyBlue;
-            appearance10.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            appearance10.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            appearance10.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(255)))));
-            appearance10.TextHAlignAsString = "Center";
-            this.ultraLabel7.Appearance = appearance10;
-            this.ultraLabel7.BorderStyleInner = Infragistics.Win.UIElementBorderStyle.WindowsVista;
-            this.ultraLabel7.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ultraLabel7.Location = new System.Drawing.Point(132, 119);
-            this.ultraLabel7.Name = "ultraLabel7";
-            this.ultraLabel7.Size = new System.Drawing.Size(51, 13);
-            this.ultraLabel7.TabIndex = 49;
-            this.ultraLabel7.Text = "F4";
+            this.lblCancelledGrn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblCancelledGrn.AutoSize = true;
+            this.lblCancelledGrn.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
+            this.lblCancelledGrn.Location = new System.Drawing.Point(1039, 67);
+            this.lblCancelledGrn.Name = "lblCancelledGrn";
+            this.lblCancelledGrn.Size = new System.Drawing.Size(117, 16);
+            this.lblCancelledGrn.TabIndex = 78;
+            this.lblCancelledGrn.Text = "Cancelled GRN(s)";
             // 
             // ultraPictureBox2
             // 
-            appearance11.BackColor = System.Drawing.Color.LightSkyBlue;
-            appearance11.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            appearance11.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            appearance11.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            this.ultraPictureBox2.Appearance = appearance11;
+            appearance23.BackColor = System.Drawing.Color.LightSkyBlue;
+            appearance23.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
+            appearance23.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            appearance23.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            this.ultraPictureBox2.Appearance = appearance23;
             this.ultraPictureBox2.BackColor = System.Drawing.Color.LightSkyBlue;
             this.ultraPictureBox2.BackColorInternal = System.Drawing.Color.LightSkyBlue;
             this.ultraPictureBox2.BorderShadowColor = System.Drawing.Color.Empty;
             this.ultraPictureBox2.BorderStyle = Infragistics.Win.UIElementBorderStyle.Rounded1Etched;
             this.ultraPictureBox2.Cursor = System.Windows.Forms.Cursors.Hand;
             this.ultraPictureBox2.Image = ((object)(resources.GetObject("ultraPictureBox2.Image")));
-            this.ultraPictureBox2.Location = new System.Drawing.Point(130, 61);
+            this.ultraPictureBox2.Location = new System.Drawing.Point(687, 18);
             this.ultraPictureBox2.Name = "ultraPictureBox2";
             this.ultraPictureBox2.Size = new System.Drawing.Size(53, 56);
             this.ultraPictureBox2.TabIndex = 48;
             // 
             // ultraLabel10
             // 
-            appearance12.BackColor = System.Drawing.Color.LightSkyBlue;
-            appearance12.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            appearance12.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            appearance12.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(255)))));
-            appearance12.TextHAlignAsString = "Center";
-            this.ultraLabel10.Appearance = appearance12;
+            appearance22.BackColor = System.Drawing.Color.LightSkyBlue;
+            appearance22.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            appearance22.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            appearance22.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(255)))));
+            appearance22.TextHAlignAsString = "Center";
+            this.ultraLabel10.Appearance = appearance22;
             this.ultraLabel10.BorderStyleInner = Infragistics.Win.UIElementBorderStyle.WindowsVista;
             this.ultraLabel10.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ultraLabel10.Location = new System.Drawing.Point(72, 119);
+            this.ultraLabel10.Location = new System.Drawing.Point(871, 49);
             this.ultraLabel10.Name = "ultraLabel10";
             this.ultraLabel10.Size = new System.Drawing.Size(53, 13);
             this.ultraLabel10.TabIndex = 45;
@@ -450,33 +467,33 @@ namespace PosBranch_Win.Accounts
             // 
             // ultraPictureBox1
             // 
-            appearance13.BackColor = System.Drawing.Color.LightSkyBlue;
-            appearance13.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            appearance13.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            appearance13.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            this.ultraPictureBox1.Appearance = appearance13;
+            appearance27.BackColor = System.Drawing.Color.LightSkyBlue;
+            appearance27.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
+            appearance27.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            appearance27.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            this.ultraPictureBox1.Appearance = appearance27;
             this.ultraPictureBox1.BackColor = System.Drawing.Color.LightSkyBlue;
             this.ultraPictureBox1.BackColorInternal = System.Drawing.Color.LightSkyBlue;
             this.ultraPictureBox1.BorderShadowColor = System.Drawing.Color.Empty;
             this.ultraPictureBox1.BorderStyle = Infragistics.Win.UIElementBorderStyle.Rounded1Etched;
             this.ultraPictureBox1.Cursor = System.Windows.Forms.Cursors.Hand;
             this.ultraPictureBox1.Image = ((object)(resources.GetObject("ultraPictureBox1.Image")));
-            this.ultraPictureBox1.Location = new System.Drawing.Point(71, 62);
+            this.ultraPictureBox1.Location = new System.Drawing.Point(938, 40);
             this.ultraPictureBox1.Name = "ultraPictureBox1";
             this.ultraPictureBox1.Size = new System.Drawing.Size(53, 56);
             this.ultraPictureBox1.TabIndex = 44;
             // 
             // ultraLabel11
             // 
-            appearance14.BackColor = System.Drawing.Color.LightSkyBlue;
-            appearance14.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            appearance14.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            appearance14.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(255)))));
-            appearance14.TextHAlignAsString = "Center";
-            this.ultraLabel11.Appearance = appearance14;
+            appearance24.BackColor = System.Drawing.Color.LightSkyBlue;
+            appearance24.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            appearance24.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            appearance24.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(255)))));
+            appearance24.TextHAlignAsString = "Center";
+            this.ultraLabel11.Appearance = appearance24;
             this.ultraLabel11.BorderStyleInner = Infragistics.Win.UIElementBorderStyle.WindowsVista;
             this.ultraLabel11.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ultraLabel11.Location = new System.Drawing.Point(11, 119);
+            this.ultraLabel11.Location = new System.Drawing.Point(930, 102);
             this.ultraLabel11.Name = "ultraLabel11";
             this.ultraLabel11.Size = new System.Drawing.Size(51, 14);
             this.ultraLabel11.TabIndex = 40;
@@ -484,36 +501,36 @@ namespace PosBranch_Win.Accounts
             // 
             // ultraPictureBox3
             // 
-            appearance15.BackColor = System.Drawing.Color.LightSkyBlue;
-            appearance15.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            appearance15.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            appearance15.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            this.ultraPictureBox3.Appearance = appearance15;
+            appearance26.BackColor = System.Drawing.Color.LightSkyBlue;
+            appearance26.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
+            appearance26.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            appearance26.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            this.ultraPictureBox3.Appearance = appearance26;
             this.ultraPictureBox3.BackColor = System.Drawing.Color.LightSkyBlue;
             this.ultraPictureBox3.BackColorInternal = System.Drawing.Color.LightSteelBlue;
             this.ultraPictureBox3.BorderShadowColor = System.Drawing.Color.Empty;
             this.ultraPictureBox3.BorderStyle = Infragistics.Win.UIElementBorderStyle.Rounded1Etched;
             this.ultraPictureBox3.Cursor = System.Windows.Forms.Cursors.Hand;
             this.ultraPictureBox3.Image = ((object)(resources.GetObject("ultraPictureBox3.Image")));
-            this.ultraPictureBox3.Location = new System.Drawing.Point(10, 62);
+            this.ultraPictureBox3.Location = new System.Drawing.Point(654, 40);
             this.ultraPictureBox3.Name = "ultraPictureBox3";
             this.ultraPictureBox3.Size = new System.Drawing.Size(53, 56);
             this.ultraPictureBox3.TabIndex = 39;
             // 
             // ultraPictureBox4
             // 
-            appearance16.BackColor = System.Drawing.Color.DeepSkyBlue;
-            appearance16.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            appearance16.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            appearance16.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            this.ultraPictureBox4.Appearance = appearance16;
+            appearance28.BackColor = System.Drawing.Color.DeepSkyBlue;
+            appearance28.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
+            appearance28.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            appearance28.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            this.ultraPictureBox4.Appearance = appearance28;
             this.ultraPictureBox4.BackColor = System.Drawing.Color.DeepSkyBlue;
             this.ultraPictureBox4.BackColorInternal = System.Drawing.Color.LightSkyBlue;
             this.ultraPictureBox4.BorderShadowColor = System.Drawing.Color.Empty;
             this.ultraPictureBox4.BorderStyle = Infragistics.Win.UIElementBorderStyle.Rounded1Etched;
             this.ultraPictureBox4.Cursor = System.Windows.Forms.Cursors.Hand;
             this.ultraPictureBox4.Image = ((object)(resources.GetObject("ultraPictureBox4.Image")));
-            this.ultraPictureBox4.Location = new System.Drawing.Point(10, 63);
+            this.ultraPictureBox4.Location = new System.Drawing.Point(871, 49);
             this.ultraPictureBox4.Name = "ultraPictureBox4";
             this.ultraPictureBox4.Size = new System.Drawing.Size(53, 56);
             this.ultraPictureBox4.TabIndex = 41;
@@ -528,88 +545,93 @@ namespace PosBranch_Win.Accounts
             // ultraPanel5.ClientArea
             // 
             this.ultraPanel5.ClientArea.Controls.Add(this.ultraGrid1);
+            this.ultraPanel5.ClientArea.Controls.Add(this.ultraLabel10);
+            this.ultraPanel5.ClientArea.Controls.Add(this.ultraPictureBox2);
+            this.ultraPanel5.ClientArea.Controls.Add(this.ultraLabel11);
             this.ultraPanel5.ClientArea.Controls.Add(this.gridFooterPanel);
+            this.ultraPanel5.ClientArea.Controls.Add(this.ultraPictureBox3);
+            this.ultraPanel5.ClientArea.Controls.Add(this.ultraPictureBox1);
+            this.ultraPanel5.ClientArea.Controls.Add(this.ultraPictureBox4);
             this.ultraPanel5.Location = new System.Drawing.Point(12, 243);
             this.ultraPanel5.Name = "ultraPanel5";
-            this.ultraPanel5.Size = new System.Drawing.Size(1130, 203);
+            this.ultraPanel5.Size = new System.Drawing.Size(1321, 203);
             this.ultraPanel5.TabIndex = 6;
             // 
             // ultraGrid1
             // 
-            appearance17.BackColor = System.Drawing.SystemColors.Window;
-            appearance17.BorderColor = System.Drawing.SystemColors.InactiveCaption;
-            this.ultraGrid1.DisplayLayout.Appearance = appearance17;
+            appearance10.BackColor = System.Drawing.SystemColors.Window;
+            appearance10.BorderColor = System.Drawing.SystemColors.InactiveCaption;
+            this.ultraGrid1.DisplayLayout.Appearance = appearance10;
             this.ultraGrid1.DisplayLayout.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
             this.ultraGrid1.DisplayLayout.CaptionVisible = Infragistics.Win.DefaultableBoolean.False;
-            appearance18.BackColor = System.Drawing.SystemColors.ActiveBorder;
-            appearance18.BackColor2 = System.Drawing.SystemColors.ControlDark;
-            appearance18.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
-            appearance18.BorderColor = System.Drawing.SystemColors.Window;
-            this.ultraGrid1.DisplayLayout.GroupByBox.Appearance = appearance18;
-            appearance19.ForeColor = System.Drawing.SystemColors.GrayText;
-            this.ultraGrid1.DisplayLayout.GroupByBox.BandLabelAppearance = appearance19;
+            appearance11.BackColor = System.Drawing.SystemColors.ActiveBorder;
+            appearance11.BackColor2 = System.Drawing.SystemColors.ControlDark;
+            appearance11.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
+            appearance11.BorderColor = System.Drawing.SystemColors.Window;
+            this.ultraGrid1.DisplayLayout.GroupByBox.Appearance = appearance11;
+            appearance12.ForeColor = System.Drawing.SystemColors.GrayText;
+            this.ultraGrid1.DisplayLayout.GroupByBox.BandLabelAppearance = appearance12;
             this.ultraGrid1.DisplayLayout.GroupByBox.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
             this.ultraGrid1.DisplayLayout.GroupByBox.Hidden = true;
-            appearance20.BackColor = System.Drawing.SystemColors.ControlLightLight;
-            appearance20.BackColor2 = System.Drawing.SystemColors.Control;
-            appearance20.BackGradientStyle = Infragistics.Win.GradientStyle.Horizontal;
-            appearance20.ForeColor = System.Drawing.SystemColors.GrayText;
-            this.ultraGrid1.DisplayLayout.GroupByBox.PromptAppearance = appearance20;
+            appearance13.BackColor = System.Drawing.SystemColors.ControlLightLight;
+            appearance13.BackColor2 = System.Drawing.SystemColors.Control;
+            appearance13.BackGradientStyle = Infragistics.Win.GradientStyle.Horizontal;
+            appearance13.ForeColor = System.Drawing.SystemColors.GrayText;
+            this.ultraGrid1.DisplayLayout.GroupByBox.PromptAppearance = appearance13;
             this.ultraGrid1.DisplayLayout.MaxColScrollRegions = 1;
             this.ultraGrid1.DisplayLayout.MaxRowScrollRegions = 1;
-            appearance21.BackColor = System.Drawing.SystemColors.Window;
-            appearance21.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.ultraGrid1.DisplayLayout.Override.ActiveCellAppearance = appearance21;
-            appearance22.BackColor = System.Drawing.SystemColors.Highlight;
-            appearance22.ForeColor = System.Drawing.SystemColors.HighlightText;
-            this.ultraGrid1.DisplayLayout.Override.ActiveRowAppearance = appearance22;
+            appearance14.BackColor = System.Drawing.SystemColors.Window;
+            appearance14.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.ultraGrid1.DisplayLayout.Override.ActiveCellAppearance = appearance14;
+            appearance15.BackColor = System.Drawing.SystemColors.Highlight;
+            appearance15.ForeColor = System.Drawing.SystemColors.HighlightText;
+            this.ultraGrid1.DisplayLayout.Override.ActiveRowAppearance = appearance15;
             this.ultraGrid1.DisplayLayout.Override.BorderStyleCell = Infragistics.Win.UIElementBorderStyle.Dotted;
             this.ultraGrid1.DisplayLayout.Override.BorderStyleRow = Infragistics.Win.UIElementBorderStyle.Dotted;
-            appearance23.BackColor = System.Drawing.SystemColors.Window;
-            this.ultraGrid1.DisplayLayout.Override.CardAreaAppearance = appearance23;
-            appearance24.BorderColor = System.Drawing.Color.Silver;
-            appearance24.TextTrimming = Infragistics.Win.TextTrimming.EllipsisCharacter;
-            this.ultraGrid1.DisplayLayout.Override.CellAppearance = appearance24;
+            appearance16.BackColor = System.Drawing.SystemColors.Window;
+            this.ultraGrid1.DisplayLayout.Override.CardAreaAppearance = appearance16;
+            appearance17.BorderColor = System.Drawing.Color.Silver;
+            appearance17.TextTrimming = Infragistics.Win.TextTrimming.EllipsisCharacter;
+            this.ultraGrid1.DisplayLayout.Override.CellAppearance = appearance17;
             this.ultraGrid1.DisplayLayout.Override.CellClickAction = Infragistics.Win.UltraWinGrid.CellClickAction.EditAndSelectText;
             this.ultraGrid1.DisplayLayout.Override.CellPadding = 0;
-            appearance25.BackColor = System.Drawing.SystemColors.Control;
-            appearance25.BackColor2 = System.Drawing.SystemColors.ControlDark;
-            appearance25.BackGradientAlignment = Infragistics.Win.GradientAlignment.Element;
-            appearance25.BackGradientStyle = Infragistics.Win.GradientStyle.Horizontal;
-            appearance25.BorderColor = System.Drawing.SystemColors.Window;
-            this.ultraGrid1.DisplayLayout.Override.GroupByRowAppearance = appearance25;
-            appearance26.TextHAlignAsString = "Left";
-            this.ultraGrid1.DisplayLayout.Override.HeaderAppearance = appearance26;
+            appearance18.BackColor = System.Drawing.SystemColors.Control;
+            appearance18.BackColor2 = System.Drawing.SystemColors.ControlDark;
+            appearance18.BackGradientAlignment = Infragistics.Win.GradientAlignment.Element;
+            appearance18.BackGradientStyle = Infragistics.Win.GradientStyle.Horizontal;
+            appearance18.BorderColor = System.Drawing.SystemColors.Window;
+            this.ultraGrid1.DisplayLayout.Override.GroupByRowAppearance = appearance18;
+            appearance19.TextHAlignAsString = "Left";
+            this.ultraGrid1.DisplayLayout.Override.HeaderAppearance = appearance19;
             this.ultraGrid1.DisplayLayout.Override.HeaderClickAction = Infragistics.Win.UltraWinGrid.HeaderClickAction.SortMulti;
             this.ultraGrid1.DisplayLayout.Override.HeaderStyle = Infragistics.Win.HeaderStyle.WindowsXPCommand;
-            appearance27.BackColor = System.Drawing.SystemColors.Window;
-            appearance27.BorderColor = System.Drawing.Color.Silver;
-            this.ultraGrid1.DisplayLayout.Override.RowAppearance = appearance27;
+            appearance20.BackColor = System.Drawing.SystemColors.Window;
+            appearance20.BorderColor = System.Drawing.Color.Silver;
+            this.ultraGrid1.DisplayLayout.Override.RowAppearance = appearance20;
             this.ultraGrid1.DisplayLayout.Override.RowSelectors = Infragistics.Win.DefaultableBoolean.False;
-            appearance28.BackColor = System.Drawing.SystemColors.ControlLight;
-            this.ultraGrid1.DisplayLayout.Override.TemplateAddRowAppearance = appearance28;
+            appearance21.BackColor = System.Drawing.SystemColors.ControlLight;
+            this.ultraGrid1.DisplayLayout.Override.TemplateAddRowAppearance = appearance21;
             this.ultraGrid1.DisplayLayout.ScrollBounds = Infragistics.Win.UltraWinGrid.ScrollBounds.ScrollToFill;
             this.ultraGrid1.DisplayLayout.ScrollStyle = Infragistics.Win.UltraWinGrid.ScrollStyle.Immediate;
             this.ultraGrid1.DisplayLayout.ViewStyleBand = Infragistics.Win.UltraWinGrid.ViewStyleBand.OutlookGroupBy;
-            this.ultraGrid1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ultraGrid1.Location = new System.Drawing.Point(0, 0);
+            this.ultraGrid1.Location = new System.Drawing.Point(-2, 0);
             this.ultraGrid1.Name = "ultraGrid1";
-            this.ultraGrid1.Size = new System.Drawing.Size(1128, 175);
+            this.ultraGrid1.Size = new System.Drawing.Size(1318, 175);
             this.ultraGrid1.TabIndex = 7;
             this.ultraGrid1.Text = "ultraGrid1";
             // 
             // gridFooterPanel
             // 
-            appearance29.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(122)))), ((int)(((byte)(204)))));
-            appearance29.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(102)))), ((int)(((byte)(184)))));
-            appearance29.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
-            appearance29.FontData.BoldAsString = "True";
-            appearance29.ForeColor = System.Drawing.Color.White;
-            this.gridFooterPanel.Appearance = appearance29;
+            appearance25.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(122)))), ((int)(((byte)(204)))));
+            appearance25.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(102)))), ((int)(((byte)(184)))));
+            appearance25.BackGradientStyle = Infragistics.Win.GradientStyle.Vertical;
+            appearance25.FontData.BoldAsString = "True";
+            appearance25.ForeColor = System.Drawing.Color.White;
+            this.gridFooterPanel.Appearance = appearance25;
             this.gridFooterPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.gridFooterPanel.Location = new System.Drawing.Point(0, 175);
             this.gridFooterPanel.Name = "gridFooterPanel";
-            this.gridFooterPanel.Size = new System.Drawing.Size(1128, 26);
+            this.gridFooterPanel.Size = new System.Drawing.Size(1319, 26);
             this.gridFooterPanel.TabIndex = 6;
             // 
             // radioBtnAllDocument
@@ -677,6 +699,9 @@ namespace PosBranch_Win.Accounts
             // 
             // ultraPanel2.ClientArea
             // 
+            this.ultraPanel2.ClientArea.Controls.Add(this.label3);
+            this.ultraPanel2.ClientArea.Controls.Add(this.ultraPictureBox11);
+            this.ultraPanel2.ClientArea.Controls.Add(this.ultraTextEditor4);
             this.ultraPanel2.ClientArea.Controls.Add(this.ultraPictureBox10);
             this.ultraPanel2.ClientArea.Controls.Add(this.ultraPanel3);
             this.ultraPanel2.ClientArea.Controls.Add(this.ultraPanel9);
@@ -689,7 +714,9 @@ namespace PosBranch_Win.Accounts
             this.ultraPanel2.ClientArea.Controls.Add(this.btnF11);
             this.ultraPanel2.ClientArea.Controls.Add(this.lblVendorLedgerId);
             this.ultraPanel2.ClientArea.Controls.Add(this.lblCutomerCode);
+            this.ultraPanel2.ClientArea.Controls.Add(this.ultraTextEditor3);
             this.ultraPanel2.ClientArea.Controls.Add(this.lblOutStanding);
+            this.ultraPanel2.ClientArea.Controls.Add(this.lblCancelledGrn);
             this.ultraPanel2.ClientArea.Controls.Add(this.lblVendorName);
             this.ultraPanel2.ClientArea.Controls.Add(this.lblDocNo);
             this.ultraPanel2.Location = new System.Drawing.Point(13, 3);
@@ -700,8 +727,8 @@ namespace PosBranch_Win.Accounts
             // ultraPictureBox10
             // 
             this.ultraPictureBox10.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            appearance30.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(160)))), ((int)(((byte)(210)))), ((int)(((byte)(255)))));
-            this.ultraPictureBox10.Appearance = appearance30;
+            appearance31.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(160)))), ((int)(((byte)(210)))), ((int)(((byte)(255)))));
+            this.ultraPictureBox10.Appearance = appearance31;
             this.ultraPictureBox10.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(160)))), ((int)(((byte)(210)))), ((int)(((byte)(255)))));
             this.ultraPictureBox10.BackColorInternal = System.Drawing.Color.AliceBlue;
             this.ultraPictureBox10.BorderShadowColor = System.Drawing.Color.Empty;
@@ -711,12 +738,28 @@ namespace PosBranch_Win.Accounts
             this.ultraPictureBox10.Size = new System.Drawing.Size(26, 17);
             this.ultraPictureBox10.TabIndex = 77;
             // 
+            // ultraPictureBox11
+            // 
+            this.ultraPictureBox11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            appearance29.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
+            appearance29.BorderColor = System.Drawing.Color.DeepSkyBlue;
+            this.ultraPictureBox11.Appearance = appearance29;
+            this.ultraPictureBox11.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
+            this.ultraPictureBox11.BackColorInternal = System.Drawing.Color.AliceBlue;
+            this.ultraPictureBox11.BorderShadowColor = System.Drawing.Color.Empty;
+            this.ultraPictureBox11.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.ultraPictureBox11.Image = ((object)(resources.GetObject("ultraPictureBox11.Image")));
+            this.ultraPictureBox11.Location = new System.Drawing.Point(1292, 38);
+            this.ultraPictureBox11.Name = "ultraPictureBox11";
+            this.ultraPictureBox11.Size = new System.Drawing.Size(26, 17);
+            this.ultraPictureBox11.TabIndex = 78;
+            // 
             // ultraPanel3
             // 
-            appearance31.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(174)))), ((int)(((byte)(239)))));
-            appearance31.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(116)))), ((int)(((byte)(217)))));
-            appearance31.BackGradientStyle = Infragistics.Win.GradientStyle.GlassTop50;
-            this.ultraPanel3.Appearance = appearance31;
+            appearance32.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(174)))), ((int)(((byte)(239)))));
+            appearance32.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(116)))), ((int)(((byte)(217)))));
+            appearance32.BackGradientStyle = Infragistics.Win.GradientStyle.GlassTop50;
+            this.ultraPanel3.Appearance = appearance32;
             this.ultraPanel3.BorderStyle = Infragistics.Win.UIElementBorderStyle.Rounded1;
             // 
             // ultraPanel3.ClientArea
@@ -730,10 +773,10 @@ namespace PosBranch_Win.Accounts
             // 
             // ultraPictureBox5
             // 
-            appearance32.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            appearance32.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            appearance32.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            this.ultraPictureBox5.Appearance = appearance32;
+            appearance33.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
+            appearance33.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            appearance33.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            this.ultraPictureBox5.Appearance = appearance33;
             this.ultraPictureBox5.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.ultraPictureBox5.BackColorInternal = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.ultraPictureBox5.BorderShadowColor = System.Drawing.Color.Empty;
@@ -746,10 +789,10 @@ namespace PosBranch_Win.Accounts
             // 
             // ultraPanel9
             // 
-            appearance33.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(174)))), ((int)(((byte)(239)))));
-            appearance33.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(116)))), ((int)(((byte)(217)))));
-            appearance33.BackGradientStyle = Infragistics.Win.GradientStyle.GlassTop50;
-            this.ultraPanel9.Appearance = appearance33;
+            appearance34.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(174)))), ((int)(((byte)(239)))));
+            appearance34.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(116)))), ((int)(((byte)(217)))));
+            appearance34.BackGradientStyle = Infragistics.Win.GradientStyle.GlassTop50;
+            this.ultraPanel9.Appearance = appearance34;
             this.ultraPanel9.BorderStyle = Infragistics.Win.UIElementBorderStyle.Rounded1;
             // 
             // ultraPanel9.ClientArea
@@ -763,10 +806,10 @@ namespace PosBranch_Win.Accounts
             // 
             // ultraPictureBox6
             // 
-            appearance34.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            appearance34.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            appearance34.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            this.ultraPictureBox6.Appearance = appearance34;
+            appearance35.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
+            appearance35.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            appearance35.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            this.ultraPictureBox6.Appearance = appearance35;
             this.ultraPictureBox6.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.ultraPictureBox6.BackColorInternal = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.ultraPictureBox6.BorderShadowColor = System.Drawing.Color.Empty;
@@ -779,10 +822,10 @@ namespace PosBranch_Win.Accounts
             // 
             // ultraPanel10
             // 
-            appearance35.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(174)))), ((int)(((byte)(239)))));
-            appearance35.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(116)))), ((int)(((byte)(217)))));
-            appearance35.BackGradientStyle = Infragistics.Win.GradientStyle.GlassTop50;
-            this.ultraPanel10.Appearance = appearance35;
+            appearance36.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(174)))), ((int)(((byte)(239)))));
+            appearance36.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(116)))), ((int)(((byte)(217)))));
+            appearance36.BackGradientStyle = Infragistics.Win.GradientStyle.GlassTop50;
+            this.ultraPanel10.Appearance = appearance36;
             this.ultraPanel10.BorderStyle = Infragistics.Win.UIElementBorderStyle.Rounded1;
             // 
             // ultraPanel10.ClientArea
@@ -796,10 +839,10 @@ namespace PosBranch_Win.Accounts
             // 
             // ultraPictureBox8
             // 
-            appearance36.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            appearance36.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            appearance36.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            this.ultraPictureBox8.Appearance = appearance36;
+            appearance37.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
+            appearance37.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            appearance37.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            this.ultraPictureBox8.Appearance = appearance37;
             this.ultraPictureBox8.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.ultraPictureBox8.BackColorInternal = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.ultraPictureBox8.BorderShadowColor = System.Drawing.Color.Empty;
@@ -812,10 +855,10 @@ namespace PosBranch_Win.Accounts
             // 
             // ultraPanel8
             // 
-            appearance37.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(174)))), ((int)(((byte)(239)))));
-            appearance37.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(116)))), ((int)(((byte)(217)))));
-            appearance37.BackGradientStyle = Infragistics.Win.GradientStyle.GlassTop50;
-            this.ultraPanel8.Appearance = appearance37;
+            appearance38.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(174)))), ((int)(((byte)(239)))));
+            appearance38.BackColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(116)))), ((int)(((byte)(217)))));
+            appearance38.BackGradientStyle = Infragistics.Win.GradientStyle.GlassTop50;
+            this.ultraPanel8.Appearance = appearance38;
             this.ultraPanel8.BorderStyle = Infragistics.Win.UIElementBorderStyle.Rounded1;
             // 
             // ultraPanel8.ClientArea
@@ -829,10 +872,10 @@ namespace PosBranch_Win.Accounts
             // 
             // ultraPictureBox9
             // 
-            appearance38.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            appearance38.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            appearance38.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            this.ultraPictureBox9.Appearance = appearance38;
+            appearance39.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
+            appearance39.BorderColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            appearance39.BorderColor3DBase = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            this.ultraPictureBox9.Appearance = appearance39;
             this.ultraPictureBox9.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.ultraPictureBox9.BackColorInternal = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.ultraPictureBox9.BorderShadowColor = System.Drawing.Color.Empty;
@@ -846,9 +889,9 @@ namespace PosBranch_Win.Accounts
             // txtPurchaseNo
             // 
             this.txtPurchaseNo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            appearance39.BackColor = System.Drawing.Color.White;
-            appearance39.BorderColor = System.Drawing.Color.DeepSkyBlue;
-            this.txtPurchaseNo.Appearance = appearance39;
+            appearance40.BackColor = System.Drawing.Color.White;
+            appearance40.BorderColor = System.Drawing.Color.DeepSkyBlue;
+            this.txtPurchaseNo.Appearance = appearance40;
             this.txtPurchaseNo.BackColor = System.Drawing.Color.White;
             this.txtPurchaseNo.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
             this.txtPurchaseNo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
@@ -861,14 +904,14 @@ namespace PosBranch_Win.Accounts
             // 
             // txtOutstanding
             // 
-            appearance40.BackColor = System.Drawing.Color.White;
-            appearance40.BorderColor = System.Drawing.Color.DeepSkyBlue;
-            appearance40.FontData.BoldAsString = "True";
-            appearance40.ForeColor = System.Drawing.Color.Black;
-            appearance40.TextHAlignAsString = "Center";
-            appearance40.TextVAlignAsString = "Middle";
-            appearance40.ThemedElementAlpha = Infragistics.Win.Alpha.UseAlphaLevel;
-            this.txtOutstanding.Appearance = appearance40;
+            appearance41.BackColor = System.Drawing.Color.White;
+            appearance41.BorderColor = System.Drawing.Color.DeepSkyBlue;
+            appearance41.FontData.BoldAsString = "True";
+            appearance41.ForeColor = System.Drawing.Color.Black;
+            appearance41.TextHAlignAsString = "Center";
+            appearance41.TextVAlignAsString = "Middle";
+            appearance41.ThemedElementAlpha = Infragistics.Win.Alpha.UseAlphaLevel;
+            this.txtOutstanding.Appearance = appearance41;
             this.txtOutstanding.BackColor = System.Drawing.Color.White;
             this.txtOutstanding.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
             this.txtOutstanding.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
@@ -881,9 +924,9 @@ namespace PosBranch_Win.Accounts
             // 
             // txtVendorName
             // 
-            appearance41.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-            appearance41.BorderColor = System.Drawing.Color.DeepSkyBlue;
-            this.txtVendorName.Appearance = appearance41;
+            appearance42.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+            appearance42.BorderColor = System.Drawing.Color.DeepSkyBlue;
+            this.txtVendorName.Appearance = appearance42;
             this.txtVendorName.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.txtVendorName.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
             this.txtVendorName.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
@@ -896,9 +939,7 @@ namespace PosBranch_Win.Accounts
             // 
             // textBox4
             // 
-            appearance42.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
-            appearance42.BorderColor = System.Drawing.Color.DeepSkyBlue;
-            this.textBox4.Appearance = appearance42;
+            this.textBox4.Appearance = appearance29;
             this.textBox4.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
             this.textBox4.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
             this.textBox4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -972,33 +1013,32 @@ namespace PosBranch_Win.Accounts
             this.lblDocNo.TabIndex = 22;
             this.lblDocNo.Text = "Doc No.";
             // 
-            // ultraTextEditor2
+            // ultraTextEditor4
             // 
-            this.ultraTextEditor2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            appearance3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-            appearance3.BorderColor = System.Drawing.Color.DeepSkyBlue;
-            appearance3.TextHAlignAsString = "Center";
-            appearance3.TextVAlignAsString = "Middle";
-            this.ultraTextEditor2.Appearance = appearance3;
-            this.ultraTextEditor2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-            this.ultraTextEditor2.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
-            this.ultraTextEditor2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
-            this.ultraTextEditor2.Location = new System.Drawing.Point(1207, 81);
-            this.ultraTextEditor2.Name = "ultraTextEditor2";
-            this.ultraTextEditor2.Size = new System.Drawing.Size(113, 21);
-            this.ultraTextEditor2.TabIndex = 75;
-            this.ultraTextEditor2.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
+            this.ultraTextEditor4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            appearance30.BackColor = System.Drawing.Color.White;
+            appearance30.BorderColor = System.Drawing.Color.DeepSkyBlue;
+            this.ultraTextEditor4.Appearance = appearance30;
+            this.ultraTextEditor4.BackColor = System.Drawing.Color.White;
+            this.ultraTextEditor4.BorderStyle = Infragistics.Win.UIElementBorderStyle.Solid;
+            this.ultraTextEditor4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
+            this.ultraTextEditor4.Location = new System.Drawing.Point(1160, 36);
+            this.ultraTextEditor4.Multiline = true;
+            this.ultraTextEditor4.Name = "ultraTextEditor4";
+            this.ultraTextEditor4.Size = new System.Drawing.Size(159, 21);
+            this.ultraTextEditor4.TabIndex = 79;
+            this.ultraTextEditor4.UseOsThemes = Infragistics.Win.DefaultableBoolean.False;
             // 
-            // label2
+            // label3
             // 
-            this.label2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
-            this.label2.Location = new System.Drawing.Point(1156, 83);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(45, 16);
-            this.label2.TabIndex = 77;
-            this.label2.Text = "Status";
+            this.label3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
+            this.label3.Location = new System.Drawing.Point(1110, 38);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(44, 16);
+            this.label3.TabIndex = 80;
+            this.label3.Text = "GRN :";
             // 
             // FrmPayment
             // 
@@ -1017,13 +1057,13 @@ namespace PosBranch_Win.Accounts
             ((System.ComponentModel.ISupportInitialize)(this.ultraTextEditor1)).EndInit();
             this.gboxPaymentInfo.ResumeLayout(false);
             this.gboxPaymentInfo.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraTextEditor2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.textBox2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dtpPurchaseDate)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.richTextBox2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.CmboPayment)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.textBox1)).EndInit();
-            this.ultraPanel6.ClientArea.ResumeLayout(false);
-            this.ultraPanel6.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.ultraTextEditor3)).EndInit();
             this.ultraPanel5.ClientArea.ResumeLayout(false);
             this.ultraPanel5.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.ultraGrid1)).EndInit();
@@ -1045,7 +1085,7 @@ namespace PosBranch_Win.Accounts
             ((System.ComponentModel.ISupportInitialize)(this.txtOutstanding)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtVendorName)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.textBox4)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.ultraTextEditor2)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ultraTextEditor4)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -1064,8 +1104,6 @@ namespace PosBranch_Win.Accounts
         private System.Windows.Forms.Label lblOutStanding;
         private System.Windows.Forms.Label lblVendorName;
         private System.Windows.Forms.Label lblDocNo;
-        private Infragistics.Win.Misc.UltraPanel ultraPanel6;
-        private Infragistics.Win.Misc.UltraLabel ultraLabel7;
         private Infragistics.Win.UltraWinEditors.UltraPictureBox ultraPictureBox2;
         private Infragistics.Win.Misc.UltraLabel ultraLabel10;
         private Infragistics.Win.UltraWinEditors.UltraPictureBox ultraPictureBox1;
@@ -1104,5 +1142,10 @@ namespace PosBranch_Win.Accounts
         private Infragistics.Win.UltraWinEditors.UltraPictureBox ultraPictureBox10;
         private System.Windows.Forms.Label label2;
         private Infragistics.Win.UltraWinEditors.UltraComboEditor ultraTextEditor2;
+        private Infragistics.Win.UltraWinEditors.UltraPictureBox ultraPictureBox11;
+        private Infragistics.Win.UltraWinEditors.UltraTextEditor ultraTextEditor3;
+        private System.Windows.Forms.Label lblCancelledGrn;
+        private System.Windows.Forms.Label label3;
+        private Infragistics.Win.UltraWinEditors.UltraTextEditor ultraTextEditor4;
     }
 }

@@ -701,6 +701,9 @@
     <Compile Include="DialogBox\FrmPurchaseDisplayDialog.Designer.cs">
       <DependentUpon>FrmPurchaseDisplayDialog.cs</DependentUpon>
     </Compile>
+    <Compile Include="DialogBox\FrmGrnPaymentCancel.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="DialogBox\FrmPurchaseItemDialog.cs">
       <SubType>Form</SubType>
     </Compile>

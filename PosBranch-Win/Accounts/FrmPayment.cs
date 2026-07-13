@@ -30,8 +30,15 @@ namespace PosBranch_Win.Accounts
         private int currentBranchId = ModelClass.SessionContext.BranchId; // Use SessionContext instead of hardcoded value
         private int currentUserId = ModelClass.SessionContext.UserId; // Use SessionContext instead of hardcoded value
         private int currentPaymentMasterId = 0;
-        private const string PaymentStatusActive = "Active";
-        private const string PaymentStatusCancel = "Cancel";
+        private const string PaymentStatusActive  = "Active";
+        private const string PaymentStatusCancel  = "Cancel";
+        private const string MsgSelectVendorFirst  = "Please select a vendor first before cancelling GRN payments.";
+        private const string MsgSelectVendorTitle  = "Vendor Required";
+        private const string GrnCancelledPrefix    = "Cancelled: ";
+        private const string CashPayModeName       = "cash";   // lowercase for comparison
+
+        // Remembers the user's chosen payment mode across ClearForm calls
+        private object _userSelectedPayModeId = null;
 
         public FrmPayment()
         {
@@ -52,7 +59,15 @@ namespace PosBranch_Win.Accounts
             // Wire up picture box click events
             ultraPictureBox1.Click += (s, e) => ClearForm();
             ultraPictureBox2.Click += (s, e) => CloseFormFromTab();
-            this.ultraPictureBox7.Click += ultraPictureBox7_Click;
+            this.ultraPictureBox7.Click  += ultraPictureBox7_Click;
+            this.ultraPictureBox11.Click += ultraPictureBox11_Click;
+
+            // Save user's payment method choice so it persists after ClearForm
+            CmboPayment.ValueChanged += (s, e) =>
+            {
+                if (CmboPayment.Value != null)
+                    _userSelectedPayModeId = CmboPayment.Value;
+            };
         }
 
         private void ultraPictureBox7_Click(object sender, EventArgs e)
@@ -64,6 +79,34 @@ namespace PosBranch_Win.Accounts
                     textBox2.Text = name;
                 };
                 dlg.ShowDialog(this);
+            }
+        }
+
+        private void ultraPictureBox11_Click(object sender, EventArgs e)
+        {
+            if (currentVendorLedgerId <= 0)
+            {
+                MessageBox.Show(MsgSelectVendorFirst, MsgSelectVendorTitle,
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            using (var dlg = new PosBranch_Win.DialogBox.FrmGrnPaymentCancel(
+                currentVendorLedgerId,
+                txtVendorName.Text,
+                currentBranchId,
+                currentUserId,
+                paymentRepo))
+            {
+                if (dlg.ShowDialog(this) == DialogResult.OK && dlg.CancelledGrnNumbers.Count > 0)
+                {
+                    // Load the cancelled GRN numbers into ultraTextEditor3
+                    ultraTextEditor3.Text = GrnCancelledPrefix +
+                        string.Join(", ", dlg.CancelledGrnNumbers);
+
+                    // Refresh the vendor invoices grid to reflect updated balances
+                    LoadVendorInvoices();
+                }
             }
         }
 
@@ -140,20 +183,22 @@ namespace PosBranch_Win.Accounts
             CmboPayment.DataSource = paymentMethods.List;
             CmboPayment.DisplayMember = "PayModeName";
             CmboPayment.ValueMember = "PayModeID";
-            // Set default to 'Cash' if available
+            // Set default to 'Cash' if available; also seed _userSelectedPayModeId
             if (paymentMethods.List != null)
             {
                 foreach (var item in paymentMethods.List)
                 {
                     var payModeNameProp = item.GetType().GetProperty("PayModeName");
-                    var payModeIdProp = item.GetType().GetProperty("PayModeID");
+                    var payModeIdProp   = item.GetType().GetProperty("PayModeID");
                     if (payModeNameProp != null && payModeIdProp != null)
                     {
                         string payModeName = payModeNameProp.GetValue(item)?.ToString();
-                        if (!string.IsNullOrEmpty(payModeName) && payModeName.Trim().ToLower() == "cash")
+                        if (!string.IsNullOrEmpty(payModeName) &&
+                            payModeName.Trim().ToLower() == CashPayModeName)
                         {
                             var payModeId = payModeIdProp.GetValue(item);
-                            CmboPayment.Value = payModeId;
+                            CmboPayment.Value       = payModeId;
+                            _userSelectedPayModeId  = payModeId;   // seed default
                             break;
                         }
                     }
@@ -1023,7 +1068,11 @@ namespace PosBranch_Win.Accounts
             textBox4.Text = "";
             currentVendorLedgerId = 0;
             currentPaymentMasterId = 0;
-            CmboPayment.SelectedIndex = -1;
+            // Restore the user's preferred payment method (defaults to Cash on first load)
+            if (_userSelectedPayModeId != null)
+                CmboPayment.Value = _userSelectedPayModeId;
+            else
+                CmboPayment.SelectedIndex = -1;
             textBox1.Text = "0";
             textBox2.Text = "";
             ultraTextEditor2.Value = PaymentStatusActive;
@@ -1032,6 +1081,7 @@ namespace PosBranch_Win.Accounts
             ultraGrid1.DataSource = CreateEmptyInvoiceTable();
             ConfigureGridColumns();
             ultraTextEditor1.Text = "0.00";
+            ultraTextEditor3.Text = string.Empty;    // clear cancelled GRN display
             txtOutstanding.Text = "0.00";
             totalPaymentAmount = 0;
             // Re-initialize the repository to ensure connection string is set
