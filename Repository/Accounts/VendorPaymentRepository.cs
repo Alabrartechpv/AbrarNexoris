@@ -963,5 +963,52 @@ WHERE BranchID = @BranchId
             }
             return dt;
         }
+
+        /// <summary>
+        /// Returns all active (non-cancelled) payment vouchers for a given vendor,
+        /// grouped by GRN (BillNo).  Used by the GRN Payment Cancellation popup.
+        /// Columns: PaymentMasterId, GrnNo, VoucherNo, VoucherDate, PaymentAmount, VendorLedgerId
+        /// </summary>
+        public DataTable GetActiveVouchersByVendor(int vendorLedgerId, int branchId)
+        {
+            DataTable dt = new DataTable();
+            DataConnection.Open();
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand(@"
+SELECT
+    VPM.Id           AS PaymentMasterId,
+    VPD.BillNo       AS GrnNo,
+    VPM.VoucherId    AS VoucherNo,
+    VPM.VoucherDate,
+    ISNULL(VPD.PaymentAmount, 0) AS PaymentAmount,
+    VPD.VendorLedgerId
+FROM VendorPaymentMaster VPM
+INNER JOIN VendorPaymentDetails VPD ON VPD.PaymentMasterId = VPM.Id
+WHERE VPM.BranchId          = @BranchId
+  AND VPD.VendorLedgerId    = @VendorLedgerId
+  AND ISNULL(VPM.CancelFlag, 0) = 0
+  AND ISNULL(VPD.CancelFlag, 0) = 0
+ORDER BY VPD.BillNo, VPM.VoucherDate DESC", (SqlConnection)DataConnection))
+                {
+                    cmd.Parameters.AddWithValue("@BranchId", branchId);
+                    cmd.Parameters.AddWithValue("@VendorLedgerId", vendorLedgerId);
+                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                    {
+                        da.Fill(dt);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                    DataConnection.Close();
+            }
+            return dt;
+        }
     }
 }
