@@ -156,6 +156,7 @@ namespace PosBranch_Win
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool61 = new Infragistics.Win.UltraWinToolbars.ButtonTool("BtnClosing");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool100 = new Infragistics.Win.UltraWinToolbars.ButtonTool("OpeningStock");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool114 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Change Item No");
+            Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolDatabaseInstance = new Infragistics.Win.UltraWinToolbars.ButtonTool("Database");
             Infragistics.Win.UltraWinToolbars.RibbonTab ribbonTab8 = new Infragistics.Win.UltraWinToolbars.RibbonTab("ribbon7");
             Infragistics.Win.UltraWinToolbars.RibbonGroup ribbonGroup31 = new Infragistics.Win.UltraWinToolbars.RibbonGroup("SalesSettings");
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool106 = new Infragistics.Win.UltraWinToolbars.ButtonTool("POSSettings");
@@ -303,6 +304,8 @@ namespace PosBranch_Win
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool125 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Delet");
             Infragistics.Win.Appearance appearance67 = new Infragistics.Win.Appearance();
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool122 = new Infragistics.Win.UltraWinToolbars.ButtonTool("Change Item No");
+            Infragistics.Win.UltraWinToolbars.ButtonTool buttonToolDatabaseShared = new Infragistics.Win.UltraWinToolbars.ButtonTool("Database");
+            Infragistics.Win.Appearance appearanceDatabase = new Infragistics.Win.Appearance();
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool127 = new Infragistics.Win.UltraWinToolbars.ButtonTool("D");
             Infragistics.Win.Appearance appearance68 = new Infragistics.Win.Appearance();
             Infragistics.Win.UltraWinToolbars.ButtonTool buttonTool129 = new Infragistics.Win.UltraWinToolbars.ButtonTool("LogIn");
@@ -801,12 +804,14 @@ namespace PosBranch_Win
             buttonTool100.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             buttonTool114.InstanceProps.MinimumSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Normal;
             buttonTool114.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Normal;
+            buttonToolDatabaseInstance.InstanceProps.PreferredSizeOnRibbon = Infragistics.Win.UltraWinToolbars.RibbonToolSize.Large;
             ribbonGroup30.Tools.AddRange(new Infragistics.Win.UltraWinToolbars.ToolBase[] {
             buttonTool75,
             buttonTool88,
             buttonTool61,
             buttonTool100,
-            buttonTool114});
+            buttonTool114,
+            buttonToolDatabaseInstance});
             ribbonTab7.Groups.AddRange(new Infragistics.Win.UltraWinToolbars.RibbonGroup[] {
             ribbonGroup30});
             ribbonTab8.Caption = "Settings";
@@ -1059,6 +1064,10 @@ namespace PosBranch_Win
             buttonTool125.SharedPropsInternal.AppearancesLarge.Appearance = appearance67;
             buttonTool125.SharedPropsInternal.Caption = "Delete";
             buttonTool122.SharedPropsInternal.Caption = "Change Item No";
+            appearanceDatabase.Image = global::PosBranch_Win.Properties.Resources.icons8_report_50;
+            buttonToolDatabaseShared.SharedPropsInternal.AppearancesLarge.Appearance = appearanceDatabase;
+            buttonToolDatabaseShared.SharedPropsInternal.Caption = "Database Maintenance";
+            buttonToolDatabaseShared.SharedPropsInternal.DisplayStyle = Infragistics.Win.UltraWinToolbars.ToolDisplayStyle.ImageAndText;
             appearance68.Image = ((object)(resources.GetObject("appearance68.Image")));
             buttonTool127.SharedPropsInternal.AppearancesLarge.Appearance = appearance68;
             buttonTool127.SharedPropsInternal.Caption = "D";
@@ -1250,6 +1259,7 @@ namespace PosBranch_Win
             buttonTool123,
             buttonTool125,
             buttonTool122,
+            buttonToolDatabaseShared,
             buttonTool127,
             buttonTool129,
             buttonToolHold_Tool,

@@ -1020,6 +1020,8 @@ namespace PosBranch_Win
 
             // Set tabControlMain BackColor programmatically - will be themed dynamically
 
+
+
             // Apply initial theme color
             UpdateHoldToolVisibility();
         }
@@ -1372,7 +1374,8 @@ namespace PosBranch_Win
                                              toolKey == "ReOrder" ||
                                              toolKey == "Overview" ||
                                              toolKey == "Hold" ||
-                                             toolKey == "LastBill";
+                                             toolKey == "LastBill" ||
+                                             toolKey == "Database";
 
                         bool hasPermission = isGlobalAction || SessionContext.CanView(toolKey) || SessionContext.CanView(tool.Key);
                         
@@ -2088,6 +2091,12 @@ namespace PosBranch_Win
                 Utilities.frmChangeItemNo frmChangeItemNo = new Utilities.frmChangeItemNo();
                 frmChangeItemNo.ShowDialog(this);
                
+            }
+
+            if (e.Tool.Key == "Database")
+            {
+                Utilities.frmDataBase frmDb = new Utilities.frmDataBase();
+                frmDb.ShowDialog(this);
             }
 
 

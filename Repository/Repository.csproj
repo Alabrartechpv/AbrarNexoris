@@ -61,6 +61,7 @@
     <Compile Include="Accounts\BankReconciliationRepository.cs" />
     <Compile Include="Accounts\VendorPaymentRepository.cs" />
     <Compile Include="BaseRepostitory.cs" />
+    <Compile Include="DatabaseRepository.cs" />
     <Compile Include="ClientOperations.cs" />
     <Compile Include="ClosingRepo.cs" />
     <Compile Include="common.cs" />

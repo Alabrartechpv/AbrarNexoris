@@ -618,6 +618,12 @@ namespace PosBranch_Win.Utilities
                     MessageBox.Show("Saved Successfully!", "Success",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
 
+                    // Auto-trigger Database Backup on Day End Closing
+                    if (_model.ReportSelection == "Day End Closing")
+                    {
+                        TriggerDayEndBackup();
+                    }
+
                     SessionContext.CounterSessionId = 0;
                     SessionContext.RequiresClosing = false;
 
@@ -824,6 +830,54 @@ namespace PosBranch_Win.Utilities
             {
                 MessageBox.Show($"Error opening closing history: {ex.Message}", "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void TriggerDayEndBackup()
+        {
+            try
+            {
+                string backupFolder = @"C:\Backup\";
+
+                // Retrieve company configuration path if available
+                if (SessionContext.CompanyId > 0)
+                {
+                    var compRepo = new Repository.MasterRepositry.CompanyRepo();
+                    var company = compRepo.GetCompanyById(SessionContext.CompanyId);
+                    if (company != null && !string.IsNullOrWhiteSpace(company.BackupPath))
+                    {
+                        backupFolder = company.BackupPath.Trim();
+                    }
+                }
+
+                // Show information to the user that database backup is running
+                MessageBox.Show(
+                    $"Day End Closing completed successfully.\n\n" +
+                    $"Automatic database backup has been initiated to:\n{backupFolder}\n\n" +
+                    "The backup process will complete in the background.",
+                    "Auto Database Backup",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+
+                // Run backup asynchronously on a background thread
+                System.Threading.Tasks.Task.Run(() =>
+                {
+                    var dbRepo = new Repository.DatabaseRepository();
+                    string backupFile;
+                    string error;
+                    if (dbRepo.BackupDatabase(backupFolder, out backupFile, out error))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Automatic Day End Backup completed: {backupFile}");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Automatic Day End Backup failed: {error}");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error initiating auto database backup: {ex.Message}");
             }
         }
     }
