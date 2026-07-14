@@ -874,7 +874,7 @@ namespace Repository.TransactionRepository
                         catch (Exception ex)
                         {
                             System.Diagnostics.Debug.WriteLine($"Error updating stock for item {dgvInvoice.Rows[i].Cells["ItemName"].Value}: {ex.Message}");
-                            // Continue with the transaction even if stock update fails
+                            throw new Exception($"Failed to update stock for returned item '{dgvInvoice.Rows[i].Cells["ItemName"].Value}'. Sales return was not saved.", ex);
                         }
                     }
 
@@ -951,6 +951,7 @@ namespace Repository.TransactionRepository
                     catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine("Error creating voucher entries: " + ex.Message);
+                        throw new Exception("Failed to create accounting voucher entries for sales return. Sales return was not saved.", ex);
                     }
 
                     trans.Commit();
@@ -1497,7 +1498,7 @@ namespace Repository.TransactionRepository
                             catch (Exception ex)
                             {
                                 System.Diagnostics.Debug.WriteLine($"Error updating stock for item {dgvInvoice.Rows[i].Cells["ItemName"].Value}: {ex.Message}");
-                                // Continue with the transaction even if stock update fails
+                                throw new Exception($"Failed to update stock for returned item '{dgvInvoice.Rows[i].Cells["ItemName"].Value}'. Sales return update was not saved.", ex);
                             }
                         }
                         catch (Exception ex)
