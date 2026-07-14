@@ -246,7 +246,7 @@ namespace PosBranch_Win.Accounts
                 ConfigureGridColumns();
 
                 // Auto-distribute if amount is entered
-                if (totalDebitAmount > 0)
+                if (totalDebitAmount > 0 && !IsPurchaseReturnWithoutInvoice())
                 {
                     DistributeDebitAmounts();
                 }
@@ -453,7 +453,7 @@ namespace PosBranch_Win.Accounts
                     }
                 }
 
-                if (!details.Any())
+                if (!details.Any() && !IsPurchaseReturnWithoutInvoice())
                 {
                     MessageBox.Show("Please allocate debit amount to at least one invoice.", "Validation Error",
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -483,6 +483,23 @@ namespace PosBranch_Win.Accounts
             }
         }
 
+        private bool IsPurchaseReturnWithoutInvoice()
+        {
+            if (_pReturnNo <= 0)
+            {
+                return false;
+            }
+
+            string invoiceNo = (_invoiceNo ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(invoiceNo))
+            {
+                return true;
+            }
+
+            string normalized = invoiceNo.ToUpperInvariant();
+            return normalized == "WITHOUT GR" || normalized == "WITHOUT BILL" || normalized == "WITHOUT PURCHASE BILL";
+        }
+
         private bool ValidateDebitNote()
         {
             if (currentVendorLedgerId <= 0)
@@ -502,6 +519,11 @@ namespace PosBranch_Win.Accounts
             decimal totalApplied = GetTotalDebitAmount();
             if (totalApplied <= 0)
             {
+                if (IsPurchaseReturnWithoutInvoice())
+                {
+                    return true;
+                }
+
                 MessageBox.Show("Please allocate debit amount to invoices.", "Validation Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
@@ -805,7 +827,7 @@ namespace PosBranch_Win.Accounts
                 totalDebitAmount = 0m;
             }
 
-            if (ultraGrid1.Rows.Count > 0)
+            if (ultraGrid1.Rows.Count > 0 && !IsPurchaseReturnWithoutInvoice())
             {
                 DistributeDebitAmounts();
             }

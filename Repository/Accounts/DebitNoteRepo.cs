@@ -205,11 +205,21 @@ namespace Repository.Accounts
         /// <param name="skipVoucherCreation">If true, skip voucher creation (used when coming from Purchase Return which already created vouchers)</param>
         public bool SaveDebitNote(DebitNoteMaster master, List<DebitNoteDetails> details, bool skipVoucherCreation = false)
         {
-            if (master == null || details == null || !details.Any())
+            if (master == null)
             {
                 return false;
             }
 
+            if (details == null)
+            {
+                details = new List<DebitNoteDetails>();
+            }
+
+            bool isPurchaseReturnDebitNote = master.PReturnNo > 0;
+            if (!details.Any() && !isPurchaseReturnDebitNote)
+            {
+                return false;
+            }
             using (SqlConnection conn = (SqlConnection)DataConnection)
             {
                 try
