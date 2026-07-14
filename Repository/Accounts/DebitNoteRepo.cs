@@ -93,7 +93,13 @@ namespace Repository.Accounts
             DataConnection.Open();
             try
             {
-                using (SqlCommand cmd = new SqlCommand("SELECT PurchaseNo AS BillNo, PurchaseDate AS BillDate, DueDate, GrandTotal AS InvoiceAmount, ISNULL(PayedAmount, 0) AS PaidAmount, ISNULL(GrandTotal - PayedAmount, 0) AS Balance FROM PMaster WHERE PurchaseNo = @PurchaseNo AND LedgerID = @LedgerID AND BranchId = @BranchId AND CancelFlag = 0", (SqlConnection)DataConnection))
+                using (SqlCommand cmd = new SqlCommand(@"SELECT PurchaseNo AS BillNo, PurchaseDate AS BillDate, DueDate, GrandTotal AS InvoiceAmount, ISNULL(PayedAmount, 0) AS PaidAmount, 
+                                                         CASE WHEN (ISNULL((SELECT SUM(GrandTotal) FROM PReturnMaster WHERE (InvoiceNo = CAST(PMaster.PurchaseNo AS varchar(50)) OR PInvoice = CAST(PMaster.PurchaseNo AS varchar(50))) AND BranchId = @BranchId AND CancelFlag = 0), 0) - ISNULL((SELECT SUM(DebitAmount) FROM DebitNoteDetails WHERE BillNo = PMaster.PurchaseNo AND BranchId = @BranchId AND CancelFlag = 0), 0)) < 0 
+                                                              THEN 0 
+                                                              ELSE (ISNULL((SELECT SUM(GrandTotal) FROM PReturnMaster WHERE (InvoiceNo = CAST(PMaster.PurchaseNo AS varchar(50)) OR PInvoice = CAST(PMaster.PurchaseNo AS varchar(50))) AND BranchId = @BranchId AND CancelFlag = 0), 0) - ISNULL((SELECT SUM(DebitAmount) FROM DebitNoteDetails WHERE BillNo = PMaster.PurchaseNo AND BranchId = @BranchId AND CancelFlag = 0), 0)) 
+                                                         END AS ReturnedAmount, 
+                                                         ISNULL(GrandTotal - PayedAmount, 0) AS Balance 
+                                                         FROM PMaster WHERE PurchaseNo = @PurchaseNo AND LedgerID = @LedgerID AND BranchId = @BranchId AND CancelFlag = 0", (SqlConnection)DataConnection))
                 {
                     cmd.Parameters.AddWithValue("@PurchaseNo", purchaseNo);
                     cmd.Parameters.AddWithValue("@LedgerID", vendorId);

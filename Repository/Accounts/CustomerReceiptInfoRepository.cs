@@ -611,7 +611,7 @@ namespace Repository.Accounts
                     receivedAmount = invoiceAmount;
                 }
 
-                decimal balance = invoiceAmount - receivedAmount;
+                decimal balance = invoiceAmount - receivedAmount - returnedAmount;
                 if (balance < 0m)
                 {
                     balance = 0m;

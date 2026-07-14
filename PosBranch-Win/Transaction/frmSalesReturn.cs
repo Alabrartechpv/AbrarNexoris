@@ -1314,17 +1314,31 @@ namespace PosBranch_Win.Transaction
                         }
 
                         // Validate that ReturnQty does not exceed available quantity (SoldQty - ReturnedQty)
-                        decimal availableQty = soldQty - returnedQty;
-                        if (returnQty > availableQty)
+                        // For "without bill" returns, we don't enforce this check and sync Qty with ReturnQty
+                        bool isWithoutBill = textBox1.Value?.ToString() == "without bill" || string.IsNullOrEmpty(textBox1.Value?.ToString());
+                        if (isWithoutBill)
                         {
-                            MessageBox.Show($"Cannot return {returnQty} items. Only {availableQty} items are available for return.\n\n" +
-                                           $"Details:\n" +
-                                           $"• Originally Sold: {soldQty}\n" +
-                                           $"• Previously Returned: {returnedQty}\n" +
-                                           $"• Maximum Returnable: {availableQty}",
-                                           "Return Quantity Validation", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            returnQty = availableQty;
-                            row.Cells["ReturnQty"].Value = returnQty;
+                            decimal currentQty = 0;
+                            decimal.TryParse(row.Cells["Qty"].Value?.ToString(), out currentQty);
+                            if (currentQty != returnQty)
+                            {
+                                row.Cells["Qty"].Value = returnQty;
+                            }
+                        }
+                        else
+                        {
+                            decimal availableQty = soldQty - returnedQty;
+                            if (returnQty > availableQty)
+                            {
+                                MessageBox.Show($"Cannot return {returnQty} items. Only {availableQty} items are available for return.\n\n" +
+                                               $"Details:\n" +
+                                               $"• Originally Sold: {soldQty}\n" +
+                                               $"• Previously Returned: {returnedQty}\n" +
+                                               $"• Maximum Returnable: {availableQty}",
+                                               "Return Quantity Validation", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                returnQty = availableQty;
+                                row.Cells["ReturnQty"].Value = returnQty;
+                            }
                         }
 
                         // Calculate tax values for this item
@@ -1384,7 +1398,12 @@ namespace PosBranch_Win.Transaction
 
                             if (qty <= availableQty + returnedQty) // Allow qty to be set to sold amount
                             {
-                                row.Cells["ReturnQty"].Value = qty;
+                                decimal currentReturnQty = 0;
+                                decimal.TryParse(row.Cells["ReturnQty"].Value?.ToString(), out currentReturnQty);
+                                if (currentReturnQty != qty)
+                                {
+                                    row.Cells["ReturnQty"].Value = qty;
+                                }
                                 // FIXED: Calculate amount based on ReturnQty, not Qty
                                 row.Cells["Amount"].Value = qty * unitPrice;
                             }
@@ -1929,6 +1948,7 @@ namespace PosBranch_Win.Transaction
                     if (e.Cell.Column.Key == "Unit" ||
                         e.Cell.Column.Key == "UnitPrice" ||
                         e.Cell.Column.Key == "Qty" ||
+                        e.Cell.Column.Key == "ReturnQty" ||
                         e.Cell.Column.Key == "Reason")
                     {
                         // Ensure this cell is editable by setting its activation directly

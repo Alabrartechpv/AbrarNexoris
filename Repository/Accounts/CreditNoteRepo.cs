@@ -248,43 +248,89 @@ namespace Repository.Accounts
                                 }
                             }
 
-                            // 2. Insert into CreditNoteMaster
-                            using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE._CreditNoteMaster, conn, transaction))
-                            {
-                                cmd.CommandType = CommandType.StoredProcedure;
-                                cmd.Parameters.AddWithValue("@CompanyId", master.CompanyId);
-                                cmd.Parameters.AddWithValue("@BranchId", master.BranchId);
-                                cmd.Parameters.AddWithValue("@FinYearId", finYearId);
-                                cmd.Parameters.AddWithValue("@VoucherId", master.VoucherId);
-                                cmd.Parameters.AddWithValue("@VoucherDate", master.VoucherDate);
-                                cmd.Parameters.AddWithValue("@CustomerLedgerId", master.CustomerLedgerId);
-                                cmd.Parameters.AddWithValue("@SReturnNo", master.SReturnNo);
-                                cmd.Parameters.AddWithValue("@InvoiceNo", master.InvoiceNo ?? "");
-                                cmd.Parameters.AddWithValue("@CreditAmount", master.CreditAmount);
-                                cmd.Parameters.AddWithValue("@PaymentMethodLedgerId", master.PaymentMethodLedgerId);
-                                cmd.Parameters.AddWithValue("@Narration", master.Narration ?? "");
-                                cmd.Parameters.AddWithValue("@UserId", master.UserId);
-                                cmd.Parameters.AddWithValue("@_Operation", "CREATE");
+                             // 2. Insert or Update into CreditNoteMaster
+                             bool exists = false;
+                             int existingId = 0;
+                             if (master.SReturnNo > 0)
+                             {
+                                 using (SqlCommand checkCmd = new SqlCommand(STOREDPROCEDURE._CreditNoteMaster, conn, transaction))
+                                 {
+                                     checkCmd.CommandType = CommandType.StoredProcedure;
+                                     checkCmd.Parameters.AddWithValue("@SReturnNo", master.SReturnNo);
+                                     checkCmd.Parameters.AddWithValue("@BranchId", master.BranchId);
+                                     checkCmd.Parameters.AddWithValue("@FinYearId", finYearId);
+                                     checkCmd.Parameters.AddWithValue("@_Operation", "GETMASTERBYSR");
+                                     using (var checkReader = checkCmd.ExecuteReader())
+                                     {
+                                         if (checkReader.Read())
+                                         {
+                                             exists = true;
+                                             existingId = Convert.ToInt32(checkReader["Id"]);
+                                             master.VoucherId = Convert.ToInt32(checkReader["VoucherId"]);
+                                         }
+                                     }
+                                 }
+                             }
 
-                                using (var reader = cmd.ExecuteReader())
+                            if (exists)
+                            {
+                                master.Id = existingId;
+                                using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE._CreditNoteMaster, conn, transaction))
                                 {
-                                    if (reader.Read() && reader.FieldCount >= 2)
+                                    cmd.CommandType = CommandType.StoredProcedure;
+                                    cmd.Parameters.AddWithValue("@Id", master.Id);
+                                    cmd.Parameters.AddWithValue("@CompanyId", master.CompanyId);
+                                    cmd.Parameters.AddWithValue("@BranchId", master.BranchId);
+                                    cmd.Parameters.AddWithValue("@FinYearId", finYearId);
+                                    cmd.Parameters.AddWithValue("@VoucherId", master.VoucherId);
+                                    cmd.Parameters.AddWithValue("@CustomerLedgerId", master.CustomerLedgerId);
+                                    cmd.Parameters.AddWithValue("@CreditAmount", master.CreditAmount);
+                                    cmd.Parameters.AddWithValue("@PaymentMethodLedgerId", master.PaymentMethodLedgerId);
+                                    cmd.Parameters.AddWithValue("@Narration", master.Narration ?? "");
+                                    cmd.Parameters.AddWithValue("@_Operation", "UPDATE");
+
+                                    cmd.ExecuteNonQuery();
+                                }
+                            }
+                            else
+                            {
+                                using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE._CreditNoteMaster, conn, transaction))
+                                {
+                                    cmd.CommandType = CommandType.StoredProcedure;
+                                    cmd.Parameters.AddWithValue("@CompanyId", master.CompanyId);
+                                    cmd.Parameters.AddWithValue("@BranchId", master.BranchId);
+                                    cmd.Parameters.AddWithValue("@FinYearId", finYearId);
+                                    cmd.Parameters.AddWithValue("@VoucherId", master.VoucherId);
+                                    cmd.Parameters.AddWithValue("@VoucherDate", master.VoucherDate);
+                                    cmd.Parameters.AddWithValue("@CustomerLedgerId", master.CustomerLedgerId);
+                                    cmd.Parameters.AddWithValue("@SReturnNo", master.SReturnNo);
+                                    cmd.Parameters.AddWithValue("@InvoiceNo", master.InvoiceNo ?? "");
+                                    cmd.Parameters.AddWithValue("@CreditAmount", master.CreditAmount);
+                                    cmd.Parameters.AddWithValue("@PaymentMethodLedgerId", master.PaymentMethodLedgerId);
+                                    cmd.Parameters.AddWithValue("@Narration", master.Narration ?? "");
+                                    cmd.Parameters.AddWithValue("@UserId", master.UserId);
+                                    cmd.Parameters.AddWithValue("@_Operation", "CREATE");
+
+                                    using (var reader = cmd.ExecuteReader())
                                     {
-                                        var status = reader[0].ToString();
-                                        if (status == "SUCCESS")
+                                        if (reader.Read() && reader.FieldCount >= 2)
                                         {
-                                            master.Id = Convert.ToInt32(reader[1]);
+                                            var status = reader[0].ToString();
+                                            if (status == "SUCCESS")
+                                            {
+                                                master.Id = Convert.ToInt32(reader[1]);
+                                            }
+                                            else
+                                            {
+                                                transaction.Rollback();
+                                                return false;
+                                            }
                                         }
                                         else
                                         {
                                             transaction.Rollback();
                                             return false;
                                         }
-                                    }
-                                    else
-                                    {
-                                        transaction.Rollback();
-                                        return false;
                                     }
                                 }
                             }

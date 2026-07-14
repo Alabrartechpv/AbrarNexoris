@@ -318,11 +318,13 @@ namespace PosBranch_Win.Accounts
                     string billNo = row.Cells["BillNo"].Value?.ToString();
                     DateTime billDate = row.Cells["BillDate"].Value != null ? Convert.ToDateTime(row.Cells["BillDate"].Value) : DateTime.Now;
 
-                    // IMPORTANT: use original outstanding (InvoiceAmount - ReceivedAmount),
+                    // IMPORTANT: use original outstanding (InvoiceAmount - ReceivedAmount - ReturnedAmount),
                     // not the grid Balance column because Balance is already reduced by Adjusted Amount.
                     decimal invoiceAmount = row.Cells["InvoiceAmount"].Value != null ? Convert.ToDecimal(row.Cells["InvoiceAmount"].Value) : 0m;
                     decimal alreadyReceived = row.Cells["ReceivedAmount"].Value != null ? Convert.ToDecimal(row.Cells["ReceivedAmount"].Value) : 0m;
-                    decimal originalOutstanding = invoiceAmount - alreadyReceived;
+                    decimal returnedAmount = row.Cells.Exists("ReturnedAmount") && row.Cells["ReturnedAmount"].Value != null && row.Cells["ReturnedAmount"].Value != DBNull.Value
+                        ? Convert.ToDecimal(row.Cells["ReturnedAmount"].Value) : 0m;
+                    decimal originalOutstanding = invoiceAmount - alreadyReceived - returnedAmount;
                     if (originalOutstanding < 0m)
                     {
                         originalOutstanding = 0m;
@@ -950,8 +952,11 @@ namespace PosBranch_Win.Accounts
                 decimal invoiceAmount = Convert.ToDecimal(row.Cells["InvoiceAmount"].Value);
                 decimal receivedAmount = Convert.ToDecimal(row.Cells["ReceivedAmount"].Value);
                 decimal adjustedAmount = Convert.ToDecimal(row.Cells["Adjusted Amount"].Value);
-                // Original balance = InvoiceAmount - ReceivedAmount. Credit notes update ReceivedAmount.
-                decimal originalBalance = invoiceAmount - receivedAmount;
+                decimal returnedAmount = row.Cells.Exists("ReturnedAmount") && row.Cells["ReturnedAmount"].Value != null && row.Cells["ReturnedAmount"].Value != DBNull.Value
+                    ? Convert.ToDecimal(row.Cells["ReturnedAmount"].Value) : 0m;
+                // Original balance = InvoiceAmount - ReceivedAmount - ReturnedAmount.
+                decimal originalBalance = invoiceAmount - receivedAmount - returnedAmount;
+                if (originalBalance < 0m) originalBalance = 0m;
                 // New balance = Original balance - Adjusted amount
                 row.Cells["Balance"].Value = originalBalance - adjustedAmount;
             }

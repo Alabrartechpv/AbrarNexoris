@@ -204,6 +204,7 @@ namespace PosBranch_Win.Accounts
                                 dt.Columns.Add("DueDate", typeof(DateTime));
                                 dt.Columns.Add("InvoiceAmount", typeof(decimal));
                                 dt.Columns.Add("PaidAmount", typeof(decimal));
+                                dt.Columns.Add("ReturnedAmount", typeof(decimal));
                                 dt.Columns.Add("Balance", typeof(decimal));
                             }
 
@@ -213,6 +214,7 @@ namespace PosBranch_Win.Accounts
                             newRow["DueDate"] = sourceInvoiceRow["DueDate"];
                             newRow["InvoiceAmount"] = sourceInvoiceRow["InvoiceAmount"];
                             newRow["PaidAmount"] = sourceInvoiceRow["PaidAmount"];
+                            newRow["ReturnedAmount"] = sourceInvoiceRow.Table.Columns.Contains("ReturnedAmount") ? sourceInvoiceRow["ReturnedAmount"] : 0m;
                             newRow["Balance"] = sourceInvoiceRow["Balance"];
                             dt.Rows.Add(newRow);
                         }
@@ -220,6 +222,8 @@ namespace PosBranch_Win.Accounts
                 }
 
                 // Add additional columns for UI
+                if (!dt.Columns.Contains("ReturnedAmount"))
+                    dt.Columns.Add("ReturnedAmount", typeof(decimal));
                 if (!dt.Columns.Contains("Select"))
                     dt.Columns.Add("Select", typeof(bool));
                 if (!dt.Columns.Contains("Debit Amount"))
@@ -234,6 +238,7 @@ namespace PosBranch_Win.Accounts
                 {
                     row["Select"] = false;
                     row["Debit Amount"] = 0m;
+                    if (row["ReturnedAmount"] == DBNull.Value) row["ReturnedAmount"] = 0m;
                     row["OriginalBalance"] = row["Balance"] != DBNull.Value ? row["Balance"] : 0m;
                 }
 
@@ -359,6 +364,14 @@ namespace PosBranch_Win.Accounts
                 band.Columns["Balance"].Width = 120;
                 band.Columns["Balance"].Format = "##,##0.00";
                 band.Columns["Balance"].CellActivation = Activation.NoEdit;
+            }
+
+            if (band.Columns.Exists("ReturnedAmount"))
+            {
+                band.Columns["ReturnedAmount"].Header.Caption = "Returned Amount";
+                band.Columns["ReturnedAmount"].Width = 120;
+                band.Columns["ReturnedAmount"].Format = "##,##0.00";
+                band.Columns["ReturnedAmount"].CellActivation = Activation.NoEdit;
             }
 
             if (band.Columns.Exists("Select"))
@@ -640,6 +653,7 @@ namespace PosBranch_Win.Accounts
             dt.Columns.Add("DueDate", typeof(DateTime));
             dt.Columns.Add("InvoiceAmount", typeof(decimal));
             dt.Columns.Add("PaidAmount", typeof(decimal));
+            dt.Columns.Add("ReturnedAmount", typeof(decimal));
             dt.Columns.Add("Balance", typeof(decimal));
             dt.Columns.Add("Select", typeof(bool));
             dt.Columns.Add("Debit Amount", typeof(decimal));
