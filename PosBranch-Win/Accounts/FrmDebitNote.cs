@@ -80,6 +80,8 @@ namespace PosBranch_Win.Accounts
 
             // Configure grid
             ConfigureGrid();
+            ultraGrid1.DataSource = CreateEmptyInvoiceTable();
+            ConfigureGridColumns();
 
             // Wire up events
             this.KeyPreview = true;
@@ -153,26 +155,6 @@ namespace PosBranch_Win.Accounts
                 if (rdbtnoutstanding.Checked)
                 {
                     dt = debitNoteRepo.GetOutstandingInvoices(currentVendorLedgerId, currentBranchId);
-                    
-                    // Filter out invoices with Balance <= 0
-                    if (dt != null && dt.Columns.Contains("Balance"))
-                    {
-                        var rows = dt.AsEnumerable()
-                            .Where(row => {
-                                var val = row["Balance"];
-                                decimal balance = 0;
-                                if (val != DBNull.Value && val != null)
-                                {
-                                    decimal.TryParse(val.ToString(), out balance);
-                                }
-                                return balance > 0;
-                            })
-                            .ToList();
-                        if (rows.Count > 0)
-                            dt = rows.CopyToDataTable();
-                        else
-                            dt = dt.Clone();
-                    }
                 }
                 else
                 {
@@ -180,7 +162,7 @@ namespace PosBranch_Win.Accounts
                 }
 
                 // If a purchase return is loaded and its source invoice is not in the list, force-append it!
-                if (dt != null && !string.IsNullOrEmpty(_invoiceNo) && currentVendorLedgerId > 0)
+                if (dt != null && !string.IsNullOrEmpty(_invoiceNo) && !IsPurchaseReturnWithoutInvoice() && currentVendorLedgerId > 0)
                 {
                     bool found = false;
                     foreach (DataRow row in dt.Rows)
@@ -221,6 +203,11 @@ namespace PosBranch_Win.Accounts
                     }
                 }
 
+                if (dt == null)
+                {
+                    dt = CreateEmptyInvoiceTable();
+                }
+
                 // Add additional columns for UI
                 if (!dt.Columns.Contains("ReturnedAmount"))
                     dt.Columns.Add("ReturnedAmount", typeof(decimal));
@@ -233,13 +220,43 @@ namespace PosBranch_Win.Accounts
                 if (!dt.Columns.Contains("OriginalBalance"))
                     dt.Columns.Add("OriginalBalance", typeof(decimal));
 
-                // Initialize values
+                // Initialize values and recalculate balance: InvoiceAmount - PaidAmount - ReturnedAmount
                 foreach (DataRow row in dt.Rows)
                 {
                     row["Select"] = false;
                     row["Debit Amount"] = 0m;
-                    if (row["ReturnedAmount"] == DBNull.Value) row["ReturnedAmount"] = 0m;
-                    row["OriginalBalance"] = row["Balance"] != DBNull.Value ? row["Balance"] : 0m;
+
+                    decimal invoiceAmount = dt.Columns.Contains("InvoiceAmount") && row["InvoiceAmount"] != DBNull.Value ? Convert.ToDecimal(row["InvoiceAmount"]) : 0m;
+                    decimal paidAmount = dt.Columns.Contains("PaidAmount") && row["PaidAmount"] != DBNull.Value ? Convert.ToDecimal(row["PaidAmount"]) : 0m;
+                    decimal returnedAmount = dt.Columns.Contains("ReturnedAmount") && row["ReturnedAmount"] != DBNull.Value ? Convert.ToDecimal(row["ReturnedAmount"]) : 0m;
+
+                    row["ReturnedAmount"] = returnedAmount;
+
+                    // Clamp and calculate actual balance
+                    decimal balance = invoiceAmount - paidAmount - returnedAmount;
+                    if (balance < 0) balance = 0;
+
+                    row["Balance"] = balance;
+                    row["OriginalBalance"] = balance;
+                }
+
+                // Filter out invoices with Balance <= 0 if viewing outstanding only
+                if (rdbtnoutstanding.Checked)
+                {
+                    var rows = dt.AsEnumerable()
+                        .Where(row => {
+                            decimal balance = GetSafeDecimal(row["Balance"]);
+                            // Don't filter out the source invoice even if its balance is 0
+                            bool isSourceInvoice = !string.IsNullOrEmpty(_invoiceNo) && 
+                                                 row["BillNo"].ToString().Trim().Equals(_invoiceNo.Trim(), StringComparison.OrdinalIgnoreCase);
+                            return balance > 0 || isSourceInvoice;
+                        })
+                        .ToList();
+
+                    if (rows.Count > 0)
+                        dt = rows.CopyToDataTable();
+                    else
+                        dt = dt.Clone();
                 }
 
                 ultraGrid1.DataSource = dt;
@@ -429,25 +446,20 @@ namespace PosBranch_Win.Accounts
                 List<DebitNoteDetails> details = new List<DebitNoteDetails>();
                 foreach (UltraGridRow row in ultraGrid1.Rows)
                 {
-                    if (row.Cells.Exists("Debit Amount") &&
-                        row.Cells["Debit Amount"].Value != null &&
-                        Convert.ToDecimal(row.Cells["Debit Amount"].Value) > 0)
+                    if (row.Cells.Exists("Debit Amount") && GetSafeDecimal(row.Cells["Debit Amount"].Value) > 0)
                     {
                         var detail = new DebitNoteDetails
                         {
                             BranchId = currentBranchId,
                             FinYearId = SessionContext.FinYearId,
-                            BillNo = Convert.ToInt32(row.Cells["BillNo"].Value),
+                            BillNo = GetSafeInt(row.Cells["BillNo"].Value),
                             BillDate = row.Cells.Exists("BillDate") && row.Cells["BillDate"].Value != DBNull.Value
                                 ? Convert.ToDateTime(row.Cells["BillDate"].Value)
                                 : DateTime.Now,
-                            BillAmount = row.Cells.Exists("InvoiceAmount") && row.Cells["InvoiceAmount"].Value != DBNull.Value
-                                ? Convert.ToDouble(row.Cells["InvoiceAmount"].Value) : 0,
-                            OldBillAmount = row.Cells.Exists("InvoiceAmount") && row.Cells["InvoiceAmount"].Value != DBNull.Value
-                                ? Convert.ToDouble(row.Cells["InvoiceAmount"].Value) : 0,
-                            DebitAmount = Convert.ToDouble(row.Cells["Debit Amount"].Value),
-                            BalanceAmount = row.Cells.Exists("Balance") && row.Cells["Balance"].Value != DBNull.Value
-                                ? Convert.ToDouble(row.Cells["Balance"].Value) : 0
+                            BillAmount = row.Cells.Exists("InvoiceAmount") ? GetSafeDouble(row.Cells["InvoiceAmount"].Value) : 0,
+                            OldBillAmount = row.Cells.Exists("InvoiceAmount") ? GetSafeDouble(row.Cells["InvoiceAmount"].Value) : 0,
+                            DebitAmount = GetSafeDouble(row.Cells["Debit Amount"].Value),
+                            BalanceAmount = row.Cells.Exists("Balance") ? GetSafeDouble(row.Cells["Balance"].Value) : 0
                         };
                         details.Add(detail);
                     }
@@ -577,8 +589,8 @@ namespace PosBranch_Win.Accounts
             {
                 if (remaining <= 0) break;
 
-                decimal originalBalance = row.Cells.Exists("OriginalBalance") && row.Cells["OriginalBalance"].Value != null && row.Cells["OriginalBalance"].Value != DBNull.Value
-                    ? Convert.ToDecimal(row.Cells["OriginalBalance"].Value) : 0m;
+                decimal originalBalance = row.Cells.Exists("OriginalBalance")
+                    ? GetSafeDecimal(row.Cells["OriginalBalance"].Value) : 0m;
 
                 if (originalBalance > 0)
                 {
@@ -632,9 +644,9 @@ namespace PosBranch_Win.Accounts
             decimal total = 0;
             foreach (UltraGridRow row in ultraGrid1.Rows)
             {
-                if (row.Cells.Exists("Debit Amount") && row.Cells["Debit Amount"].Value != null)
+                if (row.Cells.Exists("Debit Amount"))
                 {
-                    total += Convert.ToDecimal(row.Cells["Debit Amount"].Value);
+                    total += GetSafeDecimal(row.Cells["Debit Amount"].Value);
                 }
             }
             return total;
@@ -700,8 +712,8 @@ namespace PosBranch_Win.Accounts
                     return;
                 }
 
-                decimal originalBalance = e.Cell.Row.Cells.Exists("OriginalBalance") && e.Cell.Row.Cells["OriginalBalance"].Value != null && e.Cell.Row.Cells["OriginalBalance"].Value != DBNull.Value
-                    ? Convert.ToDecimal(e.Cell.Row.Cells["OriginalBalance"].Value)
+                decimal originalBalance = e.Cell.Row.Cells.Exists("OriginalBalance")
+                    ? GetSafeDecimal(e.Cell.Row.Cells["OriginalBalance"].Value)
                     : 0m;
 
                 if (newAmount > originalBalance)
@@ -712,7 +724,7 @@ namespace PosBranch_Win.Accounts
                     return;
                 }
 
-                decimal totalAdjusted = GetTotalDebitAmount() - Convert.ToDecimal(e.Cell.Row.Cells["Debit Amount"].Value ?? 0m);
+                decimal totalAdjusted = GetTotalDebitAmount() - GetSafeDecimal(e.Cell.Row.Cells["Debit Amount"].Value);
                 if (totalAdjusted + newAmount > totalDebitAmount)
                 {
                     MessageBox.Show("Total adjusted amount cannot exceed debit amount!", "Warning",
@@ -735,9 +747,9 @@ namespace PosBranch_Win.Accounts
             if (!row.Cells.Exists("Debit Amount") || !row.Cells.Exists("Balance"))
                 return;
 
-            decimal debitAmount = Convert.ToDecimal(row.Cells["Debit Amount"].Value ?? 0);
-            decimal originalBalance = row.Cells.Exists("OriginalBalance") && row.Cells["OriginalBalance"].Value != null && row.Cells["OriginalBalance"].Value != DBNull.Value
-                ? Convert.ToDecimal(row.Cells["OriginalBalance"].Value)
+            decimal debitAmount = GetSafeDecimal(row.Cells["Debit Amount"].Value);
+            decimal originalBalance = row.Cells.Exists("OriginalBalance")
+                ? GetSafeDecimal(row.Cells["OriginalBalance"].Value)
                 : 0m;
 
             if (originalBalance > 0 && debitAmount > originalBalance)
@@ -966,7 +978,7 @@ namespace PosBranch_Win.Accounts
                 .Where(row => row.Cells.Exists("SelectionOrder") &&
                              row.Cells["SelectionOrder"].Value != null &&
                              row.Cells["SelectionOrder"].Value != DBNull.Value)
-                .OrderBy(row => Convert.ToInt32(row.Cells["SelectionOrder"].Value))
+                .OrderBy(row => GetSafeInt(row.Cells["SelectionOrder"].Value))
                 .ToList();
 
             decimal remaining = totalDebitAmount;
@@ -975,8 +987,8 @@ namespace PosBranch_Win.Accounts
             {
                 if (remaining <= 0) break;
 
-                decimal originalBalance = row.Cells.Exists("OriginalBalance") && row.Cells["OriginalBalance"].Value != null && row.Cells["OriginalBalance"].Value != DBNull.Value
-                    ? Convert.ToDecimal(row.Cells["OriginalBalance"].Value) : 0m;
+                decimal originalBalance = row.Cells.Exists("OriginalBalance")
+                    ? GetSafeDecimal(row.Cells["OriginalBalance"].Value) : 0m;
 
                 if (originalBalance > 0)
                 {
@@ -1126,14 +1138,50 @@ namespace PosBranch_Win.Accounts
             if (ds.Tables.Count > 1 && ds.Tables[1].Rows.Count > 0)
             {
                 DataTable dtDetails = ds.Tables[1];
+
+                // Map columns to match the standard grid layout
+                if (!dtDetails.Columns.Contains("InvoiceAmount") && dtDetails.Columns.Contains("BillAmount"))
+                {
+                    dtDetails.Columns.Add("InvoiceAmount", typeof(decimal));
+                }
+                if (!dtDetails.Columns.Contains("Debit Amount") && dtDetails.Columns.Contains("DebitAmount"))
+                {
+                    dtDetails.Columns.Add("Debit Amount", typeof(decimal));
+                }
+                if (!dtDetails.Columns.Contains("Balance") && dtDetails.Columns.Contains("BalanceAmount"))
+                {
+                    dtDetails.Columns.Add("Balance", typeof(decimal));
+                }
+                if (!dtDetails.Columns.Contains("Select"))
+                {
+                    dtDetails.Columns.Add("Select", typeof(bool));
+                }
                 if (!dtDetails.Columns.Contains("OriginalBalance"))
                 {
                     dtDetails.Columns.Add("OriginalBalance", typeof(decimal));
                 }
+
                 foreach (DataRow row in dtDetails.Rows)
                 {
-                    row["OriginalBalance"] = Convert.ToDecimal(row["Balance"] == DBNull.Value ? 0 : row["Balance"]);
+                    row["Select"] = true;
+
+                    decimal invoiceAmt = row.Table.Columns.Contains("BillAmount") ? GetSafeDecimal(row["BillAmount"]) : 0m;
+                    decimal debitAmt = row.Table.Columns.Contains("DebitAmount") ? GetSafeDecimal(row["DebitAmount"]) : 0m;
+                    decimal balAmt = row.Table.Columns.Contains("BalanceAmount") ? GetSafeDecimal(row["BalanceAmount"]) : 0m;
+
+                    if (row.Table.Columns.Contains("InvoiceAmount"))
+                        row["InvoiceAmount"] = invoiceAmt;
+
+                    if (row.Table.Columns.Contains("Debit Amount"))
+                        row["Debit Amount"] = debitAmt;
+
+                    if (row.Table.Columns.Contains("Balance"))
+                        row["Balance"] = balAmt;
+
+                    // Since it was saved, the original balance before this debit was (BalanceAmount + DebitAmount)
+                    row["OriginalBalance"] = balAmt + debitAmt;
                 }
+
                 ultraGrid1.DataSource = dtDetails;
                 ConfigureGridColumns();
             }
@@ -1212,6 +1260,33 @@ namespace PosBranch_Win.Accounts
                 form.BringToFront();
                 System.Diagnostics.Debug.WriteLine($"Error opening in tab: {ex.Message}");
             }
+        }
+
+        private decimal GetSafeDecimal(object value)
+        {
+            if (value == null || value == DBNull.Value)
+                return 0m;
+            if (decimal.TryParse(value.ToString(), out decimal res))
+                return res;
+            return 0m;
+        }
+
+        private double GetSafeDouble(object value)
+        {
+            if (value == null || value == DBNull.Value)
+                return 0;
+            if (double.TryParse(value.ToString(), out double res))
+                return res;
+            return 0;
+        }
+
+        private int GetSafeInt(object value)
+        {
+            if (value == null || value == DBNull.Value)
+                return 0;
+            if (int.TryParse(value.ToString(), out int res))
+                return res;
+            return 0;
         }
     }
 }
