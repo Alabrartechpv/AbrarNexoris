@@ -2096,7 +2096,7 @@ namespace PosBranch_Win
             if (e.Tool.Key == "Database")
             {
                 Utilities.frmDataBase frmDb = new Utilities.frmDataBase();
-                frmDb.ShowDialog(this);
+                OpenFormInTab(frmDb, "Database Backup");
             }
 
 
@@ -2457,12 +2457,29 @@ namespace PosBranch_Win
         /// Applies the selected color to the entire application like IRS POS
         /// </summary>
 
+        private bool IsHeaderControl(Control control)
+        {
+            if (control == null) return false;
+            if (!string.IsNullOrEmpty(control.Name) && control.Name.IndexOf("header", StringComparison.OrdinalIgnoreCase) >= 0) return true;
+            if (control.Parent != null) return IsHeaderControl(control.Parent);
+            return false;
+        }
+
         private void ApplyThemeToControls(Control.ControlCollection controls, Color themeColor)
         {
             try
             {
                 foreach (Control control in controls)
                 {
+                    if (IsHeaderControl(control))
+                    {
+                        if (control.HasChildren)
+                        {
+                            ApplyThemeToControls(control.Controls, themeColor);
+                        }
+                        continue;
+                    }
+
                     // Apply theme based on control type (like IRS POS - theme EVERYTHING!)
                     if (control is Panel panel && !panel.Name.Contains("color") && !panel.Name.Contains("language"))
                     {
@@ -2470,6 +2487,16 @@ namespace PosBranch_Win
                     }
                     else if (control is Button button && !button.Name.StartsWith("color") && !button.Name.StartsWith("colorButton"))
                     {
+                        if (button.Name.Equals("btnBackup", StringComparison.OrdinalIgnoreCase) || 
+                            button.Name.Equals("btnRestore", StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (control.HasChildren)
+                            {
+                                ApplyThemeToControls(control.Controls, themeColor);
+                            }
+                            continue;
+                        }
+
                         button.BackColor = Color.FromArgb(
                             Math.Min(255, themeColor.R + 20),
                             Math.Min(255, themeColor.G + 20),

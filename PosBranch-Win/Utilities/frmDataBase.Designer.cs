@@ -72,6 +72,8 @@ namespace PosBranch_Win.Utilities
             // 
             // grpBackup
             // 
+            this.grpBackup.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.grpBackup.Controls.Add(this.btnBackup);
             this.grpBackup.Controls.Add(this.btnBrowseBackup);
             this.grpBackup.Controls.Add(this.txtBackupPath);
@@ -87,6 +89,7 @@ namespace PosBranch_Win.Utilities
             // 
             // btnBackup
             // 
+            this.btnBackup.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnBackup.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(99)))), ((int)(((byte)(235)))));
             this.btnBackup.FlatAppearance.BorderSize = 0;
             this.btnBackup.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -101,6 +104,7 @@ namespace PosBranch_Win.Utilities
             // 
             // btnBrowseBackup
             // 
+            this.btnBrowseBackup.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnBrowseBackup.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(226)))), ((int)(((byte)(232)))), ((int)(((byte)(240)))));
             this.btnBrowseBackup.FlatAppearance.BorderSize = 0;
             this.btnBrowseBackup.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -115,6 +119,8 @@ namespace PosBranch_Win.Utilities
             // 
             // txtBackupPath
             // 
+            this.txtBackupPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.txtBackupPath.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.txtBackupPath.Location = new System.Drawing.Point(138, 29);
             this.txtBackupPath.Name = "txtBackupPath";
@@ -133,6 +139,8 @@ namespace PosBranch_Win.Utilities
             // 
             // grpRestore
             // 
+            this.grpRestore.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.grpRestore.Controls.Add(this.btnRestore);
             this.grpRestore.Controls.Add(this.btnBrowseRestore);
             this.grpRestore.Controls.Add(this.txtRestorePath);
@@ -148,6 +156,7 @@ namespace PosBranch_Win.Utilities
             // 
             // btnRestore
             // 
+            this.btnRestore.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnRestore.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(38)))), ((int)(((byte)(38)))));
             this.btnRestore.FlatAppearance.BorderSize = 0;
             this.btnRestore.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -162,6 +171,7 @@ namespace PosBranch_Win.Utilities
             // 
             // btnBrowseRestore
             // 
+            this.btnBrowseRestore.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnBrowseRestore.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(226)))), ((int)(((byte)(232)))), ((int)(((byte)(240)))));
             this.btnBrowseRestore.FlatAppearance.BorderSize = 0;
             this.btnBrowseRestore.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -176,6 +186,8 @@ namespace PosBranch_Win.Utilities
             // 
             // txtRestorePath
             // 
+            this.txtRestorePath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.txtRestorePath.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.txtRestorePath.Location = new System.Drawing.Point(138, 29);
             this.txtRestorePath.Name = "txtRestorePath";
@@ -194,6 +206,9 @@ namespace PosBranch_Win.Utilities
             // 
             // grpLogs
             // 
+            this.grpLogs.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.grpLogs.Controls.Add(this.lstLogs);
             this.grpLogs.Font = new System.Drawing.Font("Segoe UI Semibold", 10F, System.Drawing.FontStyle.Bold);
             this.grpLogs.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(23)))), ((int)(((byte)(42)))));
@@ -221,6 +236,8 @@ namespace PosBranch_Win.Utilities
             // 
             // progressBar
             // 
+            this.progressBar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.progressBar.Location = new System.Drawing.Point(17, 513);
             this.progressBar.Name = "progressBar";
             this.progressBar.Size = new System.Drawing.Size(750, 18);

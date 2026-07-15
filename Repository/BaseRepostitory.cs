@@ -17,7 +17,6 @@ namespace Repository
         //change by Shaji
         //change by Ashlydd
         {
-            // DataBase.Status = "Online";
             DataBase.Status = "Local";
             if (DataBase.Status == "Local")
             {
@@ -59,8 +58,7 @@ namespace Repository
             }
             else
             {
-                string Local = "Data Source = 192.168.1.232\\SQLEXPRESS; Initial Catalog = RambaiTest; User ID = sa; Password =Abrar@123;";
-                DataConnection = new SqlConnection(Local);
+                throw new NotSupportedException($"Database status '{DataBase.Status}' is not supported in production. Only local configuration is allowed.");
             }
 
         }

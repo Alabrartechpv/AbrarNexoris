@@ -25,7 +25,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 ; Copy all compiled binaries and assets recursively from the build folder
-Source: "PosBranch-Win\bin\Debug\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "PosBranch-Win\bin\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Copy the Crystal Reports runtime installer MSI to the temp directory during setup
 Source: "Prerequisites\CRRuntime_32bit.msi"; DestDir: "{tmp}"; Flags: nocompression deleteafterinstall
 

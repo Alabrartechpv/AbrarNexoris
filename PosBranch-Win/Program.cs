@@ -14,6 +14,11 @@ namespace PosBranch_Win
         [STAThread]
         static void Main()
         {
+            // Register global exception handlers for production diagnostics
+            Application.ThreadException += new System.Threading.ThreadExceptionEventHandler(Application_ThreadException);
+            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+            AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
@@ -97,6 +102,8 @@ namespace PosBranch_Win
             catch (Exception ex)
             {
                 errorMessage = ex.Message;
+                // Log connection failure details
+                Utilities.Logger.LogError("Database connection failed during startup check.", ex);
                 return false;
             }
             finally
@@ -105,6 +112,24 @@ namespace PosBranch_Win
                 {
                     repo.Dispose();
                 }
+            }
+        }
+
+        private static void Application_ThreadException(object sender, System.Threading.ThreadExceptionEventArgs e)
+        {
+            Utilities.Logger.LogError("Unhandled UI thread exception caught in Program.Main", e.Exception);
+            MessageBox.Show("An unexpected system error occurred. Details have been logged.\n\n" + e.Exception.Message, 
+                            "System Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+
+        private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            Exception ex = e.ExceptionObject as Exception;
+            Utilities.Logger.LogError("Unhandled non-UI thread exception caught in Program.Main", ex);
+            if (ex != null)
+            {
+                MessageBox.Show("A critical system error occurred. The application will now close. Details have been logged.\n\n" + ex.Message, 
+                                "Critical Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

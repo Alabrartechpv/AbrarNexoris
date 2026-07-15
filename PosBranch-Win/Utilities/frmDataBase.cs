@@ -160,6 +160,7 @@ namespace PosBranch_Win.Utilities
             }
             catch (Exception ex)
             {
+                Logger.LogError("Unexpected exception during database backup operation.", ex);
                 LogMessage($"Unexpected exception during backup: {ex.Message}");
                 progressBar.Style = ProgressBarStyle.Blocks;
                 progressBar.Value = 0;
@@ -253,6 +254,7 @@ namespace PosBranch_Win.Utilities
             }
             catch (Exception ex)
             {
+                Logger.LogError("Unexpected exception during database restore operation.", ex);
                 LogMessage($"Unexpected exception during restore: {ex.Message}");
                 progressBar.Style = ProgressBarStyle.Blocks;
                 progressBar.Value = 0;
