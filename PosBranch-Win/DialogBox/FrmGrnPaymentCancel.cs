@@ -131,7 +131,8 @@ namespace PosBranch_Win.DialogBox
                 Height = 26,
                 Top    = 6,
                 Font   = new Font("Segoe UI", 9.5f),
-                Text   = "GRN-5 or 5"
+                Text    
+                = "GRN-5 or 5"
             };
             // Simulate placeholder: clear on focus, restore if empty
             _txtSearch.ForeColor = Color.Gray;

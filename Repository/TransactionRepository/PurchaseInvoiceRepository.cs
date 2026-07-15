@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -428,6 +428,7 @@ namespace Repository.TransactionRepository
                 // IMPORTANT: Get old purchase details BEFORE any updates/deletes happen
                 // This is needed to reverse the old purchase's effect on stock and cost
                 List<PurchaseDetails> oldPurchaseDetails = GetOldPurchaseDetails(ObjPmaster.PurchaseNo, originalFinYearId, trans);
+                List<PurchaseDetails> unreversedOldPurchaseDetails = new List<PurchaseDetails>(oldPurchaseDetails);
 
                 // Calculate and set total tax amount in PurchaseMaster
                 float totalTaxAmount = CalculateTotalTaxAmount(dgvPurchase);
@@ -534,7 +535,7 @@ namespace Repository.TransactionRepository
                             float oldPurchaseCost = 0;
                             float oldPurchaseQty = 0;
                             float oldPurchaseFree = 0;
-                            var oldDetail = oldPurchaseDetails.FirstOrDefault(
+                            var oldDetail = unreversedOldPurchaseDetails.FirstOrDefault(
                                 pd => pd.ItemID == objPricesettingsStock.ItemID && pd.UnitId == objPricesettingsStock.UnitId);
 
                             if (oldDetail != null)
@@ -542,6 +543,7 @@ namespace Repository.TransactionRepository
                                 oldPurchaseCost = (float)oldDetail.Cost;
                                 oldPurchaseQty = (float)oldDetail.Qty;
                                 oldPurchaseFree = (float)oldDetail.Free;
+                                unreversedOldPurchaseDetails.Remove(oldDetail);
                             }
 
                             objPricesettingsStock.Qty = gridQty;
@@ -586,25 +588,7 @@ namespace Repository.TransactionRepository
                             // Step 1: If old purchase detail exists, call SP with DELETE to reverse old stock
                             if (oldDetail != null)
                             {
-                                var deleteObj = new PurchaseStockUpdateOnPricesettings();
-                                deleteObj._Operation = "DELETE";
-                                deleteObj.CompanyId = objPricesettingsStock.CompanyId;
-                                deleteObj.BranchID = objPricesettingsStock.BranchID;
-                                deleteObj.FinYearId = objPricesettingsStock.FinYearId;
-                                deleteObj.ItemID = objPricesettingsStock.ItemID;
-                                deleteObj.UnitId = objPricesettingsStock.UnitId;
-                                deleteObj.Qty = oldPurchaseQty;
-                                deleteObj.Free = oldPurchaseFree;
-                                deleteObj.OldQty = 0;
-                                deleteObj.SingleItemCost = oldPurchaseCost;
-                                deleteObj.Packing = packingValue;
-                                deleteObj.RetailPrice = existingPrices.RetailPrice;
-                                deleteObj.WholeSalePrice = existingPrices.WholeSalePrice;
-                                deleteObj.CreditPrice = existingPrices.CreditPrice;
-
-                                DataConnection.Query<PurchaseStockUpdateOnPricesettings>(
-                                    STOREDPROCEDURE.POS_PurchaseInvoice_PriceSettings,
-                                    deleteObj, trans, commandType: CommandType.StoredProcedure).ToList();
+                                ReversePurchaseDetailStock(oldDetail, originalFinYearId, trans, "UPDATE Purchase STEP1 DELETE");
 
                                 System.Diagnostics.Debug.WriteLine($"UPDATE Purchase STEP1 DELETE - ItemId={objPricesettingsStock.ItemID}, OldQty={oldPurchaseQty}, OldFree={oldPurchaseFree}, OldCost={oldPurchaseCost}, Packing={packingValue}");
                             }
@@ -632,6 +616,11 @@ namespace Repository.TransactionRepository
                             throw new Exception("Failed to update purchase item row " + (i + 1) + ". Transaction rolled back.", ex);
                         }
                     }
+                }
+
+                foreach (PurchaseDetails removedDetail in unreversedOldPurchaseDetails)
+                {
+                    ReversePurchaseDetailStock(removedDetail, originalFinYearId, trans, "UPDATE Purchase REMOVED ITEM DELETE");
                 }
 
                 // Calculate subtotal (GrandTotal - TaxAmount) - reuse totalTaxAmount calculated above
@@ -1009,6 +998,44 @@ namespace Repository.TransactionRepository
         /// <summary>
         /// Gets old purchase details for a specific purchase number to reverse stock/cost effects
         /// </summary>
+        private void ReversePurchaseDetailStock(PurchaseDetails oldDetail, int finYearId, IDbTransaction transaction, string debugContext)
+        {
+            if (oldDetail == null)
+            {
+                return;
+            }
+
+            var existingPrices = GetExistingItemPrices(oldDetail.ItemID, oldDetail.UnitId, transaction);
+            float preservedOriginalCost = (float)existingPrices.Cost;
+
+            var deleteObj = new PurchaseStockUpdateOnPricesettings
+            {
+                _Operation = "DELETE",
+                CompanyId = Convert.ToInt32(DataBase.CompanyId),
+                BranchID = Convert.ToInt32(DataBase.BranchId),
+                FinYearId = finYearId,
+                ItemID = oldDetail.ItemID,
+                UnitId = oldDetail.UnitId,
+                Qty = oldDetail.Qty,
+                Free = oldDetail.Free,
+                OldQty = 0,
+                SingleItemCost = oldDetail.Cost,
+                Packing = oldDetail.Packing,
+                RetailPrice = existingPrices.RetailPrice,
+                WholeSalePrice = existingPrices.WholeSalePrice,
+                CreditPrice = existingPrices.CreditPrice
+            };
+
+            DataConnection.Query<PurchaseStockUpdateOnPricesettings>(
+                STOREDPROCEDURE.POS_PurchaseInvoice_PriceSettings,
+                deleteObj, transaction, commandType: CommandType.StoredProcedure).ToList();
+
+            UpdateItemMasterCostDirectly(oldDetail.ItemID, oldDetail.UnitId, preservedOriginalCost, transaction);
+
+            System.Diagnostics.Debug.WriteLine(
+                $"{debugContext} - ItemId={oldDetail.ItemID}, UnitId={oldDetail.UnitId}, OldQty={oldDetail.Qty}, OldFree={oldDetail.Free}, OldCost={oldDetail.Cost}, Packing={oldDetail.Packing}");
+        }
+
         private List<PurchaseDetails> GetOldPurchaseDetails(int purchaseNo, int finYearId, IDbTransaction transaction)
         {
             try
@@ -1017,6 +1044,7 @@ namespace Repository.TransactionRepository
                     SELECT 
                         ItemID,
                         UnitId,
+                        ISNULL(Packing, 0) as Packing,
                         ISNULL(Qty, 0) as Qty,
                         ISNULL(Cost, 0) as Cost,
                         ISNULL(Free, 0) as Free

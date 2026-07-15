@@ -105,6 +105,7 @@ namespace PosBranch_Win.Transaction
         private const string MsgReadOnlyModeTitle = "Read-Only Mode";
         private const string MsgReadOnlyModeDetails = "GRN-{0} has vendor payment against it.\nPaid amount: {1:N2}\n\nLoaded in READ-ONLY mode. You cannot edit, add, or delete items.";
         private const string MsgReadOnlyBlock = "This purchase is in read-only mode because it has payments against it.";
+        private const string MsgPurchaseDeleteBlocked = "sorry cannot delete a purchase";
 
         // Layout state for PO section toggle in the purchase screen
         private int _poPanelLeft;
@@ -7294,71 +7295,7 @@ namespace PosBranch_Win.Transaction
         // Add DeletePurchase method
         public void DeletePurchase()
         {
-            if (_isReadOnly)
-            {
-                MessageBox.Show(MsgReadOnlyBlock, MsgReadOnlyModeTitle, MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            try
-            {
-                // Make sure we have the required data
-                if (string.IsNullOrEmpty(LblPid.Text) || string.IsNullOrEmpty(lblVoucherId.Text) || string.IsNullOrEmpty(txtPurchaseNo.Text))
-                {
-                    MessageBox.Show("Please select a purchase invoice to delete", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
-                // Confirm deletion with the userF
-                DialogResult result = MessageBox.Show(
-                    "Are you sure you want to delete Purchase No: " + txtPurchaseNo.Text + "?\n\nThis action cannot be undone.",
-                    "Confirm Delete",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Question);
-
-                if (result == DialogResult.Yes)
-                {
-                    int purchaseNo = int.Parse(txtPurchaseNo.Text.Replace("GRN-", ""));
-                    int voucherId = int.Parse(lblVoucherId.Text);
-
-                    // Get the original FinYearId to ensure data consistency
-                    int finYearId = GetOriginalFinYearId(Convert.ToInt32(LblPid.Text));
-
-                    // Call repository method to delete the purchase
-                    string message = ObjPurchaseInviceRepo.DeletePurchaseInvoice(
-                        purchaseNo,
-                        Convert.ToInt32(DataBase.BranchId),
-                        finYearId,
-                        voucherId);
-
-                    if (string.IsNullOrEmpty(message) || message.ToLower().Contains("success"))
-                    {
-                        SavePurchaseActivityLog(
-                            "DELETE",
-                            purchaseNo,
-                            txtInvoiceNo.Text,
-                            CmboVendor.Text,
-                            CmboPayment.Text,
-                            ParseDecimal(label6.Text),
-                            $"Purchase invoice GRN-{purchaseNo} deleted.");
-
-                        // Show success message
-                        MessageBox.Show("Purchase invoice deleted successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                        // Clear the form
-                        this.Clear();
-                    }
-                    else
-                    {
-                        // Show error message
-                        MessageBox.Show("Error deleting purchase: " + message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error deleting purchase: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            MessageBox.Show(MsgPurchaseDeleteBlocked, "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
         private void SavePurchaseActivityLog(string activityType, int purchaseNo, PurchaseMaster purchaseMaster, string details = null, bool detailsAreFinal = false)
