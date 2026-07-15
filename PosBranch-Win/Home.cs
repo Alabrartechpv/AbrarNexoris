@@ -2215,7 +2215,7 @@ namespace PosBranch_Win
             if (e.Tool.Key == "VendorOutstandingReport")
             {
                 PosBranch_Win.Reports.FinancialReports.frmVendorOutstandingReport vendorOutstandingReport = new PosBranch_Win.Reports.FinancialReports.frmVendorOutstandingReport();
-                OpenFormInTab(vendorOutstandingReport, "Vendor Outstanding Report");
+                OpenFormInTab(vendorOutstandingReport, "Vendor Outstanding Listing");
             }
             if (e.Tool.Key == "VendorDNPaymentReport")
             {

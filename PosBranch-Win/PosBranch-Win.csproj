@@ -1687,6 +1687,9 @@
     <EmbeddedResource Include="Reports\FinancialReports\frmVendorPaymentReport.resx">
       <DependentUpon>frmVendorPaymentReport.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Reports\FinancialReports\frmVendorOutstandingReport.resx">
+      <DependentUpon>frmVendorOutstandingReport.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Reports\InventoryReport\frmItemReport.resx">
       <DependentUpon>frmItemReport.cs</DependentUpon>
     </EmbeddedResource>
