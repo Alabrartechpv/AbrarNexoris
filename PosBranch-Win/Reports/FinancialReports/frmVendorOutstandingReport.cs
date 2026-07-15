@@ -1093,12 +1093,12 @@ namespace PosBranch_Win.Reports.FinancialReports
         {
             bool selectionMode = IsVendorSelectionMode();
             bool rangeMode = IsVendorRangeMode();
-            ultraComboVendor.Enabled = selectionMode;
+            ultraComboVendor.Enabled = false;
             txtVendorSearch.Enabled = selectionMode;
             btnVendorPicker.Enabled = selectionMode;
             btnVendorFromPicker.Enabled = rangeMode;
             btnVendorToPicker.Enabled = rangeMode;
-            ultraComboVendor.Visible = selectionMode;
+            ultraComboVendor.Visible = false;
             txtVendorSearch.Visible = selectionMode;
             btnVendorPicker.Visible = selectionMode;
             btnVendorFromPicker.Visible = rangeMode;

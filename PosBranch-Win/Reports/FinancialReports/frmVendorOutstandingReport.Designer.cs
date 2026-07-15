@@ -89,8 +89,6 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.ultraPanelControls.ClientArea.Controls.Add(this.lblVendorSelection);
             this.ultraPanelControls.ClientArea.Controls.Add(this.lblDate);
             this.ultraPanelControls.ClientArea.Controls.Add(this.lblFromDate);
-            this.ultraPanelControls.ClientArea.Controls.Add(this.lblFromVendor);
-            this.ultraPanelControls.ClientArea.Controls.Add(this.lblToVendor);
             this.ultraPanelControls.ClientArea.Controls.Add(this.ultraComboVendorMode);
             this.ultraPanelControls.ClientArea.Controls.Add(this.txtVendorSearch);
             this.ultraPanelControls.ClientArea.Controls.Add(this.btnVendorPicker);
@@ -106,6 +104,8 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.ultraPanelControls.ClientArea.Controls.Add(this.chkIncludeOutsideSelection);
             this.ultraPanelControls.ClientArea.Controls.Add(this.ultraLabel2);
             this.ultraPanelControls.ClientArea.Controls.Add(this.lblToDate);
+            this.ultraPanelControls.ClientArea.Controls.Add(this.lblFromVendor);
+            this.ultraPanelControls.ClientArea.Controls.Add(this.lblToVendor);
             this.ultraPanelControls.Dock = System.Windows.Forms.DockStyle.Top;
             this.ultraPanelControls.Location = new System.Drawing.Point(0, 0);
             this.ultraPanelControls.Name = "ultraPanelControls";
@@ -144,7 +144,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             // 
             // lblVendorSelection
             // 
-            this.lblVendorSelection.Location = new System.Drawing.Point(314, 20);
+            this.lblVendorSelection.Location = new System.Drawing.Point(401, 111);
             this.lblVendorSelection.Name = "lblVendorSelection";
             this.lblVendorSelection.Size = new System.Drawing.Size(120, 18);
             this.lblVendorSelection.TabIndex = 1;
@@ -177,7 +177,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             // 
             // lblFromVendor
             // 
-            this.lblFromVendor.Location = new System.Drawing.Point(314, 20);
+            this.lblFromVendor.Location = new System.Drawing.Point(349, 20);
             this.lblFromVendor.Name = "lblFromVendor";
             this.lblFromVendor.Size = new System.Drawing.Size(80, 18);
             this.lblFromVendor.TabIndex = 14;
@@ -186,7 +186,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             // 
             // lblToVendor
             // 
-            this.lblToVendor.Location = new System.Drawing.Point(690, 20);
+            this.lblToVendor.Location = new System.Drawing.Point(618, 18);
             this.lblToVendor.Name = "lblToVendor";
             this.lblToVendor.Size = new System.Drawing.Size(65, 18);
             this.lblToVendor.TabIndex = 15;
@@ -203,14 +203,14 @@ namespace PosBranch_Win.Reports.FinancialReports
             // 
             // txtVendorSearch
             // 
-            this.txtVendorSearch.Location = new System.Drawing.Point(314, 18);
+            this.txtVendorSearch.Location = new System.Drawing.Point(401, 109);
             this.txtVendorSearch.Name = "txtVendorSearch";
             this.txtVendorSearch.Size = new System.Drawing.Size(388, 21);
             this.txtVendorSearch.TabIndex = 6;
             // 
             // btnVendorPicker
             // 
-            this.btnVendorPicker.Location = new System.Drawing.Point(708, 16);
+            this.btnVendorPicker.Location = new System.Drawing.Point(709, 15);
             this.btnVendorPicker.Name = "btnVendorPicker";
             this.btnVendorPicker.Size = new System.Drawing.Size(33, 24);
             this.btnVendorPicker.TabIndex = 7;
@@ -219,7 +219,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             // 
             // btnVendorFromPicker
             // 
-            this.btnVendorFromPicker.Location = new System.Drawing.Point(670, 16);
+            this.btnVendorFromPicker.Location = new System.Drawing.Point(833, 13);
             this.btnVendorFromPicker.Name = "btnVendorFromPicker";
             this.btnVendorFromPicker.Size = new System.Drawing.Size(33, 24);
             this.btnVendorFromPicker.TabIndex = 22;
@@ -229,7 +229,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             // 
             // btnVendorToPicker
             // 
-            this.btnVendorToPicker.Location = new System.Drawing.Point(1032, 16);
+            this.btnVendorToPicker.Location = new System.Drawing.Point(578, 14);
             this.btnVendorToPicker.Name = "btnVendorToPicker";
             this.btnVendorToPicker.Size = new System.Drawing.Size(33, 24);
             this.btnVendorToPicker.TabIndex = 23;
@@ -240,7 +240,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             // ultraComboVendor
             // 
             this.ultraComboVendor.DropDownStyle = Infragistics.Win.DropDownStyle.DropDownList;
-            this.ultraComboVendor.Location = new System.Drawing.Point(748, 18);
+            this.ultraComboVendor.Location = new System.Drawing.Point(795, 109);
             this.ultraComboVendor.Name = "ultraComboVendor";
             this.ultraComboVendor.Size = new System.Drawing.Size(120, 21);
             this.ultraComboVendor.TabIndex = 8;
@@ -249,18 +249,18 @@ namespace PosBranch_Win.Reports.FinancialReports
             // ultraComboVendorFrom
             // 
             this.ultraComboVendorFrom.DropDownStyle = Infragistics.Win.DropDownStyle.DropDownList;
-            this.ultraComboVendorFrom.Location = new System.Drawing.Point(398, 18);
+            this.ultraComboVendorFrom.Location = new System.Drawing.Point(677, 15);
             this.ultraComboVendorFrom.Name = "ultraComboVendorFrom";
-            this.ultraComboVendorFrom.Size = new System.Drawing.Size(270, 21);
+            this.ultraComboVendorFrom.Size = new System.Drawing.Size(152, 21);
             this.ultraComboVendorFrom.TabIndex = 16;
             this.ultraComboVendorFrom.Visible = false;
             // 
             // ultraComboVendorTo
             // 
             this.ultraComboVendorTo.DropDownStyle = Infragistics.Win.DropDownStyle.DropDownList;
-            this.ultraComboVendorTo.Location = new System.Drawing.Point(760, 18);
+            this.ultraComboVendorTo.Location = new System.Drawing.Point(421, 16);
             this.ultraComboVendorTo.Name = "ultraComboVendorTo";
-            this.ultraComboVendorTo.Size = new System.Drawing.Size(270, 21);
+            this.ultraComboVendorTo.Size = new System.Drawing.Size(152, 21);
             this.ultraComboVendorTo.TabIndex = 17;
             this.ultraComboVendorTo.Visible = false;
             // 
