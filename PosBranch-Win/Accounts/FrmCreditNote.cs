@@ -472,16 +472,16 @@ namespace PosBranch_Win.Accounts
                 var details = new List<CreditNoteDetails>();
                 var selectedRows = ultraGrid1.Rows
                     .Where(row => row.Cells["Select"].Value != null && Convert.ToBoolean(row.Cells["Select"].Value))
-                    .Where(row => row.Cells["Credit Amount"].Value != null && Convert.ToDecimal(row.Cells["Credit Amount"].Value) > 0)
+                    .Where(row => GetSafeDecimal(row.Cells["Credit Amount"].Value) > 0)
                     .ToList();
 
                 foreach (var row in selectedRows)
                 {
-                    decimal creditAmount = Convert.ToDecimal(row.Cells["Credit Amount"].Value);
-                    int billNo = Convert.ToInt32(row.Cells["BillNo"].Value);
+                    decimal creditAmount = GetSafeDecimal(row.Cells["Credit Amount"].Value);
+                    int billNo = GetSafeInt(row.Cells["BillNo"].Value);
                     DateTime billDate = row.Cells["BillDate"].Value != null ? Convert.ToDateTime(row.Cells["BillDate"].Value) : DateTime.Now;
-                    decimal invoiceAmount = row.Cells["InvoiceAmount"].Value != null ? Convert.ToDecimal(row.Cells["InvoiceAmount"].Value) : 0;
-                    decimal currentBalance = row.Cells["Balance"].Value != null ? Convert.ToDecimal(row.Cells["Balance"].Value) : 0;
+                    decimal invoiceAmount = GetSafeDecimal(row.Cells["InvoiceAmount"].Value);
+                    decimal currentBalance = GetSafeDecimal(row.Cells["Balance"].Value);
 
                     details.Add(new CreditNoteDetails
                     {
@@ -609,11 +609,9 @@ namespace PosBranch_Win.Accounts
             decimal total = 0m;
             foreach (UltraGridRow row in ultraGrid1.Rows)
             {
-                decimal inv = row.Cells.Exists("InvoiceAmount") && row.Cells["InvoiceAmount"].Value != null && row.Cells["InvoiceAmount"].Value != DBNull.Value
-                    ? Convert.ToDecimal(row.Cells["InvoiceAmount"].Value) : 0m;
-                decimal rcv = row.Cells.Exists("ReceivedAmount") && row.Cells["ReceivedAmount"].Value != null && row.Cells["ReceivedAmount"].Value != DBNull.Value
-                    ? Convert.ToDecimal(row.Cells["ReceivedAmount"].Value) : 0m;
-                decimal outstanding = inv - rcv;
+                decimal outstanding = row.Cells.Exists("OriginalBalance")
+                    ? GetSafeDecimal(row.Cells["OriginalBalance"].Value)
+                    : 0m;
                 if (outstanding > 0) total += outstanding;
             }
             return total;
@@ -622,7 +620,7 @@ namespace PosBranch_Win.Accounts
         private decimal GetTotalReceivableAmount()
         {
             return ultraGrid1.Rows.Sum(row =>
-                Convert.ToDecimal(row.Cells["InvoiceAmount"].Value ?? 0));
+                GetSafeDecimal(row.Cells["InvoiceAmount"].Value));
         }
 
         private void ClearForm()
@@ -658,6 +656,12 @@ namespace PosBranch_Win.Accounts
             {
                 selectionOrderCounter = 0;
 
+                if (currentCustomerLedgerId <= 0)
+                {
+                    ultraGrid1.DataSource = CreateEmptyInvoiceTable();
+                    return;
+                }
+
                 DataTable invoices;
                 if (rdbtnoutstanding.Checked)
                 {
@@ -669,7 +673,7 @@ namespace PosBranch_Win.Accounts
                 }
 
                 // If a sales return is loaded and its source invoice is not in the list, force-append it!
-                if (invoices != null && !string.IsNullOrEmpty(_invoiceNo) && currentCustomerLedgerId > 0)
+                if (invoices != null && !string.IsNullOrEmpty(_invoiceNo) && !IsSalesReturnWithoutInvoice() && currentCustomerLedgerId > 0)
                 {
                     bool found = false;
                     foreach (DataRow row in invoices.Rows)
@@ -710,65 +714,74 @@ namespace PosBranch_Win.Accounts
                     }
                 }
 
-                ultraGrid1.DataSource = null;
-
-                if (invoices != null && invoices.Rows.Count > 0)
+                if (invoices == null)
                 {
-                    // Add OriginalBalance column if not exists
-                    if (!invoices.Columns.Contains("OriginalBalance"))
-                    {
-                        invoices.Columns.Add("OriginalBalance", typeof(decimal));
-                    }
+                    invoices = CreateEmptyInvoiceTable();
+                }
 
-                    // Credit note details update SMaster.ReceivedAmount, so ReturnedAmount is display-only here.
-                    // rather than the stored Balance column which can be stale.
-                    foreach (DataRow row in invoices.Rows)
+                // Add columns if they do not exist
+                if (!invoices.Columns.Contains("OriginalBalance"))
+                    invoices.Columns.Add("OriginalBalance", typeof(decimal));
+                if (!invoices.Columns.Contains("ReturnedAmount"))
+                    invoices.Columns.Add("ReturnedAmount", typeof(decimal));
+                if (!invoices.Columns.Contains("Select"))
+                    invoices.Columns.Add("Select", typeof(bool));
+                if (!invoices.Columns.Contains("Credit Amount"))
+                    invoices.Columns.Add("Credit Amount", typeof(decimal));
+                if (!invoices.Columns.Contains("SelectionOrder"))
+                    invoices.Columns.Add("SelectionOrder", typeof(int));
+
+                // Recalculate and set balances
+                foreach (DataRow row in invoices.Rows)
+                {
+                    decimal inv = row.Table.Columns.Contains("InvoiceAmount") && !row.IsNull("InvoiceAmount") ? Convert.ToDecimal(row["InvoiceAmount"]) : 0m;
+                    decimal rcv = row.Table.Columns.Contains("ReceivedAmount") && !row.IsNull("ReceivedAmount") ? Convert.ToDecimal(row["ReceivedAmount"]) : 0m;
+                    decimal ret = row.Table.Columns.Contains("ReturnedAmount") && !row.IsNull("ReturnedAmount") ? Convert.ToDecimal(row["ReturnedAmount"]) : 0m;
+                    
+                    decimal outstanding = inv - rcv - ret;
+                    if (outstanding < 0m) outstanding = 0m;
+
+                    row["OriginalBalance"] = outstanding;
+                    row["ReturnedAmount"] = ret;
+                    if (invoices.Columns.Contains("Balance"))
                     {
-                        decimal inv = row.IsNull("InvoiceAmount") ? 0m : Convert.ToDecimal(row["InvoiceAmount"]);
-                        decimal rcv = row.IsNull("ReceivedAmount") ? 0m : Convert.ToDecimal(row["ReceivedAmount"]);
-                        decimal outstanding = inv - rcv;
-                        decimal originalBalance = outstanding < 0m ? 0m : outstanding;
-                        row["OriginalBalance"] = originalBalance;
-                        if (invoices.Columns.Contains("Balance"))
+                        row["Balance"] = outstanding;
+                    }
+                }
+
+                if (rdbtnoutstanding.Checked)
+                {
+                    var rows = invoices.AsEnumerable()
+                        .Where(row =>
                         {
-                            row["Balance"] = originalBalance;
-                        }
-                    }
+                            decimal originalBalance = GetSafeDecimal(row["OriginalBalance"]);
+                            bool isSourceInvoice = !string.IsNullOrEmpty(_invoiceNo)
+                                && row.Table.Columns.Contains("BillNo")
+                                && row["BillNo"].ToString().Trim().Equals(_invoiceNo.Trim(), StringComparison.OrdinalIgnoreCase);
+                            return originalBalance > 0m || isSourceInvoice;
+                        })
+                        .ToList();
 
-                    if (rdbtnoutstanding.Checked)
-                    {
-                        var rows = invoices.AsEnumerable()
-                            .Where(row =>
-                            {
-                                decimal originalBalance = row.IsNull("OriginalBalance") ? 0m : Convert.ToDecimal(row["OriginalBalance"]);
-                                bool isSourceInvoice = !string.IsNullOrEmpty(_invoiceNo)
-                                    && row.Table.Columns.Contains("BillNo")
-                                    && row["BillNo"].ToString().Trim().Equals(_invoiceNo.Trim(), StringComparison.OrdinalIgnoreCase);
-                                return originalBalance > 0m || isSourceInvoice;
-                            })
-                            .ToList();
+                    invoices = rows.Count > 0 ? rows.CopyToDataTable() : invoices.Clone();
+                }
 
-                        invoices = rows.Count > 0 ? rows.CopyToDataTable() : invoices.Clone();
-                    }
+                ultraGrid1.DataSource = invoices;
+                ConfigureGridColumns();
 
-                    ultraGrid1.DataSource = invoices;
-                    ConfigureGridColumns();
+                // Set all checkboxes to false and credit amounts to 0
+                foreach (UltraGridRow row in ultraGrid1.Rows)
+                {
+                    if (row.Cells.Exists("Select")) row.Cells["Select"].Value = false;
+                    if (row.Cells.Exists("Credit Amount")) row.Cells["Credit Amount"].Value = 0m;
+                    if (row.Cells.Exists("SelectionOrder")) row.Cells["SelectionOrder"].Value = DBNull.Value;
+                }
 
-                    // Set all checkboxes to false and credit amounts to 0
-                    foreach (UltraGridRow row in ultraGrid1.Rows)
-                    {
-                        if (row.Cells.Exists("Select")) row.Cells["Select"].Value = false;
-                        if (row.Cells.Exists("Credit Amount")) row.Cells["Credit Amount"].Value = 0m;
-                        if (row.Cells.Exists("SelectionOrder")) row.Cells["SelectionOrder"].Value = DBNull.Value;
-                    }
-
+                if (ultraGrid1.Rows.Count > 0)
+                {
                     ultraGrid1.Focus();
-                    if (ultraGrid1.Rows.Count > 0)
-                    {
-                        ultraGrid1.Rows[0].Activated = true;
-                        ultraGrid1.Rows[0].Selected = true;
-                        ultraGrid1.ActiveRow = ultraGrid1.Rows[0];
-                    }
+                    ultraGrid1.Rows[0].Activated = true;
+                    ultraGrid1.Rows[0].Selected = true;
+                    ultraGrid1.ActiveRow = ultraGrid1.Rows[0];
                 }
             }
             catch (Exception ex)
@@ -1047,12 +1060,12 @@ namespace PosBranch_Win.Accounts
             // Get selected rows ordered by SelectionOrder
             var selectedRows = ultraGrid1.Rows
                 .Where(row => row.Cells.Exists("Select") &&
-                             row.Cells["Select"].Value != null &&
-                             Convert.ToBoolean(row.Cells["Select"].Value))
+                              row.Cells["Select"].Value != null &&
+                              Convert.ToBoolean(row.Cells["Select"].Value))
                 .Where(row => row.Cells.Exists("SelectionOrder") &&
-                             row.Cells["SelectionOrder"].Value != null &&
-                             row.Cells["SelectionOrder"].Value != DBNull.Value)
-                .OrderBy(row => Convert.ToInt32(row.Cells["SelectionOrder"].Value))
+                              row.Cells["SelectionOrder"].Value != null &&
+                              row.Cells["SelectionOrder"].Value != DBNull.Value)
+                .OrderBy(row => GetSafeInt(row.Cells["SelectionOrder"].Value))
                 .ToList();
 
             decimal remaining = totalCreditAmount;
@@ -1061,18 +1074,10 @@ namespace PosBranch_Win.Accounts
             {
                 if (remaining <= 0) break;
 
-                // Compute outstanding using live formula — never rely on stored Balance.
-                decimal invoiceAmount = row.Cells.Exists("InvoiceAmount") &&
-                                       row.Cells["InvoiceAmount"].Value != null &&
-                                       row.Cells["InvoiceAmount"].Value != DBNull.Value
-                    ? Convert.ToDecimal(row.Cells["InvoiceAmount"].Value) : 0m;
-
-                decimal receivedAmount = row.Cells.Exists("ReceivedAmount") &&
-                                        row.Cells["ReceivedAmount"].Value != null &&
-                                        row.Cells["ReceivedAmount"].Value != DBNull.Value
-                    ? Convert.ToDecimal(row.Cells["ReceivedAmount"].Value) : 0m;
-
-                decimal outstanding = invoiceAmount - receivedAmount;
+                // Compute outstanding using OriginalBalance.
+                decimal outstanding = row.Cells.Exists("OriginalBalance")
+                    ? GetSafeDecimal(row.Cells["OriginalBalance"].Value)
+                    : 0m;
 
                 // FIX Bug #4: Skip invoices that have no outstanding balance.
                 // Previously these rows received the remaining credit, causing
@@ -1112,22 +1117,18 @@ namespace PosBranch_Win.Accounts
             if (!row.Cells.Exists("Credit Amount") || !row.Cells.Exists("Balance"))
                 return;
 
-            decimal creditAmount = Convert.ToDecimal(row.Cells["Credit Amount"].Value ?? 0);
+            decimal creditAmount = GetSafeDecimal(row.Cells["Credit Amount"].Value);
 
             // Retrieve the original balance from the hidden column
             decimal originalBalance = 0m;
-            if (row.Cells.Exists("OriginalBalance") && row.Cells["OriginalBalance"].Value != null && row.Cells["OriginalBalance"].Value != DBNull.Value)
+            if (row.Cells.Exists("OriginalBalance"))
             {
-                originalBalance = Convert.ToDecimal(row.Cells["OriginalBalance"].Value);
+                originalBalance = GetSafeDecimal(row.Cells["OriginalBalance"].Value);
             }
             else if (row.Cells.Exists("InvoiceAmount"))
             {
-                decimal invoiceAmount = Convert.ToDecimal(row.Cells["InvoiceAmount"].Value ?? 0);
-                decimal receivedAmount = 0m;
-                if (row.Cells.Exists("ReceivedAmount") && row.Cells["ReceivedAmount"].Value != null && row.Cells["ReceivedAmount"].Value != DBNull.Value)
-                {
-                    receivedAmount = Convert.ToDecimal(row.Cells["ReceivedAmount"].Value);
-                }
+                decimal invoiceAmount = GetSafeDecimal(row.Cells["InvoiceAmount"].Value);
+                decimal receivedAmount = GetSafeDecimal(row.Cells["ReceivedAmount"].Value);
                 originalBalance = invoiceAmount - receivedAmount;
                 if (originalBalance < 0m) originalBalance = 0m;
             }
@@ -1150,9 +1151,9 @@ namespace PosBranch_Win.Accounts
             decimal total = 0;
             foreach (UltraGridRow row in ultraGrid1.Rows)
             {
-                if (row.Cells.Exists("Credit Amount") && row.Cells["Credit Amount"].Value != null)
+                if (row.Cells.Exists("Credit Amount"))
                 {
-                    total += Convert.ToDecimal(row.Cells["Credit Amount"].Value);
+                    total += GetSafeDecimal(row.Cells["Credit Amount"].Value);
                 }
             }
             return total;
@@ -1252,8 +1253,8 @@ namespace PosBranch_Win.Accounts
                 }
 
                 string billNo = selectedRow.Cells["BillNo"].Value.ToString();
-                decimal originalBillAmount = selectedRow.Cells.Exists("InvoiceAmount") && selectedRow.Cells["InvoiceAmount"].Value != null
-                    ? Convert.ToDecimal(selectedRow.Cells["InvoiceAmount"].Value) : 0;
+                decimal originalBillAmount = selectedRow.Cells.Exists("InvoiceAmount")
+                    ? GetSafeDecimal(selectedRow.Cells["InvoiceAmount"].Value) : 0m;
 
                 MessageBox.Show($"Credit Note history for Bill #: {billNo}\nAmount: {originalBillAmount:N2}",
                     "Credit Note History", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -1316,14 +1317,50 @@ namespace PosBranch_Win.Accounts
             if (ds.Tables.Count > 1 && ds.Tables[1].Rows.Count > 0)
             {
                 DataTable dtDetails = ds.Tables[1];
+
+                // Map columns to match the standard grid layout
+                if (!dtDetails.Columns.Contains("InvoiceAmount") && dtDetails.Columns.Contains("BillAmount"))
+                {
+                    dtDetails.Columns.Add("InvoiceAmount", typeof(decimal));
+                }
+                if (!dtDetails.Columns.Contains("Credit Amount") && dtDetails.Columns.Contains("CreditAmount"))
+                {
+                    dtDetails.Columns.Add("Credit Amount", typeof(decimal));
+                }
+                if (!dtDetails.Columns.Contains("Balance") && dtDetails.Columns.Contains("BalanceAmount"))
+                {
+                    dtDetails.Columns.Add("Balance", typeof(decimal));
+                }
+                if (!dtDetails.Columns.Contains("Select"))
+                {
+                    dtDetails.Columns.Add("Select", typeof(bool));
+                }
                 if (!dtDetails.Columns.Contains("OriginalBalance"))
                 {
                     dtDetails.Columns.Add("OriginalBalance", typeof(decimal));
                 }
+
                 foreach (DataRow row in dtDetails.Rows)
                 {
-                    row["OriginalBalance"] = Convert.ToDecimal(row["Balance"] == DBNull.Value ? 0 : row["Balance"]);
+                    row["Select"] = true;
+
+                    decimal invoiceAmt = row.Table.Columns.Contains("BillAmount") ? GetSafeDecimal(row["BillAmount"]) : 0m;
+                    decimal creditAmt = row.Table.Columns.Contains("CreditAmount") ? GetSafeDecimal(row["CreditAmount"]) : 0m;
+                    decimal balAmt = row.Table.Columns.Contains("BalanceAmount") ? GetSafeDecimal(row["BalanceAmount"]) : 0m;
+
+                    if (row.Table.Columns.Contains("InvoiceAmount"))
+                        row["InvoiceAmount"] = invoiceAmt;
+
+                    if (row.Table.Columns.Contains("Credit Amount"))
+                        row["Credit Amount"] = creditAmt;
+
+                    if (row.Table.Columns.Contains("Balance"))
+                        row["Balance"] = balAmt;
+
+                    // Since it was saved, original balance before credit note was applied was (BalanceAmount + CreditAmount)
+                    row["OriginalBalance"] = balAmt + creditAmt;
                 }
+
                 ultraGrid1.DataSource = dtDetails;
                 ConfigureGridColumns();
             }
@@ -1372,6 +1409,50 @@ namespace PosBranch_Win.Accounts
         private void btn_Add_Custm_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private bool IsSalesReturnWithoutInvoice()
+        {
+            if (_sReturnNo <= 0)
+            {
+                return false;
+            }
+
+            string invoiceNo = (_invoiceNo ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(invoiceNo))
+            {
+                return true;
+            }
+
+            string normalized = invoiceNo.ToUpperInvariant();
+            return normalized == "WITHOUT BILL" || normalized == "WITHOUT SALES BILL" || normalized == "WITHOUT GR";
+        }
+
+        private decimal GetSafeDecimal(object value)
+        {
+            if (value == null || value == DBNull.Value)
+                return 0m;
+            if (decimal.TryParse(value.ToString(), out decimal res))
+                return res;
+            return 0m;
+        }
+
+        private double GetSafeDouble(object value)
+        {
+            if (value == null || value == DBNull.Value)
+                return 0;
+            if (double.TryParse(value.ToString(), out double res))
+                return res;
+            return 0;
+        }
+
+        private int GetSafeInt(object value)
+        {
+            if (value == null || value == DBNull.Value)
+                return 0;
+            if (int.TryParse(value.ToString(), out int res))
+                return res;
+            return 0;
         }
     }
 }
