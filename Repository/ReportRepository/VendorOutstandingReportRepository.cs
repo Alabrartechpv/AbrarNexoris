@@ -22,16 +22,20 @@ namespace Repository.ReportRepository
                 if (DataConnection.State != ConnectionState.Open)
                     DataConnection.Open();
 
-                using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE._VendorOutstandingReport, (SqlConnection)DataConnection))
+                using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE.POS_VendorOutstandingListing, (SqlConnection)DataConnection))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Parameters.Add("@FromDate", SqlDbType.DateTime).Value = filter.FromDate.Date;
-                    cmd.Parameters.Add("@ToDate", SqlDbType.DateTime).Value = filter.ToDate.Date;
                     cmd.Parameters.Add("@CompanyId", SqlDbType.Int).Value = filter.CompanyId > 0 ? (object)filter.CompanyId : DBNull.Value;
                     cmd.Parameters.Add("@BranchId", SqlDbType.Int).Value = filter.BranchId > 0 ? (object)filter.BranchId : DBNull.Value;
                     cmd.Parameters.Add("@FinYearId", SqlDbType.Int).Value = filter.FinYearId > 0 ? (object)filter.FinYearId : DBNull.Value;
-                    cmd.Parameters.Add("@LedgerId", SqlDbType.Int).Value = filter.LedgerId > 0 ? filter.LedgerId : 0;
-                    cmd.Parameters.Add("@_Operation", SqlDbType.VarChar, 50).Value = filter.LedgerId > 0 ? "GETBYID" : "GETALL";
+                    cmd.Parameters.Add("@LedgerId", SqlDbType.Int).Value = filter.LedgerId > 0 ? (object)filter.LedgerId : DBNull.Value;
+                    cmd.Parameters.Add("@FromLedgerId", SqlDbType.Int).Value = filter.FromLedgerId > 0 ? (object)filter.FromLedgerId : DBNull.Value;
+                    cmd.Parameters.Add("@ToLedgerId", SqlDbType.Int).Value = filter.ToLedgerId > 0 ? (object)filter.ToLedgerId : DBNull.Value;
+                    cmd.Parameters.Add("@DateFilterMode", SqlDbType.VarChar, 20).Value = string.IsNullOrWhiteSpace(filter.DateFilterMode) ? (object)DBNull.Value : filter.DateFilterMode;
+                    cmd.Parameters.Add("@UseDateFilter", SqlDbType.Bit).Value = filter.UseDateFilter;
+                    cmd.Parameters.Add("@FromDate", SqlDbType.Date).Value = filter.FromDate.Date;
+                    cmd.Parameters.Add("@ToDate", SqlDbType.Date).Value = filter.ToDate.Date;
+                    cmd.Parameters.Add("@PaymentDueOnly", SqlDbType.Bit).Value = filter.PaymentDueOnly;
 
                     using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
                     {
@@ -42,11 +46,16 @@ namespace Repository.ReportRepository
                         {
                             rows.Add(new VendorOutstandingReportRow
                             {
-                                LedgerID = ToInt(row, "LedgerID"),
-                                LedgerName = ToString(row, "LedgerName"),
-                                VoucherDate = ToNullableDateTime(row, "VoucherDate", "VocherDate"),
-                                TotalOutstanding = ToDecimal(row, "TotalOutstanding"),
-                                TotalPaid = ToDecimal(row, "TotalPaid"),
+                                AcctCode = ToInt(row, "AcctCode"),
+                                Company = ToString(row, "Company"),
+                                Name = ToString(row, "Name"),
+                                Phone = ToString(row, "Phone"),
+                                PurchaseNo = ToLong(row, "PurchaseNo"),
+                                Date = ToDateTime(row, "Date"),
+                                Reference = ToString(row, "Reference"),
+                                InvoiceDate = ToNullableDateTime(row, "InvoiceDate"),
+                                PostDate = ToNullableDateTime(row, "PostDate"),
+                                DocAmt = ToDecimal(row, "DocAmt"),
                                 Balance = ToDecimal(row, "Balance")
                             });
                         }
@@ -83,6 +92,13 @@ namespace Repository.ReportRepository
                 : 0;
         }
 
+        private static long ToLong(DataRow row, string columnName)
+        {
+            return row.Table.Columns.Contains(columnName) && row[columnName] != DBNull.Value
+                ? Convert.ToInt64(row[columnName])
+                : 0L;
+        }
+
         private static decimal ToDecimal(DataRow row, string columnName)
         {
             return row.Table.Columns.Contains(columnName) && row[columnName] != DBNull.Value
@@ -90,17 +106,18 @@ namespace Repository.ReportRepository
                 : 0m;
         }
 
-        private static DateTime? ToNullableDateTime(DataRow row, params string[] columnNames)
+        private static DateTime ToDateTime(DataRow row, string columnName)
         {
-            foreach (string columnName in columnNames)
-            {
-                if (row.Table.Columns.Contains(columnName) && row[columnName] != DBNull.Value)
-                {
-                    return Convert.ToDateTime(row[columnName]);
-                }
-            }
+            return row.Table.Columns.Contains(columnName) && row[columnName] != DBNull.Value
+                ? Convert.ToDateTime(row[columnName])
+                : DateTime.MinValue;
+        }
 
-            return null;
+        private static DateTime? ToNullableDateTime(DataRow row, string columnName)
+        {
+            return row.Table.Columns.Contains(columnName) && row[columnName] != DBNull.Value
+                ? Convert.ToDateTime(row[columnName])
+                : (DateTime?)null;
         }
 
         private static string ToString(DataRow row, string columnName)
