@@ -949,12 +949,19 @@ namespace PosBranch_Win.Reports.FinancialReports
 
         private void btnPreviewGrid_Click(object sender, EventArgs e)
         {
-            ShowGridPreview("Vendor Outstanding Listing - Grid Preview");
+            ShowReportPreview();
         }
 
         private void btnPreviewReport_Click(object sender, EventArgs e)
         {
-            ShowReportPreview();
+            ShowReportFormatDialog(
+                "VENDOR OUTSTANDING LISTING",
+                new[]
+                {
+                    "VENDOR OUTSTANDING LISTING",
+                    "VENDOR OUTSTANDING LISTING - GROUP BY COMPANY",
+                    "VENDOR OUTSTANDING LISTING - SUMMARY"
+                });
         }
 
         private void btnExportGrid_Click(object sender, EventArgs e)
