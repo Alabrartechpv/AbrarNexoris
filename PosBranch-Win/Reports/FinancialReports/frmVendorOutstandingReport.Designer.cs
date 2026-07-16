@@ -29,9 +29,6 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.lblVendorSelection = new Infragistics.Win.Misc.UltraLabel();
             this.lblDate = new Infragistics.Win.Misc.UltraLabel();
             this.lblFromDate = new Infragistics.Win.Misc.UltraLabel();
-            this.lblToDate = new Infragistics.Win.Misc.UltraLabel();
-            this.lblFromVendor = new Infragistics.Win.Misc.UltraLabel();
-            this.lblToVendor = new Infragistics.Win.Misc.UltraLabel();
             this.ultraComboVendorMode = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
             this.txtVendorSearch = new Infragistics.Win.UltraWinEditors.UltraComboEditor();
             this.btnVendorPicker = new System.Windows.Forms.Button();
@@ -44,8 +41,10 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.dtFrom = new Infragistics.Win.UltraWinEditors.UltraDateTimeEditor();
             this.dtTo = new Infragistics.Win.UltraWinEditors.UltraDateTimeEditor();
             this.chkPaymentDueOnly = new Infragistics.Win.UltraWinEditors.UltraCheckEditor();
-            this.chkIncludeOutsideSelection = new Infragistics.Win.UltraWinEditors.UltraCheckEditor();
             this.ultraLabel2 = new Infragistics.Win.Misc.UltraLabel();
+            this.lblToDate = new Infragistics.Win.Misc.UltraLabel();
+            this.lblFromVendor = new Infragistics.Win.Misc.UltraLabel();
+            this.lblToVendor = new Infragistics.Win.Misc.UltraLabel();
             this.ultraPanelAction = new Infragistics.Win.Misc.UltraPanel();
             this.btnViewGrid = new Infragistics.Win.Misc.UltraButton();
             this.btnPreviewGrid = new Infragistics.Win.Misc.UltraButton();
@@ -68,7 +67,6 @@ namespace PosBranch_Win.Reports.FinancialReports
             ((System.ComponentModel.ISupportInitialize)(this.dtFrom)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dtTo)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.chkPaymentDueOnly)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.chkIncludeOutsideSelection)).BeginInit();
             this.ultraPanelAction.ClientArea.SuspendLayout();
             this.ultraPanelAction.SuspendLayout();
             this.ultraPanelMaster.ClientArea.SuspendLayout();
@@ -101,7 +99,6 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.ultraPanelControls.ClientArea.Controls.Add(this.dtFrom);
             this.ultraPanelControls.ClientArea.Controls.Add(this.dtTo);
             this.ultraPanelControls.ClientArea.Controls.Add(this.chkPaymentDueOnly);
-            this.ultraPanelControls.ClientArea.Controls.Add(this.chkIncludeOutsideSelection);
             this.ultraPanelControls.ClientArea.Controls.Add(this.ultraLabel2);
             this.ultraPanelControls.ClientArea.Controls.Add(this.lblToDate);
             this.ultraPanelControls.ClientArea.Controls.Add(this.lblFromVendor);
@@ -144,7 +141,7 @@ namespace PosBranch_Win.Reports.FinancialReports
             // 
             // lblVendorSelection
             // 
-            this.lblVendorSelection.Location = new System.Drawing.Point(401, 111);
+            this.lblVendorSelection.Location = new System.Drawing.Point(314, 20);
             this.lblVendorSelection.Name = "lblVendorSelection";
             this.lblVendorSelection.Size = new System.Drawing.Size(120, 18);
             this.lblVendorSelection.TabIndex = 1;
@@ -167,32 +164,6 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.lblFromDate.TabIndex = 3;
             this.lblFromDate.Text = "From";
             // 
-            // lblToDate
-            // 
-            this.lblToDate.Location = new System.Drawing.Point(494, 49);
-            this.lblToDate.Name = "lblToDate";
-            this.lblToDate.Size = new System.Drawing.Size(26, 18);
-            this.lblToDate.TabIndex = 4;
-            this.lblToDate.Text = "To";
-            // 
-            // lblFromVendor
-            // 
-            this.lblFromVendor.Location = new System.Drawing.Point(349, 20);
-            this.lblFromVendor.Name = "lblFromVendor";
-            this.lblFromVendor.Size = new System.Drawing.Size(80, 18);
-            this.lblFromVendor.TabIndex = 14;
-            this.lblFromVendor.Text = "From Vendor";
-            this.lblFromVendor.Visible = false;
-            // 
-            // lblToVendor
-            // 
-            this.lblToVendor.Location = new System.Drawing.Point(618, 18);
-            this.lblToVendor.Name = "lblToVendor";
-            this.lblToVendor.Size = new System.Drawing.Size(65, 18);
-            this.lblToVendor.TabIndex = 15;
-            this.lblToVendor.Text = "To Vendor";
-            this.lblToVendor.Visible = false;
-            // 
             // ultraComboVendorMode
             // 
             this.ultraComboVendorMode.DropDownStyle = Infragistics.Win.DropDownStyle.DropDownList;
@@ -203,14 +174,14 @@ namespace PosBranch_Win.Reports.FinancialReports
             // 
             // txtVendorSearch
             // 
-            this.txtVendorSearch.Location = new System.Drawing.Point(401, 109);
+            this.txtVendorSearch.Location = new System.Drawing.Point(314, 18);
             this.txtVendorSearch.Name = "txtVendorSearch";
             this.txtVendorSearch.Size = new System.Drawing.Size(388, 21);
             this.txtVendorSearch.TabIndex = 6;
             // 
             // btnVendorPicker
             // 
-            this.btnVendorPicker.Location = new System.Drawing.Point(709, 15);
+            this.btnVendorPicker.Location = new System.Drawing.Point(706, 15);
             this.btnVendorPicker.Name = "btnVendorPicker";
             this.btnVendorPicker.Size = new System.Drawing.Size(33, 24);
             this.btnVendorPicker.TabIndex = 7;
@@ -294,14 +265,6 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.chkPaymentDueOnly.TabIndex = 12;
             this.chkPaymentDueOnly.Text = "Payment Due Only";
             // 
-            // chkIncludeOutsideSelection
-            // 
-            this.chkIncludeOutsideSelection.Location = new System.Drawing.Point(122, 96);
-            this.chkIncludeOutsideSelection.Name = "chkIncludeOutsideSelection";
-            this.chkIncludeOutsideSelection.Size = new System.Drawing.Size(275, 20);
-            this.chkIncludeOutsideSelection.TabIndex = 13;
-            this.chkIncludeOutsideSelection.Text = "Include Payment Not Within Selection Date";
-            // 
             // ultraLabel2
             // 
             this.ultraLabel2.Location = new System.Drawing.Point(494, 72);
@@ -309,6 +272,32 @@ namespace PosBranch_Win.Reports.FinancialReports
             this.ultraLabel2.Size = new System.Drawing.Size(26, 18);
             this.ultraLabel2.TabIndex = 20;
             this.ultraLabel2.Text = "To";
+            // 
+            // lblToDate
+            // 
+            this.lblToDate.Location = new System.Drawing.Point(494, 49);
+            this.lblToDate.Name = "lblToDate";
+            this.lblToDate.Size = new System.Drawing.Size(26, 18);
+            this.lblToDate.TabIndex = 4;
+            this.lblToDate.Text = "To";
+            // 
+            // lblFromVendor
+            // 
+            this.lblFromVendor.Location = new System.Drawing.Point(349, 20);
+            this.lblFromVendor.Name = "lblFromVendor";
+            this.lblFromVendor.Size = new System.Drawing.Size(80, 18);
+            this.lblFromVendor.TabIndex = 14;
+            this.lblFromVendor.Text = "From Vendor";
+            this.lblFromVendor.Visible = false;
+            // 
+            // lblToVendor
+            // 
+            this.lblToVendor.Location = new System.Drawing.Point(618, 18);
+            this.lblToVendor.Name = "lblToVendor";
+            this.lblToVendor.Size = new System.Drawing.Size(65, 18);
+            this.lblToVendor.TabIndex = 15;
+            this.lblToVendor.Text = "To Vendor";
+            this.lblToVendor.Visible = false;
             // 
             // ultraPanelAction
             // 
@@ -434,7 +423,6 @@ namespace PosBranch_Win.Reports.FinancialReports
             ((System.ComponentModel.ISupportInitialize)(this.dtFrom)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dtTo)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.chkPaymentDueOnly)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.chkIncludeOutsideSelection)).EndInit();
             this.ultraPanelAction.ClientArea.ResumeLayout(false);
             this.ultraPanelAction.ResumeLayout(false);
             this.ultraPanelMaster.ClientArea.ResumeLayout(false);
@@ -469,7 +457,6 @@ namespace PosBranch_Win.Reports.FinancialReports
         private Infragistics.Win.UltraWinEditors.UltraDateTimeEditor dtFrom;
         private Infragistics.Win.UltraWinEditors.UltraDateTimeEditor dtTo;
         private Infragistics.Win.UltraWinEditors.UltraCheckEditor chkPaymentDueOnly;
-        private Infragistics.Win.UltraWinEditors.UltraCheckEditor chkIncludeOutsideSelection;
         private Infragistics.Win.Misc.UltraButton btnViewGrid;
         private Infragistics.Win.Misc.UltraButton btnPreviewGrid;
         private Infragistics.Win.Misc.UltraButton btnPreviewReport;
