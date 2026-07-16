@@ -532,5 +532,45 @@ namespace Repository.Accounts
                     DataConnection.Close();
             }
         }
+
+        /// <summary>
+        /// Gets all purchase returns available for a vendor, adjusting for partial payments/debits.
+        /// </summary>
+        public List<PReturnGetAll> GetAvailablePurchaseReturns(int vendorLedgerId, int branchId, int excludeDebitNoteId)
+        {
+            List<PReturnGetAll> list = new List<PReturnGetAll>();
+            DataConnection.Open();
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE._DebitNoteMaster, (SqlConnection)DataConnection))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@VendorLedgerId", vendorLedgerId);
+                    cmd.Parameters.AddWithValue("@BranchId", branchId);
+                    cmd.Parameters.AddWithValue("@Id", excludeDebitNoteId);
+                    cmd.Parameters.AddWithValue("@_Operation", "GETAVAILABLERETURNS");
+
+                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                    {
+                        DataTable dt = new DataTable();
+                        da.Fill(dt);
+                        if (dt.Rows.Count > 0)
+                        {
+                            list = dt.ToListOfObject<PReturnGetAll>();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                    DataConnection.Close();
+            }
+            return list;
+        }
     }
 }

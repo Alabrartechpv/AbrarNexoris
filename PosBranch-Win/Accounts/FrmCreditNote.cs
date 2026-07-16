@@ -33,6 +33,7 @@ namespace PosBranch_Win.Accounts
         private int selectionOrderCounter = 0;
         private int _sReturnNo = 0;
         private string _invoiceNo = "";
+        private int currentCreditNoteId = 0; // Tracks the currently loaded Credit Note record ID
 
         public FrmCreditNote()
         {
@@ -438,6 +439,10 @@ namespace PosBranch_Win.Accounts
 
             // Add KeyDown event for textBox4 (customer ID input)
             textBox4.KeyDown += textBox4_KeyDown;
+
+            // Hide the local action panel (Save, Clear, Close) and stretch grid panel to fill the space
+            ultraPanel2.Visible = false;
+            ultraPanel5.Width = ultraPanel2.Right - ultraPanel5.Left;
         }
 
         private void btnSave_Click(object sender, EventArgs e)
@@ -625,6 +630,7 @@ namespace PosBranch_Win.Accounts
 
         private void ClearForm()
         {
+            currentCreditNoteId = 0;
             txtCustomer.Text = string.Empty;
             textBox4.Text = string.Empty;
             txtSalesMan.Text = string.Empty;
@@ -1304,6 +1310,7 @@ namespace PosBranch_Win.Accounts
         {
             DataRow masterRow = ds.Tables[0].Rows[0];
 
+            currentCreditNoteId = Convert.ToInt32(masterRow["Id"]);
             currentCustomerLedgerId = Convert.ToInt32(masterRow["CustomerLedgerId"]);
             _sReturnNo = Convert.ToInt32(masterRow["SReturnNo"] ?? 0);
             _invoiceNo = masterRow["InvoiceNo"]?.ToString();
@@ -1363,6 +1370,46 @@ namespace PosBranch_Win.Accounts
 
                 ultraGrid1.DataSource = dtDetails;
                 ConfigureGridColumns();
+            }
+        }
+
+        // Ribbon Action Integrations
+        public void Save()
+        {
+            btnSave_Click(null, EventArgs.Empty);
+        }
+
+        public void Clear()
+        {
+            ClearForm();
+        }
+
+        public void Delete()
+        {
+            if (currentCreditNoteId <= 0)
+            {
+                MessageBox.Show("No saved Credit Note is loaded to delete.", "Delete", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (MessageBox.Show("Are you sure you want to delete this Credit Note?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                try
+                {
+                    if (creditNoteRepo.DeleteCreditNote(currentCreditNoteId))
+                    {
+                        MessageBox.Show("Credit Note deleted successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        ClearForm();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Failed to delete Credit Note.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error deleting Credit Note: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 

@@ -8,6 +8,8 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using ModelClass;
+using Repository.Accounts;
 
 namespace PosBranch_Win.DialogBox
 {
@@ -20,6 +22,7 @@ namespace PosBranch_Win.DialogBox
         private PurchaseReturnRepository purchaseReturnRepo = new PurchaseReturnRepository();
         private List<PReturnGetAll> purchaseReturnData;
         private int _vendorLedgerId = 0; // Filter by vendor if > 0
+        private int _excludeDebitNoteId = 0; // The current Debit Note ID to exclude from adjusted calculations
 
         // Event for when a Purchase Return is selected
         public delegate void PurchaseReturnSelectedHandler(int pReturnNo, int ledgerId, string vendorName, string invoiceNo, double grandTotal);
@@ -35,16 +38,17 @@ namespace PosBranch_Win.DialogBox
         }
 
         /// <summary>
-        /// Constructor to filter purchase returns by vendor.
+        /// Constructor to filter purchase returns by vendor and handle partial adjustments.
         /// </summary>
-        /// <param name="vendorLedgerId">The vendor's LedgerID.</param>
-        public frmPurchaseReturnLookup(int vendorLedgerId) : this()
+        /// <param name="vendorLedgerId">The vendor's LedgerID. Pass 0 to open without a vendor (shows empty grid).</param>
+        /// <param name="excludeDebitNoteId">The ID of the Debit Note currently being edited, to exclude its own adjustments from calculations.</param>
+        public frmPurchaseReturnLookup(int vendorLedgerId, int excludeDebitNoteId) : this()
         {
             _vendorLedgerId = vendorLedgerId;
-            if (vendorLedgerId > 0)
-            {
-                this.Text = "Purchase Returns for Vendor";
-            }
+            _excludeDebitNoteId = excludeDebitNoteId;
+            this.Text = vendorLedgerId > 0
+                ? "Purchase Returns — Vendor"
+                : "Purchase Returns — No vendor selected";
         }
 
         private void SetupGrid()
@@ -136,19 +140,18 @@ namespace PosBranch_Win.DialogBox
         {
             try
             {
-                if (_vendorLedgerId > 0)
+                if (_vendorLedgerId <= 0)
                 {
-                    purchaseReturnData = purchaseReturnRepo.GetAll()
-                        .Where(pr => pr.LedgerID == _vendorLedgerId)
-                        .OrderByDescending(pr => pr.PReturnNo)
-                        .ToList();
+                    // No vendor selected — show nothing and hint the user.
+                    purchaseReturnData = new List<PReturnGetAll>();
+                    ultraGrid1.DataSource = purchaseReturnData;
+                    label1.Text = "Please select a vendor first.";
+                    return;
                 }
-                else
-                {
-                    purchaseReturnData = purchaseReturnRepo.GetAll()
-                        .OrderByDescending(pr => pr.PReturnNo)
-                        .ToList();
-                }
+
+                var debitRepo = new DebitNoteRepository();
+                int branchId = Convert.ToInt32(DataBase.BranchId);
+                purchaseReturnData = debitRepo.GetAvailablePurchaseReturns(_vendorLedgerId, branchId, _excludeDebitNoteId);
 
                 ultraGrid1.DataSource = purchaseReturnData;
 

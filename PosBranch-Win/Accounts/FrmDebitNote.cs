@@ -29,7 +29,9 @@ namespace PosBranch_Win.Accounts
         private int _pReturnNo = 0;
         private string _invoiceNo = "";
         private bool isAdjusting = false;
+        private bool isLoadingData = false;  // Prevents event loops during programmatic loads
         private int selectionOrderCounter = 0;
+        private int currentDebitNoteId = 0; // Tracks the currently loaded Debit Note record ID
 
         public FrmDebitNote()
         {
@@ -52,7 +54,9 @@ namespace PosBranch_Win.Accounts
             txtPurchaseNo.Text = pReturnNo.ToString();
             textBox4.Text = vendorLedgerId.ToString();
             txtVendorName.Text = vendorName;
+            isLoadingData = true;
             textBox1.Text = returnAmount.ToString("N2");
+            isLoadingData = false;
             totalDebitAmount = returnAmount;
 
             // Load vendor outstanding
@@ -106,6 +110,10 @@ namespace PosBranch_Win.Accounts
 
             // Set default radio button
             rdbtnoutstanding.Checked = true;
+
+            // Hide the local action buttons panel (Save, Clear, Close) and stretch grid panel to fill the space
+            ultraPanel6.Visible = false;
+            ultraPanel5.Width = ultraPanel6.Right - ultraPanel5.Left;
         }
 
         // LoadPaymentMethods removed - payment method selection not needed for Debit Notes
@@ -338,14 +346,14 @@ namespace PosBranch_Win.Accounts
 
             if (band.Columns.Exists("BillNo"))
             {
-                band.Columns["BillNo"].Header.Caption = "Bill No";
+                band.Columns["BillNo"].Header.Caption = "Purchase No";
                 band.Columns["BillNo"].Width = 100;
                 band.Columns["BillNo"].CellActivation = Activation.NoEdit;
             }
 
             if (band.Columns.Exists("BillDate"))
             {
-                band.Columns["BillDate"].Header.Caption = "Bill Date";
+                band.Columns["BillDate"].Header.Caption = "Purchase Date";
                 band.Columns["BillDate"].Width = 100;
                 band.Columns["BillDate"].CellActivation = Activation.NoEdit;
                 band.Columns["BillDate"].Format = "dd-MM-yyyy";
@@ -361,7 +369,7 @@ namespace PosBranch_Win.Accounts
 
             if (band.Columns.Exists("InvoiceAmount"))
             {
-                band.Columns["InvoiceAmount"].Header.Caption = "Invoice Amount";
+                band.Columns["InvoiceAmount"].Header.Caption = "Purchase Amount";
                 band.Columns["InvoiceAmount"].Width = 120;
                 band.Columns["InvoiceAmount"].Format = "##,##0.00";
                 band.Columns["InvoiceAmount"].CellActivation = Activation.NoEdit;
@@ -661,6 +669,7 @@ namespace PosBranch_Win.Accounts
 
         private void ClearForm()
         {
+            currentDebitNoteId = 0;
             currentVendorLedgerId = 0;
             _pReturnNo = 0;
             _invoiceNo = "";
@@ -830,7 +839,12 @@ namespace PosBranch_Win.Accounts
 
         private void txtDebitAmount_TextChanged(object sender, EventArgs e)
         {
-            if (decimal.TryParse(textBox1.Text, out decimal amount))
+            if (isLoadingData) return;  // Ignore event during programmatic loads
+
+            if (decimal.TryParse(textBox1.Text,
+                    System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.CurrentCulture,
+                    out decimal amount))
             {
                 totalDebitAmount = amount;
             }
@@ -1040,8 +1054,8 @@ namespace PosBranch_Win.Accounts
         {
             try
             {
-                // Open Purchase Return Lookup
-                using (var dlg = new frmPurchaseReturnLookup(currentVendorLedgerId))
+                // Open Purchase Return Lookup, passing the current Debit Note ID to exclude its own adjustments
+                using (var dlg = new frmPurchaseReturnLookup(currentVendorLedgerId, currentDebitNoteId))
                 {
                     dlg.OnPurchaseReturnSelected += (pReturnNo, ledgerId, vendorName, invoiceNo, grandTotal) =>
                     {
@@ -1062,16 +1076,23 @@ namespace PosBranch_Win.Accounts
         {
             try
             {
-                // Set internal tracking fields
+                // Set internal tracking fields FIRST so LoadVendorInvoices
+                // has the correct _invoiceNo and totalDebitAmount when it runs.
                 _pReturnNo = pReturnNo;
                 _invoiceNo = invoiceNo;
 
-                // Set vendor information
-                SetVendorInfo(ledgerId, vendorName);
-
-                // Set debit amount
+                // Set debit amount BEFORE SetVendorInfo so that when
+                // LoadVendorInvoices is called inside SetVendorInfo,
+                // DistributeDebitAmounts fires with the correct amount.
+                // Use isLoadingData to prevent the TextChanged event from
+                // interfering with the totalDebitAmount we're setting.
+                isLoadingData = true;
                 textBox1.Text = grandTotal.ToString("N2");
+                isLoadingData = false;
                 totalDebitAmount = (decimal)grandTotal;
+
+                // Set vendor information (calls LoadVendorInvoices internally)
+                SetVendorInfo(ledgerId, vendorName);
 
                 // Show info message
                 MessageBox.Show($"Purchase Return PR{pReturnNo} loaded.\n" +
@@ -1125,6 +1146,7 @@ namespace PosBranch_Win.Accounts
         {
             DataRow masterRow = ds.Tables[0].Rows[0];
 
+            currentDebitNoteId = Convert.ToInt32(masterRow["Id"]);
             currentVendorLedgerId = Convert.ToInt32(masterRow["VendorLedgerId"]);
             _pReturnNo = Convert.ToInt32(masterRow["PReturnNo"] ?? 0);
             _invoiceNo = masterRow["InvoiceNo"]?.ToString();
@@ -1184,6 +1206,46 @@ namespace PosBranch_Win.Accounts
 
                 ultraGrid1.DataSource = dtDetails;
                 ConfigureGridColumns();
+            }
+        }
+
+        // Ribbon Action Integrations
+        public void Save()
+        {
+            btnSave_Click(null, EventArgs.Empty);
+        }
+
+        public void Clear()
+        {
+            ClearForm();
+        }
+
+        public void Delete()
+        {
+            if (currentDebitNoteId <= 0)
+            {
+                MessageBox.Show("No saved Debit Note is loaded to delete.", "Delete", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (MessageBox.Show("Are you sure you want to delete this Debit Note?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                try
+                {
+                    if (debitNoteRepo.DeleteDebitNote(currentDebitNoteId))
+                    {
+                        MessageBox.Show("Debit Note deleted successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        ClearForm();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Failed to delete Debit Note.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error deleting Debit Note: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 

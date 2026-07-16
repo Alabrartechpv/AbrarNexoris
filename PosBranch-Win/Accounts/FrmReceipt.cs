@@ -30,6 +30,7 @@ namespace PosBranch_Win.Accounts
         private int currentCustomerLedgerId = 0;
         private int currentBranchId = 0; // Will be set from DataBase.BranchId in constructor
         private int selectionOrderCounter = 0; // Added for tracking selection order
+        private int currentReceiptId = 0; // Tracks the currently loaded Receipt record ID
 
         public FrmReceipt()
         {
@@ -272,6 +273,10 @@ namespace PosBranch_Win.Accounts
 
             // Add KeyDown event for textBox4 (customer ID input)
             textBox4.KeyDown += textBox4_KeyDown;
+
+            // Hide the local action panel (Save, Clear, Close) and stretch grid panel to fill the space
+            ultraPanel2.Visible = false;
+            ultraPanel5.Width = ultraPanel2.Right - ultraPanel5.Left;
         }
 
         private void btnSave_Click(object sender, EventArgs e)
@@ -462,6 +467,7 @@ namespace PosBranch_Win.Accounts
 
         private void ClearForm()
         {
+            currentReceiptId = 0;
             txtCustomer.Text = string.Empty;
             textBox4.Text = string.Empty;
             CmboPayment.Value = null;
@@ -1190,6 +1196,7 @@ namespace PosBranch_Win.Accounts
                 isAdjusting = true;
                 DataRow master = ds.Tables[0].Rows[0];
 
+                currentReceiptId = Convert.ToInt32(master["Id"]);
                 txtPurchaseNo.Text = master["VoucherId"].ToString();
                 currentCustomerLedgerId = Convert.ToInt32(master["CustomerLedgerId"]);
                 textBox4.Text = currentCustomerLedgerId.ToString();
@@ -1257,6 +1264,46 @@ namespace PosBranch_Win.Accounts
             {
                 isAdjusting = false;
                 MessageBox.Show("Error loading receipt: " + ex.Message);
+            }
+        }
+
+        // Ribbon Action Integrations
+        public void Save()
+        {
+            btnSave_Click(null, EventArgs.Empty);
+        }
+
+        public void Clear()
+        {
+            ClearForm();
+        }
+
+        public void Delete()
+        {
+            if (currentReceiptId <= 0)
+            {
+                MessageBox.Show("No saved Receipt is loaded to delete.", "Delete", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (MessageBox.Show("Are you sure you want to delete this Receipt?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                try
+                {
+                    if (receiptRepo.DeleteCustomerReceipt(currentReceiptId))
+                    {
+                        MessageBox.Show("Receipt deleted successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        ClearForm();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Failed to delete Receipt.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error deleting Receipt: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
     }

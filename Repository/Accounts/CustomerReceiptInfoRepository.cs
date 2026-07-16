@@ -960,6 +960,35 @@ namespace Repository.Accounts
             return 1;
         }
 
+        /// <summary>
+        /// Delete a customer receipt (soft delete)
+        /// </summary>
+        public bool DeleteCustomerReceipt(int receiptId)
+        {
+            DataConnection.Open();
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand(STOREDPROCEDURE._CustomerReceiptMaster, (SqlConnection)DataConnection))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@Id", receiptId);
+                    cmd.Parameters.AddWithValue("@_Operation", "DELETE");
+
+                    cmd.ExecuteNonQuery();
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                if (DataConnection.State == ConnectionState.Open)
+                    DataConnection.Close();
+            }
+        }
+
     }
 
 
